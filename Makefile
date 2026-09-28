@@ -18,7 +18,7 @@ HTTP_PORT ?= $(shell sed -n 's/^HTTP_PORT=\([0-9]*\).*/\1/p' .env.docker 2>/dev/
 .PHONY: help setup up up-tools up-frontend up-async down stop restart logs ps \
         shell composer artisan migrate psql test test-front test-all lint fmt \
         npm-install npm-build npm-watch xdebug-on xdebug-off hosts image-qa teardown \
-        stellar-up contract-test contract-deploy contract-smoke
+        stellar-up contract-test contract-deploy contract-smoke doctor
 
 help: ## List available commands
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -115,6 +115,9 @@ xdebug-off: ## Disable Xdebug and restart app
 	@: > docker/app/xdebug.ini
 	@$(COMPOSE) restart app
 	@echo "Xdebug disabled"
+
+doctor: .env.docker ## Diagnose networking (VPN vs Docker subnets, internet from containers, GitHub)
+	@bash tests/infra/check-network.sh
 
 hosts: ## Print the /etc/hosts block (only needed if LOCAL_IP is not 127.0.0.1)
 	@echo "Add these lines to /etc/hosts with sudo:"
