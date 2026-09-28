@@ -583,7 +583,7 @@ Backend (`AccessScreensTest`, 9 casos, vistos en rojo):
 Suite: 280 en verde + 1 `todo`, estable en 5 corridas seguidas.
 
 - **Arreglo de aislamiento en `LoginTest` (it. 4).** El test del Super Administrador dejaba `root@govtrace.app` en la base central. Una corrida completa lo tapaba, porque un test posterior la limpia; correr solo `tests/Feature/Auth` y luego la suite fallaba con un correo duplicado. Ahora su `afterEach` lo borra, y el archivo pasa dos veces seguidas.
-- **Observación:** `APP_LOCALE=en`. Los mensajes por defecto de Laravel (`required`, `email`, `confirmed`) salen en inglés si alguien se salta la pantalla; las pantallas validan antes, en español. Traducir `lang/es` queda para cuando se toque la configuración regional.
+- **Deuda técnica menor (aceptada por el usuario, 2026-09-28):** `APP_LOCALE=en`. Los mensajes por defecto de Laravel (`required`, `email`, `confirmed`) salen en inglés si alguien se salta la pantalla; las pantallas validan antes, en español, así que para el MVP es aceptable. Traducir `lang/es` queda pendiente.
 
 ### Iteración 18 — Panel del Administrador de Organización (P1)
 **Entregable:**
@@ -595,6 +595,34 @@ Suite: 280 en verde + 1 `todo`, estable en 5 corridas seguidas.
 
 **Done-when:** Vitest de cada pantalla con sus estados (carga, error, vacío, éxito) y los mensajes de US-036, US-037, US-005, US-012, US-015 y US-035 en verde.
 **Cubre:** US-005, US-012, US-015, US-035, US-036, US-037 (UI).
+
+**✅ Cumplido (2026-09-28):** Vitest 125 en verde (48 nuevos). Cada pantalla tiene sus estados de carga, error con "Reintentar", vacío y éxito, y los mensajes de sus historias; todo visto en rojo antes de implementar.
+
+| Pantalla | Qué hace | Tests |
+|---|---|---|
+| **Bandeja** `/admin/inbox` (US-036, US-037) | Pestañas "Por revisar" y "Publicadas". Cada evidencia muestra sus fotos o su PDF tal como se sellaron, la clasificación, el comentario, la marca "Hora de captura sospechosa" y el ledger del sello. Publicar, rechazar y retirar van de a una (sin selección múltiple); rechazar y retirar exigen motivo, y retirar avisa que quedará una lápida. El 409 del servidor se muestra en la tarjeta. | `Inbox.test.js` (14) |
+| **Veedores** `/admin/observers` (US-005) | Invitar por correo y ver el equipo con su estado: Activo, Invitación pendiente o Invitación vencida. | `Observers.test.js` (7) |
+| **Territorio** `/admin/territory` (US-012) | Buscar departamentos y municipios (3 caracteres, 300 ms, sin importar tildes), sumarlos, quitarlos y guardar. No deja guardarlo vacío. | `Territory.test.js` (8) |
+| **Contratos** `/admin/contracts` (US-015) | 20 por página, por fecha de firma o por valor (un segundo toque invierte el orden). El objeto se corta en 50 caracteres y se lee completo al pasar sobre él; el valor va en pesos. | `Contracts.test.js` (7) |
+| **Obras** `/admin/worksites` (US-035) | Cada obra con sus contratos y su ubicación oficial. Se corrige arrastrando el pin del mapa o escribiendo latitud y longitud. | `Worksites.test.js` (8), `LocationMap.test.js` (3, con Leaflet de verdad) |
+
+Además: `AdminLayout` (el nombre de la organización y una barra de navegación abajo, para el pulgar) y las piezas compartidas `LoadState`, `useLoader`, `useDebouncedSearch` (ahora también la usa "Buscar Obra") y `services/errors.js`.
+
+**Backend** (`AdminPanelTest`, 27 casos, vistos en rojo):
+- **Las páginas:** `/admin/*`, solo para el Administrador. `/organization/dashboard` abre la bandeja.
+- **El JSON de cada pantalla:**
+  - `GET /inbox?status=published`;
+  - `GET /evidences/{id}/file`: el archivo tal como se selló, privado, para revisarlo; la descarga pública con prueba es la it. 23;
+  - `GET /observers`, y `POST /observers/invite`, que ahora responde JSON 201 con "Invitación enviada a … El enlace vence en 48 horas.";
+  - `GET/PUT /territory` y `GET /territory/search`. `ConfigureTerritory` registra en el log quién cambió el territorio (R-AUD-04);
+  - `GET /contracts?sort=&direction=&page=`, que solo ordena por fecha de firma o valor;
+  - `GET /worksites`.
+- **Nombres DIVIPOLA:** vienen en mayúsculas oficiales; `PlaceName::forDisplay()` los muestra como se escriben ("Bogotá, D.C.", "Archipiélago de San Andrés, Providencia y Santa Catalina"). Lo guardado no cambia.
+- **Mapa (D8):** Leaflet 1.9.4 (BSD-2) con las teselas de OpenStreetMap y su atribución, y un pin dibujado con CSS, sin las imágenes del ícono por defecto.
+
+**Peso:** cada pantalla es un archivo aparte (`import.meta.glob` sin `eager`). El veedor descarga ~86 KB gzip en total: Vue e Inertia 61, axios 19 y su pantalla 5. El panel del Administrador, Leaflet (43 KB) y pdf-lib (176 KB) solo bajan cuando se usan.
+
+Suite: 307 en verde + 1 `todo`.
 
 ### Iteración 19 — Panel global del Super Administrador (P1)
 **Entregable:** alta de organización, Administrador inicial y datos legales.

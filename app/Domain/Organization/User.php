@@ -31,6 +31,16 @@ class User extends Model implements AuthenticatableContract
 
     protected $hidden = ['password', 'remember_token', 'invitation_token_hash'];
 
+    /** US-005: how the Administrador sees each member of the team. */
+    public function statusLabel(): string
+    {
+        if ($this->invitation_token_hash !== null) {
+            return $this->invitation_expires_at?->isFuture() ? 'Invitación pendiente' : 'Invitación vencida';
+        }
+
+        return $this->is_active ? 'Activo' : 'Desactivado';
+    }
+
     protected $casts = [
         'email_verified_at' => 'datetime',
         'invitation_expires_at' => 'datetime',

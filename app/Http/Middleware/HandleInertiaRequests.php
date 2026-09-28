@@ -37,7 +37,8 @@ class HandleInertiaRequests extends Middleware
     {
         return [
             ...parent::share($request),
-            //
+            // El nombre de la organización, en su subdominio; null en el panel global.
+            'organization' => tenancy()->initialized ? tenant('name') : null,
         ];
     }
 }

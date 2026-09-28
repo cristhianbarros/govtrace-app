@@ -7,6 +7,7 @@ use App\Domain\Geography\Department;
 use App\Domain\Geography\Municipality;
 use App\Domain\Organization\Exceptions\OrganizationValidationException;
 use App\Domain\Organization\OrganizationTerritory;
+use App\Domain\Organization\User;
 use App\Infrastructure\Tenancy\Tenant;
 use App\Jobs\SyncSecopContracts;
 use Illuminate\Support\Facades\DB;
@@ -22,8 +23,9 @@ class ConfigureTerritory
 {
     /**
      * @param  list<string>  $codes
+     * @param  User|null  $administrator  who changes it from the panel (it. 18), for the audit log
      */
-    public function handle(Tenant $tenant, array $codes): void
+    public function handle(Tenant $tenant, array $codes, ?User $administrator = null): void
     {
         if ($codes === []) {
             throw OrganizationValidationException::emptyTerritory();
@@ -48,6 +50,9 @@ class ConfigureTerritory
         AuditLog::record(
             action: 'organization.territory_configured',
             organizationId: $tenant->id,
+            actorType: $administrator ? 'organization_admin' : null,
+            actorId: $administrator ? (string) $administrator->id : null,
+            actorName: $administrator?->name,
             before: ['territory' => $previous],
             after: ['territory' => $picks],
         );

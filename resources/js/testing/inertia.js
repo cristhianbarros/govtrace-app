@@ -1,8 +1,22 @@
-// Solo para los tests: un doble de useForm de Inertia. `post` queda
-// registrado en `submissions`; el test decide qué responde el servidor
-// (errores de validación o éxito) con `respondWith`.
-import { reactive } from 'vue';
+// Solo para los tests: un doble de @inertiajs/vue3. En useForm, `post` queda
+// registrado en `submissions` y el test decide qué responde el servidor
+// (errores de validación o éxito) con `respondWith`. `page` es lo que
+// devuelve usePage(): las props compartidas y la URL actual.
+//
+//   vi.mock('@inertiajs/vue3', async () => await import('@/testing/inertia.js'));
+import { defineComponent, h, reactive } from 'vue';
 import { vi } from 'vitest';
+
+export const Head = { render: () => null };
+
+export const Link = defineComponent({
+    props: { href: { type: String, required: true } },
+    setup: (props, { slots, attrs }) => () => h('a', { ...attrs, href: props.href }, slots.default?.()),
+});
+
+export const page = reactive({ props: { organization: 'Veeduría Ciudadana Santa Marta' }, url: '/admin/inbox' });
+
+export const usePage = () => page;
 
 export const submissions = [];
 let serverAnswer = () => {};
