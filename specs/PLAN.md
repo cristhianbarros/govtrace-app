@@ -19,7 +19,7 @@
 
 ### Decisiones técnicas
 
-✅ Confirmadas D1 a D10. D4 y D5 se reformularon por el **pivote a Stellar** (2026-09-28, ver la sección "Pivote a Stellar"). Siguen abiertas **D11** (custodia de las llaves, antes de la it. 14) y **D12** (umbral de saldo en XLM, antes de la it. 21).
+✅ Confirmadas D1 a D10. D4 y D5 se reformularon por el **pivote a Stellar** (2026-09-28, ver la sección "Pivote a Stellar"). D11 quedó resuelta el 2026-09-28 (secretos inyectados y patrocinadora como *hot wallet*). Sigue abierta **D12** (umbral de saldo en XLM, antes de la it. 21).
 
 | # | Tema | Propuesta | Se necesita en |
 |---|---|---|---|
@@ -32,7 +32,7 @@
 | D7 | Seudónimo del veedor (R-PRIV-03) | HMAC del ID del veedor con un secreto del servidor, más una tabla seudónimo→veedor con retención de 5 años (R-MNT-03) | it. 13 |
 | D8 | Mapas | Leaflet con teselas de OpenStreetMap (R-INT-02) | it. 18 |
 | D9 | Frontend | Se mantiene JavaScript, como está la plomería. Filament y TypeScript no se usan salvo que decidas lo contrario. | it. 16 |
-| D11 | Custodia de las llaves en producción (R-BLK-04) | **Abierta.** Con D5, Laravel firma: la invocación con la selladora y el fee bump con la patrocinadora. La regla vieja ("la llave nunca en el servidor; la custodia un relayer gestionado") ya no se cumple tal cual. Opciones: (a) el secreto lo inyecta en tiempo de ejecución un gestor de secretos, nunca en el repositorio ni en `.env.example`; (b) firma remota Ed25519, sin que la llave salga del servicio (p. ej. HashiCorp Vault Transit). En desarrollo, cuentas locales creadas con friendbot. | antes de it. 14 |
+| D11 | Custodia de las llaves (R-BLK-04) | ✅ **Resuelta (2026-09-28).** Para el MVP y testnet, **(a)**: las llaves de la selladora y la patrocinadora se inyectan como variables de entorno al arrancar, desde un gestor de secretos (en CI, las credenciales de Jenkins); nunca en el repositorio, su historial ni `.env.example`. La patrocinadora es una **hot wallet**: tiene el saldo de unos días de sellos y la recarga seguido una cuenta de **tesorería** fría, que no vive en el servidor. La selladora no tiene fondos. **Mejora futura, antes de la red principal: (b)** firma remota Ed25519 sin que la llave salga del servicio (p. ej. HashiCorp Vault Transit), detrás de la misma interfaz `SealingNetwork`. | it. 14 |
 | D12 | Umbral de saldo de la cuenta patrocinadora (US-021, US-022, US-038-CFG) | **Abierta.** El parámetro sembrado en la it. 6 es `relayer_balance_alert_threshold_pol = 5` (POL). Pasa a XLM con otro nombre y otro valor, a definir con la comisión real por sello que mida la it. 14. | it. 21 |
 | D10 | Proximidad (US-019) | Haversine en SQL, sin PostGIS | it. 31 |
 
@@ -423,6 +423,37 @@ Con esto US-016 pasa de 11 a 17 casos, US-034 de 4 a 6 y US-008 de 22 a 25, todo
 - prueba de humo (`make smoke-testnet`): un reporte de prueba llega a "Sellada" en la testnet de Stellar, con la comisión pagada por la cuenta patrocinadora (fee bump);
 - una revisión automática confirma que ni el repositorio ni `.env.example` contienen llaves secretas de Stellar (empiezan con `S` y tienen 56 caracteres);
 - se mide la comisión real por sello, el insumo de D12.
+
+**✅ Cumplido (2026-09-28):**
+- **`make smoke-testnet` en verde contra la testnet real de Stellar**, con dos reportes hasta "Sellada" (11 aserciones). La selladora no paga nada y la patrocinadora paga con fee bump.
+- **`make secrets-check`** en verde: ninguna llave en los archivos versionados, en **todo el historial de git** ni en `.env.example` / `.env.testnet.example`.
+- Suite rápida sin cambios en verde. Los grupos `stellar` y `testnet` corren aparte.
+
+- **D11 aplicada** (opción (a) + hot wallet):
+  - las llaves llegan como variables de entorno;
+  - en desarrollo, `make testnet-setup` crea cuentas de prueba con friendbot, despliega el contrato y escribe `.env.testnet` (modo `600`, fuera de git);
+  - `make smoke-testnet` carga ese archivo en el entorno de la prueba;
+  - en CI, la etapa "Smoke Testnet" corre **solo al construir un tag de release** y escribe `.env.testnet` desde las credenciales de Jenkins (`stellar-testnet-contract-id`, `-sealer-secret`, `-sponsor-secret`), que se borra al terminar;
+  - la etapa "Secrets Check" corre siempre.
+
+  La opción (b), firma remota Ed25519, queda documentada en D11 como mejora antes de la red principal.
+- **Testnet:** RPC `https://soroban-testnet.stellar.org`, passphrase `Test SDF Network ; September 2015`, en el Protocolo 28, que ejecuta el contrato compilado para el 27. Contrato desplegado para la prueba: `CB5DS2M3ZVZ3O22HBFFIMDYM6JJ4N3CWFY3KDK2ZKCNXXYI77ZJNUBZH`. SDF reinicia testnet cada tanto: si desaparece, se corre `make testnet-setup` y se actualizan las credenciales de Jenkins.
+- **Costos reales en testnet** (Horizon de testnet, comisión cobrada):
+
+  | Operación | Comisión |
+  |---|---|
+  | Subir el código WASM (una vez por versión del contrato) | 1,098 XLM |
+  | Desplegar una instancia | 0,008 XLM |
+  | **Primer sello tras subir código nuevo** | **27,5 XLM**: extiende a la vigencia máxima la entrada del código recién subido |
+  | Primer sello de una instancia nueva, con el código ya extendido | 0,415 XLM |
+  | **Sello de régimen** | **0,2435 XLM**, estable en 6 mediciones |
+
+  El sello de régimen cuesta ~3,6 veces más que en la red local (0,067). Casi todo es renta, porque cada sello se guarda con la vigencia máxima de la red. La prueba sella dos reportes, registra ambos costos (`storage/logs/testnet-smoke.json`) y pone la cota de cordura (< 1 XLM) solo en el de régimen: el primero crece con el tiempo que el contrato pasó sin sellar.
+
+**Insumos para D12 (umbral de saldo de la hot wallet), a decidir antes de la it. 21:**
+1. Con 0,2435 XLM por sello, cada 100 reportes al día cuestan ~24,4 XLM. El umbral y la recarga pueden pensarse en "días de sellos".
+2. **El golpe único de 27,5 XLM al subir código nuevo no debería pagarlo la hot wallet.** Propuesta: que el script de despliegue extienda la vigencia del código y de la instancia con la cuenta que despliega (la tesorería) antes de habilitar el sellado.
+3. **La vigencia de cada sello decide el costo.** Extenderla al máximo lo mantiene legible sin pasos extra. Una vigencia menor bajaría el costo, pero un sello archivado habría que restaurarlo (y pagarlo) antes de que el validador del navegador pueda leerlo: se decide junto con la lectura de sellos de la it. 23.
 
 **Cubre:** R-BLK-04, R-CFG-01, R-TST-01 (prueba de humo en testnet).
 

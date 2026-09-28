@@ -12,11 +12,13 @@
             <directory>tests/Feature</directory>
         </testsuite>
     </testsuites>
-    <!-- Los tests contra la red local de Stellar (it. 13) necesitan
-         make stellar-up && make contract-deploy: van aparte, en make test-stellar. -->
+    <!-- Los tests contra una red de Stellar van aparte: los de la red local
+         (it. 13) en make test-stellar, la prueba de humo en testnet (it. 14)
+         en make smoke-testnet. -->
     <groups>
         <exclude>
             <group>stellar</group>
+            <group>testnet</group>
         </exclude>
     </groups>
     <source>
