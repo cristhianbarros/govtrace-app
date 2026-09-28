@@ -5,9 +5,9 @@
 import { mount } from '@vue/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import Login from './Login.vue';
-import { respondWith, resetInertia, submissions } from '@/testing/inertia.js';
+import { page, respondWith, resetInertia, submissions } from '@/testing/inertia.js';
 
-vi.mock('@inertiajs/vue3', async () => ({ Head: { render: () => null }, useForm: (await import('@/testing/inertia.js')).useForm }));
+vi.mock('@inertiajs/vue3', async () => await import('@/testing/inertia.js'));
 
 function loginAs(email, password) {
     const wrapper = mount(Login, { props: { context: 'Veeduría Ciudadana Santa Marta' } });
@@ -21,7 +21,10 @@ function loginAs(email, password) {
     };
 }
 
-beforeEach(resetInertia);
+beforeEach(() => {
+    resetInertia();
+    page.props.flash = { status: null };
+});
 
 describe('Iniciar sesión', () => {
     it('shows where the user is logging in, and sends email and password to /login', async () => {
@@ -60,5 +63,18 @@ describe('Iniciar sesión', () => {
 
         expect(submissions).toEqual([]);
         expect(wrapper.text()).toContain(message);
+    });
+
+    it('offers to reset a forgotten password (US-039-USR)', () => {
+        const { wrapper } = loginAs('', '');
+
+        expect(wrapper.get('a[href="/forgot-password"]').text()).toBe('¿Olvidó su contraseña?');
+    });
+
+    it('confirms that the password was changed, after the reset', () => {
+        page.props.flash = { status: 'Su contraseña fue cambiada. Ya puede iniciar sesión.' };
+        const { wrapper } = loginAs('', '');
+
+        expect(wrapper.get('[role="status"]').text()).toBe('Su contraseña fue cambiada. Ya puede iniciar sesión.');
     });
 });

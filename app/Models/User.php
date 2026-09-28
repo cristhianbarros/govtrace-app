@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Domain\Auth\Notifications\ResetPasswordLink;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -21,6 +22,12 @@ class User extends Authenticatable
     // patrocinadora se quedó sin XLM, it. 13) iría a la tabla "users" de esa
     // organización: sus veedores.
     use CentralConnection, HasFactory, Notifiable;
+
+    /** US-039-USR: the link goes to the global panel. */
+    public function sendPasswordResetNotification(#[\SensitiveParameter] $token): void
+    {
+        $this->notify(new ResetPasswordLink(url("/reset-password/{$token}").'?email='.urlencode($this->email), $token));
+    }
 
     /**
      * Get the attributes that should be cast.

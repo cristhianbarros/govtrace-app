@@ -2,7 +2,7 @@
 // US-031: iniciar sesión — en el subdominio de la organización (Administrador
 // y Veedor) o en el panel global (Super Administrador). El servidor decide
 // y, si entra, lleva a cada rol a su panel.
-import { Head, useForm } from '@inertiajs/vue3';
+import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { isEmail } from '@/lib/credentials.js';
@@ -12,6 +12,7 @@ defineProps({
     context: { type: String, required: true },
 });
 
+const page = usePage();
 const form = useForm({ email: '', password: '' });
 const hints = ref({});
 
@@ -39,6 +40,10 @@ function submit() {
                 <h2 class="text-xl font-semibold">Iniciar sesión</h2>
                 <p class="text-sm text-slate-600">{{ context }}</p>
             </div>
+
+            <p v-if="page.props.flash?.status" role="status" class="rounded-lg bg-emerald-50 p-3 text-sm font-semibold text-emerald-800">
+                {{ page.props.flash.status }}
+            </p>
 
             <p v-if="form.errors.email || form.errors.password" role="alert" class="rounded-lg bg-red-50 p-3 text-sm text-red-800">
                 {{ form.errors.email ?? form.errors.password }}
@@ -76,6 +81,8 @@ function submit() {
             >
                 {{ form.processing ? 'Entrando…' : 'Entrar' }}
             </button>
+
+            <Link href="/forgot-password" class="text-center text-sm font-semibold text-slate-700 underline">¿Olvidó su contraseña?</Link>
         </form>
     </AppLayout>
 </template>

@@ -2,6 +2,7 @@
 
 namespace App\Infrastructure\Tenancy;
 
+use App\Domain\Organization\OrganizationStatus;
 use Stancl\Tenancy\Contracts\TenantWithDatabase;
 use Stancl\Tenancy\Database\Concerns\HasDatabase;
 use Stancl\Tenancy\Database\Concerns\HasDomains;
@@ -30,15 +31,18 @@ class Tenant extends BaseTenant implements TenantWithDatabase
         return ['id', 'nit', 'name', 'status'];
     }
 
-    /**
-     * For the Super Administrador's panel (it. 19). Only "active" exists
-     * today; suspender/dar de baja (US-003a, US-003b) add to this in it. 20.
-     */
     public function statusLabel(): string
     {
-        return match ($this->status) {
-            'active' => 'Activa',
-            default => $this->status,
-        };
+        return OrganizationStatus::from($this->status)->label();
+    }
+
+    /**
+     * Read from the database, not from this object: a request can hold an
+     * organization loaded before the Super Administrador suspended or
+     * reactivated it, and the change applies at once (US-003a).
+     */
+    public function freshStatus(): OrganizationStatus
+    {
+        return OrganizationStatus::from(self::query()->whereKey($this->getTenantKey())->value('status'));
     }
 }

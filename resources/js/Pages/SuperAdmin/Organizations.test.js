@@ -3,7 +3,7 @@
 import { flushPromises, mount } from '@vue/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import Organizations from './Organizations.vue';
-import { fetchOrganizationDetail, fetchOrganizations, updateOrganizationNit } from '@/services/api.js';
+import { fetchOrganizationDetail, fetchOrganizations, reactivateOrganization, suspendOrganization, updateOrganizationNit } from '@/services/api.js';
 
 vi.mock('@inertiajs/vue3', async () => await import('@/testing/inertia.js'));
 vi.mock('@/services/api.js');
@@ -98,5 +98,51 @@ describe('Organizaciones', () => {
         await flushPromises();
 
         expect(wrapper.get('form [role="alert"]').text()).toBe(message);
+    });
+});
+
+describe('Suspender y reactivar (US-003a)', () => {
+    const suspended = { ...smr, status: 'Suspendida' };
+
+    it('Suspensión de una organización activa: asks to confirm, then suspends and refreshes the list', async () => {
+        const wrapper = await openOrganizations([smr]);
+        suspendOrganization.mockResolvedValue({ message: 'Organización suspendida. Sus usuarios ya no pueden entrar; su mapa público sigue disponible.' });
+        fetchOrganizations.mockResolvedValue([suspended]);
+
+        await button(wrapper, 'Suspender').trigger('click');
+        expect(suspendOrganization).not.toHaveBeenCalled();
+        expect(wrapper.text()).toContain('Sus usuarios no podrán entrar ni enviar reportes; su mapa público seguirá disponible, con un aviso.');
+
+        await button(wrapper, 'Confirmar suspensión').trigger('click');
+        await flushPromises();
+
+        expect(suspendOrganization).toHaveBeenCalledWith('tenant-smr');
+        expect(wrapper.get('[role="status"]').text()).toBe('Organización suspendida. Sus usuarios ya no pueden entrar; su mapa público sigue disponible.');
+        expect(wrapper.get('[data-test="organization-row"]').text()).toContain('Suspendida');
+    });
+
+    it('Reactivación inmediata de una organización suspendida', async () => {
+        const wrapper = await openOrganizations([suspended]);
+        reactivateOrganization.mockResolvedValue({ message: 'Organización reactivada. Sus usuarios ya pueden volver a entrar.' });
+        fetchOrganizations.mockResolvedValue([smr]);
+
+        expect(button(wrapper, 'Suspender')).toBeUndefined();
+        await button(wrapper, 'Reactivar').trigger('click');
+        await flushPromises();
+
+        expect(reactivateOrganization).toHaveBeenCalledWith('tenant-smr');
+        expect(wrapper.get('[role="status"]').text()).toBe('Organización reactivada. Sus usuarios ya pueden volver a entrar.');
+    });
+
+    it('No se puede suspender una organización ya suspendida: shows the message', async () => {
+        const message = 'La organización seleccionada ya se encuentra en estado suspendido.';
+        suspendOrganization.mockRejectedValue({ response: { status: 422, data: { message, errors: { status: [message] } } } });
+        const wrapper = await openOrganizations([smr]);
+
+        await button(wrapper, 'Suspender').trigger('click');
+        await button(wrapper, 'Confirmar suspensión').trigger('click');
+        await flushPromises();
+
+        expect(wrapper.get('[data-test="organization-row"] [role="alert"]').text()).toBe(message);
     });
 });

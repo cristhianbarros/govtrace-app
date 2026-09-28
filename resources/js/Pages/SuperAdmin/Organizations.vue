@@ -1,13 +1,14 @@
 <script setup>
 // US-001 y US-011: el listado de organizaciones del Super Administrador,
 // desde donde da de alta una nueva y corrige el NIT de una existente (a
-// solicitud formal de la organización).
+// solicitud formal de la organización). US-003a: suspenderla o reactivarla.
 import { Head, Link } from '@inertiajs/vue3';
 import { onMounted, ref } from 'vue';
 import LoadState from '@/Components/LoadState.vue';
+import RowAction from '@/Components/RowAction.vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { useLoader } from '@/composables/useLoader.js';
-import { fetchOrganizationDetail, fetchOrganizations, updateOrganizationNit } from '@/services/api.js';
+import { fetchOrganizationDetail, fetchOrganizations, reactivateOrganization, suspendOrganization, updateOrganizationNit } from '@/services/api.js';
 import { errorMessage } from '@/services/errors.js';
 
 const { data: organizations, loading, error, load } = useLoader(fetchOrganizations);
@@ -39,7 +40,12 @@ async function save() {
     }
 }
 
-const statusStyle = { Activa: 'bg-emerald-100 text-emerald-800' };
+async function changed(message) {
+    saved.value = message;
+    await load();
+}
+
+const statusStyle = { Activa: 'bg-emerald-100 text-emerald-800', Suspendida: 'bg-amber-100 text-amber-900' };
 
 onMounted(load);
 </script>
@@ -79,6 +85,23 @@ onMounted(load);
                                 <button type="button" class="rounded-lg border px-2 py-1 text-xs font-semibold" @click="edit(organization)">Editar NIT</button>
                             </div>
                         </div>
+
+                        <RowAction
+                            v-if="organization.status === 'Suspendida'"
+                            class="mt-2"
+                            label="Reactivar"
+                            :run="() => reactivateOrganization(organization.id)"
+                            @done="changed"
+                        />
+                        <RowAction
+                            v-else
+                            class="mt-2"
+                            label="Suspender"
+                            confirm-label="Confirmar suspensión"
+                            warning="Sus usuarios no podrán entrar ni enviar reportes; su mapa público seguirá disponible, con un aviso."
+                            :run="() => suspendOrganization(organization.id)"
+                            @done="changed"
+                        />
 
                         <form v-if="editing?.id === organization.id" class="mt-3 flex flex-col gap-2" novalidate @submit.prevent="save">
                             <label for="nit" class="text-xs font-semibold text-slate-700">NIT</label>

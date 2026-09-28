@@ -12,6 +12,7 @@ use App\Domain\Organization\User as OrganizationUser;
 use App\Domain\Reports\Evidence;
 use App\Infrastructure\Tenancy\Tenant;
 use Database\Seeders\DivipolaSeeder;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
@@ -121,7 +122,8 @@ it('lists the veedores of the organization with the status of their invitation',
         OrganizationUser::query()->where('email', 'pedro@correo.co')->update(['invitation_expires_at' => now()->subHour()]);
     });
 
-    expect(asAdministrator('GET', '/observers')->assertOk()->json('data'))->toBe([
+    // Cada fila trae además su id, para desactivar o reactivar (it. 20).
+    expect(collect(asAdministrator('GET', '/observers')->assertOk()->json('data'))->map(fn (array $row) => Arr::only($row, ['email', 'status']))->all())->toBe([
         ['email' => 'carlos@correo.co', 'status' => 'Activo'],
         ['email' => 'laura@correo.co', 'status' => 'Invitación pendiente'],
         ['email' => 'pedro@correo.co', 'status' => 'Invitación vencida'],
