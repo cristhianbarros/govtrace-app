@@ -13,11 +13,15 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-it('seeds the five known default parameters', function () {
+it('seeds the five known default parameters, with the sponsor balance threshold in XLM (D12)', function () {
+    // D12 (2026-09-28): 50 XLM, ~200 sellos de 0,2435 XLM. Reemplaza al
+    // umbral de 5 POL del diseño EVM.
+    expect(Parameters::current('relayer_balance_alert_threshold_pol'))->toBeNull();
+
     expect(Parameters::current('geofence_radius_meters'))->toBe('500')
         ->and(Parameters::current('closed_contract_report_window_months'))->toBe('12')
         ->and(Parameters::current('invitation_validity_hours'))->toBe('48')
-        ->and(Parameters::current('relayer_balance_alert_threshold_pol'))->toBe('5')
+        ->and(Parameters::current('sponsor_balance_alert_threshold_xlm'))->toBe('50')
         ->and(Parameters::current('secop_sync_hour'))->toBe('02:00');
 });
 

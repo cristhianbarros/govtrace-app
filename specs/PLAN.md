@@ -19,7 +19,7 @@
 
 ### Decisiones técnicas
 
-✅ Confirmadas D1 a D10. D4 y D5 se reformularon por el **pivote a Stellar** (2026-09-28, ver la sección "Pivote a Stellar"). D11 quedó resuelta el 2026-09-28 (secretos inyectados y patrocinadora como *hot wallet*). Sigue abierta **D12** (umbral de saldo en XLM, antes de la it. 21).
+✅ Confirmadas D1 a D10. D4 y D5 se reformularon por el **pivote a Stellar** (2026-09-28, ver la sección "Pivote a Stellar"). D11 y D12 quedaron resueltas el 2026-09-28 (secretos inyectados, patrocinadora como *hot wallet*, umbral de 50 XLM y la tesorería paga la vigencia del contrato). No quedan decisiones técnicas abiertas.
 
 | # | Tema | Propuesta | Se necesita en |
 |---|---|---|---|
@@ -33,7 +33,7 @@
 | D8 | Mapas | Leaflet con teselas de OpenStreetMap (R-INT-02) | it. 18 |
 | D9 | Frontend | Se mantiene JavaScript, como está la plomería. Filament y TypeScript no se usan salvo que decidas lo contrario. | it. 16 |
 | D11 | Custodia de las llaves (R-BLK-04) | ✅ **Resuelta (2026-09-28).** Para el MVP y testnet, **(a)**: las llaves de la selladora y la patrocinadora se inyectan como variables de entorno al arrancar, desde un gestor de secretos (en CI, las credenciales de Jenkins); nunca en el repositorio, su historial ni `.env.example`. La patrocinadora es una **hot wallet**: tiene el saldo de unos días de sellos y la recarga seguido una cuenta de **tesorería** fría, que no vive en el servidor. La selladora no tiene fondos. **Mejora futura, antes de la red principal: (b)** firma remota Ed25519 sin que la llave salga del servicio (p. ej. HashiCorp Vault Transit), detrás de la misma interfaz `SealingNetwork`. | it. 14 |
-| D12 | Umbral de saldo de la cuenta patrocinadora (US-021, US-022, US-038-CFG) | **Abierta.** El parámetro sembrado en la it. 6 es `relayer_balance_alert_threshold_pol = 5` (POL). Pasa a XLM con otro nombre y otro valor, a definir con la comisión real por sello que mida la it. 14. | it. 21 |
+| D12 | Umbral de saldo de la cuenta patrocinadora (US-021, US-022, US-038-CFG) | ✅ **Resuelta (2026-09-28).** Umbral de alerta de **50 XLM** (`sponsor_balance_alert_threshold_xlm`, ~200 sellos de 0,2425 XLM); reemplaza al parámetro en POL de la it. 6. La **tesorería** paga el despliegue y la extensión de la vigencia de la instancia y del código del contrato, así la hot wallet solo paga sellos. Se mantiene la vigencia máxima por sello (se revisa en la it. 23). Detalle en la it. 14. | it. 21 |
 | D10 | Proximidad (US-019) | Haversine en SQL, sin PostGIS | it. 31 |
 
 ### Convenciones de pruebas
@@ -437,7 +437,7 @@ Con esto US-016 pasa de 11 a 17 casos, US-034 de 4 a 6 y US-008 de 22 a 25, todo
   - la etapa "Secrets Check" corre siempre.
 
   La opción (b), firma remota Ed25519, queda documentada en D11 como mejora antes de la red principal.
-- **Testnet:** RPC `https://soroban-testnet.stellar.org`, passphrase `Test SDF Network ; September 2015`, en el Protocolo 28, que ejecuta el contrato compilado para el 27. Contrato desplegado para la prueba: `CB5DS2M3ZVZ3O22HBFFIMDYM6JJ4N3CWFY3KDK2ZKCNXXYI77ZJNUBZH`. SDF reinicia testnet cada tanto: si desaparece, se corre `make testnet-setup` y se actualizan las credenciales de Jenkins.
+- **Testnet:** RPC `https://soroban-testnet.stellar.org`, passphrase `Test SDF Network ; September 2015`, en el Protocolo 28, que ejecuta el contrato compilado para el 27. Contrato desplegado para la prueba: `CABXHM74HFSAZD4FDFDONSIDJOVJBU7ZJXYBCHY3JJDCQUDFTHBT2WUI` (redesplegado con D12; el de la it. 14 era `CB5DS2M3…NUBZH`). SDF reinicia testnet cada tanto: si desaparece, se corre `make testnet-setup` y se actualizan las credenciales de Jenkins.
 - **Costos reales en testnet** (Horizon de testnet, comisión cobrada):
 
   | Operación | Comisión |
@@ -450,10 +450,31 @@ Con esto US-016 pasa de 11 a 17 casos, US-034 de 4 a 6 y US-008 de 22 a 25, todo
 
   El sello de régimen cuesta ~3,6 veces más que en la red local (0,067). Casi todo es renta, porque cada sello se guarda con la vigencia máxima de la red. La prueba sella dos reportes, registra ambos costos (`storage/logs/testnet-smoke.json`) y pone la cota de cordura (< 1 XLM) solo en el de régimen: el primero crece con el tiempo que el contrato pasó sin sellar.
 
-**Insumos para D12 (umbral de saldo de la hot wallet), a decidir antes de la it. 21:**
+**Insumos para D12 (umbral de saldo de la hot wallet):**
 1. Con 0,2435 XLM por sello, cada 100 reportes al día cuestan ~24,4 XLM. El umbral y la recarga pueden pensarse en "días de sellos".
 2. **El golpe único de 27,5 XLM al subir código nuevo no debería pagarlo la hot wallet.** Propuesta: que el script de despliegue extienda la vigencia del código y de la instancia con la cuenta que despliega (la tesorería) antes de habilitar el sellado.
 3. **La vigencia de cada sello decide el costo.** Extenderla al máximo lo mantiene legible sin pasos extra. Una vigencia menor bajaría el costo, pero un sello archivado habría que restaurarlo (y pagarlo) antes de que el validador del navegador pueda leerlo: se decide junto con la lectura de sellos de la it. 23.
+
+**✅ D12 resuelta y aplicada (2026-09-28, rama `fix/d12-hot-wallet`)** — se aprobaron las tres propuestas:
+1. **Umbral de 50 XLM** (~200 sellos de régimen). Una migración siembra `sponsor_balance_alert_threshold_xlm = 50` y quita `relayer_balance_alert_threshold_pol`, un concepto del diseño EVM que nada usaba. La pantalla (US-038-CFG) se ajusta en la it. 21 y la alerta en la it. 32.
+2. **La tesorería paga el despliegue y la vigencia del contrato**, no la hot wallet:
+   - `seal()` ya no extiende la instancia (test Rust `sellar_no_extiende_la_vigencia_de_la_instancia_ni_del_codigo`, visto en rojo antes del cambio). Cada sello solo paga la renta de su propia entrada.
+   - Los scripts de despliegue crean una tercera cuenta, la tesorería (`govtrace-treasury` / `govtrace-testnet-treasury`). Ella despliega y, antes de que se pueda sellar, extiende la instancia y el código hasta la vigencia máxima de la red (`max_entry_ttl − 1`, leída con `stellar network settings`). Su llave no va al `.env`: Laravel no la usa.
+   - `make contract-extend` (red local) y `make testnet-extend` repiten esa extensión. Hay que correrlas antes de que venzan: unos 180 días con la vigencia máxima de hoy. Vigilarlo entra en la it. 32.
+3. **Se mantiene la vigencia máxima por sello**; se revisa en la it. 23.
+
+**Medido en testnet tras D12:**
+
+| Quién paga | Operación | Comisión |
+|---|---|---|
+| Tesorería | Subir el WASM | 1,083 XLM |
+| Tesorería | Desplegar la instancia | 0,008 XLM |
+| Tesorería | Extender la instancia a la vigencia máxima | 0,172 XLM |
+| Tesorería | Extender el código a la vigencia máxima | 26,71 XLM |
+| Hot wallet | **Primer sello tras el despliegue** | **0,2425 XLM** (antes, 27,5) |
+| Hot wallet | Sello de régimen | 0,2425 XLM |
+
+La prueba de humo ahora pone la cota de cordura (< 1 XLM) en los dos sellos. Extender el código cuesta ~26,7 XLM cada ~180 días, ~53 XLM al año por versión del contrato, y lo paga la tesorería.
 
 **Cubre:** R-BLK-04, R-CFG-01, R-TST-01 (prueba de humo en testnet).
 
@@ -603,7 +624,7 @@ Con esto US-016 pasa de 11 a 17 casos, US-034 de 4 a 6 y US-008 de 22 a 25, todo
 **Cubre:** US-019, US-028.
 
 ### Iteración 32 — Operación de la cuenta patrocinadora y costos
-**Entregable:** saldo en XLM de la patrocinadora cada 15 minutos, con alerta bajo el umbral de D12; reporte de comisiones (XLM y COP) por mes y organización, con respaldo del último precio conocido de XLM; re-encolado de fallas de sellado. US-004 y US-022 se ajustan a Stellar al abrir la iteración.
+**Entregable:** saldo en XLM de la patrocinadora cada 15 minutos, con alerta bajo el umbral de D12 (50 XLM); aviso antes de que venza la vigencia de la instancia o del código del contrato, para que la tesorería corra la extensión (D12); reporte de comisiones (XLM y COP) por mes y organización, con respaldo del último precio conocido de XLM; re-encolado de fallas de sellado. US-004 y US-022 se ajustan a Stellar al abrir la iteración.
 **Done-when:** US-022 (4 casos), US-004 (4) y US-047-MNT (2) en verde.
 **Cubre:** US-004, US-022, US-047-MNT · R-VC-03.
 
@@ -653,7 +674,7 @@ Historias con Gherkin y criterios todavía redactados para Polygon; cada una se 
 | US-020a | Soroban, cuenta selladora, hora del ledger | ✅ ya ajustada (it. 12) |
 | US-008 | el mensaje de éxito dice "…en la red Stellar." | ✅ ya ajustada |
 | US-020b | fee bump y XLM en vez de relayer y gas; "Sellada" sin 3 confirmaciones ni auditoría de reorganizaciones (R-BLK-06) | it. 13 |
-| US-038-CFG | el umbral de saldo pasa a XLM (D12) | it. 21 |
+| US-038-CFG | el umbral de saldo pasa a 50 XLM, `sponsor_balance_alert_threshold_xlm` (D12 ✅, ya sembrado) | it. 21 |
 | US-021 | red o RPC de Stellar caídos, o patrocinadora sin saldo, en vez de relayer caído | it. 22 |
 | US-023, US-025 | Recibo: TxID, número y hora del ledger, enlace a un explorador de Stellar | it. 23 |
 | US-024, US-046-INT | el validador y el script leen el sello del contrato por el RPC de Stellar; cómo leer un sello archivado | it. 23 y 27 |
