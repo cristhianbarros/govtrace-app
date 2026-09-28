@@ -13,6 +13,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 
 /*
  * Iteración 10 — Crear reporte: GPS, geocerca y First-Touch
@@ -21,9 +22,9 @@ use Illuminate\Support\Facades\Schema;
  * de los dos veedores simultáneos vive en FirstTouchRaceTest (dos
  * transacciones reales, en dos procesos).
  *
- * Alcance: los archivos y sus hashes son US-009 (it. 11) y el sellado
- * llega en las it. 12-13, así que aquí el reporte viaja sin archivos.
- * Los textos de la PWA (el mensaje de éxito, "reintentar hasta obtener
+ * Cada reporte viaja con 1 foto y su SHA-256 (sendReport); las reglas de
+ * los archivos son US-009 y viven en ReportEvidenceTest (it. 11). El
+ * sellado llega en las it. 12-13. Los textos de la PWA (el mensaje de éxito, "reintentar hasta obtener
  * buena señal") son de la it. 16: el backend responde 201, o 422 con el
  * motivo.
  *
@@ -33,6 +34,7 @@ use Illuminate\Support\Facades\Schema;
 beforeEach(function () {
     $this->artisan('migrate');
     (new DivipolaSeeder)->run();
+    Storage::fake('evidencias');
 
     // Antecedentes: carlos@correo.co, veedor de una organización que
     // vigila Magdalena; la obra del contrato CO1.PCCNTR.1234567 ya tiene
@@ -232,9 +234,11 @@ it('lets veedores at the real site report once a wrong official location is corr
         ->assertUnprocessable()
         ->assertJsonValidationErrors('location');
 
-    // La corrección como acción del Administrador, con su registro, es
-    // US-035 (it. 11); aquí basta con que la ubicación cambie.
-    $this->tenant->run(fn () => $this->worksite->update(['latitude' => $realSite[0], 'longitude' => $realSite[1]]));
+    // El Administrador de Organización la corrige (US-035, it. 11).
+    $administrator = reportingMember($this->tenant, 'admin@veeduria-smr.org', Roles::Administrator);
+    $this->actingAs($administrator, 'tenant')
+        ->patchJson("http://veeduria-smr.govtrace.localhost/worksites/{$this->worksite->id}/location", ['latitude' => $realSite[0], 'longitude' => $realSite[1]])
+        ->assertOk();
 
     sendReport($this->veedor, ['latitude' => $realSite[0], 'longitude' => $realSite[1]])->assertCreated();
 });

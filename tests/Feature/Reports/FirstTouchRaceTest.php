@@ -5,12 +5,14 @@ use App\Application\Organization\RegisterOrganization;
 use App\Application\Reports\CreateReport;
 use App\Application\Reports\NewReport;
 use App\Domain\Organization\User as OrganizationUser;
+use App\Domain\Reports\EvidenceUpload;
 use App\Domain\Reports\Report;
 use App\Domain\Worksites\Worksite;
 use App\Domain\Worksites\WorksiteContract;
 use App\Infrastructure\Tenancy\Tenant;
 use Database\Seeders\DivipolaSeeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 /*
  * Iteración 10 — escenario "Dos veedores envían a la vez el primer
@@ -29,6 +31,7 @@ use Illuminate\Support\Facades\DB;
 beforeEach(function () {
     $this->artisan('migrate');
     (new DivipolaSeeder)->run();
+    Storage::fake('evidencias');
 });
 
 afterEach(function () {
@@ -137,6 +140,7 @@ it('lets only the first of two simultaneous first reports anchor the worksite, a
             longitude: $positionA[1],
             accuracyMeters: 10.0,
             capturedAt: now(),
+            files: [EvidenceUpload::fromPath(base_path('tests/fixtures/evidence/foto.jpg'))],
         ));
 
         $child = startParallelReport($tenant, $veedorB, 'CO1.PCCNTR.2222222', $positionB);

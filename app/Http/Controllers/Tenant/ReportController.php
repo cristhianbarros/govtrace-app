@@ -4,10 +4,12 @@ namespace App\Http\Controllers\Tenant;
 
 use App\Application\Reports\CreateReport;
 use App\Application\Reports\NewReport;
+use App\Domain\Reports\EvidenceUpload;
 use App\Domain\Reports\Exceptions\ReportValidationException;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\ValidationException;
 
@@ -28,7 +30,21 @@ class ReportController extends Controller
             'longitude' => ['nullable', 'numeric'],
             'accuracy_meters' => ['nullable', 'numeric'],
             'captured_at' => ['required', 'date'],
+            'files' => ['nullable', 'array'],
+            'files.*' => ['file'],
+            'hashes' => ['nullable', 'array'],
+            'hashes.*' => ['nullable', 'string'],
         ]);
+
+        // Cada archivo con el SHA-256 que el teléfono calculó, en el mismo orden.
+        $hashes = $data['hashes'] ?? [];
+        $files = array_values($request->file('files', []));
+        $uploads = array_map(fn (UploadedFile $file, int $position) => new EvidenceUpload(
+            path: (string) $file->getRealPath(),
+            mimeType: (string) $file->getMimeType(),
+            sizeBytes: (int) $file->getSize(),
+            declaredSha256: $hashes[$position] ?? null,
+        ), $files, array_keys($files));
 
         try {
             $report = (new CreateReport)->handle($request->user('tenant'), new NewReport(
@@ -39,6 +55,7 @@ class ReportController extends Controller
                 longitude: isset($data['longitude']) ? (float) $data['longitude'] : null,
                 accuracyMeters: isset($data['accuracy_meters']) ? (float) $data['accuracy_meters'] : null,
                 capturedAt: Carbon::parse($data['captured_at']),
+                files: $uploads,
             ));
         } catch (ReportValidationException $e) {
             throw ValidationException::withMessages([$e->field => $e->getMessage()]);

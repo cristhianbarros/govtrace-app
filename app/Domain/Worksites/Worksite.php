@@ -58,6 +58,16 @@ class Worksite extends Model
             throw new LogicException('La ficha de obra ya tiene ubicación oficial; First-Touch solo aplica a una ficha sin ubicación.');
         }
 
+        $this->relocateTo($point);
+    }
+
+    /**
+     * US-035: the Administrador de Organización moves the official
+     * location (a First-Touch that landed in the wrong place). The
+     * geofence of every later report is measured from here.
+     */
+    public function relocateTo(GeoPoint $point): void
+    {
         $this->update([
             'latitude' => $point->latitude,
             'longitude' => $point->longitude,
