@@ -11,7 +11,7 @@ use App\Domain\Reports\Exceptions\ReportValidationException;
  */
 final class GpsReading
 {
-    private const MAX_ACCURACY_METERS = 50;
+    public const MAX_ACCURACY_METERS = 50;
 
     private function __construct(
         public readonly GeoPoint $point,

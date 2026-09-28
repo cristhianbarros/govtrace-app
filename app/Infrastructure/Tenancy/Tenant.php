@@ -18,7 +18,7 @@ class Tenant extends BaseTenant implements TenantWithDatabase
 {
     use HasDatabase, HasDomains;
 
-    protected $fillable = ['id', 'nit', 'name', 'status'];
+    protected $fillable = ['id', 'nit', 'name', 'display_name', 'logo_path', 'status'];
 
     /**
      * Without this, stancl's VirtualColumn trait shoves every attribute
@@ -28,7 +28,33 @@ class Tenant extends BaseTenant implements TenantWithDatabase
      */
     public static function getCustomColumns(): array
     {
-        return ['id', 'nit', 'name', 'status'];
+        return ['id', 'nit', 'name', 'display_name', 'logo_path', 'status'];
+    }
+
+    /** What veedores and the public see: the display name (US-007), or the legal name until there is one. */
+    public function displayName(): string
+    {
+        return $this->display_name ?? $this->name;
+    }
+
+    /** The public URL of the logo; its file name changes with the logo, so no old one stays cached. */
+    public function logoUrl(): ?string
+    {
+        return $this->logo_path === null ? null : '/organization/logo?v='.pathinfo($this->logo_path, PATHINFO_FILENAME);
+    }
+
+    /**
+     * The name and logo as they are NOW in the database: veedores see a
+     * change on their next screen (US-007), even if this request loaded
+     * the organization before it.
+     *
+     * @return array{name: string, logo: ?string}
+     */
+    public function freshDisplay(): array
+    {
+        $fresh = self::query()->findOrFail($this->getTenantKey());
+
+        return ['name' => $fresh->displayName(), 'logo' => $fresh->logoUrl()];
     }
 
     public function statusLabel(): string

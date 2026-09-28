@@ -1,8 +1,10 @@
 <?php
 
 use App\Http\Controllers\Auth\PasswordResetController;
+use App\Http\Controllers\Central\AuditController;
 use App\Http\Controllers\Central\LoginController;
 use App\Http\Controllers\Central\OrganizationController;
+use App\Http\Controllers\Central\ParameterController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -33,6 +35,13 @@ foreach (config('tenancy.central_domains') as $domain) {
             Route::put('/admin/organizations/{tenant}/nit', [OrganizationController::class, 'updateNit'])->name('admin.organizations.update-nit');
             Route::post('/admin/organizations/{tenant}/suspend', [OrganizationController::class, 'suspend'])->name('admin.organizations.suspend');
             Route::post('/admin/organizations/{tenant}/reactivate', [OrganizationController::class, 'reactivate'])->name('admin.organizations.reactivate');
+
+            // US-038-CFG: parámetros globales. US-043-MON: el log de auditoría completo.
+            Route::get('/admin/parameters', fn () => Inertia::render('SuperAdmin/Parameters'))->name('admin.parameters.show');
+            Route::get('/admin/parameters/data', [ParameterController::class, 'index'])->name('admin.parameters.index');
+            Route::put('/admin/parameters/{key}', [ParameterController::class, 'update'])->name('admin.parameters.update');
+            Route::get('/admin/audit', fn () => Inertia::render('SuperAdmin/Audit'))->name('admin.audit.show');
+            Route::get('/admin/audit/data', [AuditController::class, 'index'])->name('admin.audit.index');
         });
     });
 }

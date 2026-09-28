@@ -41,6 +41,13 @@ export const saveTerritory = (codes) => dataOf(http.put('/territory', { codes })
 /** US-015: { data, meta: { current_page, last_page, total } } */
 export const fetchContracts = ({ sort, direction, page }) => dataOf(http.get('/contracts', { params: { sort, direction, page } }));
 
+/** US-007: nombre de fantasía y logo (multipart). */
+export const fetchProfile = async () => (await dataOf(http.get('/organization/profile'))).data;
+export const saveProfile = (form) => dataOf(http.post('/organization/profile', form));
+
+/** US-043-MON: el log de la organización, { data, meta }. */
+export const fetchAuditLog = (page) => dataOf(http.get('/audit', { params: { page } }));
+
 /** US-035 */
 export const fetchWorksites = async () => (await dataOf(http.get('/worksites'))).data;
 export const correctWorksiteLocation = (worksiteId, { latitude, longitude }) =>
@@ -55,6 +62,13 @@ export const registerOrganization = (data) => dataOf(http.post('/admin/organizat
 /** US-011 */
 export const fetchOrganizationDetail = async (id) => (await dataOf(http.get(`/admin/organizations/${id}`))).data;
 export const updateOrganizationNit = (id, nit) => dataOf(http.put(`/admin/organizations/${id}/nit`, { nit }));
+
+/** US-038-CFG: { configurable, fixed } */
+export const fetchParameters = () => dataOf(http.get('/admin/parameters/data'));
+export const updateParameter = (key, value) => dataOf(http.put(`/admin/parameters/${key}`, { value }));
+
+/** US-043-MON: todo el log, { data, meta }. */
+export const fetchGlobalAuditLog = (page) => dataOf(http.get('/admin/audit/data', { params: { page } }));
 
 /** US-003a */
 export const suspendOrganization = (id) => dataOf(http.post(`/admin/organizations/${id}/suspend`));

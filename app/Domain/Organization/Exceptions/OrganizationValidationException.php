@@ -41,6 +41,11 @@ class OrganizationValidationException extends DomainException
         return new self('El nombre de la organización debe tener entre 3 y 150 caracteres.');
     }
 
+    public static function invalidDisplayNameLength(): self
+    {
+        return new self('El nombre de fantasía debe tener entre 3 y 100 caracteres.');
+    }
+
     public static function invalidAdministratorEmail(): self
     {
         return new self('El correo electrónico no tiene un formato válido.');

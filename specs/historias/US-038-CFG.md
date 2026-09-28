@@ -1,4 +1,4 @@
-# US-038-CFG — Ajustar desde el panel global los parámetros operativos (radio de geocerca, ventana de reporte de Terminados/Liquidados, vigencia de invitaciones, umbral de saldo del Relayer y hora de la sincronización)
+# US-038-CFG — Ajustar desde el panel global los parámetros operativos (radio de geocerca, ventana de reporte de Terminados/Liquidados, vigencia de invitaciones, umbral de saldo de la cuenta patrocinadora y hora de la sincronización)
 
 | Campo | Valor |
 |---|---|
@@ -11,7 +11,7 @@
 | Reglas relacionadas | R-CFG-02, R-AUD-04, R-AUD-05 |
 
 ## Historia
-**Como** Super Administrador, **quiero** ajustar desde el panel global los parámetros operativos (radio de geocerca, ventana de reporte de Terminados/Liquidados, vigencia de invitaciones, umbral de saldo del Relayer y hora de la sincronización), **para** adaptar la operación sin desplegar código.
+**Como** Super Administrador, **quiero** ajustar desde el panel global los parámetros operativos (radio de geocerca, ventana de reporte de Terminados/Liquidados, vigencia de invitaciones, umbral de saldo de la cuenta patrocinadora y hora de la sincronización), **para** adaptar la operación sin desplegar código.
 
 ## Criterios de aceptación
 `specs/criterios/US-038-CFG.yaml`

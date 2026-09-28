@@ -24,7 +24,7 @@ class PasswordResetController extends Controller
 
     public function requestForm(): Response
     {
-        return Inertia::render('Auth/ForgotPassword', ['context' => tenancy()->initialized ? tenant('name') : 'Panel global']);
+        return Inertia::render('Auth/ForgotPassword', ['context' => tenancy()->initialized ? tenant()->displayName() : 'Panel global']);
     }
 
     public function sendLink(Request $request): RedirectResponse

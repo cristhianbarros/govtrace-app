@@ -1,7 +1,8 @@
 // Cómo se leen en pantalla fechas y pesos colombianos.
 
 const cop = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
-const dateTime = new Intl.DateTimeFormat('es-CO', { dateStyle: 'short', timeStyle: 'short', timeZone: 'America/Bogota' });
+// Año con 4 cifras: en un log de auditoría "26" no alcanza.
+const dateTime = new Intl.DateTimeFormat('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'America/Bogota' });
 
 export const formatCop = (value) => (value === null || value === undefined ? '—' : cop.format(value));
 

@@ -704,6 +704,49 @@ Vitest: 158 en verde (18 nuevos). Suite: 355 en verde, estable en dos corridas, 
 **Done-when:** US-007 (15 casos), US-038-CFG (10) y US-043-MON (3) en verde.
 **Cubre:** US-007, US-038-CFG, US-043-MON · R-SEC-04, R-VC-03, R-CFG-02, R-AUD-04 (consulta).
 
+**✅ Cumplido (2026-09-28, con Opus xhigh):** backend en verde:
+- `OrganizationProfileTest`: US-007, 15/15 más 4 derivados;
+- `SvgSanitizerTest`: 8;
+- `ParametersPanelTest`: US-038-CFG, 10/10 más 9 derivados;
+- `NightlyScheduleTest`: 3;
+- `AuditLogQueryTest`: US-043-MON, 3/3 más 3 derivados.
+
+Todos vistos en rojo antes de implementar (404 o clases inexistentes). Vitest: 180 en verde (22 nuevos). Suite: 410 en verde.
+
+- **Al abrir la iteración, US-038-CFG se ajustó a Stellar:** "umbral de saldo del Relayer, 5 → 10 POL" pasa a "umbral de saldo de la patrocinadora, 50 → 80 XLM", en el Gherkin, los criterios y la historia.
+- **Nombre de fantasía y logo** (US-007), pantalla `/admin/organization` del Administrador:
+  - columnas nuevas `tenants.display_name` y `logo_path`, aparte del nombre legal y el NIT, que se muestran sin editar;
+  - el logo se valida por lo que el archivo **es**, no por su nombre: PNG, JPG o SVG, hasta 2 MB, y al menos 128x128 px si es un mapa de bits. Un SVG no tiene mínimo: es un dibujo y escala sin perder calidad (derivada);
+  - se guarda en el disco de objetos bajo `{organización}/profile/`, con el hash en el nombre, así la URL cambia con el logo y nadie ve uno viejo en caché;
+  - los veedores lo ven en su próxima pantalla: `organization` y `organizationLogo` se comparten con cada página y se leen **de la base**. El encabezado de "Nuevo Reporte" y del panel muestran nombre y logo.
+- **SVG limpio** (R-SEC-04): `SvgSanitizer` propio, con lista de lo permitido (elementos y atributos que solo dibujan). `enshrined/svg-sanitize` es GPL y el proyecto es MIT.
+  - Quita scripts, manejadores `on*`, `foreignObject`, animaciones, hojas de estilo, imágenes y cualquier referencia que salga del documento (`href` y `url()` solo hacia `#…`).
+  - En `style` limpia declaración por declaración.
+  - Rechaza un DOCTYPE o entidades (XXE, *billion laughs*).
+  - Segunda barrera: `/organization/logo` se sirve con `Content-Security-Policy: default-src 'none'; …; sandbox` y `X-Content-Type-Options: nosniff`.
+  - **Prueba de mutación:** si el filtro de atributos deja pasar todo, fallan 4 tests.
+- **Parámetros globales** (US-038-CFG), pantalla `/admin/parameters` del Super Administrador:
+  - `ConfigurableParameter` define los 5 configurables, cada uno con su etiqueta, unidad y regla. Rangos derivados: geocerca de 50 a 5000 m, porque bajo la precisión del GPS nunca se cumpliría; ventana de 1 a 60 meses; invitación de 1 a 720 h; umbral mayor que 0 XLM; hora `HH:MM`.
+  - `FixedParameters` muestra los fijos, que toman su valor de las reglas mismas (`GpsReading`, `EvidenceSet`, `SuspiciousCaptureTime`).
+  - Cada cambio es una versión nueva, con auditoría `parameter.changed` del valor anterior y el nuevo.
+  - Cada fila del test comprueba **el código que usa el parámetro**:
+    - a 400 m ya no se puede reportar;
+    - un contrato terminado hace 7 meses ya no es reportable;
+    - una invitación nueva vence a las 72 h, y el correo lo dice;
+    - la sincronización se programa a las 03:30.
+- **Dos parámetros que no se leían de la base:**
+  - La vigencia de las invitaciones estaba fija en 48 h en `InviteObserver` y `AssignInitialAdministrator`; ahora sale del parámetro, y `WelcomeNotification` escribe las horas reales.
+  - La hora de sincronización ahora la programa `NightlySchedule`. El comentario de `routes/console.php` decía que un cambio exigía reiniciar el proceso, y era falso: `schedule:work` lanza `schedule:run` como proceso nuevo cada minuto, así que rige desde el minuto siguiente.
+  - El cálculo de riesgo pasa a ir **una hora después de la sincronización**. Antes estaba fijo a las 03:00: con la sincronización movida a las 03:30 habría corrido antes, con los contratos del día anterior.
+- **Log de auditoría** (US-043-MON):
+  - `AuditLogQuery`: el Super Administrador ve todo; el Administrador solo lo de su organización, y una entrada de otra responde 404;
+  - lo más reciente primero, de 20 en 20;
+  - `AuditLabels` pone en palabras cada acción ("Cambió el NIT", "Retiró una evidencia"…) y cada actor;
+  - pantallas `/admin/audit` en el panel global y en la organización, con el componente compartido `AuditLog`. Las fechas llevan el año con 4 cifras.
+- **Paneles:**
+  - `SuperAdminLayout`, con barra de navegación Organizaciones, Parámetros y Auditoría;
+  - el panel del Administrador suma "Organización", desde donde se abre su registro de auditoría.
+
 ### Iteración 22 — Robustez del sellado y monitoreo
 **Entregable:**
 - reintentos con backoff hasta 5, "Falla de Sellado" con banner, alerta de cola estancada a las 2 h y red de Stellar (RPC) caída o patrocinadora sin saldo (US-021 se ajusta a Stellar al abrir la iteración);
@@ -827,7 +870,7 @@ Historias con Gherkin y criterios todavía redactados para Polygon; cada una se 
 | US-020a | Soroban, cuenta selladora, hora del ledger | ✅ ya ajustada (it. 12) |
 | US-008 | el mensaje de éxito dice "…en la red Stellar." | ✅ ya ajustada |
 | US-020b | fee bump y XLM en vez de relayer y gas; "Sellada" sin 3 confirmaciones ni auditoría de reorganizaciones (R-BLK-06) | it. 13 |
-| US-038-CFG | el umbral de saldo pasa a 50 XLM, `sponsor_balance_alert_threshold_xlm` (D12 ✅, ya sembrado) | it. 21 |
+| US-038-CFG | el umbral de saldo pasa a 50 XLM, `sponsor_balance_alert_threshold_xlm` (D12) | ✅ ya ajustada (it. 21) |
 | US-021 | red o RPC de Stellar caídos, o patrocinadora sin saldo, en vez de relayer caído | it. 22 |
 | US-023, US-025 | Recibo: TxID, número y hora del ledger, enlace a un explorador de Stellar | it. 23 |
 | US-024, US-046-INT | el validador y el script leen el sello del contrato por el RPC de Stellar; cómo leer un sello archivado | it. 23 y 27 |

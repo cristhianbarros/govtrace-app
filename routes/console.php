@@ -1,38 +1,15 @@
 <?php
 
-use App\Domain\Configuration\Parameters;
-use App\Jobs\CalculateWorksitesAtRisk;
-use App\Jobs\SyncSecopContracts;
+use App\Infrastructure\Scheduling\NightlySchedule;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Schedule;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-// US-013: corrida nocturna sobre todos los territorios de organizaciones
-// activas. Lee la hora configurada UNA VEZ, al registrar el schedule —
-// un cambio posterior en el panel de parámetros (US-038-CFG, it. 21) no
-// se refleja aquí sin reiniciar el proceso que corre `schedule:run`.
-//
-// try/catch a propósito: routes/console.php se carga en TODO comando de
-// artisan, incluido el primer `migrate` de una base recién creada, antes
-// de que exista la tabla `parameters`.
-try {
-    $secopSyncHour = Parameters::current('secop_sync_hour') ?? '02:00';
-} catch (Throwable) {
-    $secopSyncHour = '02:00';
-}
-
-Schedule::job(new SyncSecopContracts)
-    ->dailyAt($secopSyncHour)
-    ->name('secop-sync-nightly')
-    ->onOneServer();
-
-// US-034: una hora después de la sincronización de las 02:00 — calcula
-// el riesgo con los contratos ya actualizados, no con los del día anterior.
-Schedule::job(new CalculateWorksitesAtRisk)
-    ->dailyAt('03:00')
-    ->name('calculate-worksites-at-risk')
-    ->onOneServer();
+// US-013 y US-034: la sincronización SECOP de la madrugada y, una hora
+// después, el cálculo de obras en riesgo. La hora sale del parámetro
+// (US-038-CFG) cada vez que se arma el calendario: ver NightlySchedule.
+NightlySchedule::register(app(Schedule::class));

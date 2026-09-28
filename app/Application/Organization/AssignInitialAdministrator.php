@@ -2,6 +2,7 @@
 
 namespace App\Application\Organization;
 
+use App\Domain\Configuration\Parameters;
 use App\Domain\Organization\Exceptions\OrganizationValidationException;
 use App\Domain\Organization\InvitationToken;
 use App\Domain\Organization\Notifications\WelcomeNotification;
@@ -40,6 +41,9 @@ class AssignInitialAdministrator
 
             $token = InvitationToken::generate();
 
+            // US-038-CFG: la vigencia configurada hoy (48 h por defecto).
+            $validityHours = (int) (Parameters::current('invitation_validity_hours') ?? 48);
+
             $user = User::create([
                 'name' => $name,
                 'email' => $email,
@@ -47,7 +51,7 @@ class AssignInitialAdministrator
                 // invitation link (below) is used to set a real one.
                 'password' => Str::random(40),
                 'invitation_token_hash' => $token->hash,
-                'invitation_expires_at' => now()->addHours(48),
+                'invitation_expires_at' => now()->addHours($validityHours),
             ]);
 
             $user->assignRole(Roles::Administrator->value);
@@ -55,7 +59,7 @@ class AssignInitialAdministrator
             $domain = $tenant->domains()->first()->domain;
             $url = "http://{$domain}/set-password/{$user->id}?token={$token->plain}";
 
-            $user->notify(new WelcomeNotification($url));
+            $user->notify(new WelcomeNotification($url, $validityHours));
 
             return $user;
         } finally {

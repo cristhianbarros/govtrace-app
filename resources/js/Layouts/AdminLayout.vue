@@ -17,6 +17,7 @@ const screens = [
     { href: '/admin/territory', label: 'Territorio' },
     { href: '/admin/contracts', label: 'Contratos' },
     { href: '/admin/worksites', label: 'Obras' },
+    { href: '/admin/organization', label: 'Organización' },
 ];
 
 const isCurrent = (href) => page.url === href || page.url.startsWith(`${href}?`);
@@ -24,7 +25,7 @@ const isCurrent = (href) => page.url === href || page.url.startsWith(`${href}?`)
 
 <template>
     <Head :title="title" />
-    <AppLayout :title="page.props.organization">
+    <AppLayout :title="page.props.organization" :logo="page.props.organizationLogo">
         <div class="flex flex-col gap-4">
             <h2 class="text-xl font-semibold">{{ title }}</h2>
             <slot />
@@ -36,7 +37,7 @@ const isCurrent = (href) => page.url === href || page.url.startsWith(`${href}?`)
                 :key="screen.href"
                 :href="screen.href"
                 :aria-current="isCurrent(screen.href) ? 'page' : undefined"
-                class="flex-1 py-3 text-center text-xs font-semibold"
+                class="flex-1 px-1 py-3 text-center text-[11px] font-semibold"
                 :class="isCurrent(screen.href) ? 'text-slate-900' : 'text-slate-500'"
             >
                 {{ screen.label }}
