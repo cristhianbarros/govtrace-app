@@ -1,5 +1,5 @@
 # language: es
-@story_id:US-016 @origin:discovery_inicial @priority:2 @epic:EPIC-002
+@story_id:US-016 @origin:discovery_inicial @priority:1 @epic:EPIC-002
 Característica: Buscar la obra por palabra clave
   Como Veedor de Campo
   quiero buscar contratos de mi territorio por nombre de la obra, contratista o número de proceso

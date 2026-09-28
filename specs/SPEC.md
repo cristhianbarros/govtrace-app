@@ -54,7 +54,7 @@ Plataforma Open Source y Mobile-First de veeduría ciudadana, multi-tenant (B2B2
 | US-013 | Como **Sistema** quiero **ejecutar una tarea programada que consulte la API del SECOP II filtrando únicamente por las ciudades/departamentos que las organizaciones activas tienen configurados** para **mantener los contratos de interés actualizados sin consumir almacenamiento innecesario** | EPIC-001 | discovery_inicial | P1 |
 | US-014 | Como **Super Administrador** quiero **visualizar un panel de salud de la sincronización (última ejecución exitosa, contratos insertados, errores/caídas de la API)** para **monitorear la estabilidad de la integración** | EPIC-001 | discovery_inicial | P2 |
 | US-015 | Como **Administrador de Organización** quiero **ver un listado de los contratos sincronizados en mi territorio (ordenable por fecha o valor presupuestal)** para **planificar a qué obras debo enviar a mis veedores** | EPIC-001 | discovery_inicial | P1 |
-| US-016 | Como **Veedor de Campo** quiero **buscar contratos activos dentro de mi territorio por palabras clave (nombre de la obra, contratista o número de proceso)** para **seleccionar ágilmente la obra exacta al subir mi evidencia** | EPIC-002 | discovery_inicial | P2 |
+| US-016 | Como **Veedor de Campo** quiero **buscar contratos activos dentro de mi territorio por palabras clave (nombre de la obra, contratista o número de proceso)** para **seleccionar ágilmente la obra exacta al subir mi evidencia** | EPIC-002 | discovery_inicial | P1 |
 | US-017 | Como **Verificador Público** quiero **ver los datos clave del contrato oficial (entidad contratante, contratista, valor total, plazo y enlace al SECOP) en la vista de la obra** para **contrastar la magnitud de los fondos públicos con la evidencia ciudadana** | EPIC-004 | discovery_inicial | P1 |
 | US-018 | Como **Veedor de Campo** quiero **que la aplicación guarde reportes y evidencias localmente cuando no tengo señal y los sincronice automáticamente al recuperar la conectividad** para **garantizar cero pérdida de datos** | EPIC-002 | discovery_inicial | P3 |
 | US-019 | Como **Veedor de Campo** quiero **que el sistema detecte mis coordenadas y me sugiera primero las obras en un radio de proximidad (ej. 500 m)** para **minimizar el tiempo de búsqueda y evitar errores de asignación** | EPIC-002 | discovery_inicial | P3 |
@@ -95,7 +95,7 @@ Plataforma Open Source y Mobile-First de veeduría ciudadana, multi-tenant (B2B2
 | US-053-RPT | Como **Super Administrador** quiero **ver un resumen de uso por organización: veedores activos y evidencias recibidas, publicadas, rechazadas y retiradas** para **seguir la adopción de la plataforma** | EPIC-009 | analisis_completitud (💡 Mejora) | P3 |
 | US-054-RPT | Como **Super Administrador** quiero **recibir una alerta cuando una organización lleve 30 días sin actividad** para **detectar a tiempo organizaciones que abandonan la plataforma** | EPIC-009 | analisis_completitud (💡 Mejora) | P3 |
 
-**Totales:** P1 = 20 · P2 = 23 · P3 = 13 · Total = 56.
+**Totales:** P1 = 21 · P2 = 22 · P3 = 13 (US-016 adelantada de P2 a P1 en `/plan` por dependencia funcional con US-008) · Total = 56.
 
 **Épicas:** EPIC-001 Sincronización SECOP II · EPIC-002 Recolección de evidencia · EPIC-003 Sellado criptográfico · EPIC-004 Visualización geoespacial y publicación · EPIC-005 Verificación de integridad · EPIC-006 Cuentas y roles · EPIC-009 Gestión de organizaciones. Quedan **fuera del MVP**: EPIC-007 Moderación de reportes (reemplazada por la publicación manual de US-036/037) y EPIC-008 Radicación de denuncias ante la Contraloría. Detalle y puntajes VUIFED en `specs/epicas/`.
 
@@ -210,7 +210,7 @@ Plataforma Open Source y Mobile-First de veeduría ciudadana, multi-tenant (B2B2
 - **R-TST-01** — Sellado: pruebas unitarias con blockchain simulada (mock) + prueba de humo contra la testnet antes de cada salida a producción — (CI)
 - **R-TST-02** — SECOP II: pruebas con respuestas grabadas (fixtures), incluidas variantes raras de nombres de municipio — (CI)
 - **R-TST-03** — Captura y modo offline: pruebas de componentes (Vitest) + pruebas de extremo a extremo en navegador real simulando pérdida de señal — (CI)
-- **R-TST-04** — Todas las reglas deben tener su escenario automático que las viola a propósito — (CI)
+- **R-TST-04** — Toda regla de comportamiento tiene su escenario automático que la viola a propósito; las reglas operativas (respaldo, red, estrategia de pruebas) tienen una verificación de infraestructura o CI (redactada de nuevo en /plan) — (CI)
 ## Endpoints
 
 > **Esbozo** derivado de las historias. Nombres y verbos se afinan en `/plan`. Con Inertia, varias rutas serán páginas y no API JSON. Tres zonas: **central** (dominio global, Super Administrador), **tenant** (subdominio de cada organización, con sesión) y **pública** (subdominio, sin sesión).
@@ -334,4 +334,4 @@ Resumen de `sessions/cristhian-barros/dqs-lite.md`:
 - **Riesgos aceptados conscientemente:**
   - rostros y placas sin difuminar (R-PRIV-05);
   - teléfono comprometido, solo mitigado con la marca de hora sospechosa (R-SEC-05).
-- **Atención para `/plan`:** P2 tiene 23 historias frente al objetivo de 5 semanas.
+- **Resuelto en `/plan`:** R-TST-04 redactada de nuevo; US-016 adelantada a P1. La carga real por fase está en `specs/PLAN.md`.
