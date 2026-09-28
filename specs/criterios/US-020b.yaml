@@ -1,0 +1,23 @@
+story_id: "US-020b"
+titulo_historia: "Como Sistema quiero encolar el hash validado de cada evidencia y registrarlo en el Smart Contract vía el relayer gestionado, que firma y paga el gas, para garantizar la inmutabilidad sin fricción para el usuario"
+bloque: "B7 — Sellado"
+criterios_aceptacion:
+  escenarios_exito:
+    - "La evidencia recorre 4 estados: Recibida (pasó las validaciones del servidor) → En Cola (job asignado) → Transmitiendo (transacción enviada al RPC, con TxHash) → Sellada (confirmada en la red)"
+    - "Una evidencia pasa a 'Sellada' cuando su transacción tiene al menos 3 bloques de confirmación en Polygon"
+  validaciones_reglas:
+    - "Se sella UNA raíz de Merkle por reporte (1 transacción por reporte, sin importar si tiene 1 o 5 archivos); las hojas son los SHA-256 de cada archivo MÁS una hoja final con el hash del JSON de metadatos (lat/lng, comentario, timestamp y un SEUDÓNIMO del veedor en lugar de su ID, R-PRIV-03), de modo que el contexto geográfico y temporal también queda sellado"
+    - "El servidor calcula su propia raíz de Merkle y las pruebas de inclusión a partir de los hashes ya verificados (R-HASH-01) e ignora cualquier raíz enviada por el teléfono; guarda la prueba de cada archivo en PostgreSQL y envía la raíz a la blockchain (ajuste de Completitud SEC)"
+    - "R-BLK-01: el veedor nunca ve billeteras ni gas"
+    - "R-BLK-04: la firma la hace el relayer gestionado/KMS, nunca el servidor"
+  manejo_errores: []
+  requisitos_ux: []
+  casos_edge:
+    - {caso: "El Relayer se queda sin saldo (MATIC/POL)", resultado: "La transacción falla en la estimación de gas; los jobs quedan en pausa y el Super Administrador recibe una alerta crítica (email) para fondear la billetera"}
+    - {caso: "Reorganización profunda de Polygon deja huérfano el bloque de una evidencia ya 'Sellada'", resultado: "Un job nocturno de auditoría cruza la base de datos con la blockchain, detecta que el TxHash ya no existe y devuelve la evidencia a 'En Cola' para resellarla automáticamente"}
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true

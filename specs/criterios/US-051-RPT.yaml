@@ -1,0 +1,19 @@
+story_id: "US-051-RPT"
+titulo_historia: "Como Verificador Público quiero ver estadísticas públicas del territorio: obras en riesgo, evidencias por mes y contratos anulados con evidencias para dimensionar el problema sin revisar obra por obra"
+origen: "analisis_completitud"
+clasificacion_gap: "💡 Mejora"
+criterios_aceptacion:
+  escenarios_exito:
+    - "El Verificador ve, en el mapa público de la organización, el número de obras en riesgo, evidencias publicadas por mes y contratos anulados que tienen evidencias"
+  validaciones_reglas:
+    - "Solo cuenta evidencias publicadas"
+    - "Sin inicio de sesión (R-VER-02)"
+  manejo_errores: []
+  requisitos_ux: []
+  casos_edge: []
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true

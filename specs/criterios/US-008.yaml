@@ -1,0 +1,33 @@
+story_id: "US-008"
+titulo_historia: "Como Veedor de Campo quiero crear un reporte de evidencia vinculado a un contrato público del SECOP (capturando las coordenadas GPS del dispositivo) para registrar una anomalía o avance de obra en terreno"
+bloque: "B6 — Captura de evidencia"
+criterios_aceptacion:
+  escenarios_exito:
+    - "El veedor selecciona el contrato en la PWA y toca 'Nuevo Reporte'; el sistema solicita automáticamente el GPS"
+    - "El veedor elige la clasificación del reporte, escribe un comentario opcional y adjunta los archivos (US-009)"
+    - "Se envía el payload completo: archivos + hashes locales + lat/lng + clasificación + comentario"
+    - "Al terminar, la pantalla muestra: \"Reporte recibido con éxito. Su evidencia ha sido encolada para sellado inmutable en la red Polygon.\""
+    - "Si la obra no tiene ubicación, la coordenada de este reporte se convierte en la ubicación oficial de la obra (First-Touch, R-GEO-01), guardada en la ficha de obra de GovTrace"
+  validaciones_reglas:
+    - "Clasificación obligatoria, con uno de estos valores: Avance, Retraso, Abandono"
+    - "Comentario opcional, máximo 500 caracteres"
+    - "Precisión del GPS (accuracy) igual o inferior a 50 metros; si es mayor, se obliga a reintentar hasta obtener buena señal"
+    - "Geocerca: si la obra ya tiene ubicación First-Touch, la coordenada del nuevo reporte debe estar dentro del radio configurado (500 m por defecto, US-038-CFG) (validado en el backend)"
+    - "El radio aplicable es el que regía en el momento de la captura, no el vigente al recibir el reporte"
+    - "R-VC-04: solo obras del territorio de la organización"
+    - "Si la ficha de obra agrupa varios contratos (US-045-INT), el reporte se vincula a la ficha completa"
+    - "El servidor registra también su propia hora de recepción y marca el reporte cuando la hora de captura del teléfono está en el futuro respecto al servidor o es anterior a los 7 días de vigencia offline; la marca la ven el Administrador de Organización y el Super Administrador (R-SEC-05)"
+  manejo_errores:
+    - {caso: "Permiso de GPS denegado", mensaje: "GovTrace requiere acceso a su ubicación exacta para certificar criptográficamente que la evidencia fue tomada en el sitio de la obra. Por favor habilite el GPS."}
+    - {caso: "Fuera de la geocerca de 500 m", mensaje: "Se encuentra a [X] km de la ubicación oficial de la obra. Para prevenir fraudes, debe acercarse a un radio de 500 metros del proyecto."}
+  requisitos_ux:
+    - "Si la precisión del GPS es mayor a 50 m, la app pide reintentar hasta obtener buena señal"
+  casos_edge:
+    - {caso: "La ubicación oficial fijada por First-Touch es errónea y los veedores en la obra real quedan fuera de la geocerca", resultado: "El Administrador de Organización puede corregir la ubicación de la obra, dejando registro del cambio (nueva historia US-035)"}
+    - {caso: "Dos veedores envían al mismo tiempo el primer reporte de una obra sin ubicación", resultado: "Bloqueo atómico en base de datos sobre la ficha de obra: la primera transacción fija la ubicación oficial (First-Touch); la segunda lee esa ubicación y se valida contra la geocerca de 500 m; si ambos están cerca, entran los dos reportes"}
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true

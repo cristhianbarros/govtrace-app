@@ -1,0 +1,28 @@
+story_id: "US-001"
+titulo_historia: "Como Super Administrador quiero dar de alta una nueva organización (tenant) validando sus datos legales (NIT y nombre) y asignándole su subdominio para habilitar su acceso de forma controlada y prevenir suplantaciones o spam"
+bloque: "B1 — Alta y gobierno de organizaciones"
+criterios_aceptacion:
+  escenarios_exito:
+    - "El Super Administrador ingresa al panel global y provee NIT oficial, nombre de la organización y subdominio deseado"
+    - "Al enviar, el sistema valida los datos, crea la instancia del tenant y el subdominio queda habilitado para responder peticiones"
+    - "La organización queda aprobada y activa (no existe paso de aprobación separado)"
+  validaciones_reglas:
+    - "NIT: numérico, con dígito de verificación OBLIGATORIO, comprobado con el algoritmo oficial de la DIAN (se rechaza si no coincide), y único en la base de datos"
+    - "Subdominio: solo minúsculas, números y guiones medios (^[a-z0-9-]+$), mínimo 3 caracteres, único"
+    - "Subdominio: no puede ser una palabra reservada del sistema: api, admin, app, www, auth, assets"
+    - "Nombre de la organización: obligatorio, texto plano, entre 3 y 150 caracteres"
+    - "R-SA-03: el subdominio lo asigna el Super Administrador en el alta"
+  manejo_errores:
+    - {caso: "NIT duplicado", mensaje: "Ya existe una organización registrada con el NIT ingresado."}
+    - {caso: "NIT sin dígito de verificación o con DV que no coincide", mensaje: "El NIT ingresado no es válido o el dígito de verificación no coincide con el algoritmo de la DIAN."}
+    - {caso: "Subdominio duplicado", mensaje: "El subdominio especificado ya no está disponible. Por favor elija otro."}
+    - {caso: "Subdominio con formato incorrecto", mensaje: "El subdominio solo puede contener letras minúsculas, números y guiones, sin espacios ni caracteres especiales."}
+    - {caso: "Subdominio es palabra reservada", mensaje: "El subdominio utiliza una palabra reservada del sistema y no puede ser utilizado."}
+  requisitos_ux: []
+  casos_edge: []
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true

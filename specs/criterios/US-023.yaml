@@ -1,0 +1,19 @@
+story_id: "US-023"
+titulo_historia: "Como Veedor de Campo quiero ver en el detalle de mi evidencia confirmada un Recibo de Inmutabilidad para tener la prueba criptográfica independiente de que mi reporte no puede ser alterado"
+bloque: "B10 — Recibos y seguimiento"
+criterios_aceptacion:
+  escenarios_exito:
+    - "El Recibo de Inmutabilidad se abre en la app (privado) como vista o modal"
+    - "Muestra: Hash Raíz (Merkle Root), TxID, número de bloque, fecha/hora exacta del bloque y un botón 'Ver en Polygonscan'"
+  validaciones_reglas: []
+  manejo_errores:
+    - {caso: "El veedor abre el detalle y el sellado aún no termina", mensaje: "⏳ Su evidencia está en proceso de sellado en la red Polygon. Este proceso toma unos minutos. El recibo criptográfico aparecerá aquí en breve."}
+  requisitos_ux: []
+  casos_edge:
+    - {caso: "La evidencia fue re-sellada tras una reorganización de Polygon", resultado: "El recibo muestra solo la nueva TxID y el nuevo bloque; la transacción huérfana no se expone y el re-sellado queda solo en el log de auditoría"}
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true

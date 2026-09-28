@@ -1,0 +1,19 @@
+story_id: "US-044-MON"
+titulo_historia: "Como Super Administrador quiero recibir alertas de una herramienta de monitoreo externa sobre errores de la aplicación, caídas y disponibilidad para enterarme de las fallas técnicas antes que los usuarios"
+origen: "analisis_completitud"
+clasificacion_gap: "⚡ Importante"
+criterios_aceptacion:
+  escenarios_exito:
+    - "Una herramienta de monitoreo externa captura errores y vigila la disponibilidad, y alerta al Super Administrador"
+  validaciones_reglas:
+    - "Solo se alerta por caídas de más de 5 minutos"
+    - "Canales: Email y Webhook"
+  manejo_errores: []
+  requisitos_ux: []
+  casos_edge: []
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true

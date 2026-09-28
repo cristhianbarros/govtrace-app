@@ -1,0 +1,19 @@
+story_id: "US-050-RPT"
+titulo_historia: "Como Administrador de Organización quiero exportar las obras y evidencias de mi organización en CSV para analizarlas con otras herramientas"
+origen: "analisis_completitud"
+clasificacion_gap: "💡 Mejora"
+criterios_aceptacion:
+  escenarios_exito:
+    - "El Administrador descarga un CSV con las obras y evidencias de su organización"
+  validaciones_reglas:
+    - "Solo datos de su organización"
+    - "Columnas: obra, contrato, municipio, fecha, clasificación, estado editorial, hash de la evidencia, comentario y seudónimo del veedor"
+  manejo_errores: []
+  requisitos_ux: []
+  casos_edge: []
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true

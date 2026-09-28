@@ -1,0 +1,18 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+
+/*
+ * Strict Mobile-First.
+ * Unprefixed utilities ARE the phone layout. Only `md:` (tablet) and `lg:` (desktop)
+ * exist to scale up; `sm:`, `xl:` and `2xl:` are disabled on purpose.
+ */
+@theme {
+    --breakpoint-sm: initial;
+    --breakpoint-xl: initial;
+    --breakpoint-2xl: initial;
+
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+}

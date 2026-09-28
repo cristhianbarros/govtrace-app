@@ -1,0 +1,24 @@
+story_id: "US-016"
+titulo_historia: "Como Veedor de Campo quiero buscar contratos activos dentro de mi territorio por palabras clave (nombre de la obra, contratista o número de proceso) para seleccionar ágilmente la obra exacta al subir mi evidencia"
+bloque: "B5 — Contratos para los usuarios"
+criterios_aceptacion:
+  escenarios_exito:
+    - "En la PWA el veedor toca 'Buscar Obra' y escribe en el buscador"
+    - "A partir del tercer carácter, con un debounce de 300 ms, el sistema lista los contratos que coinciden"
+    - "El veedor selecciona la obra de la lista y procede a reportar"
+  validaciones_reglas:
+    - "La búsqueda exige mínimo 3 caracteres alfanuméricos"
+    - "Son consultables y seleccionables los contratos en estado 'En ejecución', 'Celebrado' o 'Adjudicado', y también los 'Terminados' o 'Liquidados' hasta 12 meses después de su fecha oficial de terminación o liquidación en SECOP"
+    - "Nunca aparecen los contratos 'Anulados' ni los Terminados/Liquidados con más de 12 meses"
+    - "Filtro territorial obligatorio (R-VC-04): se suman todos los territorios configurados por la organización; un departamento incluye la Gobernación y todos sus municipios (jerarquía DIVIPOLA, ej. Magdalena 47 incluye Santa Marta 47001)"
+  manejo_errores:
+    - {caso: "Búsqueda sin resultados", mensaje: "No se encontraron obras activas. Verifique el número de proceso, nombre del contratista o palabras clave de la obra."}
+  requisitos_ux:
+    - "Búsqueda con debounce de 300 ms a partir del tercer carácter"
+  casos_edge: []
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true

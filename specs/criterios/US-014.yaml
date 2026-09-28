@@ -1,0 +1,18 @@
+story_id: "US-014"
+titulo_historia: "Como Super Administrador quiero visualizar un panel de salud de la sincronización para monitorear la estabilidad de la integración"
+bloque: "B4 — Sincronización SECOP"
+criterios_aceptacion:
+  escenarios_exito:
+    - "El Super Administrador ve en un panel centralizado las métricas de la última ejecución: timestamp de inicio y fin, estado general (Success / Warning / Failed), total de contratos procesados, desglose de nuevos vs. actualizados por organización y los contratos descartados por no emparejar con DIVIPOLA"
+  validaciones_reglas: []
+  manejo_errores:
+    - {caso: "La última sincronización falló por timeout de SECOP II", mensaje: "Falla de sincronización con SECOP II: El servicio remoto no respondió (Error HTTP {código} {descripción}). Reintento programado en {tiempo hasta el próximo reintento}.", ejemplo: "Falla de sincronización con SECOP II: El servicio remoto no respondió (Error HTTP 504 Gateway Timeout). Reintento programado en 30 minutos.", nota: "el tiempo es variable: refleja el próximo reintento real del backoff exponencial"}
+  requisitos_ux:
+    - "Indicador visual en rojo cuando la sincronización falla"
+  casos_edge: []
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true

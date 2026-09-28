@@ -1,0 +1,20 @@
+story_id: "US-043-MON"
+titulo_historia: "Como Super Administrador o Administrador de Organización quiero consultar el log de auditoría (el Super Administrador el de toda la plataforma, cada Administrador el de su organización) para saber quién hizo qué, cuándo y qué cambió"
+origen: "analisis_completitud"
+clasificacion_gap: "⚡ Importante"
+criterios_aceptacion:
+  escenarios_exito:
+    - "El Super Administrador consulta todas las entradas del log"
+    - "Cada Administrador de Organización consulta solo las entradas de su organización"
+    - "Cada entrada muestra quién, cuándo, la acción, el valor anterior y el nuevo"
+  validaciones_reglas:
+    - "Un Administrador de Organización nunca ve entradas de otra organización"
+  manejo_errores: []
+  requisitos_ux: []
+  casos_edge: []
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true

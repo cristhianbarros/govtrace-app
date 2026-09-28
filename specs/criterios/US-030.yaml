@@ -1,0 +1,21 @@
+story_id: "US-030"
+titulo_historia: "Como Veedor de Campo quiero aceptar la invitación y crear mi contraseña para activar mi cuenta de acceso"
+bloque: "B3 — Acceso y equipo"
+criterios_aceptacion:
+  escenarios_exito:
+    - "El Veedor abre el enlace del correo, que lo lleva a una pantalla segura donde define y confirma su contraseña"
+    - "Al enviarla, el sistema activa su cuenta y le permite el acceso inmediato a la aplicación"
+  validaciones_reglas:
+    - "Contraseña: mínimo 8 caracteres, al menos una mayúscula, una minúscula, un número y un carácter especial"
+    - "El enlace solo es válido dentro de las 48 horas posteriores a su emisión"
+  manejo_errores:
+    - {caso: "Enlace vencido o inválido", mensaje: "El enlace de invitación ha expirado o no es válido. Solicite una nueva invitación al administrador."}
+    - {caso: "Contraseña débil", mensaje: "La contraseña debe tener al menos 8 caracteres, incluir una mayúscula, una minúscula, un número y un símbolo especial."}
+  requisitos_ux: []
+  casos_edge: []
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true

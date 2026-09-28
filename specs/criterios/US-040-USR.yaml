@@ -1,0 +1,20 @@
+story_id: "US-040-USR"
+titulo_historia: "Como Administrador de Organización quiero reenviar o revocar una invitación pendiente para corregir invitaciones enviadas por error o no atendidas"
+origen: "analisis_completitud"
+clasificacion_gap: "💡 Mejora"
+criterios_aceptacion:
+  escenarios_exito:
+    - "El Administrador reenvía una invitación pendiente: se emite un nuevo enlace con la vigencia configurada"
+    - "El Administrador revoca una invitación pendiente: su enlace deja de ser válido"
+  validaciones_reglas:
+    - "Un enlace revocado se comporta como uno vencido: \"El enlace de invitación ha expirado o no es válido. Solicite una nueva invitación al administrador.\" (US-030)"
+    - "Queda en el log de auditoría (R-AUD-04)"
+  manejo_errores: []
+  requisitos_ux: []
+  casos_edge: []
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true

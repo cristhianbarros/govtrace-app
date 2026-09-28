@@ -1,0 +1,21 @@
+story_id: "US-015"
+titulo_historia: "Como Administrador de Organización quiero ver un listado de los contratos sincronizados en mi territorio (ordenable por fecha o valor) para planificar a qué obras debo enviar a mis veedores"
+bloque: "B5 — Contratos para los usuarios"
+criterios_aceptacion:
+  escenarios_exito:
+    - "El Administrador entra al módulo 'Contratos' y ve una tabla paginada de 20 registros"
+    - "Columnas: Número de Proceso, Objeto (truncado a 50 caracteres con tooltip), Contratista, Valor Total, Estado y Fecha de Firma"
+    - "Orden por defecto: Fecha de Firma descendente; clic en el encabezado de 'Valor' o 'Fecha' invierte el orden"
+  validaciones_reglas:
+    - "Filtro territorial obligatorio: se suman todos los territorios configurados por la organización; un departamento incluye la Gobernación y todos sus municipios (jerarquía DIVIPOLA, ej. Magdalena 47 incluye Santa Marta 47001)"
+  manejo_errores:
+    - {caso: "El territorio aún no tiene contratos de obra sincronizados", mensaje: "Aún no hay contratos de obra sincronizados para su territorio. La actualización desde SECOP II se ejecuta automáticamente cada madrugada."}
+  requisitos_ux:
+    - "Objeto truncado a 50 caracteres con tooltip con el texto completo"
+  casos_edge: []
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true

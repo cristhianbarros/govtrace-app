@@ -1,0 +1,24 @@
+story_id: "US-013"
+titulo_historia: "Como Sistema quiero ejecutar una tarea programada que consulte la API del SECOP II filtrando únicamente por las ciudades/departamentos que las organizaciones activas tienen configurados, para mantener los contratos de interés actualizados sin consumir almacenamiento innecesario"
+bloque: "B4 — Sincronización SECOP"
+criterios_aceptacion:
+  escenarios_exito:
+    - "Una tarea programada corre automáticamente todas las noches a las 02:00"
+    - "En cada corrida consulta las organizaciones activas, extrae sus territorios configurados (códigos DIVIPOLA) y consulta la API de Datos Abiertos del SECOP II (Socrata/SODA) solo para esos territorios"
+    - "Los contratos procesados se guardan una sola vez en la base de datos CENTRAL compartida; cada organización ve los de su territorio por consulta (decisión de tenancy)"
+  validaciones_reglas:
+    - "R-SEC-02: no se consultan ni guardan contratos de territorios sin organizaciones activas; si un territorio se queda sin organizaciones activas, sus contratos ya guardados se conservan pero dejan de actualizarse"
+    - "R-SEC-01: los datos del contrato no se editan manualmente; SECOP es la única fuente de verdad"
+    - "Emparejamiento territorial: el municipio/departamento de SECOP se empareja con la tabla DIVIPOLA de forma normalizada (sin tildes ni mayúsculas); los contratos que no emparejan se descartan y se reportan en el panel de salud (US-014)"
+  manejo_errores:
+    - {caso: "La API de SECOP II no responde, devuelve 5xx o supera el tiempo de espera", resultado: "La tarea captura la excepción, programa un reintento automático con retraso exponencial y registra el fallo (visible en US-014)"}
+  requisitos_ux: []
+
+  casos_edge:
+    - {caso: "Una organización se da de alta (US-001), se reactiva (US-003a) o cambia su territorio (US-012) durante el día", resultado: "No se espera a la corrida nocturna: se encola de inmediato una sincronización asíncrona que trae los contratos de ese territorio"}
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true

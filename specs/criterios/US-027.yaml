@@ -1,0 +1,24 @@
+story_id: "US-027"
+titulo_historia: "Como Verificador Público quiero ver un mapa interactivo con pines de obras que cambian de color automáticamente según su estado para detectar de un vistazo los proyectos en riesgo o abandono"
+bloque: "B8 — Mapa y publicación"
+criterios_aceptacion:
+  escenarios_exito:
+    - "🟢 Verde (Normal): obra en ejecución, sin alertas y dentro del plazo"
+    - "🟡 Amarillo (Alerta/Retraso): obra en plazo cuya evidencia PUBLICADA más reciente fue clasificada como 'Retraso'"
+    - "🔴 Rojo (En riesgo/Vencida): la fecha de terminación expiró y SECOP la sigue mostrando 'En ejecución' (US-034), o la evidencia PUBLICADA más reciente es de 'Abandono'"
+  validaciones_reglas:
+    - "R-MAP-01: cada organización tiene su mapa público aislado en su subdominio"
+    - "R-MAP-02: la carga inicial solo trae [{id, lat, lng, color_pin}]"
+    - "Solo tienen pin las obras con ubicación (First-Touch)"
+    - "Las obras Terminadas/Liquidadas dentro de la ventana de 12 meses siguen las mismas reglas de color (según su evidencia publicada más reciente) y son verdes si no tienen ninguna"
+    - "Si una ficha agrupa varios contratos (US-045-INT), el pin toma el peor estado entre sus contratos"
+    - "El color refleja la última verdad conocida: lo dicta la evidencia publicada más reciente (ej. si tras un 'Abandono' se publica un 'Avance', el pin deja de ser rojo por abandono)"
+  manejo_errores: []
+  requisitos_ux: []
+  casos_edge: []
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true

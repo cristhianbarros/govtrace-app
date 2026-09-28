@@ -1,0 +1,18 @@
+story_id: "US-025"
+titulo_historia: "Como Verificador Público quiero ver públicamente el Recibo de Inmutabilidad junto a cada evidencia confirmada para auditar el registro en un explorador de bloques independiente"
+bloque: "B10 — Recibos y seguimiento"
+criterios_aceptacion:
+  escenarios_exito:
+    - "El Recibo de Inmutabilidad se abre en el mapa público, junto a cada evidencia publicada como vista o modal"
+    - "Muestra: Hash Raíz (Merkle Root), TxID, número de bloque, fecha/hora exacta del bloque y un botón 'Ver en Polygonscan'"
+  validaciones_reglas: []
+  manejo_errores: []
+  requisitos_ux: []
+  casos_edge:
+    - {caso: "La evidencia fue re-sellada tras una reorganización de Polygon", resultado: "El recibo muestra solo la nueva TxID y el nuevo bloque; la transacción huérfana no se expone y el re-sellado queda solo en el log de auditoría"}
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true

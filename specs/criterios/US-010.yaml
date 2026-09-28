@@ -1,0 +1,21 @@
+story_id: "US-010"
+titulo_historia: "Como Veedor de Campo quiero consultar el listado y estado de mis propios reportes enviados y su hash de sellado en la blockchain para hacer seguimiento a lo que envié"
+bloque: "B10 — Recibos y seguimiento"
+criterios_aceptacion:
+  escenarios_exito:
+    - "En la app, el veedor entra a la pestaña 'Mis Reportes' y ve sus reportes"
+    - "Cada reporte muestra dos estados separados: el técnico de inmutabilidad (En Cola, Sellando, Sellado) y el editorial de la organización (En Revisión, Publicado, Rechazado, Retirado)"
+  validaciones_reglas:
+    - "'En Revisión' corresponde al estado interno Oculto. Si la evidencia fue Rechazada, el veedor ve 'Rechazada' junto con el motivo que escribió el Administrador (ajuste de Completitud USR)"
+    - "Correspondencia con los estados del sellado (US-020b): Recibida y En Cola → 'En Cola'; Transmitiendo → 'Sellando'; Sellada → 'Sellado'; Falla de Sellado → 'En Cola' (el veedor nunca ve errores de sellado, US-021)"
+    - "R-VC-02: el veedor solo ve sus propios reportes"
+  manejo_errores: []
+  requisitos_ux:
+    - "Estado técnico y estado editorial se muestran por separado"
+  casos_edge: []
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true

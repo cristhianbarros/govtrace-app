@@ -1,0 +1,18 @@
+story_id: "US-041-USR"
+titulo_historia: "Como Administrador de Organización quiero reactivar a un veedor desactivado para reincorporarlo al equipo sin crear una cuenta nueva"
+origen: "analisis_completitud"
+clasificacion_gap: "⚡ Importante"
+criterios_aceptacion:
+  escenarios_exito:
+    - "El Administrador selecciona un veedor inactivo y lo reactiva; el veedor puede volver a iniciar sesión"
+  validaciones_reglas:
+    - "Queda en el log de auditoría (R-AUD-04)"
+  manejo_errores: []
+  requisitos_ux: []
+  casos_edge: []
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true

@@ -1,0 +1,30 @@
+story_id: "US-024"
+titulo_historia: "Como Verificador Público quiero arrastrar una foto o documento a la herramienta de Validación para que mi navegador recalcule su SHA-256 y consulte el Smart Contract, obteniendo un veredicto que no dependa de la base de datos de GovTrace"
+bloque: "B9 — Verificación pública"
+criterios_aceptacion:
+  escenarios_exito:
+    - "El Verificador arrastra un archivo; su navegador calcula el SHA-256 localmente (R-VER-01), pide al API la prueba de inclusión, recompone la raíz de Merkle y la compara con el Smart Contract (R-BLK-05)"
+    - "Si coincide: banner verde \"✅ Archivo Auténtico e Inmutable. Sellado el [Fecha] en el bloque #[Bloque].\" con enlace a la transacción en Polygonscan"
+    - "Modo contextual (botón 'Verificar Sello Blockchain' de una evidencia en la línea de tiempo): el archivo se compara contra ESA evidencia; si coincide → banner verde; si no coincide → banner rojo \"❌ Archivo Alterado o Falso. Las huellas criptográficas no coinciden con la blockchain.\""
+    - "Modo libre (arrastrar cualquier archivo, sin evidencia de referencia): el resultado es 'Auténtico' (banner verde) o 'No encontrado'; nunca 'Alterado'"
+    - "Modo con prueba adjunta: el Verificador aporta el archivo más su prueba de inclusión descargada (US-026) y la verificación se hace solo contra Polygon, sin consultar el API de GovTrace (R-INT-04)"
+  validaciones_reglas:
+    - "Formatos aceptados: JPG, PNG y PDF"
+    - "Tamaño máximo 10 MB; por encima, el navegador no calcula el hash"
+    - "R-VER-02: sin registro ni inicio de sesión"
+    - "El validador consulta todas las direcciones históricas del Smart Contract de sellado: los sellos de versiones anteriores siguen verificables (R-MNT-01)"
+  manejo_errores:
+    - {caso: "Archivo mayor a 10 MB", mensaje: "El archivo supera el tamaño máximo de 10MB."}
+    - {caso: "El hash no está registrado en GovTrace", mensaje: "⚠️ Archivo no encontrado. No hay registro de este documento en GovTrace."}
+    - {caso: "No se puede leer el Smart Contract (falla del RPC/Polygon)", mensaje: "⏳ Error de conexión con la red Polygon. No se pudo verificar la inmutabilidad en este momento. Intente más tarde."}
+  requisitos_ux:
+    - "Banner verde gigante para auténtico; banner rojo para alterado"
+  casos_edge:
+    - {caso: "Se verifica una evidencia Oculta o Rechazada", resultado: "Si el archivo alcanzó a sellarse, el validador libre responde 'Auténtico' con el mensaje \"✅ Archivo Auténtico. (Nota: esta evidencia existe en la blockchain pero la organización aún no la ha publicado).\""}
+    - {caso: "Se verifica una copia descargada antes de que la evidencia fuera retirada (lápida)", resultado: "\"✅ Archivo Auténtico. (Nota: Esta evidencia fue retirada de la galería pública por la organización, pero su registro criptográfico permanece inalterable).\""}
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true

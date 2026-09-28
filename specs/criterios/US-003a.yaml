@@ -1,0 +1,21 @@
+story_id: "US-003a"
+titulo_historia: "Como Super Administrador quiero suspender o reactivar una organización activa para bloquear o restablecer temporalmente su acceso ante impagos o revisiones de seguridad"
+bloque: "B1 — Alta y gobierno de organizaciones"
+criterios_aceptacion:
+  escenarios_exito:
+    - "El Super Administrador selecciona una organización activa y pulsa 'Suspender': el estado cambia a suspendido"
+    - "Con la organización suspendida se bloquea el acceso a su panel y la entrada de reportes de ese tenant"
+    - "Al reactivarla, el acceso se restaura de inmediato"
+    - "Mientras está suspendida, su mapa público y sus evidencias publicadas siguen visibles y verificables, con el aviso: \"⚠️ Esta organización se encuentra suspendida temporalmente. Sus evidencias publicadas siguen disponibles solo para consulta.\""
+  validaciones_reglas: []
+  manejo_errores:
+    - {caso: "Suspender una organización ya suspendida", mensaje: "La organización seleccionada ya se encuentra en estado suspendido."}
+  requisitos_ux: []
+  casos_edge:
+    - {caso: "Un veedor en campo intenta enviar un reporte mientras su organización está suspendida", resultado: "El backend responde HTTP 403 y la app muestra: \"La organización veedora ha sido temporalmente suspendida. Contacte a soporte\". Los reportes pendientes se conservan en el teléfono y se envían si la organización se reactiva dentro de los 7 días de vigencia offline (Completitud USR)"}
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true

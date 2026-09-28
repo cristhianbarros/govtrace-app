@@ -1,0 +1,17 @@
+story_id: "US-047-MNT"
+titulo_historia: "Como Super Administrador quiero volver a encolar desde mi panel las evidencias en 'Falla de Sellado', una o varias a la vez para recuperar sellos fallidos sin intervención técnica fuera del sistema"
+origen: "analisis_completitud"
+clasificacion_gap: "💡 Mejora"
+criterios_aceptacion:
+  escenarios_exito:
+    - "El Super Administrador selecciona una o varias evidencias en 'Falla de Sellado' y las vuelve a encolar; pasan a 'En Cola'"
+  validaciones_reglas: []
+  manejo_errores: []
+  requisitos_ux: []
+  casos_edge: []
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true

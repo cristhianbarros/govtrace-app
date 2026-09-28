@@ -1,0 +1,20 @@
+story_id: "US-019"
+titulo_historia: "Como Veedor de Campo quiero que el sistema detecte mis coordenadas y me sugiera primero las obras en un radio de proximidad para minimizar el tiempo de búsqueda y evitar errores de asignación"
+bloque: "B12 — Offline y proximidad"
+criterios_aceptacion:
+  escenarios_exito:
+    - "La app sugiere un máximo de 5 obras dentro de un radio de 500 m, ordenadas de la más cercana a la más lejana"
+  validaciones_reglas:
+    - "Aplican las mismas reglas de US-016: solo obras del territorio de la organización (R-VC-04), en estado activo o Terminadas/Liquidadas hace 12 meses o menos"
+    - "Solo se sugieren obras con ubicación (ancladas)"
+  manejo_errores:
+    - {caso: "Ninguna obra a menos de 500 m", mensaje: "📍 No se encontraron obras a menos de 500m. Utilice el buscador para encontrarla por nombre o contrato."}
+  requisitos_ux:
+    - "Orden por distancia ascendente"
+  casos_edge: []
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true

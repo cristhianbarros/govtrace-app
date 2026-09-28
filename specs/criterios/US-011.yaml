@@ -1,0 +1,21 @@
+story_id: "US-011"
+titulo_historia: "Como Super Administrador quiero actualizar el NIT y los datos legales de una organización desde el panel global, a solicitud formal, para mantener su validez legal sin abrir un vector de suplantación"
+bloque: "B1 — Alta y gobierno de organizaciones"
+criterios_aceptacion:
+  escenarios_exito:
+    - "Ante una solicitud formal y documentada (cambio de razón social o NIT), el Super Administrador accede al detalle de la organización, edita el campo legal restringido y guarda"
+    - "El cambio queda registrado en el log de auditoría global"
+  validaciones_reglas:
+    - "Aplican las mismas validaciones de NIT que en US-001: numérico, dígito de verificación obligatorio comprobado con el algoritmo de la DIAN, único"
+    - "R-TA-03: el Administrador de Organización no puede editar estos campos"
+  manejo_errores:
+    - {caso: "NIT duplicado", mensaje: "Ya existe una organización registrada con el NIT ingresado."}
+    - {caso: "NIT sin dígito de verificación o con DV que no coincide", mensaje: "El NIT ingresado no es válido o el dígito de verificación no coincide con el algoritmo de la DIAN."}
+  requisitos_ux: []
+  casos_edge: []
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true

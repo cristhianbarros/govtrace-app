@@ -1,0 +1,20 @@
+story_id: "US-022"
+titulo_historia: "Como Super Administrador quiero ver el saldo MATIC/POL de la billetera del Relayer y recibir alertas cuando caiga bajo un umbral para recargar fondos antes de que se detenga el sellado"
+bloque: "B11 — Monitoreo y costos"
+criterios_aceptacion:
+  escenarios_exito:
+    - "Una tarea programada consulta el saldo de la billetera del Relayer cada 15 minutos a través del nodo RPC"
+    - "Si el saldo es menor a 5 POL, se envía de inmediato una alerta por Email y por Webhook (Slack/Discord) al rol Super Administrador"
+  validaciones_reglas:
+    - "Umbral crítico: saldo < 5 POL"
+    - "Frecuencia de consulta: cada 15 minutos"
+  manejo_errores:
+    - {caso: "Saldo bajo el umbral", mensaje: "🚨 URGENTE: El Relayer de GovTrace tiene saldo crítico ([Saldo] POL). Recargue la wallet [Dirección] inmediatamente para evitar el bloqueo en la cola de sellado."}
+  requisitos_ux: []
+  casos_edge: []
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true

@@ -1,0 +1,18 @@
+story_id: "US-032"
+titulo_historia: "Como Sistema quiero traer solo los contratos de tipo 'Obra' para descartar contratos irrelevantes (ej. papelería)"
+bloque: "B4 — Sincronización SECOP"
+criterios_aceptacion:
+  escenarios_exito:
+    - "El pipeline procesa lo recibido de SECOP II y conserva solo los contratos cuyo tipo de contrato oficial es 'Obra'"
+  validaciones_reglas:
+    - "Se usa el campo oficial de tipo de contratación de la API de SECOP II (ej. tipo_de_contrato == \"Obra\")"
+    - "Se descartan consultoría, prestación de servicios, suministros y cualquier otro tipo distinto de 'Obra'"
+  manejo_errores: []
+  requisitos_ux: []
+  casos_edge: []
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true
