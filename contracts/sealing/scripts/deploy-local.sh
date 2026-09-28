@@ -9,7 +9,7 @@
 # custodia en producción es la decisión D11 de specs/PLAN.md.
 set -eu
 
-. "$(dirname "$0")/stellar-local.sh"
+. "$(dirname "$0")/stellar-common.sh"
 
 sealer=$(ensure_funded_account govtrace-sealer)
 sponsor=$(ensure_funded_account govtrace-sponsor)

@@ -7,7 +7,7 @@
 # Requiere make contract-deploy antes.
 set -eu
 
-. "$(dirname "$0")/stellar-local.sh"
+. "$(dirname "$0")/stellar-common.sh"
 
 STELLAR_SEALING_CONTRACT_ID=$(sed -n 's/^STELLAR_SEALING_CONTRACT_ID=//p' "$ENV_FILE")
 [ -n "$STELLAR_SEALING_CONTRACT_ID" ] || { echo "Falta STELLAR_SEALING_CONTRACT_ID en .env: corre make contract-deploy." >&2; exit 1; }

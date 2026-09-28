@@ -18,7 +18,8 @@ HTTP_PORT ?= $(shell sed -n 's/^HTTP_PORT=\([0-9]*\).*/\1/p' .env.docker 2>/dev/
 .PHONY: help setup up up-tools up-frontend up-async down stop restart logs ps \
         shell composer artisan migrate psql test test-front test-all lint fmt \
         npm-install npm-build npm-watch xdebug-on xdebug-off hosts image-qa teardown \
-        stellar-up contract-test contract-deploy contract-smoke doctor test-stellar
+        stellar-up contract-test contract-deploy contract-smoke doctor test-stellar \
+        testnet-setup smoke-testnet secrets-check
 
 help: ## List available commands
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -100,6 +101,13 @@ contract-deploy: .env.docker .env stellar-up ## Deploy the sealing contract to t
 	@$(SOROBAN) ./scripts/deploy-local.sh
 contract-smoke: .env.docker stellar-up ## Seal, reject an outsider and a duplicate, on the local network
 	@$(SOROBAN) ./scripts/smoke-local.sh
+testnet-setup: .env.docker ## Testnet: funded test accounts + the contract deployed; writes .env.testnet (never versioned)
+	@$(SOROBAN) ./scripts/deploy-testnet.sh
+smoke-testnet: ## Smoke test on the Stellar testnet: a report up to "Sellada", fee paid by the sponsor (needs .env.testnet)
+	@test -f .env.testnet || { echo "Falta .env.testnet: corre make testnet-setup (en CI lo escribe Jenkins)."; exit 1; }
+	@$(EXEC) sh -c 'set -a; . ./.env.testnet; set +a; ./vendor/bin/pest --group=testnet'
+secrets-check: ## R-BLK-04: no Stellar secret key in the repository, its history or the env examples
+	@bash tests/infra/check-secrets.sh
 
 npm-install: .env.docker ## Install frontend dependencies
 	@mkdir -p .cache/npm
