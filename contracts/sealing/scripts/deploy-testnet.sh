@@ -9,14 +9,13 @@
 # testnet no valen nada, así que aquí la patrocinadora no necesita el saldo
 # bajo de la hot wallet de producción.
 #
+# D12: el despliegue y la vigencia del contrato los paga la tesorería, no la
+# patrocinadora; su llave no va a .env.testnet, porque Laravel no la usa.
+#
 # SDF reinicia testnet cada tanto: si el contrato desaparece, se corre de nuevo.
 set -eu
 
-STELLAR_RPC_URL=https://soroban-testnet.stellar.org
-STELLAR_NETWORK_PASSPHRASE="Test SDF Network ; September 2015"
-STELLAR_FRIENDBOT_URL=https://friendbot.stellar.org
-ENV_FILE=/workspace/.env.testnet
-
+. "$(dirname "$0")/testnet.sh"
 . "$(dirname "$0")/stellar-common.sh"
 
 touch "$ENV_FILE"
@@ -24,15 +23,18 @@ chmod 600 "$ENV_FILE"
 
 sealer=$(ensure_funded_account govtrace-testnet-sealer)
 sponsor=$(ensure_funded_account govtrace-testnet-sponsor)
+treasury=$(ensure_funded_account govtrace-testnet-treasury)
 
 stellar contract build --quiet
 
 contract_id=$(stellar contract deploy \
   --wasm "$WASM" \
-  --source-account govtrace-testnet-sponsor \
+  --source-account govtrace-testnet-treasury \
   --rpc-url "$STELLAR_RPC_URL" \
   --network-passphrase "$STELLAR_NETWORK_PASSPHRASE" \
   -- --sealer "$sealer")
+
+extend_contract "$contract_id" govtrace-testnet-treasury
 
 set_env STELLAR_RPC_URL "$STELLAR_RPC_URL"
 set_env STELLAR_NETWORK_PASSPHRASE "\"$STELLAR_NETWORK_PASSPHRASE\""
@@ -46,3 +48,4 @@ echo "Contrato de sellado desplegado en testnet: $contract_id"
 echo "  https://stellar.expert/explorer/testnet/contract/$contract_id"
 echo "  selladora:     $sealer"
 echo "  patrocinadora: $sponsor"
+echo "  tesorería:     $treasury (no va al .env: Laravel no la usa)"

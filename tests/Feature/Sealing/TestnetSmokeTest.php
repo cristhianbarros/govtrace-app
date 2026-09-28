@@ -20,6 +20,11 @@ use Soneso\StellarSDK\Crypto\KeyPair;
  * testnet, con la comisión pagada por la cuenta patrocinadora (fee bump), y
  * se mide cuánto costó de verdad — el insumo de D12.
  *
+ * D12: la hot wallet (la patrocinadora) solo paga la renta de cada sello; la
+ * vigencia del contrato la paga la tesorería al desplegar. Por eso el primer
+ * sello tras un despliegue cuesta lo mismo que cualquier otro — antes de D12
+ * pagaba además esa extensión: 27,5 XLM medidos en testnet.
+ *
  * Las llaves llegan como variables de entorno (D11): make smoke-testnet carga
  * .env.testnet, que en desarrollo escribe make testnet-setup y en CI Jenkins,
  * con sus credenciales. make test lo excluye (grupo "testnet").
@@ -53,11 +58,8 @@ it('seals a test report on the Stellar testnet, with the fee paid by the sponsor
 
         $sealerBefore = $rpc->accountBalance($sealer);
 
-        // Dos reportes seguidos. El primero puede pagar además la extensión
-        // de vigencia de la instancia y del código del contrato, que crece
-        // con el tiempo que el contrato pasó sin sellar (tras un despliegue,
-        // más de 1 XLM). El segundo es el costo de régimen de un sello: el
-        // insumo de D12.
+        // Dos reportes seguidos: el primero tras el despliegue y el de
+        // régimen. Con D12 los dos cuestan lo mismo.
         $sealReport = function () use ($tenant, $veedor, $rpc, $sponsor): array {
             $sponsorBefore = $rpc->accountBalance($sponsor);
             $reportId = sendReport($veedor)->assertCreated()->json('id');
@@ -99,10 +101,13 @@ it('seals a test report on the Stellar testnet, with the fee paid by the sponsor
         }
 
         // D5 / R-BLK-04: la selladora no paga nada; la patrocinadora, la comisión.
-        expect($rpc->accountBalance($sealer))->toBe($sealerBefore)
-            ->and($firstFee)->toBeGreaterThan(0)
-            ->and($steadyFee)->toBeGreaterThan(0)
-            ->toBeLessThan(10_000_000); // cota de cordura: un sello de régimen, menos de 1 XLM
+        expect($rpc->accountBalance($sealer))->toBe($sealerBefore);
+
+        // D12: ningún sello, ni el primero, paga la vigencia del contrato.
+        // Cota de cordura: menos de 1 XLM cada uno (se miden ~0,25 XLM).
+        foreach ([$firstFee, $steadyFee] as $fee) {
+            expect($fee)->toBeGreaterThan(0)->toBeLessThan(10_000_000);
+        }
     } finally {
         if (tenant()) {
             tenancy()->end();

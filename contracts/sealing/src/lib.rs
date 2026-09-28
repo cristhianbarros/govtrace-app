@@ -86,12 +86,14 @@ impl SealingContract {
 
         // Persistente y con la vigencia máxima que permite la red. Un sello
         // archivado igual no se pierde: la red lo restaura (Protocolo 23).
+        // La vigencia de la instancia y del código no se toca aquí: la
+        // extiende la tesorería (D12), para que la cuenta que paga cada
+        // sello solo pague la renta de ese sello.
         let max_ttl = env.storage().max_ttl();
         env.storage().persistent().set(&key, &seal);
         env.storage()
             .persistent()
             .extend_ttl(&key, max_ttl, max_ttl);
-        env.storage().instance().extend_ttl(max_ttl, max_ttl);
 
         Sealed {
             root,

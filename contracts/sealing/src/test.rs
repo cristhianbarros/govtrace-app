@@ -8,8 +8,8 @@ extern crate std;
 use super::{DataKey, Seal, SealingContract, SealingContractClient, SealingError};
 use soroban_sdk::{
     testutils::{
-        storage::Persistent as _, Address as _, AuthorizedFunction, AuthorizedInvocation, Ledger,
-        MockAuth, MockAuthInvoke,
+        storage::{Instance as _, Persistent as _},
+        Address as _, AuthorizedFunction, AuthorizedInvocation, Ledger, MockAuth, MockAuthInvoke,
     },
     Address, BytesN, Env, IntoVal, Symbol, Val, Vec,
 };
@@ -183,4 +183,21 @@ fn un_sello_queda_con_la_maxima_vigencia_que_permite_la_red() {
     });
 
     assert_eq!(ttl, env.storage().max_ttl());
+}
+
+#[test]
+fn sellar_no_extiende_la_vigencia_de_la_instancia_ni_del_codigo() {
+    // D12: la hot wallet (la patrocinadora, que paga cada sello) solo paga
+    // la renta de su propio sello. La vigencia de la instancia y del código
+    // la extiende la tesorería al desplegar y cada tanto
+    // (scripts/extend-contract.sh), no cada sello.
+    let env = Env::default();
+    let (_sealer, client) = deploy(&env);
+    env.mock_all_auths();
+    let instance_ttl = || env.as_contract(&client.address, || env.storage().instance().get_ttl());
+    let before = instance_ttl();
+
+    client.seal(&bytes32(&env, 0xab), &bytes32(&env, 0x9f));
+
+    assert_eq!(instance_ttl(), before);
 }

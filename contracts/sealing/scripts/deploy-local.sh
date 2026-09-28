@@ -13,21 +13,25 @@ set -eu
 
 sealer=$(ensure_funded_account govtrace-sealer)
 sponsor=$(ensure_funded_account govtrace-sponsor)
+treasury=$(ensure_funded_account govtrace-treasury)
 
 stellar contract build --quiet
 
-# Despliega la patrocinadora (tiene los XLM); el constructor fija la selladora.
+# Despliega la tesorería (D12: paga el despliegue y la vigencia del contrato,
+# no la hot wallet); el constructor fija la selladora.
 contract_id=$(stellar contract deploy \
   --wasm "$WASM" \
-  --source-account govtrace-sponsor \
+  --source-account govtrace-treasury \
   --rpc-url "$STELLAR_RPC_URL" \
   --network-passphrase "$STELLAR_NETWORK_PASSPHRASE" \
   -- --sealer "$sealer")
 
+extend_contract "$contract_id" govtrace-treasury
+
 # El contrato responde: una raíz que nadie selló no tiene sello.
 stellar contract invoke \
   --id "$contract_id" \
-  --source-account govtrace-sponsor \
+  --source-account govtrace-treasury \
   --rpc-url "$STELLAR_RPC_URL" \
   --network-passphrase "$STELLAR_NETWORK_PASSPHRASE" \
   -- get_seal --root "$(printf '0%.0s' $(seq 64))" >/dev/null
@@ -43,3 +47,4 @@ set_env STELLAR_SPONSOR_SECRET "$(stellar keys show govtrace-sponsor)"
 echo "Contrato de sellado desplegado en la red local: $contract_id"
 echo "  selladora:     $sealer"
 echo "  patrocinadora: $sponsor"
+echo "  tesorería:     $treasury (no va al .env: Laravel no la usa)"
