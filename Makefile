@@ -8,6 +8,8 @@ COMPOSE  ?= docker compose --env-file .env.docker
 EXEC     ?= $(COMPOSE) exec -u workspace app
 RUN      ?= $(COMPOSE) run --rm --no-deps -u workspace app
 NODE     ?= $(COMPOSE) --profile frontend run --rm node
+# Rust + Stellar CLI for the sealing Smart Contract (profile stellar, it. 12).
+SOROBAN  ?= $(COMPOSE) --profile stellar run --rm -T soroban
 LOCAL_IP ?= $(shell sed -n 's/^LOCAL_IP=//p' .env.docker 2>/dev/null | head -1)
 HTTP_PORT ?= $(shell sed -n 's/^HTTP_PORT=\([0-9]*\).*/\1/p' .env.docker 2>/dev/null | head -1)
 
@@ -15,7 +17,8 @@ HTTP_PORT ?= $(shell sed -n 's/^HTTP_PORT=\([0-9]*\).*/\1/p' .env.docker 2>/dev/
 
 .PHONY: help setup up up-tools up-frontend up-async down stop restart logs ps \
         shell composer artisan migrate psql test test-front test-all lint fmt \
-        npm-install npm-build npm-watch xdebug-on xdebug-off hosts image-qa teardown
+        npm-install npm-build npm-watch xdebug-on xdebug-off hosts image-qa teardown \
+        stellar-up contract-test contract-deploy contract-smoke
 
 help: ## List available commands
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -86,6 +89,15 @@ lint: ## Check style with Pint (does not modify)
 	@$(EXEC) ./vendor/bin/pint --test
 fmt: ## Fix style with Pint
 	@$(EXEC) ./vendor/bin/pint
+
+stellar-up: .env.docker ## Start the local Stellar standalone network (RPC + friendbot)
+	@$(COMPOSE) --profile stellar up -d --wait stellar
+contract-test: .env.docker ## Smart Contract: rustfmt, clippy, cargo test and the compiled WASM's interface
+	@$(SOROBAN) sh -c 'cargo fmt --check && cargo clippy --locked --all-targets -- -D warnings && cargo test --locked && stellar contract build && ./scripts/check-interface.sh'
+contract-deploy: .env.docker .env stellar-up ## Deploy the sealing contract to the local network; writes its ID to .env
+	@$(SOROBAN) ./scripts/deploy-local.sh
+contract-smoke: .env.docker stellar-up ## Seal, reject an outsider and a duplicate, on the local network
+	@$(SOROBAN) ./scripts/smoke-local.sh
 
 npm-install: .env.docker ## Install frontend dependencies
 	@mkdir -p .cache/npm

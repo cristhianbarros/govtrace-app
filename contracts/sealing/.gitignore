@@ -1,0 +1,4 @@
+/target
+# Instantáneas que escribe el entorno de pruebas de Soroban en cada corrida;
+# los tests ya afirman explícitamente lo que importa.
+/test_snapshots

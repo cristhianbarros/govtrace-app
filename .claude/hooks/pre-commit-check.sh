@@ -12,6 +12,7 @@ REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 cd "$REPO_ROOT"
 
 FRONTEND_DIR="resources/js"
+CONTRACTS_DIR="contracts"
 
 # PHP del host si existe; si no, el contenedor `app` del docker-compose (make up).
 if command -v php >/dev/null 2>&1; then
@@ -35,6 +36,15 @@ fi
 if [ -n "$FRONTEND_DIR" ] && [ -d "$FRONTEND_DIR" ] && [ -n "$(git status --porcelain -- "$FRONTEND_DIR")" ]; then
   if ! (cd "$FRONTEND_DIR" && npm run test) >&2; then
     echo "[pre-commit-check] BLOQUEADO: hay tests de frontend fallando." >&2
+    exit 2
+  fi
+fi
+
+# Smart Contract (it. 12): solo si cambió algo en contracts/. Corre en el
+# contenedor de Rust + Stellar CLI; el host solo necesita Docker y make.
+if [ -d "$CONTRACTS_DIR" ] && [ -n "$(git status --porcelain -- "$CONTRACTS_DIR")" ]; then
+  if ! make contract-test >&2; then
+    echo "[pre-commit-check] BLOQUEADO: el Smart Contract no pasa (rustfmt, clippy, cargo test o su interfaz)." >&2
     exit 2
   fi
 fi

@@ -331,6 +331,33 @@ Con esto US-016 pasa de 11 a 17 casos, US-034 de 4 a 6 y US-008 de 22 a 25, todo
 
 "El servidor descarta el duplicado" (tercer escenario de US-020a) pasa del lado de Laravel: se prueba en la it. 13, cuando el backend empiece a sellar.
 
+**✅ Cumplido (4/4 casos + 1 técnico):** `contracts/sealing/src/test.rs` tiene un test por escenario, con su nombre, más la vigencia máxima del sello (TTL). `make contract-test` corre `cargo fmt --check`, `cargo clippy -D warnings`, `cargo test`, `stellar contract build` y `scripts/check-interface.sh`, todo en verde. La suite de Laravel no cambia: 228 + 1 `todo`.
+
+- **Versiones fijas** (2026-09-28): `soroban-sdk` 27.0.6 y Stellar CLI 27.1.0 corresponden al **Protocolo 27**, el de la red principal. El 28 solo corre en testnet, y testnet ejecuta contratos del 27. A eso se suman Rust 1.98.1 (el SDK exige ≥ 1.91), target `wasm32v1-none` y `stellar/quickstart:v670-b1459.1-latest` (el mismo digest que `latest`), con `--protocol-version 27 --limits testnet`.
+- **El contrato** (3 KB de WASM):
+  - `__constructor(sealer)` fija la selladora;
+  - `seal(worksite, root)` exige `require_auth` de la selladora, rechaza el duplicado con `Error(Contract, #1)` = `HashAlreadyRegistered`, guarda `{worksite, sealed_at, ledger}` (hora y número **del ledger**) en almacenamiento persistente con el TTL al máximo de la red, y emite el evento `Sealed`;
+  - `get_seal(root)` lo lee.
+
+  No hay nada para modificar ni borrar sellos, ni `upgrade`. Cambiar de selladora es desplegar otro contrato, y el verificador de la it. 23 consulta todas las direcciones históricas.
+- **"Nadie puede modificar ni borrar" se verifica en dos partes, a propósito:**
+  - el test de Rust intenta llamar operaciones de cambio y exige que el sello siga igual;
+  - `check-interface.sh` exige que el WASM exporte **exactamente** `__constructor`, `get_seal` y `seal`.
+
+  Hace falta lo segundo porque, en el entorno de pruebas, un `upgrade` con un hash inexistente falla con el mismo error que una función que no existe. Se comprobó agregando un `upgrade` al contrato: el test de Rust no lo notó y el chequeo de interfaz sí. Quitando el `require_auth`, fallan los dos tests de autorización.
+- **Red local:** `make stellar-up` levanta la red *standalone* (sana en ~15 s; RPC y friendbot en `http://stellar:8000` dentro de Docker y en `127.0.0.1:8100` desde el host). `make contract-deploy`:
+  - crea con friendbot las cuentas selladora y patrocinadora de desarrollo (sus llaves quedan en `.cache/`, fuera de git);
+  - despliega con la patrocinadora y comprueba que `get_seal` responda;
+  - escribe en `.env` solo valores públicos: RPC, passphrase, ID del contrato y direcciones.
+- **Prueba de humo real** (`make contract-smoke`, además del Done-when):
+  - sella una raíz y la lee de vuelta con la hora del ledger;
+  - comprueba que una cuenta externa es rechazada **porque la red exige la firma de la selladora**;
+  - comprueba que el duplicado se rechaza **con `Error(Contract, #1)`**.
+
+  El script exige el motivo exacto, no solo que falle.
+- **CI y hook:** el Jenkinsfile suma la etapa "Test Contract" (`make contract-test`, sin necesitar la red). El hook de pre-commit corre `make contract-test` cuando cambia algo en `contracts/`.
+- **VPN:** con la VPN de la oficina activa, los `RUN` de `docker build` se quedaban sin DNS ni internet, porque la VPN publica rutas dentro de `172.17.0.0/16`, la subred de `docker0`. Los builds ahora usan la red del host (`DOCKER_BUILD_NETWORK=host`, documentado en `.env.docker.example`). La red del proyecto (`172.29.0.0/24`) no estaba afectada. El puerto por defecto de la red local pasó a 8100, porque el 8000 es un puerto de desarrollo muy común.
+
 **Cubre:** US-020a · R-BLK-02, R-BLK-03, R-SA-01, R-TST-01 (contrato).
 
 ### Iteración 13 — Sellado por raíz de Merkle (red local)
