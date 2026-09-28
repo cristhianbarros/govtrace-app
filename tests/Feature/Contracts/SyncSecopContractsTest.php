@@ -50,10 +50,17 @@ function secopWhere(Request $request): string
     return mb_strtoupper((string) ($query['$where'] ?? ''));
 }
 
-/** Serves the recorded fixture of whichever department the request asks for. */
-function fakeSecopApi(): void
+/**
+ * Serves the recorded fixture of whichever department the request asks
+ * for. $extraMagdalenaRows añade filas sueltas (no grabadas de la API) a
+ * la respuesta de Magdalena, para un caso puntual que el corpus real no
+ * tiene — hoy, ningún nombre de ciudad de Magdalena queda sin emparejar.
+ *
+ * @param  list<array<string, mixed>>  $extraMagdalenaRows
+ */
+function fakeSecopApi(array $extraMagdalenaRows = []): void
 {
-    Http::fake(function (Request $request) {
+    Http::fake(function (Request $request) use ($extraMagdalenaRows) {
         parse_str((string) parse_url($request->url(), PHP_URL_QUERY), $query);
 
         if ((int) ($query['$offset'] ?? 0) > 0) {
@@ -61,7 +68,7 @@ function fakeSecopApi(): void
         }
 
         return Http::response(match (true) {
-            str_contains(secopWhere($request), "'MAGDALENA'") => secopFixture('magdalena_obras'),
+            str_contains(secopWhere($request), "'MAGDALENA'") => [...secopFixture('magdalena_obras'), ...$extraMagdalenaRows],
             str_contains(secopWhere($request), "'ANTIOQUIA'") => secopFixture('antioquia_obras'),
             default => [],
         });
@@ -101,21 +108,24 @@ it('the nightly run queries SECOP only for the configured territories and stores
     Http::assertSent(fn (Request $r) => str_contains(secopWhere($r), "'MAGDALENA'"));
     Http::assertSent(fn (Request $r) => str_contains(secopWhere($r), "'ANTIOQUIA'"));
 
-    // Magdalena: 5 de 6 filas (la de ciudad "No Definido" no empareja).
+    // Magdalena: las 6 filas se guardan — la de ciudad "No Definido" es
+    // un contrato departamental (Gobernación, sin municipio propio;
+    // US-015/US-016, it. 8) y Magdalena entero está vigilado.
     // Antioquia: solo las 2 de Medellín; Envigado, Peñol y Santafé de
-    // Antioquia no los vigila nadie.
-    expect(Contract::query()->where('department_code', '47')->count())->toBe(5)
+    // Antioquia no los vigila nadie (nadie vigila el departamento entero).
+    expect(Contract::query()->where('department_code', '47')->count())->toBe(6)
+        ->and(Contract::query()->where('department_code', '47')->whereNull('municipality_code')->count())->toBe(1)
         ->and(Contract::query()->where('department_code', '05')->pluck('municipality_code')->unique()->values()->all())->toBe(['05001'])
-        ->and(Contract::query()->count())->toBe(7);
+        ->and(Contract::query()->count())->toBe(8);
 
     runSecopSync(); // la noche siguiente SECOP devuelve lo mismo
 
     $runs = SecopSyncRun::query()->orderBy('id')->get();
 
-    expect(Contract::query()->count())->toBe(7)
+    expect(Contract::query()->count())->toBe(8)
         ->and($runs->pluck('status')->all())->toBe(['success', 'success'])
-        ->and($runs[0]->only('contracts_inserted', 'contracts_updated'))->toBe(['contracts_inserted' => 7, 'contracts_updated' => 0])
-        ->and($runs[1]->only('contracts_inserted', 'contracts_updated'))->toBe(['contracts_inserted' => 0, 'contracts_updated' => 7]);
+        ->and($runs[0]->only('contracts_inserted', 'contracts_updated'))->toBe(['contracts_inserted' => 8, 'contracts_updated' => 0])
+        ->and($runs[1]->only('contracts_inserted', 'contracts_updated'))->toBe(['contracts_inserted' => 0, 'contracts_updated' => 8]);
 });
 
 it('never queries or stores contracts for a territory with no active organization', function () {
@@ -158,18 +168,24 @@ it('a territory left without active organizations stops being synced, keeping wh
 });
 
 it('discards a contract whose municipality does not match DIVIPOLA and reports it in the sync run', function () {
-    fakeSecopApi();
+    // El corpus real grabado (magdalena_obras.json) ya no tiene ningún
+    // nombre sin emparejar: "No Definido" ahora es un contrato
+    // departamental de la Gobernación (US-015/US-016, it. 8). Esta fila
+    // no viene de la API — es el Esquema del escenario de
+    // features/US-013.feature ("Villa Inexistente" se descarta).
+    fakeSecopApi(extraMagdalenaRows: [array_merge(secopFixture('magdalena_obras')[0], [
+        'id_contrato' => 'CO1.PCCNTR.INEXISTENTE',
+        'ciudad' => 'Villa Inexistente',
+    ])]);
     registerUs013Organizations();
 
     runSecopSync();
 
     $run = SecopSyncRun::query()->latest('id')->first();
 
-    // El Esquema usa "Villa Inexistente" (ProcessSecopContractRowTest); en
-    // la fixture real el caso es una fila de Magdalena con ciudad "No Definido".
     expect($run->contracts_discarded)->toBe(1)
-        ->and($run->unmatched_locations)->toBe(['Magdalena / No Definido' => 1])
-        ->and(Contract::query()->where('secop_contract_id', 'CO1.PCCNTR.9259454')->exists())->toBeFalse();
+        ->and($run->unmatched_locations)->toBe(['Magdalena / Villa Inexistente' => 1])
+        ->and(Contract::query()->where('secop_contract_id', 'CO1.PCCNTR.INEXISTENTE')->exists())->toBeFalse();
 });
 
 it('records the failure and lets the queue retry with exponential backoff', function () {

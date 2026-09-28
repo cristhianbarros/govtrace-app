@@ -180,6 +180,18 @@
 - tarjeta pública del contrato, con aviso de anulado.
 
 **Done-when:** US-015 (5 casos), US-016 (11 casos, adelantada por O1) y US-017 (4 casos) en verde (backend).
+
+**✅ Cumplido (20/20 casos):** `ListTerritoryContractsTest` 5, `SearchSelectableContractsTest` 11, `PublicContractCardTest` 4, más 2 tests técnicos añadidos a `ProcessSecopContractRowTest` para el punto 2 de abajo. Suite completa: 153 en verde + 1 `todo`.
+
+- **`ListTerritoryContracts`**: paginado a 20, orden por `signed_at` (por defecto, descendente) o `value`, filtrado por el territorio vigilado. El truncado del objeto a 50 caracteres con tooltip es de la pantalla (it. 18) — el backend entrega el texto completo.
+- **Se resolvió la decisión pendiente de la it. 7**: US-015 y US-016 exigen que "un departamento incluye la Gobernación y todos sus municipios". Un contrato de Gobernación llega de SECOP con departamento conocido y ciudad "No Definido" — hasta ahora se descartaba como no emparejado. Ahora `ProcessSecopContractRow` lo guarda como **contrato departamental** (`municipality_code` nulo) si — y solo si — alguna organización activa vigila **el departamento entero**; si solo vigila uno de sus municipios, el contrato de la Gobernación queda fuera (`WatchedTerritories::coversDepartmentCode()`). Requirió una migración nueva (`municipality_code` nullable) y actualizar dos tests de la it. 7 que asumían el descarte (`SyncSecopContractsTest`): ahora Magdalena trae sus 6 filas en vez de 5, y el caso de "no emparejado y reportado" usa el Esquema de "Villa Inexistente" en vez de la fila real, porque en el corpus grabado ya no queda ningún nombre sin emparejar.
+- **`SearchSelectableContracts`**: exige 3+ caracteres (si no, ni consulta), busca por objeto/contratista/número de proceso (`ilike`, Postgres) y aplica la regla de US-016 — siempre seleccionables "En ejecución", "Celebrado", "Adjudicado"; "Terminado"/"Liquidado" solo dentro de `closed_contract_report_window_months` (parámetro con historial, it. 6, hoy 12) contado desde `end_date`; nunca los `cancelled`. El debounce de 300 ms es de la PWA (it. 16).
+- **`GetPublicContractCard`**: entidad, contratista, valor (crudo; el formato en COP es de la pantalla, it. 26), plazo en meses (`signed_at`→`end_date`) y el aviso de "⚠️ Contrato Anulado/Retirado en SECOP" cuando el contrato está `cancelled`. Sin autenticación (R-VER-02). Como la ficha de obra no existe todavía (it. 9), la tarjeta se arma directamente a partir del `Contract` — es "el backend en P1" de la observación O3; conectarla a la vista de la obra es de la it. 26.
+
+**Alcance parcial, documentado:**
+- US-017: "la obra tiene 2 evidencias publicadas" no se prueba — las evidencias llegan en it. 10+. Lo que se prueba es que la tarjeta del contrato muestra su aviso sin importar el estado de las evidencias.
+- El formato en pesos colombianos del valor y el truncado del objeto quedan sin construir: son de pantalla (it. 18 y it. 26).
+
 **Cubre:** US-015, US-016, US-017 · R-VC-04.
 
 ### Iteración 9 — Ficha de obra por organización y cálculo de riesgo
