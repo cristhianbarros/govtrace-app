@@ -8,8 +8,9 @@ criterios_aceptacion:
     - "El veedor selecciona la obra de la lista y procede a reportar"
   validaciones_reglas:
     - "La búsqueda exige mínimo 3 caracteres alfanuméricos"
-    - "Son consultables y seleccionables los contratos en estado 'En ejecución', 'Celebrado' o 'Adjudicado', y también los 'Terminados' o 'Liquidados' hasta 12 meses después de su fecha oficial de terminación o liquidación en SECOP"
-    - "Nunca aparecen los contratos 'Anulados' ni los Terminados/Liquidados con más de 12 meses"
+    - "Son consultables y seleccionables los contratos en estado 'En ejecución', 'Modificado', 'Aprobado', 'cedido' o 'Suspendido', y también los 'terminado' o 'Cerrado' hasta 12 meses después de su fecha de terminación en SECOP (R-SEC-07; ajustado a los estados reales de SECOP II el 2026-09-28)"
+    - "Nunca aparecen los contratos anulados ('Cancelado' en SECOP), 'Borrador', 'enviado Proveedor' ni 'En aprobación', ni los cerrados con más de 12 meses"
+    - "Los estados se comparan sin distinguir mayúsculas (SECOP publica 'terminado' en minúscula)"
     - "Filtro territorial obligatorio (R-VC-04): se suman todos los territorios configurados por la organización; un departamento incluye la Gobernación y todos sus municipios (jerarquía DIVIPOLA, ej. Magdalena 47 incluye Santa Marta 47001)"
   manejo_errores:
     - {caso: "Búsqueda sin resultados", mensaje: "No se encontraron obras activas. Verifique el número de proceso, nombre del contratista o palabras clave de la obra."}

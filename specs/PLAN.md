@@ -2,7 +2,7 @@
 
 > Generado por `/plan` a partir de `specs/SPEC.md` y `features/*.feature`. Las iteraciones están numeradas y cada una tiene un "Done-when" concreto y verificable. Cada iteración termina en **un commit** con tests en verde, porque lo exige el hook de pre-commit. Se trabaja con GitFlow: una rama por iteración desde `main` (`feature/it-NN-<slug>`) y un commit `feat: iteración N — <resumen> (US-XXX)`.
 >
-> **Trazabilidad verificada:** las 56 historias del SPEC tienen su `.feature` (56/56, **0 huérfanas**). En total son 248 escenarios y 351 casos ejecutables, contando las filas de los *Esquemas*.
+> **Trazabilidad verificada:** las 56 historias del SPEC tienen su `.feature` (56/56, **0 huérfanas**). En total son 248 escenarios y 362 casos ejecutables, contando las filas de los *Esquemas* (351 al generar el plan; +11 filas al ajustar US-016, US-034 y US-008 a los datos reales de SECOP, R-SEC-07 y R-SEC-05).
 
 ## Antes de empezar
 
@@ -185,7 +185,7 @@
 
 - **`ListTerritoryContracts`**: paginado a 20, orden por `signed_at` (por defecto, descendente) o `value`, filtrado por el territorio vigilado. El truncado del objeto a 50 caracteres con tooltip es de la pantalla (it. 18) — el backend entrega el texto completo.
 - **Se resolvió la decisión pendiente de la it. 7**: US-015 y US-016 exigen que "un departamento incluye la Gobernación y todos sus municipios". Un contrato de Gobernación llega de SECOP con departamento conocido y ciudad "No Definido" — hasta ahora se descartaba como no emparejado. Ahora `ProcessSecopContractRow` lo guarda como **contrato departamental** (`municipality_code` nulo) si — y solo si — alguna organización activa vigila **el departamento entero**; si solo vigila uno de sus municipios, el contrato de la Gobernación queda fuera (`WatchedTerritories::coversDepartmentCode()`). Requirió una migración nueva (`municipality_code` nullable) y actualizar dos tests de la it. 7 que asumían el descarte (`SyncSecopContractsTest`): ahora Magdalena trae sus 6 filas en vez de 5, y el caso de "no emparejado y reportado" usa el Esquema de "Villa Inexistente" en vez de la fila real, porque en el corpus grabado ya no queda ningún nombre sin emparejar.
-- **`SearchSelectableContracts`**: exige 3+ caracteres (si no, ni consulta), busca por objeto/contratista/número de proceso (`ilike`, Postgres) y aplica la regla de US-016 — siempre seleccionables "En ejecución", "Celebrado", "Adjudicado"; "Terminado"/"Liquidado" solo dentro de `closed_contract_report_window_months` (parámetro con historial, it. 6, hoy 12) contado desde `end_date`; nunca los `cancelled`. El debounce de 300 ms es de la PWA (it. 16).
+- **`SearchSelectableContracts`**: exige 3+ caracteres (si no, ni consulta), busca por objeto/contratista/número de proceso (`ilike`, Postgres) y aplica la regla de US-016 — siempre seleccionables "En ejecución", "Celebrado", "Adjudicado"; "Terminado"/"Liquidado" solo dentro de `closed_contract_report_window_months` (parámetro con historial, it. 6, hoy 12) contado desde `end_date`; nunca los `cancelled`. *(Después se ajustó a los estados reales de SECOP II, con R-SEC-07; ver las decisiones tomadas en la it. 10.)* El debounce de 300 ms es de la PWA (it. 16).
 - **`GetPublicContractCard`**: entidad, contratista, valor (crudo; el formato en COP es de la pantalla, it. 26), plazo en meses (`signed_at`→`end_date`) y el aviso de "⚠️ Contrato Anulado/Retirado en SECOP" cuando el contrato está `cancelled`. Sin autenticación (R-VER-02). Como la ficha de obra no existe todavía (it. 9), la tarjeta se arma directamente a partir del `Contract` — es "el backend en P1" de la observación O3; conectarla a la vista de la obra es de la it. 26.
 
 **Alcance parcial, documentado:**
@@ -238,14 +238,33 @@
 - La ficha "Acueducto Gaira" no tiene nombre todavía: nombrar y agrupar fichas es US-045-INT (it. 29).
 - Una organización suspendida hoy ve sus reportes rechazados como "fuera del territorio", porque su territorio activo queda vacío. El 403 con su mensaje propio es de US-003a (it. 20).
 
-**Decisiones pendientes:**
-1. **(Importante) Los estados reales de SECOP II no son los del discovery.** US-016 y US-034 hablan de "En ejecución", "Celebrado", "Adjudicado", "Terminado" y "Liquidado". Los 53.398 contratos de obra de SECOP II (consultados el 2026-09-27) traen otros valores: Modificado 16.089 · terminado (en minúscula) 13.781 · En ejecución 10.419 · Cerrado 3.785 · Aprobado 2.687 · Borrador 2.668 · Cancelado 1.809 · Suspendido 952 · enviado Proveedor 693 · En aprobación 464 · cedido 51. **No aparece ni un "Celebrado", "Adjudicado", "Liquidado" ni "Terminado" con mayúscula.** Con la regla literal, solo "En ejecución" (19,5%) se puede buscar y reportar, y un contrato "Modificado" vencido nunca queda en riesgo. Propuesta a confirmar:
-   - activos: En ejecución, Modificado, Aprobado, cedido, Suspendido;
-   - cerrados dentro de la ventana: terminado, Cerrado;
-   - nunca: Cancelado/anulado, Borrador, enviado Proveedor, En aprobación.
-   - Comparar sin distinguir mayúsculas.
-   - Para el riesgo (US-034), "En ejecución" y "Modificado".
-2. **Tolerancia de reloj** para la hora "en el futuro": hoy basta un segundo adelantado para marcar el reporte. Propuesta: unos minutos de tolerancia.
+**Decisiones tomadas después del cierre** (aprobadas el 2026-09-28; rama `fix/estados-secop-y-tolerancia-reloj`):
+1. ✅ **Estados reales de SECOP II (nueva R-SEC-07).** El discovery hablaba de "Celebrado", "Adjudicado", "Terminado" y "Liquidado", y ninguno existe entre los 53.398 contratos de obra de SECOP II. Los valores reales son:
+
+   | Estado en SECOP II | Contratos |
+   |---|---|
+   | Modificado | 16.089 |
+   | terminado (en minúscula) | 13.781 |
+   | En ejecución | 10.419 |
+   | Cerrado | 3.785 |
+   | Aprobado | 2.687 |
+   | Borrador | 2.668 |
+   | Cancelado | 1.809 |
+   | Suspendido | 952 |
+   | enviado Proveedor | 693 |
+   | En aprobación | 464 |
+   | cedido | 51 |
+
+   Con la regla literal solo el 19,5% era reportable. Se aprobó esta tabla de equivalencias, que vive en `App\Domain\Contracts\SecopContractStatus` y se compara sin distinguir mayúsculas (`Contract::scopeStatusIn`):
+   - **siempre reportables:** En ejecución, Modificado, Aprobado, cedido y **Suspendido**. Las obras paralizadas, los "elefantes blancos", son donde la evidencia ciudadana más importa.
+   - **reportables dentro de la ventana:** terminado y Cerrado.
+   - **nunca:** Cancelado, Borrador, enviado Proveedor, En aprobación, ni cualquier estado desconocido.
+   - **"en riesgo" (US-034):** En ejecución y Modificado.
+
+   El contrato conserva el texto de SECOP tal cual (R-SEC-01). Se actualizaron los Esquemas de `features/US-016.feature` (7 → 13 filas) y `features/US-034.feature` (3 → 5), sus criterios y los tests. Además se añadió un test técnico: un reporte sobre una obra "Suspendido" se acepta.
+2. ✅ **Tolerancia de reloj (R-SEC-05):** 5 minutos hacia el futuro (`SuspiciousCaptureTime::CLOCK_SKEW_TOLERANCE_SECONDS = 300`), como el *leeway* al validar un JWT. Absorbe la latencia y el desfase del reloj sin abrir una ventana real para fechar evidencias. `features/US-008.feature` suma 3 filas (4, 5 y 6 minutos en el futuro).
+
+Con esto US-016 pasa de 11 a 17 casos, US-034 de 4 a 6 y US-008 de 22 a 25, todos en verde.
 
 **Cubre:** US-008 · R-GEO-01, R-VC-04, R-SEC-05, R-AUD-05, R-MON-02.
 
@@ -471,10 +490,10 @@
 
 | Fase | Semanas | Historias | Iteraciones | Casos ejecutables* |
 |---|---|---|---|---|
-| **P1** | 1-2 | 21 (20 + US-016 adelantada) | **19** (1-19) | 173 |
+| **P1** | 1-2 | 21 (20 + US-016 adelantada) | **19** (1-19) | 184 |
 | **P2** | 3-4 | 22 | **10** (20-29) | 121 |
 | **P3** | 5+ | 13 | **6** (30-35) | 57 |
-| **Total** | | 56 | **35** | 351 |
+| **Total** | | 56 | **35** | 362 |
 
 \* Filas de `features/*.feature`, contando cada fila de los *Esquemas*.
 

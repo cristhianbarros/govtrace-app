@@ -4,7 +4,7 @@ bloque: "B8 — Mapa y publicación"
 criterios_aceptacion:
   escenarios_exito:
     - "Un Job diario compara la fecha actual con la fecha de terminación del contrato"
-    - "Si la fecha de terminación ya expiró y en SECOP el contrato sigue 'En ejecución', la obra queda 'En riesgo' (pin rojo)"
+    - "Si la fecha de terminación ya expiró y en SECOP el contrato sigue en ejecución ('En ejecución' o 'Modificado', R-SEC-07), la obra queda 'En riesgo' (pin rojo); un contrato 'Suspendido' no"
   validaciones_reglas:
     - "El estado calculado se guarda en la ficha de obra de cada organización, nunca en el contrato (R-SEC-01)"
   manejo_errores: []

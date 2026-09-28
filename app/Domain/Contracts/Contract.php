@@ -10,6 +10,7 @@ use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\DB;
 use RuntimeException;
 use Stancl\Tenancy\Database\Concerns\CentralConnection;
 
@@ -28,12 +29,6 @@ use Stancl\Tenancy\Database\Concerns\CentralConnection;
 class Contract extends Model
 {
     use CentralConnection;
-
-    /** US-016: statuses a veedor can always pick to report on. */
-    public const ALWAYS_REPORTABLE_STATUSES = ['En ejecución', 'Celebrado', 'Adjudicado'];
-
-    /** US-016: closed statuses, reportable only within closed_contract_report_window_months of their end date. */
-    public const RECENTLY_CLOSED_STATUSES = ['Terminado', 'Liquidado'];
 
     private static bool $allowingSecopWrite = false;
 
@@ -101,8 +96,9 @@ class Contract extends Model
 
     /**
      * US-016: contracts a veedor may report on at $moment — active ones,
-     * plus Terminado/Liquidado for a while after their end date; never an
-     * annulled one. The window is the one in force at $moment (R-AUD-05).
+     * plus closed ones for a while after their end date; never an
+     * annulled one (R-SEC-07). The window is the one in force at $moment
+     * (R-AUD-05).
      */
     public function scopeReportableAt(Builder $query, CarbonInterface $moment): void
     {
@@ -110,10 +106,21 @@ class Contract extends Model
         $closedSince = $moment->copy()->subMonths($windowMonths);
 
         $query->where(fn (Builder $query) => $query
-            ->whereIn('status', self::ALWAYS_REPORTABLE_STATUSES)
+            ->statusIn(SecopContractStatus::ACTIVE)
             ->orWhere(fn (Builder $query) => $query
-                ->whereIn('status', self::RECENTLY_CLOSED_STATUSES)
+                ->statusIn(SecopContractStatus::CLOSED)
                 ->where('end_date', '>=', $closedSince)));
+    }
+
+    /**
+     * SECOP's status compared case-insensitively ("terminado" and
+     * "Terminado" are the same) against lowercase SecopContractStatus lists.
+     *
+     * @param  list<string>  $statuses
+     */
+    public function scopeStatusIn(Builder $query, array $statuses): void
+    {
+        $query->whereIn(DB::raw('lower(status)'), $statuses);
     }
 
     public function department(): BelongsTo

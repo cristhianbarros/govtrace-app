@@ -16,7 +16,7 @@ criterios_aceptacion:
     - "El radio aplicable es el que regía en el momento de la captura, no el vigente al recibir el reporte"
     - "R-VC-04: solo obras del territorio de la organización"
     - "Si la ficha de obra agrupa varios contratos (US-045-INT), el reporte se vincula a la ficha completa"
-    - "El servidor registra también su propia hora de recepción y marca el reporte cuando la hora de captura del teléfono está en el futuro respecto al servidor o es anterior a los 7 días de vigencia offline; la marca la ven el Administrador de Organización y el Super Administrador (R-SEC-05)"
+    - "El servidor registra también su propia hora de recepción y marca el reporte cuando la hora de captura del teléfono está más de 5 minutos en el futuro respecto al servidor (tolerancia por latencia y desfase del reloj) o es anterior a los 7 días de vigencia offline; la marca la ven el Administrador de Organización y el Super Administrador (R-SEC-05)"
   manejo_errores:
     - {caso: "Permiso de GPS denegado", mensaje: "GovTrace requiere acceso a su ubicación exacta para certificar criptográficamente que la evidencia fue tomada en el sitio de la obra. Por favor habilite el GPS."}
     - {caso: "Fuera de la geocerca de 500 m", mensaje: "Se encuentra a [X] km de la ubicación oficial de la obra. Para prevenir fraudes, debe acercarse a un radio de 500 metros del proyecto."}

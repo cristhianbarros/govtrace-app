@@ -197,6 +197,11 @@ it('flags a report whose capture time is in the future or older than the 7 days 
 })->with([
     '20 minutos antes' => ['2026-09-27 09:40', false],
     '6 días antes' => ['2026-09-21 10:00', false],
+    // R-SEC-05: 5 minutos de tolerancia hacia el futuro para la latencia y
+    // el reloj desfasado de los teléfonos (como el leeway de un JWT).
+    '4 minutos en el futuro' => ['2026-09-27 10:04', false],
+    'justo 5 minutos en el futuro' => ['2026-09-27 10:05', false],
+    '6 minutos en el futuro' => ['2026-09-27 10:06', true],
     '2 horas en el futuro' => ['2026-09-27 12:00', true],
     'más de 7 días antes' => ['2026-09-19 09:00', true],
 ]);
@@ -261,6 +266,14 @@ it('validates the geofence with the radius in force when the report was captured
     'capturado con el radio de 500 m' => ['2026-09-27 08:00', true],
     'capturado con el radio de 100 m' => ['2026-09-27 09:30', false],
 ]);
+
+it('accepts a report on a suspended works contract — the paralyzed works citizens most need to document', function () {
+    // R-SEC-07: una obra suspendida (los "elefantes blancos") siempre admite reportes.
+    reportableContract('CO1.PCCNTR.SUSPENDIDO', ['status' => 'Suspendido']);
+    worksiteWithContracts($this->tenant, ['CO1.PCCNTR.SUSPENDIDO'], santaMartaWorksiteLocation());
+
+    sendReport($this->veedor, ['secop_contract_id' => 'CO1.PCCNTR.SUSPENDIDO', 'classification' => 'Abandono'])->assertCreated();
+});
 
 it('rejects a report on a contract a veedor can no longer select, such as an annulled one', function () {
     reportableContract('CO1.PCCNTR.ANULADO', ['status' => 'cancelled']);

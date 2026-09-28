@@ -10,8 +10,9 @@ use Illuminate\Support\Facades\DB;
 
 /*
  * Iteración 8 — Contratos del territorio: listado, búsqueda y tarjeta
- * pública (specs/PLAN.md). Traduce features/US-016.feature (11 casos:
- * 2 escenarios + el Esquema de 7 filas + 2 escenarios más).
+ * pública (specs/PLAN.md). Traduce features/US-016.feature (17 casos:
+ * 2 escenarios + el Esquema de 13 filas + 2 escenarios más). El Esquema
+ * usa los estados reales de SECOP II desde la corrección de R-SEC-07.
  *
  * Backend únicamente: el debounce de 300 ms es de la pantalla de la PWA
  * (it. 16); aquí se prueba la regla de mínimo 3 caracteres y de qué
@@ -92,14 +93,22 @@ it('only shows the contracts whose status makes them selectable', function (stri
 
     expect($results->isNotEmpty())->toBe($aparece);
 })->with([
+    // Estados tal como los publica SECOP II (R-SEC-07), comparados sin
+    // distinguir mayúsculas: "terminado" llega en minúscula.
     'En ejecución' => ['En ejecución', null, true],
-    'Celebrado' => ['Celebrado', null, true],
-    'Adjudicado' => ['Adjudicado', null, true],
-    'Terminado hace 11 meses' => ['Terminado', 11, true],
-    'Liquidado hace 12 meses' => ['Liquidado', 12, true],
-    'Liquidado hace 13 meses' => ['Liquidado', 13, false],
-    // "Anulado" en SECOP ya llega guardado como 'cancelled' (it. 7, US-033).
-    'Anulado' => ['cancelled', null, false],
+    'Modificado' => ['Modificado', null, true],
+    'Aprobado' => ['Aprobado', null, true],
+    'cedido' => ['cedido', null, true],
+    'Suspendido (obra paralizada)' => ['Suspendido', null, true],
+    'terminado hace 11 meses' => ['terminado', 11, true],
+    'Cerrado hace 12 meses' => ['Cerrado', 12, true],
+    'terminado hace 13 meses' => ['terminado', 13, false],
+    // "Cancelado" en SECOP ya llega guardado como 'cancelled' (it. 7, US-033).
+    'Cancelado' => ['cancelled', null, false],
+    'Borrador' => ['Borrador', null, false],
+    'enviado Proveedor' => ['enviado Proveedor', null, false],
+    'En aprobación' => ['En aprobación', null, false],
+    'MODIFICADO en mayúsculas' => ['MODIFICADO', null, true],
 ]);
 
 it('only shows contracts within the organization watching them', function () {

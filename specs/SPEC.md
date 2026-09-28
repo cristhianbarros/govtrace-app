@@ -123,6 +123,7 @@ Plataforma Open Source y Mobile-First de veeduría ciudadana, multi-tenant (B2B2
 
 - **R-SEC-01** — Nadie (ni el Super Administrador) puede editar, modificar o borrar datos de un contrato descargado; SECOP es la única fuente de verdad y los errores del Estado se muestran tal cual — US-013, US-017, US-033, US-034, US-048-MNT
 - **R-SEC-02** — No se consultan ni guardan contratos de territorios que no pertenezcan a ninguna organización activa — US-013, US-032
+- **R-SEC-07** — Los estados de SECOP II se leen con una tabla de equivalencias y sin distinguir mayúsculas: siempre reportables "En ejecución", "Modificado", "Aprobado", "cedido" y "Suspendido" (las obras paralizadas son donde más importa la evidencia); reportables dentro de la ventana configurada "terminado" y "Cerrado"; nunca "Cancelado", "Borrador", "enviado Proveedor", "En aprobación" ni un estado desconocido. En ejecución (para "en riesgo") son "En ejecución" y "Modificado". El contrato conserva el texto de SECOP tal cual (R-SEC-01) — US-008, US-016, US-034
 
 ### Captura, geolocalización e integridad
 
@@ -160,7 +161,7 @@ Plataforma Open Source y Mobile-First de veeduría ciudadana, multi-tenant (B2B2
 
 - **R-SEC-03** — 5 intentos fallidos de inicio de sesión bloquean la cuenta 15 minutos — US-031, US-039-USR
 - **R-SEC-04** — Los logos SVG se aceptan, pero se limpian de contenido ejecutable — US-007
-- **R-SEC-05** — El servidor registra su hora de recepción y marca los reportes cuya hora de captura está en el futuro o es anterior a los 7 días de vigencia offline; la marca la ven el Admin de Organización y el Super Admin — US-008, US-036
+- **R-SEC-05** — El servidor registra su hora de recepción y marca los reportes cuya hora de captura está más de 5 minutos en el futuro (tolerancia por latencia y desfase del reloj del teléfono) o es anterior a los 7 días de vigencia offline; la marca la ven el Admin de Organización y el Super Admin — US-008, US-036
 - **R-SEC-06** — El servidor calcula su propia raíz de Merkle y las pruebas; ignora la raíz del teléfono — US-020b
 
 ### Configuración
