@@ -4,6 +4,7 @@ namespace App\Domain\Geography;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Stancl\Tenancy\Database\Concerns\CentralConnection;
 
 /**
  * A DIVIPOLA municipality (DANE). Central reference data — see
@@ -12,6 +13,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class Municipality extends Model
 {
+    use CentralConnection;
+
     protected $primaryKey = 'code';
 
     protected $keyType = 'string';

@@ -3,6 +3,7 @@
 namespace App\Domain\Configuration;
 
 use Illuminate\Database\Eloquent\Model;
+use Stancl\Tenancy\Database\Concerns\CentralConnection;
 
 /**
  * One version of one parameter (US-038-CFG). Never updated in place — a
@@ -11,6 +12,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class ParameterValue extends Model
 {
+    use CentralConnection;
+
     public const UPDATED_AT = null;
 
     protected $table = 'parameters';

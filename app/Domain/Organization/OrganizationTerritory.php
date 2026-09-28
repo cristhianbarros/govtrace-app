@@ -6,6 +6,7 @@ use App\Domain\Geography\Department;
 use App\Domain\Geography\Municipality;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Stancl\Tenancy\Database\Concerns\CentralConnection;
 
 /**
  * One department OR one municipality an organization vigila (US-012).
@@ -14,6 +15,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class OrganizationTerritory extends Model
 {
+    use CentralConnection;
+
     protected $fillable = ['tenant_id', 'department_code', 'municipality_code'];
 
     public function department(): BelongsTo

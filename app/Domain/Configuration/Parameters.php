@@ -2,6 +2,7 @@
 
 namespace App\Domain\Configuration;
 
+use Carbon\CarbonInterface;
 use Illuminate\Support\Carbon;
 
 /**
@@ -12,14 +13,21 @@ use Illuminate\Support\Carbon;
  */
 class Parameters
 {
-    public static function valueAt(string $key, ?Carbon $at = null): ?string
+    /**
+     * A moment before the first recorded version answers with that first
+     * version — the value in force since the start. A phone with its clock
+     * set back can report such a capture time (R-SEC-05 flags it).
+     */
+    public static function valueAt(string $key, ?CarbonInterface $at = null): ?string
     {
-        return ParameterValue::query()
-            ->where('key', $key)
+        $versions = ParameterValue::query()->where('key', $key);
+
+        return (clone $versions)
             ->where('effective_from', '<=', $at ?? now())
             ->orderByDesc('effective_from')
             ->orderByDesc('id')
-            ->value('value');
+            ->value('value')
+            ?? $versions->orderBy('effective_from')->orderBy('id')->value('value');
     }
 
     public static function current(string $key): ?string

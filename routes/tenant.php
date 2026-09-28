@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Domain\Organization\Roles;
 use App\Http\Controllers\Tenant\InviteObserverController;
 use App\Http\Controllers\Tenant\LoginController;
+use App\Http\Controllers\Tenant\ReportController;
 use App\Http\Controllers\Tenant\SetPasswordController;
 use Illuminate\Support\Facades\Route;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
@@ -51,6 +52,11 @@ Route::middleware([
         // US-005: solo el Administrador de Organización invita veedores.
         Route::middleware('role:'.Roles::Administrator->value.',tenant')->group(function () {
             Route::post('/observers/invite', [InviteObserverController::class, 'store'])->name('observers.invite');
+        });
+
+        // US-008: solo el Veedor de Campo crea reportes (la PWA, it. 16).
+        Route::middleware('role:'.Roles::Observer->value.',tenant')->group(function () {
+            Route::post('/reports', [ReportController::class, 'store'])->name('reports.store');
         });
     });
 });

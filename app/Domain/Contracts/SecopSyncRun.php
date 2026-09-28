@@ -3,6 +3,7 @@
 namespace App\Domain\Contracts;
 
 use Illuminate\Database\Eloquent\Model;
+use Stancl\Tenancy\Database\Concerns\CentralConnection;
 
 /**
  * One execution of the SECOP sync job — what US-014's health panel
@@ -10,6 +11,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class SecopSyncRun extends Model
 {
+    use CentralConnection;
+
     protected $fillable = [
         'organization_id', 'started_at', 'finished_at', 'status',
         'contracts_inserted', 'contracts_updated', 'contracts_discarded',

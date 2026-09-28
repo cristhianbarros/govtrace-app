@@ -218,6 +218,35 @@
 - marca de hora sospechosa.
 
 **Done-when:** US-008 (22 casos) en verde, incluida la carrera de dos veedores (test con dos transacciones concurrentes).
+
+**✅ Cumplido (22/22 casos):** `CreateReportTest` (21 casos contra el endpoint real) y `FirstTouchRaceTest` (la carrera, en dos variantes). A eso se suman tests técnicos: el radio vigente al capturar (2), el rechazo de un contrato anulado, solo el Veedor puede reportar, `CentralConnectionTest` (8), la primera versión de un parámetro y el riesgo de una ficha con varios contratos. Suite completa: 197 en verde + 1 `todo`.
+
+- **`POST /reports`** (tenant, `auth:tenant`, solo el rol Veedor de Campo) responde `201 {id}`, o `422` con el motivo bajo el campo al que se refiere (`classification`, `comment`, `location`, `accuracy_meters`, `secop_contract_id`). El controlador solo revisa la forma de la petición. Las reglas viven en `App\Domain\Reports` (`ReportClassification`, `ReportComment`, `GpsReading`, `Geofence`, `SuspiciousCaptureTime`), con los mensajes textuales de `specs/criterios/US-008.yaml`.
+- **La ficha de obra ahora agrupa varios contratos**, porque el escenario "ficha con varios contratos" es de US-008 y la it. 9 había dejado uno solo. Se crea la tabla `worksite_contracts` (`secop_contract_id` único dentro de la organización); la migración mueve los datos de la it. 9. El job de riesgo marca la ficha cuando **cualquiera** de sus contratos venció y sigue "En ejecución". Además usa `end_date < hoy`: un contrato que termina hoy queda en riesgo recién mañana. Los casos de la it. 9 no cambian.
+- **First-Touch con bloqueo atómico** (`CreateReport`): la ficha se lee con `SELECT … FOR UPDATE`. De dos primeros reportes simultáneos, el segundo espera y se valida contra la ubicación que fijó el primero. Si la ficha ni siquiera existía, la carrera la resuelve el índice único más un savepoint.
+  - El test usa **dos transacciones reales en dos procesos**: A queda abierta y B corre en `tests/support/create_report_in_parallel.php`. A solo confirma cuando Postgres muestra a B esperando el bloqueo.
+  - Se corrió 5 veces seguidas, estable. Se verificó que detecta el error: sin el `lockForUpdate()`, B sobrescribe la ubicación y el test falla.
+- **R-AUD-05:** la geocerca usa el radio que regía **al capturar**, y queda guardado en el reporte (`geofence_radius_meters`). `Parameters::valueAt()` ahora responde con la primera versión cuando el momento es anterior a todas; antes devolvía `null`. Es lo que pasa con un teléfono con el reloj atrasado.
+- **R-SEC-05 / R-MON-02:** el reporte se marca, sin rechazarse, cuando la hora de captura está en el futuro del servidor o es anterior a los 7 días de vigencia offline.
+- **Se resolvió la decisión pendiente de la it. 9:** todos los modelos de tablas centrales (`Contract`, `SecopSyncRun`, `Department`, `Municipality`, `OrganizationTerritory`, `ParameterValue`, `AuditLog`) usan `CentralConnection`. Crear un reporte lee el territorio y los parámetros desde el contexto del veedor, y sin esto fallaba con `relation "departments" does not exist`. `CentralConnectionTest` lo vigila.
+- **Una sola regla para tres lugares:** `Contract::scopeInTerritory()` y `Contract::scopeReportableAt()` las usan el listado y la búsqueda de la it. 8 (refactorizados) y la creación del reporte. Así `CreateReport` rechaza del lado del servidor lo que la búsqueda no ofrece, como un contrato anulado.
+
+**Alcance parcial, documentado:**
+- Los archivos y sus hashes son US-009 (it. 11). El sellado llega en las it. 12-13. El mensaje de éxito y el de "reintentar hasta obtener buena señal" son de la PWA (it. 16).
+- "Si queda marcado lo ven el Administrador y el Super Administrador": la marca queda guardada. La bandeja es la it. 15 y el panel global la it. 19.
+- Corregir la ubicación como acción del Administrador, con su registro, es US-035 (it. 11). El test de "ubicación errónea" la simula cambiando la ficha.
+- La ficha "Acueducto Gaira" no tiene nombre todavía: nombrar y agrupar fichas es US-045-INT (it. 29).
+- Una organización suspendida hoy ve sus reportes rechazados como "fuera del territorio", porque su territorio activo queda vacío. El 403 con su mensaje propio es de US-003a (it. 20).
+
+**Decisiones pendientes:**
+1. **(Importante) Los estados reales de SECOP II no son los del discovery.** US-016 y US-034 hablan de "En ejecución", "Celebrado", "Adjudicado", "Terminado" y "Liquidado". Los 53.398 contratos de obra de SECOP II (consultados el 2026-09-27) traen otros valores: Modificado 16.089 · terminado (en minúscula) 13.781 · En ejecución 10.419 · Cerrado 3.785 · Aprobado 2.687 · Borrador 2.668 · Cancelado 1.809 · Suspendido 952 · enviado Proveedor 693 · En aprobación 464 · cedido 51. **No aparece ni un "Celebrado", "Adjudicado", "Liquidado" ni "Terminado" con mayúscula.** Con la regla literal, solo "En ejecución" (19,5%) se puede buscar y reportar, y un contrato "Modificado" vencido nunca queda en riesgo. Propuesta a confirmar:
+   - activos: En ejecución, Modificado, Aprobado, cedido, Suspendido;
+   - cerrados dentro de la ventana: terminado, Cerrado;
+   - nunca: Cancelado/anulado, Borrador, enviado Proveedor, En aprobación.
+   - Comparar sin distinguir mayúsculas.
+   - Para el riesgo (US-034), "En ejecución" y "Modificado".
+2. **Tolerancia de reloj** para la hora "en el futuro": hoy basta un segundo adelantado para marcar el reporte. Propuesta: unos minutos de tolerancia.
+
 **Cubre:** US-008 · R-GEO-01, R-VC-04, R-SEC-05, R-AUD-05, R-MON-02.
 
 ### Iteración 11 — Archivos de evidencia y corrección de ubicación

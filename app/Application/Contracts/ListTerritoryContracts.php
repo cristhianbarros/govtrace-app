@@ -23,16 +23,8 @@ class ListTerritoryContracts
      */
     public function handle(Tenant $tenant, string $sortBy = 'signed_at', string $direction = 'desc'): LengthAwarePaginator
     {
-        $watched = WatchedTerritories::ofActiveOrganizations($tenant->id);
-
         return Contract::query()
-            ->where(function ($query) use ($watched) {
-                // Un departamento vigilado entero trae su Gobernación
-                // (municipality_code nulo) y todos sus municipios; un
-                // municipio vigilado por su cuenta trae solo el suyo.
-                $query->whereIn('department_code', $watched->departmentCodes())
-                    ->orWhereIn('municipality_code', $watched->municipalityCodes());
-            })
+            ->inTerritory(WatchedTerritories::ofActiveOrganizations($tenant->id))
             ->orderBy($sortBy, $direction)
             ->paginate(self::PER_PAGE);
     }
