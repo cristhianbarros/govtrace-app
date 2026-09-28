@@ -1,55 +1,13 @@
 <script setup>
 // US-016: "Buscar Obra" — por nombre de la obra, contratista o número de
 // proceso. Busca en el servidor desde 3 caracteres y cuando pasan 300 ms sin
-// que el veedor escriba más: una búsqueda por pausa, no una por tecla.
-import { onBeforeUnmount, ref, watch } from 'vue';
+// que el veedor escriba más.
+import { useDebouncedSearch } from '@/composables/useDebouncedSearch.js';
 import { searchContracts } from '@/services/api.js';
-
-const MIN_CHARACTERS = 3;
-const DEBOUNCE_MS = 300;
 
 const emit = defineEmits(['select']);
 
-const keyword = ref('');
-const results = ref(null); // null: todavía no hay búsqueda
-const searching = ref(false);
-const failed = ref(false);
-
-let timer;
-let latestSearch = 0;
-
-watch(keyword, (value) => {
-    clearTimeout(timer);
-    const text = value.trim();
-    if (text.length < MIN_CHARACTERS) {
-        results.value = null;
-        return;
-    }
-    timer = setTimeout(() => search(text), DEBOUNCE_MS);
-});
-
-async function search(text) {
-    // Si llega tarde la respuesta de una búsqueda vieja, se ignora.
-    const current = ++latestSearch;
-    searching.value = true;
-    failed.value = false;
-    try {
-        const found = await searchContracts(text);
-        if (current === latestSearch) {
-            results.value = found;
-        }
-    } catch {
-        if (current === latestSearch) {
-            failed.value = true;
-        }
-    } finally {
-        if (current === latestSearch) {
-            searching.value = false;
-        }
-    }
-}
-
-onBeforeUnmount(() => clearTimeout(timer));
+const { keyword, results, searching, failed } = useDebouncedSearch(searchContracts);
 </script>
 
 <template>

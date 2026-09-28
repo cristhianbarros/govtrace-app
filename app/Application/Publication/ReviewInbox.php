@@ -13,14 +13,16 @@ use App\Domain\Sealing\SealStatus;
  * evidence arrives here once it's sealed: what gets published has to be
  * verifiable (US-024). The suspicious capture time mark is shown, not
  * acted upon (R-SEC-05, R-MON-02): the Administrador decides.
+ *
+ * With Published, the ones that can be withdrawn (US-037).
  */
 class ReviewInbox
 {
     /** @return list<array<string, mixed>> */
-    public function handle(): array
+    public function handle(EditorialStatus $status = EditorialStatus::Hidden): array
     {
         return Report::query()
-            ->where('editorial_status', EditorialStatus::Hidden)
+            ->where('editorial_status', $status)
             ->whereHas('seal', fn ($seal) => $seal->where('status', SealStatus::Sealed))
             ->with(['seal', 'evidences' => fn ($evidences) => $evidences->orderBy('id')])
             ->orderBy('id')

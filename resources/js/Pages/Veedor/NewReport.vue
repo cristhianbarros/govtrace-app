@@ -12,6 +12,7 @@ import EvidencePicker from '@/Components/EvidencePicker.vue';
 import { cannotUpload } from '@/lib/evidence/attachments.js';
 import { capturePosition, formatMeters, imprecisionMessage, isPreciseEnough } from '@/lib/geolocation.js';
 import { sendReport } from '@/services/api.js';
+import { errorMessages } from '@/services/errors.js';
 
 const CLASSIFICATIONS = ['Avance', 'Retraso', 'Abandono'];
 const MAX_COMMENT_LENGTH = 500;
@@ -81,19 +82,10 @@ async function submit() {
         startOver();
         sent.value = true;
     } catch (error) {
-        serverErrors.value = messagesFrom(error);
+        serverErrors.value = errorMessages(error);
     } finally {
         sending.value = false;
     }
-}
-
-/** Los motivos del 422, con las palabras del dominio; si no hubo respuesta, la conexión. */
-function messagesFrom(error) {
-    const errors = error?.response?.data?.errors;
-    if (errors) {
-        return [...new Set(Object.values(errors).flat())];
-    }
-    return [error?.response?.data?.message ?? 'No se pudo enviar el reporte. Revise su conexión y vuelva a intentarlo.'];
 }
 
 function startOver() {

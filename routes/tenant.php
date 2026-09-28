@@ -3,12 +3,17 @@
 declare(strict_types=1);
 
 use App\Domain\Organization\Roles;
+use App\Http\Controllers\Tenant\ContractListController;
 use App\Http\Controllers\Tenant\ContractSearchController;
 use App\Http\Controllers\Tenant\EditorialController;
+use App\Http\Controllers\Tenant\EvidenceFileController;
 use App\Http\Controllers\Tenant\InviteObserverController;
 use App\Http\Controllers\Tenant\LoginController;
+use App\Http\Controllers\Tenant\ObserverController;
 use App\Http\Controllers\Tenant\ReportController;
 use App\Http\Controllers\Tenant\SetPasswordController;
+use App\Http\Controllers\Tenant\TerritoryController;
+use App\Http\Controllers\Tenant\WorksiteController;
 use App\Http\Controllers\Tenant\WorksiteLocationController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -55,7 +60,8 @@ Route::middleware([
 
     // Placeholders hasta que it. 18/it. 19 construyan los paneles reales.
     Route::middleware('auth:tenant')->group(function () {
-        Route::get('/organization/dashboard', fn () => 'Organization Dashboard')->name('organization.dashboard');
+        // El panel del Administrador abre en la bandeja de entrada (it. 18).
+        Route::get('/organization/dashboard', fn () => redirect('/admin/inbox'))->name('organization.dashboard');
         Route::get('/veedor/dashboard', fn () => 'Veedor Dashboard')->name('veedor.dashboard');
 
         // US-005: solo el Administrador de Organización invita veedores.
@@ -71,6 +77,18 @@ Route::middleware([
             Route::post('/reports/{report}/publish', [EditorialController::class, 'publish'])->whereNumber('report')->name('reports.publish');
             Route::post('/reports/{report}/reject', [EditorialController::class, 'reject'])->whereNumber('report')->name('reports.reject');
             Route::post('/reports/{report}/withdraw', [EditorialController::class, 'withdraw'])->whereNumber('report')->name('reports.withdraw');
+            Route::get('/evidences/{evidence}/file', [EvidenceFileController::class, 'show'])->whereNumber('evidence')->name('evidences.file');
+
+            // El panel del Administrador (it. 18): cada pantalla pide sus datos al JSON de abajo.
+            foreach (['inbox' => 'Admin/Inbox', 'observers' => 'Admin/Observers', 'territory' => 'Admin/Territory', 'contracts' => 'Admin/Contracts', 'worksites' => 'Admin/Worksites'] as $screen => $component) {
+                Route::get("/admin/{$screen}", fn () => Inertia::render($component))->name("admin.{$screen}");
+            }
+            Route::get('/observers', [ObserverController::class, 'index'])->name('observers.index');
+            Route::get('/territory', [TerritoryController::class, 'show'])->name('territory.show');
+            Route::get('/territory/search', [TerritoryController::class, 'search'])->name('territory.search');
+            Route::put('/territory', [TerritoryController::class, 'update'])->name('territory.update');
+            Route::get('/contracts', ContractListController::class)->name('contracts.index');
+            Route::get('/worksites', [WorksiteController::class, 'index'])->name('worksites.index');
         });
 
         // US-008: solo el Veedor de Campo crea reportes, desde la PWA (it. 16).

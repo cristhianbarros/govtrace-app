@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Tenant;
 
 use App\Application\Publication\EditorialDecisions;
 use App\Application\Publication\ReviewInbox;
+use App\Domain\Reports\EditorialStatus;
 use App\Domain\Reports\Exceptions\EditorialDecisionRejected;
 use App\Domain\Reports\Report;
 use App\Http\Controllers\Controller;
@@ -19,9 +20,12 @@ use Illuminate\Validation\ValidationException;
  */
 class EditorialController extends Controller
 {
-    public function inbox(): JsonResponse
+    /** ?status=published lists the ones that can be withdrawn; by default, the hidden ones. */
+    public function inbox(Request $request): JsonResponse
     {
-        return response()->json(['data' => (new ReviewInbox)->handle()]);
+        $status = $request->query('status') === 'published' ? EditorialStatus::Published : EditorialStatus::Hidden;
+
+        return response()->json(['data' => (new ReviewInbox)->handle($status)]);
     }
 
     public function publish(Request $request, int $report): JsonResponse
