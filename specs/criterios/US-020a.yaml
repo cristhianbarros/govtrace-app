@@ -1,15 +1,18 @@
 story_id: "US-020a"
-titulo_historia: "Como Sistema quiero desplegar el Smart Contract de sellado en Polygon con control de acceso (solo RELAYER_ROLE puede sellar) para que ningún tercero pueda registrar sellos falsos"
+titulo_historia: "Como Sistema quiero desplegar el Smart Contract de sellado en Stellar (Soroban) con control de acceso (solo la cuenta selladora puede sellar) para que ningún tercero pueda registrar sellos falsos"
 bloque: "B7 — Sellado"
+# Pivote a Stellar (2026-09-28): reemplaza la versión Solidity/Polygon con RELAYER_ROLE.
 criterios_aceptacion:
   escenarios_exito:
-    - "El Smart Contract de sellado está desplegado en Polygon y solo la cuenta con RELAYER_ROLE puede invocar la función de sellado (R-BLK-03)"
-    - "El contrato almacena el hash sellado (64 caracteres hex / bytes32) junto al ID de obra y el timestamp (R-BLK-02)"
+    - "El Smart Contract de sellado (Soroban, Rust) está desplegado en Stellar; al desplegarse fija la cuenta selladora, y solo esa cuenta puede invocar la función de sellado (require_auth, R-BLK-03)"
+    - "El contrato guarda la raíz (BytesN<32>) junto a la referencia de la obra (BytesN<32>) y la hora y el número del ledger en que se selló; la hora la pone la red, no el servidor (R-BLK-02)"
   validaciones_reglas:
     - "Un hash ya registrado no puede volver a registrarse: el contrato rechaza el duplicado con 'Hash ya registrado'"
-    - "Una billetera sin RELAYER_ROLE que intente sellar es rechazada on-chain"
+    - "Una cuenta distinta de la selladora que intente sellar es rechazada por la red"
+    - "El contrato no expone operaciones para modificar ni borrar sellos, ni para reemplazar su código (sin upgrade): lo desplegado es inmutable (R-SA-01)"
+    - "Los sellos viven en almacenamiento persistente de Soroban y el contrato extiende su vigencia (TTL) al sellar; un sello archivado no se pierde y la red lo restaura (Protocolo 23)"
   manejo_errores:
-    - {caso: "Se intenta registrar un hash que ya existe (p. ej. reenvío malicioso del mismo reporte)", resultado: "La blockchain rechaza la transacción con 'Hash ya registrado' y el servidor descarta el duplicado"}
+    - {caso: "Se intenta registrar un hash que ya existe (p. ej. reenvío malicioso del mismo reporte)", resultado: "La red rechaza la invocación con 'Hash ya registrado' y el servidor descarta el duplicado"}
   requisitos_ux: []
   casos_edge: []
 validacion_smart:
