@@ -6,7 +6,7 @@ criterios_aceptacion:
     - "El veedor selecciona el contrato en la PWA y toca 'Nuevo Reporte'; el sistema solicita automáticamente el GPS"
     - "El veedor elige la clasificación del reporte, escribe un comentario opcional y adjunta los archivos (US-009)"
     - "Se envía el payload completo: archivos + hashes locales + lat/lng + clasificación + comentario"
-    - "Al terminar, la pantalla muestra: \"Reporte recibido con éxito. Su evidencia ha sido encolada para sellado inmutable en la red Polygon.\""
+    - "Al terminar, la pantalla muestra: \"Reporte recibido con éxito. Su evidencia ha sido encolada para sellado inmutable en la red Stellar.\""
     - "Si la obra no tiene ubicación, la coordenada de este reporte se convierte en la ubicación oficial de la obra (First-Touch, R-GEO-01), guardada en la ficha de obra de GovTrace"
   validaciones_reglas:
     - "Clasificación obligatoria, con uno de estos valores: Avance, Retraso, Abandono"

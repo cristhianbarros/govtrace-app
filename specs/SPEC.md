@@ -6,7 +6,7 @@
 
 ## Resumen del producto
 
-Plataforma Open Source y Mobile-First de veeduría ciudadana, multi-tenant (B2B2C). Cada **organización** (ONG, Cámara de Comercio, veeduría) es un tenant, con subdominio, veedores y evidencias propios. Los **contratos de obra pública** se sincronizan desde SECOP II a una base central compartida. Los veedores capturan fotos o PDF geolocalizados. Cada reporte se **sella en Polygon** (una raíz de Merkle por reporte) a través de un relayer gestionado, de forma invisible para el usuario. Cualquier persona puede **verificar** una evidencia en su navegador contra la blockchain, sin depender de GovTrace.
+Plataforma Open Source y Mobile-First de veeduría ciudadana, multi-tenant (B2B2C). Cada **organización** (ONG, Cámara de Comercio, veeduría) es un tenant, con subdominio, veedores y evidencias propios. Los **contratos de obra pública** se sincronizan desde SECOP II a una base central compartida. Los veedores capturan fotos o PDF geolocalizados. Cada reporte se **sella en Stellar** (una raíz de Merkle por reporte) en un Smart Contract de Soroban; GovTrace paga las comisiones de red (fee bump), de forma invisible para el usuario. Cualquier persona puede **verificar** una evidencia en su navegador contra la blockchain, sin depender de GovTrace.
 
 ### Decisiones de arquitectura confirmadas
 
@@ -16,18 +16,22 @@ Plataforma Open Source y Mobile-First de veeduría ciudadana, multi-tenant (B2B2
 | Participación | Modelo **cerrado**: solo veedores invitados por una organización aportan evidencia |
 | Obra vs. contrato | El contrato SECOP es inmutable; GovTrace mantiene su propia ficha de obra (puede agrupar varios contratos) |
 | Ubicación de la obra | SECOP no trae coordenadas → *First-Touch Anchoring* (el primer reporte ancla la obra), corregible por el Admin (US-035) |
-| Cadena de custodia | Foto optimizada (1920 px, JPEG 80 %) y sin EXIF → SHA-256 en el teléfono → el servidor verifica y calcula su propia raíz de Merkle → Smart Contract con `RELAYER_ROLE` → llave del Relayer en KMS/relayer gestionado |
+| Cadena de custodia | Foto optimizada (1920 px, JPEG 80 %) y sin EXIF → SHA-256 en el teléfono → el servidor verifica y calcula su propia raíz de Merkle → Smart Contract de Soroban que solo acepta la firma de la cuenta selladora → la cuenta patrocinadora de GovTrace paga la comisión con fee bump |
 | Publicación | Toda evidencia nace **Oculta**; el Admin publica una por una, rechaza con motivo o retira dejando lápida. Nada se borra físicamente |
 | Verificación | Validador en el navegador (contextual, libre o con prueba adjunta) + script independiente; cada descarga incluye su prueba de inclusión |
 | Privacidad | Coordenadas públicas aproximadas (~100 m), seudónimo del veedor, PDF sin metadatos; rostros y placas no se difuminan (riesgo aceptado) |
-| Red | Testnet de Polygon en desarrollo y pruebas; red principal en producción |
+| Blockchain | **Stellar**, con Smart Contracts en **Soroban (Rust)**. Reemplaza EVM/Polygon desde el 2026-09-28 (el proyecto participa en Stellar Apex) |
+| Red | Red local *standalone* de Stellar en Docker (Stellar CLI) para desarrollo; testnet de Stellar para pruebas y la prueba de humo; red principal (pubnet) en producción |
+| Comisiones | Sin proveedores de relayer de terceros: el backend patrocina cada transacción con *fee bump* (Stellar lo soporta de forma nativa) desde una cuenta patrocinadora con XLM |
 | Mapas | OpenStreetMap |
+
+> **Pivote a Stellar (2026-09-28).** Las reglas de esta SPEC ya están redactadas para Stellar. Algunas historias posteriores de EPIC-003 y relacionadas todavía hablan de Polygon, POL, gas o relayer: US-020b, US-004, US-021, US-022, US-023, US-024, US-025, US-038-CFG y US-046-INT. **Ahí rige el ecosistema Stellar**, y cada una se ajusta, con sus Gherkin y criterios, al abrir su iteración. El inventario está en `specs/PLAN.md` → "Pivote a Stellar".
 
 ## Actores
 
 | Actor | Rol |
 |---|---|
-| Super Administrador | Plataforma global: da de alta organizaciones, datos legales, parámetros, sincronización, Relayer y costos |
+| Super Administrador | Plataforma global: da de alta organizaciones, datos legales, parámetros, sincronización, cuenta patrocinadora (XLM) y costos |
 | Administrador de Organización | Su equipo de veedores, su territorio, revisión y publicación de evidencias, fichas de obra |
 | Veedor de Campo | Captura y envía reportes de las obras de su territorio, desde el teléfono |
 | Verificador Público | Ciudadano o periodista **sin cuenta**: mapa, vista de obra, validador, descargas y datos abiertos |
@@ -58,7 +62,7 @@ Plataforma Open Source y Mobile-First de veeduría ciudadana, multi-tenant (B2B2
 | US-017 | Como **Verificador Público** quiero **ver los datos clave del contrato oficial (entidad contratante, contratista, valor total, plazo y enlace al SECOP) en la vista de la obra** para **contrastar la magnitud de los fondos públicos con la evidencia ciudadana** | EPIC-004 | discovery_inicial | P1 |
 | US-018 | Como **Veedor de Campo** quiero **que la aplicación guarde reportes y evidencias localmente cuando no tengo señal y los sincronice automáticamente al recuperar la conectividad** para **garantizar cero pérdida de datos** | EPIC-002 | discovery_inicial | P3 |
 | US-019 | Como **Veedor de Campo** quiero **que el sistema detecte mis coordenadas y me sugiera primero las obras en un radio de proximidad (ej. 500 m)** para **minimizar el tiempo de búsqueda y evitar errores de asignación** | EPIC-002 | discovery_inicial | P3 |
-| US-020a | Como **Sistema** quiero **desplegar el Smart Contract de sellado en Polygon con control de acceso (solo RELAYER_ROLE puede sellar)** para **que ningún tercero pueda registrar sellos falsos** | EPIC-003 | discovery_inicial | P1 |
+| US-020a | Como **Sistema** quiero **desplegar el Smart Contract de sellado en Stellar (Soroban) con control de acceso (solo la cuenta selladora puede sellar)** para **que ningún tercero pueda registrar sellos falsos** | EPIC-003 | discovery_inicial | P1 |
 | US-020b | Como **Sistema** quiero **encolar el hash SHA-256 validado de cada evidencia y registrarlo en el Smart Contract vía el relayer gestionado, que firma y paga el gas** para **garantizar la inmutabilidad sin fricción para el usuario** | EPIC-003 | discovery_inicial | P1 |
 | US-021 | Como **Sistema** quiero **aplicar reintentos con retraso exponencial si el nodo RPC falla, hay congestión o la transacción queda pending/dropped** para **que ningún reporte quede huérfano de su sello** | EPIC-003 | discovery_inicial | P2 |
 | US-022 | Como **Super Administrador** quiero **ver el saldo MATIC/POL de la billetera del Relayer y recibir alertas (Slack/Email) cuando caiga bajo un umbral** para **recargar fondos antes de que se detenga el sellado** | EPIC-003 | discovery_inicial | P3 |
@@ -105,18 +109,18 @@ Plataforma Open Source y Mobile-First de veeduría ciudadana, multi-tenant (B2B2
 
 ### Organizaciones y roles (Super Admin / Admin de Organización / Veedor)
 
-- **R-SA-01** — No puede modificar, borrar ni falsificar hashes de evidencias o contratos ya sellados en Polygon — US-003b, US-020a
+- **R-SA-01** — No puede modificar, borrar ni falsificar hashes de evidencias o contratos ya sellados en Stellar — US-003b, US-020a
 - **R-SA-02** — (precisada) El Super Admin solo crea reportes en una organización si su Admin lo autoriza en el sistema, con registro (US-042-SEC) — US-042-SEC
 - **R-SA-03** — El subdominio de cada organización lo asigna el Super Administrador al darla de alta (US-001), evitando colisiones — US-001
 - **R-TA-01** — No puede dar de alta otras organizaciones (exclusivo del Super Administrador) — US-005
-- **R-TA-02** — No puede alterar ni borrar evidencias ya selladas en Polygon — US-037
+- **R-TA-02** — No puede alterar ni borrar evidencias ya selladas en Stellar — US-037
 - **R-TA-03** — No puede editar el NIT ni los datos legales de validación inicial; solo el Super Administrador, a solicitud formal — US-007, US-011
 - **R-USR-01** — Un mismo correo puede ser veedor en varias organizaciones: una cuenta independiente por organización — US-005
 - **R-USR-02** — El veedor ve 'Rechazada' con el motivo del Administrador (Rechazar exige motivo); 'En Revisión' = solo Oculto — US-010, US-036
 - **R-USR-03** — Los reportes offline de un veedor cuya organización fue suspendida se conservan y se envían si se reactiva dentro de los 7 días — US-003a
 - **R-VC-01** — No puede invitar, aprobar ni gestionar cuentas de otros usuarios de la organización — US-041-USR
 - **R-VC-02** — No puede ver ni modificar reportes creados por otros veedores (en el MVP cada uno gestiona sus propios reportes) — US-010
-- **R-VC-03** — No tiene acceso a la configuración ni a los reportes de consumo de gas de la organización — US-004, US-007
+- **R-VC-03** — No tiene acceso a la configuración ni a los reportes de costos de sellado de la organización — US-004, US-007
 - **R-VC-04** — Solo puede reportar sobre obras dentro del territorio (ciudades/departamentos) configurado por su organización — US-008, US-012, US-016, US-019
 
 ### Contratos SECOP II
@@ -132,11 +136,12 @@ Plataforma Open Source y Mobile-First de veeduría ciudadana, multi-tenant (B2B2
 
 ### Sellado en blockchain
 
-- **R-BLK-01** — Ningún Veedor ni Verificador instala wallets, maneja llaves privadas ni ve conceptos de gas; si aparece un prompt criptográfico, es un fallo de UX — US-020b
-- **R-BLK-02** — El Smart Contract solo recibe [ID_Obra (uint256), Hash_Evidencia (bytes32), Timestamp (uint256)]; nunca imágenes, PDFs, nombres ni textos largos — US-020a, US-020b
-- **R-BLK-03** — La función de sellado del Smart Contract no es pública: solo la puede invocar el rol RELAYER_ROLE (AccessControl de OpenZeppelin); cualquier otra billetera es rechazada on-chain — US-020a
-- **R-BLK-04** — La llave privada del Relayer nunca se guarda en el servidor ni en .env: la custodia un servicio de relayer/KMS gestionado; Laravel solo envía la orden por API — US-020b
+- **R-BLK-01** — Ningún Veedor ni Verificador crea cuentas de Stellar, instala wallets (p. ej. Freighter), maneja llaves ni paga o ve comisiones en XLM. GovTrace patrocina cada transacción con *fee bump*: su cuenta patrocinadora paga la comisión completa, incluida la de recursos de Soroban. Si aparece un prompt criptográfico, es un fallo de UX — US-020b
+- **R-BLK-02** — El Smart Contract de Soroban solo recibe [referencia de la obra (`BytesN<32>`), raíz de Merkle (`BytesN<32>`)]; la hora la pone la red (hora y número del ledger en que se selló), no el servidor. Nunca recibe imágenes, PDFs, nombres ni textos largos. La referencia de la obra es el SHA-256 de «organización:ficha», única entre organizaciones y sin datos legibles — US-020a, US-020b
+- **R-BLK-03** — La función de sellado no es pública: exige la autorización (`require_auth`) de la cuenta selladora que el contrato fija al desplegarse; cualquier otra cuenta es rechazada por la red. El contrato no ofrece ninguna operación para modificar ni borrar sellos, ni para reemplazar su propio código (sin `upgrade`): lo desplegado es inmutable — US-020a
+- **R-BLK-04** — La cuenta selladora (firma la invocación) y la patrocinadora (paga la comisión con fee bump, tiene los XLM) son distintas; no hay proveedores de relayer de terceros. Ninguna llave secreta está en el repositorio ni en `.env.example`; en producción se custodian fuera del código de la aplicación (mecanismo en la decisión D11 de `specs/PLAN.md`) — US-020b
 - **R-BLK-05** — Se sella una raíz de Merkle por reporte; cada archivo conserva su prueba de inclusión, que se publica para que el navegador del Verificador recomponga la raíz y la compare con la cadena — US-024
+- **R-BLK-06** — Stellar confirma cada transacción de forma definitiva al cerrar el ledger (consenso SCP, sin reorganizaciones): un sello está "Sellado" cuando su transacción queda incluida con éxito en un ledger cerrado. No hacen falta confirmaciones adicionales ni auditorías de reorganización — US-020b
 
 ### Verificación pública
 
@@ -166,8 +171,8 @@ Plataforma Open Source y Mobile-First de veeduría ciudadana, multi-tenant (B2B2
 
 ### Configuración
 
-- **R-CFG-01** — Red de sellado: testnet de Polygon en desarrollo y pruebas; red principal (mainnet) al salir a producción — (infra)
-- **R-CFG-02** — Fijos en el código: precisión GPS 50 m, archivos por reporte (5 fotos o 1 PDF, 10 MB), vigencia offline 7 días. Configurables por el Super Admin (globales): geocerca 500 m, ventana 12 meses, invitación 48 h, umbral 5 POL, sincronización 02:00. Ninguno es configurable por organización — US-038-CFG
+- **R-CFG-01** — Red de sellado: Stellar. Red local *standalone* en Docker para desarrollo, testnet para pruebas y la prueba de humo, red principal (pubnet) al salir a producción — (infra)
+- **R-CFG-02** — Fijos en el código: precisión GPS 50 m, archivos por reporte (5 fotos o 1 PDF, 10 MB), vigencia offline 7 días. Configurables por el Super Admin (globales): geocerca 500 m, ventana 12 meses, invitación 48 h, umbral de saldo de la cuenta patrocinadora (en XLM, valor por definir — D12 de `specs/PLAN.md`), sincronización 02:00. Ninguno es configurable por organización — US-038-CFG
 
 ### Auditoría e integridad
 
@@ -185,10 +190,10 @@ Plataforma Open Source y Mobile-First de veeduría ciudadana, multi-tenant (B2B2
 
 ### Integraciones
 
-- **R-INT-01** — Si el relayer gestionado no responde, el sellado espera y reintenta (US-021) — US-021
+- **R-INT-01** — Si la red de Stellar (su RPC) no responde, o la cuenta patrocinadora no tiene saldo, el sellado espera y reintenta (US-021) — US-021
 - **R-INT-02** — Mapas con OpenStreetMap y teselas abiertas — US-027, US-035
 - **R-INT-03** — Si el API de precios falla, el reporte de costos usa el último precio conocido con su fecha; el municipio SECOP se empareja con DIVIPOLA normalizado y lo no emparejado se descarta y reporta — US-004, US-013, US-014
-- **R-INT-04** — Cada descarga incluye la prueba de inclusión para verificar solo contra Polygon, sin depender de GovTrace — US-024, US-026, US-046-INT
+- **R-INT-04** — Cada descarga incluye la prueba de inclusión para verificar solo contra Stellar, sin depender de GovTrace — US-024, US-026, US-046-INT
 - **R-INT-05** — Una ficha de obra puede agrupar varios contratos de tipo Obra (lo decide el Admin de Organización) — US-045-INT
 
 ### Mantenimiento
@@ -208,7 +213,7 @@ Plataforma Open Source y Mobile-First de veeduría ciudadana, multi-tenant (B2B2
 
 ### Estrategia de pruebas
 
-- **R-TST-01** — Sellado: pruebas unitarias con blockchain simulada (mock) + prueba de humo contra la testnet antes de cada salida a producción — (CI)
+- **R-TST-01** — Sellado: el Smart Contract se prueba con el entorno de pruebas de Soroban (`cargo test`); el backend, contra la red local *standalone*; y hay una prueba de humo contra la testnet de Stellar antes de cada salida a producción — (CI)
 - **R-TST-02** — SECOP II: pruebas con respuestas grabadas (fixtures), incluidas variantes raras de nombres de municipio — (CI)
 - **R-TST-03** — Captura y modo offline: pruebas de componentes (Vitest) + pruebas de extremo a extremo en navegador real simulando pérdida de señal — (CI)
 - **R-TST-04** — Toda regla de comportamiento tiene su escenario automático que la viola a propósito; las reglas operativas (respaldo, red, estrategia de pruebas) tienen una verificación de infraestructura o CI (redactada de nuevo en /plan) — (CI)
@@ -318,7 +323,7 @@ Regla común: el diseño sin prefijo es el del teléfono y solo `md:` / `lg:` es
   - libre, con resultado Auténtico o No encontrado;
   - con prueba adjunta.
 
-  Además, estados de archivo mayor a 10 MB y de error de conexión con Polygon.
+  Además, estados de archivo mayor a 10 MB y de error de conexión con la red de Stellar.
 - **Estadísticas y datos abiertos** (US-051-RPT, US-052-RPT).
 
 ## Criterios de aceptación (YAML)

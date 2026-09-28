@@ -16,7 +16,7 @@ Característica: Crear un reporte de evidencia con ubicación GPS
     Dado que mi GPS indica una posición a 120 m de la obra con precisión de 15 m
     Cuando creo un reporte del contrato "CO1.PCCNTR.1234567" clasificado como "Retraso" con el comentario "Obra detenida hace 2 meses" y 2 fotos
     Entonces el reporte se envía con los archivos, sus hashes, mi latitud y longitud, la clasificación y el comentario
-    Y veo el mensaje "Reporte recibido con éxito. Su evidencia ha sido encolada para sellado inmutable en la red Polygon."
+    Y veo el mensaje "Reporte recibido con éxito. Su evidencia ha sido encolada para sellado inmutable en la red Stellar."
 
   @complexity:high
   Escenario: El primer reporte fija la ubicación de una obra sin ubicación

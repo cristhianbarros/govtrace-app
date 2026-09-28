@@ -19,25 +19,27 @@
 
 ### Decisiones técnicas
 
-✅ Confirmadas todas, **salvo D5** (proveedor del relayer gestionado), que sigue abierta y hace falta antes de la iteración 14.
+✅ Confirmadas D1 a D10. D4 y D5 se reformularon por el **pivote a Stellar** (2026-09-28, ver la sección "Pivote a Stellar"). Siguen abiertas **D11** (custodia de las llaves, antes de la it. 14) y **D12** (umbral de saldo en XLM, antes de la it. 21).
 
 | # | Tema | Propuesta | Se necesita en |
 |---|---|---|---|
 | D1 | Cola de trabajos | Driver `database`, con un servicio `worker` en el docker-compose base. Sin Horizon ni Redis en el MVP. | it. 1 |
 | D2 | Archivos de evidencia | LocalStack (compatible con S3) en docker-compose para desarrollo y CI; S3 en producción. *Ajustada en it. 1: MinIO ya no se descarga sin login desde 2025.* | it. 1 |
 | D3 | Roles y permisos | `spatie/laravel-permission`, preferencia expresada en el discovery | it. 4 |
-| D4 | Smart Contract | Solidity con Foundry (`forge test`), y Anvil como blockchain local en un perfil de docker-compose (R-TST-01) | it. 12 |
-| D5 | Relayer gestionado (R-BLK-04) | **Elegir proveedor:** Gelato, AWS KMS u otro. Verificar antes si OpenZeppelin Defender sigue operando. | it. 14 |
+| D4 | Smart Contract | **Soroban (Rust, `soroban-sdk`)** en `contracts/sealing/`, probado con el entorno de pruebas del SDK (`cargo test`, sin red). Red local *standalone* de Stellar en un perfil `stellar` de docker-compose: la imagen `stellar/quickstart` que levanta `stellar container start local`, con RPC y friendbot. Rust y Stellar CLI corren en un contenedor de herramientas, así que el host sigue necesitando solo Docker y `make` (R-TST-01). *Reemplaza Solidity/Foundry/Anvil (pivote a Stellar).* | it. 12 |
+| D5 | Comisiones de red (R-BLK-01, R-BLK-04) | ✅ **Resuelta: sin proveedores de terceros.** El backend patrocina cada transacción con *fee bump*, nativo de Stellar. La cuenta **selladora** firma la invocación (`require_auth`); la cuenta **patrocinadora** de GovTrace, que tiene los XLM, paga la comisión completa, incluida la de recursos de Soroban. | it. 13-14 |
 | D6 | Árbol de Merkle | Esquema único y documentado (SHA-256, pares ordenados), implementado en PHP en el servidor y en JS en el validador y el script, con vectores de prueba compartidos | it. 13 |
 | D7 | Seudónimo del veedor (R-PRIV-03) | HMAC del ID del veedor con un secreto del servidor, más una tabla seudónimo→veedor con retención de 5 años (R-MNT-03) | it. 13 |
 | D8 | Mapas | Leaflet con teselas de OpenStreetMap (R-INT-02) | it. 18 |
 | D9 | Frontend | Se mantiene JavaScript, como está la plomería. Filament y TypeScript no se usan salvo que decidas lo contrario. | it. 16 |
+| D11 | Custodia de las llaves en producción (R-BLK-04) | **Abierta.** Con D5, Laravel firma: la invocación con la selladora y el fee bump con la patrocinadora. La regla vieja ("la llave nunca en el servidor; la custodia un relayer gestionado") ya no se cumple tal cual. Opciones: (a) el secreto lo inyecta en tiempo de ejecución un gestor de secretos, nunca en el repositorio ni en `.env.example`; (b) firma remota Ed25519, sin que la llave salga del servicio (p. ej. HashiCorp Vault Transit). En desarrollo, cuentas locales creadas con friendbot. | antes de it. 14 |
+| D12 | Umbral de saldo de la cuenta patrocinadora (US-021, US-022, US-038-CFG) | **Abierta.** El parámetro sembrado en la it. 6 es `relayer_balance_alert_threshold_pol = 5` (POL). Pasa a XLM con otro nombre y otro valor, a definir con la comisión real por sello que mida la it. 14. | it. 21 |
 | D10 | Proximidad (US-019) | Haversine en SQL, sin PostGIS | it. 31 |
 
 ### Convenciones de pruebas
 - **Backend:** Pest en `tests/Feature/<Épica>/US-XXX…Test.php`, con un test por `Escenario` y el mismo nombre. Cada `Esquema` es un test con `->with()` (dataset).
 - **Frontend:** Vitest junto al componente, un test por escenario de UI.
-- **Smart Contract:** `forge test` en `contracts/`.
+- **Smart Contract:** `cargo test` en `contracts/sealing/`, con el entorno de pruebas de Soroban (sin red); los tests llevan el nombre del escenario, igual que en Pest.
 - **SECOP:** respuestas grabadas (fixtures) de la API SODA (R-TST-02). **Nunca** se llama a la API real en `make test`.
 - Un Done-when como "US-XXX (N casos)" significa que **todos** los casos de `features/US-XXX.feature` tienen su test y está en verde.
 
@@ -300,35 +302,60 @@ Con esto US-016 pasa de 11 a 17 casos, US-034 de 4 a 6 y US-008 de 22 a 25, todo
 
 **Cubre:** US-009 (servidor), US-035 · R-HASH-01 (servidor), R-PRIV-05.
 
-### Iteración 12 — Smart Contract de sellado
-**Entregable:** contrato Solidity en `contracts/` con AccessControl (`RELAYER_ROLE`), rechazo de duplicados y sin operaciones de modificación ni borrado (D4). Incluye script de despliegue a Anvil y a testnet.
+### Iteración 12 — Smart Contract de sellado en Soroban
+*Reformulada el 2026-09-28 por el pivote a Stellar (Stellar Apex). Reemplaza la versión Solidity/Foundry/Anvil.*
+
+**Entregable:**
+- contrato Soroban en Rust, en `contracts/sealing/` (`soroban-sdk`):
+  - `__constructor(sealer: Address)` fija la cuenta selladora al desplegar (R-BLK-03);
+  - `seal(worksite: BytesN<32>, root: BytesN<32>)`:
+    - exige `sealer.require_auth()`;
+    - rechaza una raíz ya registrada con el error `HashAlreadyRegistered` ("Hash ya registrado");
+    - guarda `{obra, hora del ledger, número del ledger}` con la raíz como clave, en almacenamiento persistente, y extiende su TTL;
+    - emite el evento `sealed` (R-BLK-02);
+  - `get_seal(root) -> Option<Seal>` para leerlo; lo usarán el validador y el script (it. 23-27);
+  - sin funciones para modificar ni borrar sellos, ni `upgrade`: el código desplegado es inmutable (R-SA-01).
+- perfil `stellar` en `docker-compose` con dos piezas:
+  - la red local *standalone* (imagen `stellar/quickstart`, con RPC y friendbot);
+  - un contenedor de herramientas con Rust y Stellar CLI.
+- `make stellar-up`, `make contract-test` y `make contract-deploy`. El último:
+  - compila el WASM;
+  - crea con friendbot las cuentas selladora y patrocinadora de desarrollo;
+  - despliega con el constructor y deja `STELLAR_SEALING_CONTRACT_ID` en `.env`.
+
 **Done-when:**
-- US-020a (4 casos) como `forge test` en verde;
-- `make` tiene un target que despliega en Anvil y deja la dirección en la configuración;
-- el Jenkinsfile corre `forge test`.
+- US-020a (4 casos) como `cargo test` en verde, con el entorno de pruebas de Soroban; el test fija la hora y el número del ledger;
+- un test comprueba que la interfaz exportada del contrato es exactamente `__constructor`, `seal` y `get_seal` (el escenario "nadie puede modificar ni borrar");
+- `make contract-deploy` despliega en la red local, y un `stellar contract invoke … -- get_seal` responde;
+- el Jenkinsfile corre `cargo test` del contrato.
 
-**Cubre:** US-020a · R-BLK-02, R-BLK-03, R-SA-01, R-TST-01 (parte blockchain simulada).
+"El servidor descarta el duplicado" (tercer escenario de US-020a) pasa del lado de Laravel: se prueba en la it. 13, cuando el backend empiece a sellar.
 
-### Iteración 13 — Sellado por raíz de Merkle (relayer simulado)
+**Cubre:** US-020a · R-BLK-02, R-BLK-03, R-SA-01, R-TST-01 (contrato).
+
+### Iteración 13 — Sellado por raíz de Merkle (red local)
 **Entregable:**
 - árbol de Merkle en el servidor, con una hoja por archivo más una de metadatos con seudónimo (D6, D7);
 - pruebas de inclusión guardadas;
-- estados Recibida → En Cola → Transmitiendo → Sellada (3 confirmaciones);
-- pausa y alerta por falta de saldo;
-- auditoría nocturna de reorganizaciones;
-- interfaz `SealingRelayer` con una implementación falsa que firma contra Anvil.
+- estados Recibida → En Cola → Transmitiendo → Sellada. "Sellada" es incluida con éxito en un ledger cerrado: Stellar no reorganiza, así que no hay confirmaciones extra ni auditoría de reorganizaciones (R-BLK-06);
+- la transacción la firma la selladora y la envuelve en *fee bump* la patrocinadora (D5);
+- pausa y alerta por falta de saldo de la patrocinadora;
+- interfaz `SealingNetwork`, implementada contra la red local *standalone*. El SDK de Stellar para PHP se confirma al abrir la iteración; `soneso/stellar-php-sdk` soporta Soroban y fee bump.
 
 **Done-when:**
-- US-020b (8 casos) en verde contra Anvil;
-- vectores de prueba de Merkle compartidos (`tests/fixtures/merkle/*.json`) usados por PHP y por JS.
+- US-020b en verde contra la red local. Su Gherkin se ajusta a Stellar al abrir la iteración: sin las 3 confirmaciones ni la auditoría de reorganizaciones, y con fee bump y XLM en vez de relayer y gas;
+- vectores de prueba de Merkle compartidos (`tests/fixtures/merkle/*.json`), usados por PHP y por JS;
+- el servidor descarta un duplicado que el contrato rechaza con "Hash ya registrado" (US-020a).
 
-**Cubre:** US-020b · R-BLK-01, R-BLK-05, R-SEC-06, R-PRIV-03.
+**Cubre:** US-020b · R-BLK-01, R-BLK-04, R-BLK-05, R-BLK-06, R-SEC-06, R-PRIV-03.
 
-### Iteración 14 — Relayer gestionado real (testnet)
-**Entregable:** adaptador del proveedor elegido en D5. La llave nunca está en el servidor ni en `.env`.
+### Iteración 14 — Sellado en la testnet de Stellar
+**Entregable:** la firma de las cuentas selladora y patrocinadora según D11, y la configuración de la testnet.
+
 **Done-when:**
-- prueba de humo (`make smoke-testnet`): un reporte de prueba llega a "Sellada" en la testnet de Polygon con 3 confirmaciones;
-- una revisión automática confirma que ni el repositorio ni `.env.example` contienen claves privadas.
+- prueba de humo (`make smoke-testnet`): un reporte de prueba llega a "Sellada" en la testnet de Stellar, con la comisión pagada por la cuenta patrocinadora (fee bump);
+- una revisión automática confirma que ni el repositorio ni `.env.example` contienen llaves secretas de Stellar (empiezan con `S` y tienen 56 caracteres);
+- se mide la comisión real por sello, el insumo de D12.
 
 **Cubre:** R-BLK-04, R-CFG-01, R-TST-01 (prueba de humo en testnet).
 
@@ -407,7 +434,7 @@ Con esto US-016 pasa de 11 a 17 casos, US-034 de 4 a 6 y US-008 de 22 a 25, todo
 
 ### Iteración 22 — Robustez del sellado y monitoreo
 **Entregable:**
-- reintentos con backoff hasta 5, "Falla de Sellado" con banner, alerta de cola estancada a las 2 h y relayer caído;
+- reintentos con backoff hasta 5, "Falla de Sellado" con banner, alerta de cola estancada a las 2 h y red de Stellar (RPC) caída o patrocinadora sin saldo (US-021 se ajusta a Stellar al abrir la iteración);
 - panel de salud de SECOP;
 - monitoreo externo de caídas de más de 5 minutos, por Email y Webhook.
 
@@ -423,7 +450,7 @@ Con esto US-016 pasa de 11 a 17 casos, US-034 de 4 a 6 y US-008 de 22 a 25, todo
 - descarga del archivo exacto con su prueba de inclusión;
 - script de verificación en `tools/verify/`, que consulta todas las direcciones históricas del contrato.
 
-**Done-when:** US-023 (3 casos), US-025 (2), US-026 (3) y US-046-INT (4) en verde. El script se prueba contra Anvil con los vectores de la it. 13.
+**Done-when:** US-023 (3 casos), US-025 (2), US-026 (3) y US-046-INT (4) en verde. El script se prueba contra la red local *standalone* con los vectores de la it. 13. US-023, US-025 y US-046-INT se ajustan a Stellar al abrir la iteración. El recibo lleva TxID, número y hora del ledger y el enlace a un explorador de Stellar (hay que elegir cuál). Hay que decidir cómo se lee un sello archivado por TTL.
 **Cubre:** US-023, US-025, US-026, US-046-INT · R-INT-04, R-MNT-01, R-MNT-02.
 
 ### Iteración 24 — Mapa y línea de tiempo (datos)
@@ -477,8 +504,8 @@ Con esto US-016 pasa de 11 a 17 casos, US-034 de 4 a 6 y US-008 de 22 a 25, todo
 **Done-when:** US-019 (7 casos) y US-028 (3) en verde.
 **Cubre:** US-019, US-028.
 
-### Iteración 32 — Operación del Relayer y costos
-**Entregable:** saldo cada 15 minutos con alerta bajo 5 POL; reporte de gas por mes y organización con respaldo del último precio conocido; re-encolado de fallas de sellado.
+### Iteración 32 — Operación de la cuenta patrocinadora y costos
+**Entregable:** saldo en XLM de la patrocinadora cada 15 minutos, con alerta bajo el umbral de D12; reporte de comisiones (XLM y COP) por mes y organización, con respaldo del último precio conocido de XLM; re-encolado de fallas de sellado. US-004 y US-022 se ajustan a Stellar al abrir la iteración.
 **Done-when:** US-022 (4 casos), US-004 (4) y US-047-MNT (2) en verde.
 **Cubre:** US-004, US-022, US-047-MNT · R-VC-03.
 
@@ -496,7 +523,7 @@ Con esto US-016 pasa de 11 a 17 casos, US-034 de 4 a 6 y US-008 de 22 a 25, todo
 **Entregable:**
 - respaldos programados de PostgreSQL y MinIO, **cada hora**, con retención de 30 días;
 - purga de la tabla de seudónimos a los 5 años;
-- Jenkinsfile con `forge test` y la prueba de humo en testnet antes de cada salida;
+- Jenkinsfile con `cargo test` del contrato y la prueba de humo en la testnet de Stellar antes de cada salida;
 - ejecución y documentación de **una restauración de prueba**.
 
 **Done-when:**
@@ -507,6 +534,33 @@ Con esto US-016 pasa de 11 a 17 casos, US-034 de 4 a 6 y US-008 de 22 a 25, todo
 **Cubre:** R-BCK-01, R-BCK-02, R-BCK-03, R-BCK-04, R-BCK-05, R-MNT-03, R-TST-01, R-TST-02, R-CFG-01 (reglas sin Gherkin, O6).
 
 ---
+
+## Pivote a Stellar (2026-09-28)
+
+El proyecto participa en **Stellar Apex**, así que la blockchain pasa de EVM/Polygon a **Stellar**, con Smart Contracts en **Soroban (Rust)**:
+- La red local es la *standalone* de Stellar CLI en Docker.
+- No hay relayer de terceros: el backend patrocina las comisiones con *fee bump* (D4, D5).
+- En la SPEC se reescribieron el resumen, las decisiones de arquitectura, R-BLK-01 a 04 (más la nueva R-BLK-06, finalidad sin reorganizaciones), R-CFG-01/02, R-INT-01/04, R-TST-01, R-SA-01, R-TA-02 y R-VC-03.
+
+Qué cambia además, frente al diseño EVM:
+- **La hora del sello la pone la red** (hora y número del ledger), no el servidor.
+- **"Sellada" no espera confirmaciones:** un ledger cerrado es definitivo.
+- **El contrato no se puede actualizar:** no tiene `upgrade`, y esa es la garantía de inmutabilidad en Soroban.
+- **La referencia de la obra on-chain es un hash de «organización:ficha»:** el `uint256` de ID de obra se repetía entre organizaciones.
+
+Historias con Gherkin y criterios todavía redactados para Polygon; cada una se ajusta al abrir su iteración:
+
+| Historia | Qué cambia | Se ajusta en |
+|---|---|---|
+| US-020a | Soroban, cuenta selladora, hora del ledger | ✅ ya ajustada (it. 12) |
+| US-008 | el mensaje de éxito dice "…en la red Stellar." | ✅ ya ajustada |
+| US-020b | fee bump y XLM en vez de relayer y gas; "Sellada" sin 3 confirmaciones ni auditoría de reorganizaciones (R-BLK-06) | it. 13 |
+| US-038-CFG | el umbral de saldo pasa a XLM (D12) | it. 21 |
+| US-021 | red o RPC de Stellar caídos, o patrocinadora sin saldo, en vez de relayer caído | it. 22 |
+| US-023, US-025 | Recibo: TxID, número y hora del ledger, enlace a un explorador de Stellar | it. 23 |
+| US-024, US-046-INT | el validador y el script leen el sello del contrato por el RPC de Stellar; cómo leer un sello archivado | it. 23 y 27 |
+| US-004, US-022 | comisiones en XLM (no gas en POL), precio de XLM en COP, saldo de la patrocinadora | it. 32 |
+| US-003b, US-037 | solo el nombre de la red en los textos | al abrir su iteración |
 
 ## Carga real por fase (sin rebalancear, como se decidió)
 
@@ -520,14 +574,14 @@ Con esto US-016 pasa de 11 a 17 casos, US-034 de 4 a 6 y US-008 de 22 a 25, todo
 \* Filas de `features/*.feature`, contando cada fila de los *Esquemas*.
 
 **Lectura honesta:** la carga no está donde se esperaba.
-- **P1 concentra la mitad del trabajo**: 19 de las 35 iteraciones y cerca del 50 % de los casos, en 2 semanas. Incluye además las piezas de mayor riesgo técnico: el Smart Contract, Merkle y el relayer real (it. 12-14).
+- **P1 concentra la mitad del trabajo**: 19 de las 35 iteraciones y cerca del 50 % de los casos, en 2 semanas. Incluye además las piezas de mayor riesgo técnico: el Smart Contract, Merkle y el sellado en testnet (it. 12-14). El pivote a Stellar le suma una curva nueva: Rust y Soroban.
 - P2 creció por los huecos de Completitud, pero con 10 iteraciones es más manejable que P1.
 - P3 cabe en una semana solo si P1 y P2 terminan a tiempo.
 
 Si hay que recortar, estas palancas no rompen ninguna regla:
 1. Aceptar P3 como **post-MVP**: el MVP publicable es el fin de P2.
 2. Unir las iteraciones de UI de administración (18-19 y 29) en pantallas funcionales mínimas.
-3. Mover la iteración 14 (relayer real) al inicio de P2, dejando P1 contra Anvil.
+3. Mover la iteración 14 (testnet) al inicio de P2, dejando P1 contra la red local de Stellar.
 
 La decisión es tuya: el plan no la toma.
 
