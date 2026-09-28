@@ -65,6 +65,7 @@
 - test de seeder: el conteo de departamentos y municipios coincide con el archivo oficial, y se verifican los códigos 47, 47001, 47189, 05 y 05001;
 - los 4 casos del Esquema *"Emparejamiento normalizado del municipio con la tabla DIVIPOLA"* (US-013) en verde como tests unitarios del servicio.
 
+**✅ Cumplido:** `database/data/divipola.json` con el dataset oficial completo del DANE (dataset `gdxc-w37w` de datos.gov.co): **33 departamentos y 1122 municipios**, no un subconjunto. Migraciones `departments`/`municipalities` (BD central), modelos `app/Domain/Geography/{Department,Municipality}.php`, `DivipolaSeeder` (idempotente) y `MunicipalityMatcher` (normaliza con `Str::ascii()` + mayúsculas). `tests/Feature/Geography/{DivipolaSeederTest,MunicipalityMatcherTest}.php` en verde — 7 tests, incluidos los 4 casos del Esquema de US-013. *(Los tests del matcher viven en `Feature/`, no en `Unit/`, porque `tests/Pest.php` solo liga `Tests\TestCase` — y por tanto la base de datos — a `Feature/`; "unitario" en el Done-when describe el estilo de la prueba, llamar al servicio directo, no la carpeta.)*
 **Cubre:** US-012 (validación DIVIPOLA), US-013 (emparejamiento) · R-INT-03.
 
 ### Iteración 3 — Organización: invariantes y alta
