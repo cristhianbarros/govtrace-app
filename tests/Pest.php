@@ -3,8 +3,11 @@
 use App\Domain\Contracts\Contract;
 use App\Domain\Organization\Roles;
 use App\Domain\Organization\User as OrganizationUser;
+use App\Domain\Reports\Report;
 use App\Domain\Worksites\Worksite;
 use App\Infrastructure\Tenancy\Tenant;
+use App\Jobs\ConfirmSeal;
+use App\Jobs\SealReport;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
@@ -154,12 +157,12 @@ function sha256Of(UploadedFile $file): string
  *
  * @param  array<string, mixed>  $overrides
  */
-function sendReport(OrganizationUser $veedor, array $overrides = []): TestResponse
+function sendReport(OrganizationUser $veedor, array $overrides = [], string $host = 'veeduria-smr.govtrace.localhost'): TestResponse
 {
     [$latitude, $longitude] = pointMetersNorthOf(santaMartaWorksiteLocation(), 120);
     $files = $overrides['files'] ?? [evidencePhoto()];
 
-    return test()->actingAs($veedor, 'tenant')->postJson('http://veeduria-smr.govtrace.localhost/reports', array_merge([
+    return test()->actingAs($veedor, 'tenant')->postJson("http://{$host}/reports", array_merge([
         'secop_contract_id' => 'CO1.PCCNTR.1234567',
         'classification' => 'Retraso',
         'comment' => 'Obra detenida hace 2 meses',
@@ -170,4 +173,49 @@ function sendReport(OrganizationUser $veedor, array $overrides = []): TestRespon
         'files' => $files,
         'hashes' => array_map(sha256Of(...), $files),
     ], $overrides));
+}
+
+/**
+ * A report by $veedor that went all the way to "Sellada" on the sealing
+ * network bound in the container (a FakeSealingNetwork in the fast suite).
+ * Every sealed evidence is born "Oculto" (US-036).
+ *
+ * @param  array<string, mixed>  $overrides  for sendReport
+ */
+function sealedReport(Tenant $tenant, OrganizationUser $veedor, array $overrides = []): int
+{
+    // Cada organización es otro subdominio y otra sesión, como en un navegador.
+    test()->flushSession();
+
+    $reportId = sendReport($veedor, $overrides, $tenant->domains()->value('domain'))->assertCreated()->json('id');
+
+    app()->call([new SealReport($tenant->id, $reportId), 'handle']);
+    app()->call([new ConfirmSeal($tenant->id, $reportId), 'handle']);
+
+    // La petición dejó activo el contexto de la organización; el test sigue en el central.
+    tenancy()->end();
+
+    return $reportId;
+}
+
+/** GET /inbox: the Administrador's review inbox (US-036). */
+function inbox(OrganizationUser $member, string $host = 'veeduria-smr.govtrace.localhost'): TestResponse
+{
+    return test()->actingAs($member, 'tenant')->getJson("http://{$host}/inbox");
+}
+
+/**
+ * POST /reports/{id}/publish, /reject or /withdraw (US-036, US-037).
+ *
+ * @param  array<string, mixed>  $data
+ */
+function editorialDecision(OrganizationUser $member, string $decision, int $reportId, array $data = [], string $host = 'veeduria-smr.govtrace.localhost'): TestResponse
+{
+    return test()->actingAs($member, 'tenant')->postJson("http://{$host}/reports/{$reportId}/{$decision}", $data);
+}
+
+/** "Oculto", "Publicado", "Rechazado" or "Retirado". */
+function editorialStatusOf(Tenant $tenant, int $reportId): string
+{
+    return $tenant->run(fn () => Report::query()->findOrFail($reportId)->editorial_status->label());
 }

@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Domain\Organization\Roles;
+use App\Http\Controllers\Tenant\EditorialController;
 use App\Http\Controllers\Tenant\InviteObserverController;
 use App\Http\Controllers\Tenant\LoginController;
 use App\Http\Controllers\Tenant\ReportController;
@@ -11,6 +12,7 @@ use App\Http\Controllers\Tenant\WorksiteLocationController;
 use Illuminate\Support\Facades\Route;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
+use Stancl\Tenancy\Middleware\ScopeSessions;
 
 /*
 |--------------------------------------------------------------------------
@@ -28,6 +30,10 @@ Route::middleware([
     'web',
     InitializeTenancyByDomain::class,
     PreventAccessFromCentralDomains::class,
+    // Una sesión vale solo en la organización donde se abrió: los usuarios
+    // viven en la base de cada una, así que la misma cookie presentada en
+    // otro subdominio sería el usuario con ese id de la otra (403).
+    ScopeSessions::class,
 ])->group(function () {
     // Público, sin sesión (R-VER-02) — el mapa y el validador reales
     // llegan en it. 24-27; este placeholder solo prueba que las rutas de
@@ -56,6 +62,13 @@ Route::middleware([
 
             // US-035: corregir la ubicación oficial de una obra de la organización.
             Route::patch('/worksites/{worksite}/location', [WorksiteLocationController::class, 'update'])->name('worksites.location.update');
+
+            // US-036 / US-037: la bandeja de entrada y las decisiones
+            // editoriales, de a una evidencia (no hay publicación masiva).
+            Route::get('/inbox', [EditorialController::class, 'inbox'])->name('inbox');
+            Route::post('/reports/{report}/publish', [EditorialController::class, 'publish'])->whereNumber('report')->name('reports.publish');
+            Route::post('/reports/{report}/reject', [EditorialController::class, 'reject'])->whereNumber('report')->name('reports.reject');
+            Route::post('/reports/{report}/withdraw', [EditorialController::class, 'withdraw'])->whereNumber('report')->name('reports.withdraw');
         });
 
         // US-008: solo el Veedor de Campo crea reportes (la PWA, it. 16).

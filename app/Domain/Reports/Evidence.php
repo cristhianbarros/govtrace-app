@@ -2,6 +2,7 @@
 
 namespace App\Domain\Reports;
 
+use App\Domain\Reports\Exceptions\EvidenceIsImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -21,6 +22,20 @@ class Evidence extends Model
         // R-BLK-05: los hermanos de su hoja en el árbol del reporte (US-020b).
         'merkle_proof' => 'array',
     ];
+
+    /** The file as the phone sent it, and where it's stored: never replaced (R-TA-02). */
+    private const FILE = ['report_id', 'kind', 'mime_type', 'size_bytes', 'sha256', 'storage_path'];
+
+    protected static function booted(): void
+    {
+        static::deleting(fn () => throw EvidenceIsImmutable::cannotDelete());
+
+        static::updating(function (self $evidence) {
+            if ($file = array_values(array_intersect(array_keys($evidence->getDirty()), self::FILE))) {
+                throw EvidenceIsImmutable::cannotAlter($file);
+            }
+        });
+    }
 
     public function report(): BelongsTo
     {
