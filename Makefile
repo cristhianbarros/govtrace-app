@@ -18,7 +18,7 @@ HTTP_PORT ?= $(shell sed -n 's/^HTTP_PORT=\([0-9]*\).*/\1/p' .env.docker 2>/dev/
 .PHONY: help setup up up-tools up-frontend up-async down stop restart logs ps \
         shell composer artisan migrate psql test test-front test-all lint fmt \
         npm-install npm-build npm-watch xdebug-on xdebug-off hosts image-qa teardown \
-        stellar-up contract-test contract-deploy contract-smoke doctor
+        stellar-up contract-test contract-deploy contract-smoke doctor test-stellar
 
 help: ## List available commands
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -82,6 +82,8 @@ psql: ## psql console on the central database
 
 test: ## Backend tests (Pest)
 	@$(EXEC) ./vendor/bin/pest $(ARGS)
+test-stellar: ## Sealing tests against the local Stellar network (needs make stellar-up && make contract-deploy)
+	@$(EXEC) ./vendor/bin/pest --group=stellar $(ARGS)
 test-front: .env.docker ## Frontend tests (Vitest)
 	@$(NODE) npm run test
 test-all: lint test test-front ## Pint + Pest + Vitest (same as CI)

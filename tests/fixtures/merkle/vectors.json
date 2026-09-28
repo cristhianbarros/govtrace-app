@@ -1,0 +1,197 @@
+{
+  "_description": "Vectores de prueba compartidos del sellado (D6, it. 13). Generados con una implementación independiente (Python) para que PHP y JS no se validen contra sí mismos. Árbol: hoja = SHA-256 de 32 bytes; nodo = SHA-256(menor || mayor), comparando bytes; un nodo sin pareja sube tal cual; la prueba es la lista de hermanos de abajo hacia arriba. Metadatos: JSON canónico — claves ordenadas, sin espacios, UTF-8 sin escapar (tampoco U+2028/U+2029 ni '/'), controles como \\u00XX en minúscula.",
+  "trees": [
+    {
+      "name": "2 hojas",
+      "leaves": [
+        "9379536573abc3c9c4d03306f5485c49432709bb6524ec3e67127fab132f5969",
+        "f45b7c29cdee198a647d78df206a8f707d35cc6537ed1c74a2eb1e9ad0498ac8"
+      ],
+      "root": "094150d41a84269b0597a8122c1afe2985daf9321949539d479f6e14e1678015",
+      "proofs": [
+        [
+          "f45b7c29cdee198a647d78df206a8f707d35cc6537ed1c74a2eb1e9ad0498ac8"
+        ],
+        [
+          "9379536573abc3c9c4d03306f5485c49432709bb6524ec3e67127fab132f5969"
+        ]
+      ]
+    },
+    {
+      "name": "3 hojas",
+      "leaves": [
+        "9379536573abc3c9c4d03306f5485c49432709bb6524ec3e67127fab132f5969",
+        "f45b7c29cdee198a647d78df206a8f707d35cc6537ed1c74a2eb1e9ad0498ac8",
+        "68d60eae136b9cf7c42861de1257d89029ed8e2c3d8f50dba3c20fe0a3708c6c"
+      ],
+      "root": "e3fefe50763a3583761e1323a3940fb7289beae86176235c73b972d1e631b8c7",
+      "proofs": [
+        [
+          "f45b7c29cdee198a647d78df206a8f707d35cc6537ed1c74a2eb1e9ad0498ac8",
+          "68d60eae136b9cf7c42861de1257d89029ed8e2c3d8f50dba3c20fe0a3708c6c"
+        ],
+        [
+          "9379536573abc3c9c4d03306f5485c49432709bb6524ec3e67127fab132f5969",
+          "68d60eae136b9cf7c42861de1257d89029ed8e2c3d8f50dba3c20fe0a3708c6c"
+        ],
+        [
+          "094150d41a84269b0597a8122c1afe2985daf9321949539d479f6e14e1678015"
+        ]
+      ]
+    },
+    {
+      "name": "4 hojas",
+      "leaves": [
+        "9379536573abc3c9c4d03306f5485c49432709bb6524ec3e67127fab132f5969",
+        "f45b7c29cdee198a647d78df206a8f707d35cc6537ed1c74a2eb1e9ad0498ac8",
+        "68d60eae136b9cf7c42861de1257d89029ed8e2c3d8f50dba3c20fe0a3708c6c",
+        "88373497eb2bed3c9bc29cfa64ed5119e2bafaa6bb8575e98cb6a4fab305481a"
+      ],
+      "root": "9482a334c32840119472b7e199b523bcbd870b9416240e8eac222344327d3d9e",
+      "proofs": [
+        [
+          "f45b7c29cdee198a647d78df206a8f707d35cc6537ed1c74a2eb1e9ad0498ac8",
+          "7ac5ec299a26ce6a1a33b7affa8f338c050981b37ee24e592e87d4ea49aafebf"
+        ],
+        [
+          "9379536573abc3c9c4d03306f5485c49432709bb6524ec3e67127fab132f5969",
+          "7ac5ec299a26ce6a1a33b7affa8f338c050981b37ee24e592e87d4ea49aafebf"
+        ],
+        [
+          "88373497eb2bed3c9bc29cfa64ed5119e2bafaa6bb8575e98cb6a4fab305481a",
+          "094150d41a84269b0597a8122c1afe2985daf9321949539d479f6e14e1678015"
+        ],
+        [
+          "68d60eae136b9cf7c42861de1257d89029ed8e2c3d8f50dba3c20fe0a3708c6c",
+          "094150d41a84269b0597a8122c1afe2985daf9321949539d479f6e14e1678015"
+        ]
+      ]
+    },
+    {
+      "name": "5 hojas",
+      "leaves": [
+        "9379536573abc3c9c4d03306f5485c49432709bb6524ec3e67127fab132f5969",
+        "f45b7c29cdee198a647d78df206a8f707d35cc6537ed1c74a2eb1e9ad0498ac8",
+        "68d60eae136b9cf7c42861de1257d89029ed8e2c3d8f50dba3c20fe0a3708c6c",
+        "88373497eb2bed3c9bc29cfa64ed5119e2bafaa6bb8575e98cb6a4fab305481a",
+        "0eff45ab37ff3db7665416cec55698227cf891ddf7ffce4f7782b6a79ee5d2a7"
+      ],
+      "root": "087d57d1cdbfc395fd6b6c6e1224b0f070a377abd159e974f3094a4413c2befb",
+      "proofs": [
+        [
+          "f45b7c29cdee198a647d78df206a8f707d35cc6537ed1c74a2eb1e9ad0498ac8",
+          "7ac5ec299a26ce6a1a33b7affa8f338c050981b37ee24e592e87d4ea49aafebf",
+          "0eff45ab37ff3db7665416cec55698227cf891ddf7ffce4f7782b6a79ee5d2a7"
+        ],
+        [
+          "9379536573abc3c9c4d03306f5485c49432709bb6524ec3e67127fab132f5969",
+          "7ac5ec299a26ce6a1a33b7affa8f338c050981b37ee24e592e87d4ea49aafebf",
+          "0eff45ab37ff3db7665416cec55698227cf891ddf7ffce4f7782b6a79ee5d2a7"
+        ],
+        [
+          "88373497eb2bed3c9bc29cfa64ed5119e2bafaa6bb8575e98cb6a4fab305481a",
+          "094150d41a84269b0597a8122c1afe2985daf9321949539d479f6e14e1678015",
+          "0eff45ab37ff3db7665416cec55698227cf891ddf7ffce4f7782b6a79ee5d2a7"
+        ],
+        [
+          "68d60eae136b9cf7c42861de1257d89029ed8e2c3d8f50dba3c20fe0a3708c6c",
+          "094150d41a84269b0597a8122c1afe2985daf9321949539d479f6e14e1678015",
+          "0eff45ab37ff3db7665416cec55698227cf891ddf7ffce4f7782b6a79ee5d2a7"
+        ],
+        [
+          "9482a334c32840119472b7e199b523bcbd870b9416240e8eac222344327d3d9e"
+        ]
+      ]
+    },
+    {
+      "name": "7 hojas",
+      "leaves": [
+        "9379536573abc3c9c4d03306f5485c49432709bb6524ec3e67127fab132f5969",
+        "f45b7c29cdee198a647d78df206a8f707d35cc6537ed1c74a2eb1e9ad0498ac8",
+        "68d60eae136b9cf7c42861de1257d89029ed8e2c3d8f50dba3c20fe0a3708c6c",
+        "88373497eb2bed3c9bc29cfa64ed5119e2bafaa6bb8575e98cb6a4fab305481a",
+        "0eff45ab37ff3db7665416cec55698227cf891ddf7ffce4f7782b6a79ee5d2a7",
+        "c28f9a32855ddc680803664aefd57e0a945b5e189aba20d29f33c70070a2951c",
+        "5fc96ae54ecdad995b8fcc7b09c8a34ea052e08a585cad21f25d27d1d4110c80"
+      ],
+      "root": "464d59c15dfebcd17d7dbb97afa7ee6271313584aa2e8e50f8245191ed78feb3",
+      "proofs": [
+        [
+          "f45b7c29cdee198a647d78df206a8f707d35cc6537ed1c74a2eb1e9ad0498ac8",
+          "7ac5ec299a26ce6a1a33b7affa8f338c050981b37ee24e592e87d4ea49aafebf",
+          "0588d84bf124891af401c21a06d91ad17116f95f6ae1a2920a3e36d8856d6244"
+        ],
+        [
+          "9379536573abc3c9c4d03306f5485c49432709bb6524ec3e67127fab132f5969",
+          "7ac5ec299a26ce6a1a33b7affa8f338c050981b37ee24e592e87d4ea49aafebf",
+          "0588d84bf124891af401c21a06d91ad17116f95f6ae1a2920a3e36d8856d6244"
+        ],
+        [
+          "88373497eb2bed3c9bc29cfa64ed5119e2bafaa6bb8575e98cb6a4fab305481a",
+          "094150d41a84269b0597a8122c1afe2985daf9321949539d479f6e14e1678015",
+          "0588d84bf124891af401c21a06d91ad17116f95f6ae1a2920a3e36d8856d6244"
+        ],
+        [
+          "68d60eae136b9cf7c42861de1257d89029ed8e2c3d8f50dba3c20fe0a3708c6c",
+          "094150d41a84269b0597a8122c1afe2985daf9321949539d479f6e14e1678015",
+          "0588d84bf124891af401c21a06d91ad17116f95f6ae1a2920a3e36d8856d6244"
+        ],
+        [
+          "c28f9a32855ddc680803664aefd57e0a945b5e189aba20d29f33c70070a2951c",
+          "5fc96ae54ecdad995b8fcc7b09c8a34ea052e08a585cad21f25d27d1d4110c80",
+          "9482a334c32840119472b7e199b523bcbd870b9416240e8eac222344327d3d9e"
+        ],
+        [
+          "0eff45ab37ff3db7665416cec55698227cf891ddf7ffce4f7782b6a79ee5d2a7",
+          "5fc96ae54ecdad995b8fcc7b09c8a34ea052e08a585cad21f25d27d1d4110c80",
+          "9482a334c32840119472b7e199b523bcbd870b9416240e8eac222344327d3d9e"
+        ],
+        [
+          "2a89a939f2e8ea84089f5ab50b69d16d5a95f93b64b223c0a9e98b9162fec223",
+          "9482a334c32840119472b7e199b523bcbd870b9416240e8eac222344327d3d9e"
+        ]
+      ]
+    }
+  ],
+  "metadata": [
+    {
+      "name": "comentario con tildes, emoji, comillas y saltos de línea",
+      "fields": {
+        "captured_at": "2026-09-27T10:00:00Z",
+        "classification": "Retraso",
+        "comment": "Obra detenida hace 2 meses 🚧 — \"sin avance\"\nniño/ñandú \\ fin",
+        "latitude": "11.2408000",
+        "longitude": "-74.1990000",
+        "pseudonym": "9b1f2c7d4e8a0b3c6d5e4f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c"
+      },
+      "canonical_json": "{\"captured_at\":\"2026-09-27T10:00:00Z\",\"classification\":\"Retraso\",\"comment\":\"Obra detenida hace 2 meses 🚧 — \\\"sin avance\\\"\\nniño/ñandú \\\\ fin\",\"latitude\":\"11.2408000\",\"longitude\":\"-74.1990000\",\"pseudonym\":\"9b1f2c7d4e8a0b3c6d5e4f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c\"}",
+      "sha256": "e9c16d087ea2acadc1de8314502f739e10ec45f8d782f540fea7f6b0e4e60cb8"
+    },
+    {
+      "name": "sin comentario",
+      "fields": {
+        "captured_at": "2026-09-27T09:40:00Z",
+        "classification": "Avance",
+        "comment": null,
+        "latitude": "11.2418793",
+        "longitude": "-74.1990000",
+        "pseudonym": "0000000000000000000000000000000000000000000000000000000000000001"
+      },
+      "canonical_json": "{\"captured_at\":\"2026-09-27T09:40:00Z\",\"classification\":\"Avance\",\"comment\":null,\"latitude\":\"11.2418793\",\"longitude\":\"-74.1990000\",\"pseudonym\":\"0000000000000000000000000000000000000000000000000000000000000001\"}",
+      "sha256": "57dd72055ddf5cd3f725ec825d59736d425c87888119f015bb821285f691a243"
+    },
+    {
+      "name": "separador de línea U+2028 y caracter de control",
+      "fields": {
+        "captured_at": "2026-09-19T09:00:00Z",
+        "classification": "Abandono",
+        "comment": "línea siguiente\u0001",
+        "latitude": "-4.2000000",
+        "longitude": "-69.9400000",
+        "pseudonym": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      "canonical_json": "{\"captured_at\":\"2026-09-19T09:00:00Z\",\"classification\":\"Abandono\",\"comment\":\"línea siguiente\\u0001\",\"latitude\":\"-4.2000000\",\"longitude\":\"-69.9400000\",\"pseudonym\":\"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\"}",
+      "sha256": "4adb2bff27d413bd1c0d59b818433f6bcdb78e1fd8452466fb494f6885c77815"
+    }
+  ]
+}

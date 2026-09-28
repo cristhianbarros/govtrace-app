@@ -6,7 +6,7 @@
  * transacción — para que la carrera de First-Touch sea real y no una
  * simulación. Hereda el entorno del proceso de Pest (DB_DATABASE=testing).
  *
- * Uso: php tests/support/create_report_in_parallel.php <tenant> <veedor> <contrato> <lat> <lng>
+ * Uso: php tests/Support/create_report_in_parallel.php <tenant> <veedor> <contrato> <lat> <lng>
  * Imprime una línea JSON: {"status":"accepted","report_id":…} o {"status":"rejected","message":…}.
  */
 
@@ -25,8 +25,13 @@ $app->make(Kernel::class)->bootstrap();
 
 [, $tenantId, $veedorId, $secopContractId, $latitude, $longitude] = $argv;
 
-// Los archivos van a un directorio temporal, no al S3 del entorno.
-config(['filesystems.disks.evidencias' => ['driver' => 'local', 'root' => sys_get_temp_dir().'/govtrace-race-evidence']]);
+// Los archivos van a un directorio temporal, no al S3 del entorno. El
+// sellado (it. 13) no se despacha: aquí solo importa la carrera de
+// First-Touch, y no debe depender de que haya una red de Stellar.
+config([
+    'filesystems.disks.evidencias' => ['driver' => 'local', 'root' => sys_get_temp_dir().'/govtrace-race-evidence'],
+    'queue.default' => 'null',
+]);
 
 $result = Tenant::query()->findOrFail($tenantId)->run(function () use ($veedorId, $secopContractId, $latitude, $longitude) {
     try {

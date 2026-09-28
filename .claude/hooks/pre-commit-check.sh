@@ -34,7 +34,9 @@ if ! "${PHP_RUN[@]}" ./vendor/bin/pest >&2; then
 fi
 
 if [ -n "$FRONTEND_DIR" ] && [ -d "$FRONTEND_DIR" ] && [ -n "$(git status --porcelain -- "$FRONTEND_DIR")" ]; then
-  if ! (cd "$FRONTEND_DIR" && npm run test) >&2; then
+  # En el contenedor node (make test-front): los node_modules los instala
+  # node:22-alpine, y sus binarios nativos no tienen por qué correr en el host.
+  if ! make test-front >&2; then
     echo "[pre-commit-check] BLOQUEADO: hay tests de frontend fallando." >&2
     exit 2
   fi

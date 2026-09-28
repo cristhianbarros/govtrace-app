@@ -12,6 +12,13 @@
             <directory>tests/Feature</directory>
         </testsuite>
     </testsuites>
+    <!-- Los tests contra la red local de Stellar (it. 13) necesitan
+         make stellar-up && make contract-deploy: van aparte, en make test-stellar. -->
+    <groups>
+        <exclude>
+            <group>stellar</group>
+        </exclude>
+    </groups>
     <source>
         <include>
             <directory>app</directory>

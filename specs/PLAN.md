@@ -226,7 +226,7 @@
 - **`POST /reports`** (tenant, `auth:tenant`, solo el rol Veedor de Campo) responde `201 {id}`, o `422` con el motivo bajo el campo al que se refiere (`classification`, `comment`, `location`, `accuracy_meters`, `secop_contract_id`). El controlador solo revisa la forma de la petición. Las reglas viven en `App\Domain\Reports` (`ReportClassification`, `ReportComment`, `GpsReading`, `Geofence`, `SuspiciousCaptureTime`), con los mensajes textuales de `specs/criterios/US-008.yaml`.
 - **La ficha de obra ahora agrupa varios contratos**, porque el escenario "ficha con varios contratos" es de US-008 y la it. 9 había dejado uno solo. Se crea la tabla `worksite_contracts` (`secop_contract_id` único dentro de la organización); la migración mueve los datos de la it. 9. El job de riesgo marca la ficha cuando **cualquiera** de sus contratos venció y sigue "En ejecución". Además usa `end_date < hoy`: un contrato que termina hoy queda en riesgo recién mañana. Los casos de la it. 9 no cambian.
 - **First-Touch con bloqueo atómico** (`CreateReport`): la ficha se lee con `SELECT … FOR UPDATE`. De dos primeros reportes simultáneos, el segundo espera y se valida contra la ubicación que fijó el primero. Si la ficha ni siquiera existía, la carrera la resuelve el índice único más un savepoint.
-  - El test usa **dos transacciones reales en dos procesos**: A queda abierta y B corre en `tests/support/create_report_in_parallel.php`. A solo confirma cuando Postgres muestra a B esperando el bloqueo.
+  - El test usa **dos transacciones reales en dos procesos**: A queda abierta y B corre en `tests/Support/create_report_in_parallel.php`. A solo confirma cuando Postgres muestra a B esperando el bloqueo.
   - Se corrió 5 veces seguidas, estable. Se verificó que detecta el error: sin el `lockForUpdate()`, B sobrescribe la ubicación y el test falla.
 - **R-AUD-05:** la geocerca usa el radio que regía **al capturar**, y queda guardado en el reporte (`geofence_radius_meters`). `Parameters::valueAt()` ahora responde con la primera versión cuando el momento es anterior a todas; antes devolvía `null`. Es lo que pasa con un teléfono con el reloj atrasado.
 - **R-SEC-05 / R-MON-02:** el reporte se marca, sin rechazarse, cuando la hora de captura está en el futuro del servidor o es anterior a los 7 días de vigencia offline.
@@ -376,6 +376,43 @@ Con esto US-016 pasa de 11 a 17 casos, US-034 de 4 a 6 y US-008 de 22 a 25, todo
 - US-020b en verde contra la red local. Su Gherkin se ajusta a Stellar al abrir la iteración: sin las 3 confirmaciones ni la auditoría de reorganizaciones, y con fee bump y XLM en vez de relayer y gas;
 - vectores de prueba de Merkle compartidos (`tests/fixtures/merkle/*.json`), usados por PHP y por JS;
 - el servidor descarta un duplicado que el contrato rechaza con "Hash ya registrado" (US-020a).
+
+**✅ Cumplido:**
+- **US-020b, 7/7 casos**, en `SealReportTest`, con la red en memoria (`Tests\Support\FakeSealingNetwork`).
+- **La mitad de servidor de US-020a** ("el servidor descarta el duplicado").
+- **Contra la red local de verdad**, `StellarSealingNetworkTest` (grupo `stellar`, `make test-stellar`) pasa 4/4:
+  - la selladora firma y **no paga nada**, y la patrocinadora paga con fee bump (se lee el sobre en la red);
+  - la red rechaza el duplicado;
+  - una patrocinadora sin XLM se detecta;
+  - un reporte llega de punta a punta a "Sellada" con un ledger real.
+- **Vectores de Merkle compartidos** (`tests/fixtures/merkle/vectors.json`, generados con Python para que ninguna implementación se valide contra sí misma), usados por `MerkleTreeTest` en PHP y por `resources/js/lib/merkle.test.js` en JS.
+- Suite rápida: 247 en verde + 1 `todo`, **también con la red de Stellar apagada**. Vitest: 11.
+
+- **El JSON de metadatos** (US-020b, R-PRIV-03, D6) es canónico: claves ordenadas, sin espacios, UTF-8 sin escapar (tampoco `/` ni U+2028), coordenadas con 7 decimales y hora de captura en UTC. Así el navegador lo recompone byte a byte. Lleva `captured_at`, `classification`, `comment`, `latitude`, `longitude` y `pseudonym`. La **clasificación** se agregó a lo que pedía el criterio, porque también es algo que no debería poder cambiarse sin que se note.
+- **El seudónimo** (D7) es el HMAC-SHA256 de «organización:veedor» con `SEALING_PSEUDONYM_KEY` (o una llave derivada de `APP_KEY`). La tabla `veedor_pseudonyms` es la única forma de volver al veedor; su purga a los 5 años es de la it. 35.
+- **El árbol** (`App\Domain\Sealing\MerkleTree`, D6) usa pares ordenados. Un nodo sin pareja sube tal cual. Las hojas son los archivos, en orden, y al final el hash del JSON. Cada evidencia guarda `leaf_index` y `merkle_proof`.
+- **Estados** en `report_seals`: una raíz por reporte, así que un solo estado, con su hora en cada paso. `evidences.seal_status` de la it. 11 se quitó.
+  - "Recibida" se escribe en la misma transacción que el reporte, y "En Cola" al confirmarla.
+  - `SealReport` arma el árbol, envía y deja "Transmitiendo".
+  - `ConfirmSeal` pasa a "Sellada" cuando la red cierra el ledger (R-BLK-06).
+  - `SealReport` va de a uno (`WithoutOverlapping`), porque la selladora firma con su número de secuencia.
+- **Sin XLM:** la patrocinadora se revisa antes de cada envío. Si no alcanza, el sellado se pausa (`sealing_pauses`, central, con historial), se manda **una** alerta crítica por email al Super Administrador, y los reportes esperan "En Cola". Se reanuda solo cuando vuelve a haber saldo.
+- **Duplicado** (un reintento del mismo reporte): la simulación ya devuelve `Error(Contract, #1)`. El servidor no reenvía: lee el sello que la red tiene (`get_seal`) y lo toma.
+- **Stellar desde Laravel** (`App\Infrastructure\Stellar`): del SDK `soneso/stellar-php-sdk` 1.15 se usan las transacciones, el fee bump, el XDR y la lectura de respuestas. Las cuatro llamadas JSON-RPC van por el cliente HTTP de Laravel (`StellarRpc`), porque el `SorobanServer` del SDK exige HTTPS salvo en `localhost` y no envía fee bumps.
+  - El SDK pide la extensión `gmp`, que se sumó a la imagen de la app.
+  - El SDK exige `guzzlehttp/guzzle ^7`, así que guzzle bajó de 8.2 a **7.15.5**; Laravel 13 y el SDK de AWS aceptan las dos.
+- **Costo medido de un sello** en la red local, con límites de testnet: **≈ 0,067 XLM** (673.103 stroops), con una comisión de recursos declarada de 0,08 y la parte no usada reembolsada. Es el primer insumo de D12. Por ahora el sellado se pausa por debajo de 2 XLM (`STELLAR_SPONSOR_MIN_BALANCE_XLM`); la reserva mínima de una cuenta es 1 XLM.
+- **Dos bugs latentes corregidos al pasar:**
+  - `App\Models\User` (el Super Administrador) no declaraba `CentralConnection`. Leído desde el contexto de una organización, la alerta habría ido a la tabla `users` de esa organización, es decir, a sus veedores. Ahora `CentralConnectionTest` lo vigila, junto con `SealingPause`.
+  - El hook de pre-commit corría Vitest en el host con `node_modules` instalados en Alpine. Ahora usa `make test-front`.
+- `make contract-deploy` escribe las llaves secretas de desarrollo en el `.env` local, fuera de git, para que Laravel firme. `.env.example` las deja vacías y un test revisa que ningún archivo versionado contenga una llave de Stellar (R-BLK-04).
+- **Jenkins:** nueva etapa "Test Stellar" (`make stellar-up && make contract-deploy && make test-stellar`).
+- El test de la carrera de First-Touch (it. 10) no despacha el sellado en su proceso hijo, para no depender de una red de Stellar.
+
+**Pendiente, ya asignado:**
+- Reintentos con espera, "Falla de Sellado" y cola estancada: US-021 (it. 22).
+- La custodia de las llaves en producción: D11 (antes de la it. 14).
+- El umbral de alerta de saldo: D12.
 
 **Cubre:** US-020b · R-BLK-01, R-BLK-04, R-BLK-05, R-BLK-06, R-SEC-06, R-PRIV-03.
 

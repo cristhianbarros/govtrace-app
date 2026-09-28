@@ -13,10 +13,13 @@ class Evidence extends Model
 {
     protected $table = 'evidences';
 
-    protected $fillable = ['report_id', 'kind', 'mime_type', 'size_bytes', 'sha256', 'storage_path', 'seal_status'];
+    protected $fillable = ['report_id', 'kind', 'mime_type', 'size_bytes', 'sha256', 'storage_path', 'leaf_index', 'merkle_proof'];
 
     protected $casts = [
         'size_bytes' => 'integer',
+        'leaf_index' => 'integer',
+        // R-BLK-05: los hermanos de su hoja en el árbol del reporte (US-020b).
+        'merkle_proof' => 'array',
     ];
 
     public function report(): BelongsTo
