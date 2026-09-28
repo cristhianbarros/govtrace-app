@@ -1,0 +1,40 @@
+<?php
+
+namespace App\Domain\Organization;
+
+use Illuminate\Auth\Authenticatable;
+use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Notifications\Notifiable;
+use Spatie\Permission\Traits\HasRoles;
+
+/**
+ * An Administrador de Organización or a Veedor de Campo of ONE
+ * organization. Lives in that tenant's own database (specs/SPEC.md,
+ * decisión de tenancy) — never in the central "users" table, which is
+ * reserved for the Super Administrator.
+ */
+class User extends Model implements AuthenticatableContract
+{
+    use Authenticatable, HasRoles, Notifiable;
+
+    /**
+     * Every role here uses this guard (config/auth.php "tenant" guard) —
+     * spatie/permission needs it to match when checking $user->hasRole().
+     */
+    protected string $guard_name = 'tenant';
+
+    protected $fillable = [
+        'name', 'email', 'password', 'is_active',
+        'invitation_token_hash', 'invitation_expires_at',
+    ];
+
+    protected $hidden = ['password', 'remember_token', 'invitation_token_hash'];
+
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'invitation_expires_at' => 'datetime',
+        'is_active' => 'boolean',
+        'password' => 'hashed',
+    ];
+}

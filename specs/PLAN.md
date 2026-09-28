@@ -1,0 +1,447 @@
+# PLAN — GovTrace MVP
+
+> Generado por `/plan` a partir de `specs/SPEC.md` y `features/*.feature`. Las iteraciones están numeradas y cada una tiene un "Done-when" concreto y verificable. Cada iteración termina en **un commit** con tests en verde, porque lo exige el hook de pre-commit. Se trabaja con GitFlow: una rama por iteración desde `main` (`feature/it-NN-<slug>`) y un commit `feat: iteración N — <resumen> (US-XXX)`.
+>
+> **Trazabilidad verificada:** las 56 historias del SPEC tienen su `.feature` (56/56, **0 huérfanas**). En total son 248 escenarios y 351 casos ejecutables, contando las filas de los *Esquemas*.
+
+## Antes de empezar
+
+### Observaciones de trazabilidad y dependencias
+
+| # | Observación | Cómo lo resuelve el plan |
+|---|---|---|
+| O1 | **US-008 (P1) necesita elegir la obra**, pero la búsqueda US-016 es P2 y la sugerencia de cercanía US-019 es P3. Sin una de las dos, P1 no se puede usar de punta a punta. | **US-016 se adelanta a P1** (iteraciones 8 y 16). ✅ *Confirmado.* |
+| O2 | US-036/037 (publicar y retirar, P1) no tienen dónde mostrarse al público hasta el mapa y la línea de tiempo (US-027/029, P2). | Se acepta: en P1 la publicación queda lista en backend y se ve a partir de P2. |
+| O3 | US-017 (tarjeta del contrato, P1) vive en la vista de obra de US-029 (P2). | El backend va en P1 (it. 8) y la pantalla en P2 (it. 26). |
+| O4 | Las historias de P1 ya usan parámetros configurables (geocerca, invitación de 48 h, ventana de 12 meses), pero su pantalla (US-038-CFG) es P2. | En P1 los parámetros existen con valores por defecto **y con historial**, porque R-AUD-05 exige saber el valor vigente al capturar (it. 6). La pantalla llega en P2 (it. 21). |
+| O5 | Las historias de P1 escriben en el log de auditoría (US-011, US-035, US-037), pero consultarlo (US-043-MON) es P2. | La escritura del log se construye en P1 (it. 6) y la consulta en P2 (it. 21). |
+| O6 | Unas 10 reglas no se pueden expresar como escenario Gherkin: R-BCK-01..05, R-CFG-01, R-INT-02, R-MNT-03 y R-TST-01..03. Eso choca con R-TST-04. | Se verifican con Done-when de infraestructura y CI (it. 1, 12, 14 y 35). R-TST-04 **redactada de nuevo**: *"toda regla de comportamiento tiene su escenario automático; las reglas operativas tienen una verificación de infraestructura o CI"*. ✅ *Confirmado.* |
+
+### Decisiones técnicas
+
+✅ Confirmadas todas, **salvo D5** (proveedor del relayer gestionado), que sigue abierta y hace falta antes de la iteración 14.
+
+| # | Tema | Propuesta | Se necesita en |
+|---|---|---|---|
+| D1 | Cola de trabajos | Driver `database`, con un servicio `worker` en el docker-compose base. Sin Horizon ni Redis en el MVP. | it. 1 |
+| D2 | Archivos de evidencia | LocalStack (compatible con S3) en docker-compose para desarrollo y CI; S3 en producción. *Ajustada en it. 1: MinIO ya no se descarga sin login desde 2025.* | it. 1 |
+| D3 | Roles y permisos | `spatie/laravel-permission`, preferencia expresada en el discovery | it. 4 |
+| D4 | Smart Contract | Solidity con Foundry (`forge test`), y Anvil como blockchain local en un perfil de docker-compose (R-TST-01) | it. 12 |
+| D5 | Relayer gestionado (R-BLK-04) | **Elegir proveedor:** Gelato, AWS KMS u otro. Verificar antes si OpenZeppelin Defender sigue operando. | it. 14 |
+| D6 | Árbol de Merkle | Esquema único y documentado (SHA-256, pares ordenados), implementado en PHP en el servidor y en JS en el validador y el script, con vectores de prueba compartidos | it. 13 |
+| D7 | Seudónimo del veedor (R-PRIV-03) | HMAC del ID del veedor con un secreto del servidor, más una tabla seudónimo→veedor con retención de 5 años (R-MNT-03) | it. 13 |
+| D8 | Mapas | Leaflet con teselas de OpenStreetMap (R-INT-02) | it. 18 |
+| D9 | Frontend | Se mantiene JavaScript, como está la plomería. Filament y TypeScript no se usan salvo que decidas lo contrario. | it. 16 |
+| D10 | Proximidad (US-019) | Haversine en SQL, sin PostGIS | it. 31 |
+
+### Convenciones de pruebas
+- **Backend:** Pest en `tests/Feature/<Épica>/US-XXX…Test.php`, con un test por `Escenario` y el mismo nombre. Cada `Esquema` es un test con `->with()` (dataset).
+- **Frontend:** Vitest junto al componente, un test por escenario de UI.
+- **Smart Contract:** `forge test` en `contracts/`.
+- **SECOP:** respuestas grabadas (fixtures) de la API SODA (R-TST-02). **Nunca** se llama a la API real en `make test`.
+- Un Done-when como "US-XXX (N casos)" significa que **todos** los casos de `features/US-XXX.feature` tienen su test y está en verde.
+
+---
+
+## Fase P1 — Semanas 1-2 · Núcleo del flujo de evidencia
+
+### Iteración 1 — Infraestructura del MVP
+
+**Entregable:** el docker-compose suma un `worker` de cola (D1) y un almacenamiento de objetos S3-compatible con su bucket `evidencias` (D2), y `make setup` funciona desde cero.
+**Done-when:**
+- `make setup` desde un clon limpio termina sin errores;
+- `make ps` muestra app, proxy, pgsql, scheduler, storage y worker en *healthy*;
+- `curl -s -o /dev/null -w "%{http_code}" http://govtrace.localhost:8080/up` devuelve `200`;
+- `tests/Feature/HealthCheckTest.php` y el nuevo `tests/Feature/Infra/ObjectStorageTest.php` (escribe y lee un objeto en el disco `evidencias`) en verde;
+- `make test-all` en verde.
+
+**✅ Cumplido:** `docker-compose.yml` con el servicio `storage` y `worker` (con su propio healthcheck de proceso, no el de Apache que trae la imagen); `config/filesystems.php` con el disco `evidencias` (driver `s3`); `docker/storage/init-bucket.sh` crea el bucket al arrancar. `tests/Feature/Infra/ObjectStorageTest.php` (2) y `QueueTest.php` (2) en verde. `tests/infra/verify-stack.sh` confirma los 6 servicios *healthy* y `/up` en 200.
+**Decisión que cambió D2:** MinIO ya no se puede descargar sin iniciar sesión (`minio/minio` y el mirror de Bitnami rechazan el pull anónimo desde 2025). Se usa **LocalStack** (`localstack/localstack:3.8`) en su lugar: mismo API S3, gratis, se descarga sin problema. La producción sigue apuntando a un bucket S3 real.
+**Cubre:** infraestructura base · D1, D2 (ajustada) · R-BCK-03 (el almacenamiento queda preparado para respaldo).
+
+### Iteración 2 — Datos de referencia: DIVIPOLA y emparejamiento
+**Entregable:** tabla central de departamentos y municipios cargada con un seeder, desde el archivo oficial DIVIPOLA versionado en `database/data/`. Servicio de emparejamiento normalizado, sin tildes ni mayúsculas.
+**Done-when:**
+- test de seeder: el conteo de departamentos y municipios coincide con el archivo oficial, y se verifican los códigos 47, 47001, 47189, 05 y 05001;
+- los 4 casos del Esquema *"Emparejamiento normalizado del municipio con la tabla DIVIPOLA"* (US-013) en verde como tests unitarios del servicio.
+
+**✅ Cumplido:** `database/data/divipola.json` con el dataset oficial completo del DANE (dataset `gdxc-w37w` de datos.gov.co): **33 departamentos y 1122 municipios**, no un subconjunto. Migraciones `departments`/`municipalities` (BD central), modelos `app/Domain/Geography/{Department,Municipality}.php`, `DivipolaSeeder` (idempotente) y `MunicipalityMatcher` (normaliza con `Str::ascii()` + mayúsculas). `tests/Feature/Geography/{DivipolaSeederTest,MunicipalityMatcherTest}.php` en verde — 7 tests, incluidos los 4 casos del Esquema de US-013. *(Los tests del matcher viven en `Feature/`, no en `Unit/`, porque `tests/Pest.php` solo liga `Tests\TestCase` — y por tanto la base de datos — a `Feature/`; "unitario" en el Done-when describe el estilo de la prueba, llamar al servicio directo, no la carpeta.)*
+**Cubre:** US-012 (validación DIVIPOLA), US-013 (emparejamiento) · R-INT-03.
+
+### Iteración 3 — Organización: invariantes y alta
+**Entregable:**
+- `app/Domain/Organization`: valores `Nit` (DV de la DIAN), `Subdomain` (formato, mínimo 3 caracteres, palabras reservadas) y `OrganizationName`.
+- Caso de uso de alta en `app/Application`.
+- Alta del tenant con stancl, con su dominio `<subdominio>.govtrace.localhost`.
+
+**Done-when:** US-001 (22 casos) en verde. Incluye NIT duplicado, DV inválido, subdominio duplicado, reservado, mal formado y fuera de rango, más el negativo "solo el Super Admin asigna el subdominio".
+
+**✅ Cumplido:** `app/Domain/Organization/{Nit,Subdomain,OrganizationName}.php` (value objects inmutables) y `Exceptions/OrganizationValidationException.php` con los mensajes exactos. `app/Application/Organization/RegisterOrganization.php` valida, comprueba duplicados y crea el tenant + su dominio en un solo paso (alta = aprobación). `tests/Feature/Organization/RegisterOrganizationTest.php`: **22/22 en verde**.
+
+**Hallazgo de infraestructura (corregido aquí):** `routes/tenant.php` existía desde el arranque del proyecto pero **nunca se cargaba** — `bootstrap/app.php` solo registraba `routes/web.php`. Ningún subdominio de organización respondía. Se agregó el callback `then:` de `withRouting()` para incluirlo.
+
+**Tres decisiones técnicas de esta iteración, no anticipadas en el plan:**
+1. **Columnas reales en `tenants`.** El trait `VirtualColumn` de stancl mete todo atributo salvo `id` en un JSON `data`, salvo que se declare `getCustomColumns()`. Sin eso, la comprobación de NIT duplicado no se puede indexar ni consultar. Se sobrescribió en `App\Infrastructure\Tenancy\Tenant`.
+2. **Inmutabilidad del subdominio como invariante, no como permiso.** Ninguna historia del SPEC (US-007 solo nombre/logo, US-011 solo NIT) permite cambiar el subdominio después del alta — ni siquiera el Super Admin. Se implementó como una regla de `App\Infrastructure\Tenancy\Domain` (bloquea el `UPDATE` de la columna `domain`), no como una verificación de rol, porque el rol todavía no existe (llega en la it. 4) y, sobre todo, porque la capacidad de cambiarlo no existe para nadie.
+3. **Los tests de esta historia no usan `RefreshDatabase`.** Crear una organización ejecuta `CREATE DATABASE` sobre la misma conexión central, y Postgres rechaza ese comando dentro de una transacción — que es justamente lo que envuelve `RefreshDatabase` en cada test. Se limpia a mano en `afterEach` (borrar el tenant dispara el borrado de su base).
+
+**Cubre:** US-001 · R-SA-03.
+
+### Iteración 4 — Identidad y acceso
+**Entregable:**
+- roles Super Administrador, Administrador de Organización y Veedor (D3);
+- inicio de sesión en el dominio central y en el subdominio, con redirección por rol;
+- bloqueo de 5 intentos / 15 min;
+- asignación del Administrador inicial con su correo de bienvenida.
+
+**Done-when:** US-002 (6 casos) y US-031 (9 casos) en verde.
+
+**✅ Cumplido:** 15/15 tests en verde (`tests/Feature/Organization/AssignInitialAdministratorTest.php` y `tests/Feature/Auth/LoginTest.php`).
+
+**Diseño de identidad (dos espacios de usuarios, no uno):** el Super Administrador vive en la tabla `users` **central** (`App\Models\User`, guard `web`); el Administrador de Organización y el Veedor viven en la tabla `users` **de cada tenant** (`App\Domain\Organization\User`, guard `tenant`), instalada por una migración nueva en `database/migrations/tenant/`. `spatie/laravel-permission` (D3) también se migra por tenant, con dos roles sembrados por una migración (no un seeder aparte) para que estén listos apenas se crea la organización. `App\Domain\Auth\Exceptions\AuthenticationRejected` + `app/Application/Auth/AuthenticateUser.php` implementan el bloqueo de 5 intentos / 15 min (mismo código para ambos guards) y la cuenta desactivada. `AssignInitialAdministrator` reutiliza `WelcomeNotification` con un enlace de 48 h, pensado para que la it. 5 (invitar veedores) lo reuse tal cual.
+
+**Rutas y paneles placeholder.** No hay pantallas Vue todavía (llegan en it. 17-19): se agregaron rutas mínimas (`POST /login` central y de tenant, `GET /dashboard` · `/organization/dashboard` · `/veedor/dashboard`) solo para que el backend sea probable por HTTP de punta a punta. Se reemplazan por las páginas reales en su iteración correspondiente.
+
+**Hallazgo corregido en código de producción (no solo en el test):** `$tenant->run($callback)` de stancl **no es exception-safe** — si el `$callback` lanza, nunca revierte el contexto de tenancy ni purga la conexión, dejando el resto del *request* corriendo contra la base de datos del tenant equivocado. `AssignInitialAdministrator` ya no usa `$tenant->run()`; inicializa el tenancy a mano dentro de un `try/finally`. Vale para cualquier código futuro que use `$tenant->run()` con lógica que pueda lanzar.
+
+**Cubre:** US-002, US-031 · R-SEC-03, R-VER-02 (la zona pública no pide sesión).
+
+### Iteración 5 — Invitaciones de veedores
+**Entregable:** invitación con token de 48 h y aceptación con reglas de contraseña. El correo es único por organización y puede repetirse entre organizaciones.
+**Done-when:** US-005 (7 casos) y US-030 (7 casos) en verde.
+
+**✅ Cumplido:** 14/14 casos (`InviteObserverTest` 7 + `AcceptInvitationTest` 7). `InvitationToken` (nuevo, `app/Domain/Organization/`) extrae la generación de token que ya se repetía en `AssignInitialAdministrator`; ambos use cases lo usan ahora (DRY). `AcceptInvitation` + `SetPasswordController` son el consumidor real del enlace que ya generaban US-002 y US-005: valida el token con `hash_equals` + vencimiento, activa la cuenta e inicia sesión de inmediato. `StrongPassword` (regla de validación reusable, `app/Domain/Auth/Rules/`) impone las 4 condiciones de la contraseña con un único mensaje exacto — pensada para reusarse en US-039-USR (it. 20). Se registraron los alias de middleware `role`/`permission`/`role_or_permission` de spatie (no vienen automáticos en el estilo `bootstrap/app.php` de Laravel 11+); `POST /observers/invite` los usa (`role:Administrador de Organización,tenant`).
+
+**Bug de producción encontrado y corregido (no solo en el test):** `invitation_token_hash` e `invitation_expires_at` **no estaban en `$fillable`** de `App\Domain\Organization\User`. `User::create([...])` los descartaba en silencio — la invitación se creaba sin fecha de vencimiento real. El test de la it. 4 no lo detectó porque nunca verificaba ese valor (solo que se enviara un correo); ahora sí lo hace, como regresión.
+
+**El último escenario de US-005** ("el Administrador de Organización no puede dar de alta otras organizaciones") se implementó como una guarda estructural en `RegisterOrganization`: si `tenant()` está activo, rechaza — el Super Administrador nunca opera desde un dominio de tenant, así que esta condición por sí sola basta, sin necesitar todavía el panel/rol completo de la it. 19.
+
+**Cubre:** US-005, US-030 · R-USR-01, R-TA-01.
+
+### Iteración 6 — Datos legales, territorio, log de auditoría y parámetros
+**Entregable:**
+- actualización del NIT por el Super Admin;
+- territorio de la organización guardado en la base central, para que la sincronización lo consulte;
+- **escritura** del log de auditoría (quién, cuándo, acción, antes y después);
+- tabla de parámetros con valores por defecto **e historial con fecha de vigencia** (O4).
+
+**Done-when:**
+- US-011 (4 casos) y US-012 (4 casos) en verde;
+- test que prueba que la tabla de parámetros devuelve el valor vigente en una fecha pasada, base de R-AUD-05.
+
+**✅ Cumplido:** 8/8 casos (`UpdateOrganizationLegalDataTest` 4, `ConfigureTerritoryTest` 4) + 3 tests de `ParametersTest`. Infraestructura nueva, central en las tres:
+
+- **`audit_logs`** (`App\Domain\Audit\AuditLog`, con `AuditLog::record(...)`): quién, cuándo, acción, antes y después. Solo `UpdateOrganizationLegalData` escribe en esta iteración; el resto de acciones que R-AUD-04 lista (publicar/rechazar evidencia, invitar veedor, cambio de territorio…) se conectan en sus propias iteraciones — no se retrocedió a instrumentar it. 3/4/5.
+- **`organization_territories`** (central, no por tenant, porque la sincronización SECOP de la it. 7 necesita leer el territorio de todas las organizaciones sin abrir cada base): una fila por departamento o municipio elegido. `ConfigureTerritory` reemplaza el conjunto completo en una transacción.
+- **`parameters`** (`App\Domain\Configuration\Parameters`): nunca se actualiza una fila, se inserta una versión nueva con su propia `effective_from` — así `valueAt($clave, $fecha)` puede responder "qué valor regía en esa fecha", la base literal de R-AUD-05. Sembrada con los 5 valores por defecto conocidos (geocerca 500 m, ventana 12 meses, invitación 48 h, umbral Relayer 5 POL, sincronización 02:00). **No se reconectaron** los usos ya hardcodeados de esos valores (US-018's 48h, US-008's 500m, etc.) — eso le corresponde a la it. 21, que construye el panel de US-038-CFG.
+
+**Alcance parcial, documentado:** el escenario *edge* de US-012 ("quitar una ciudad no borra lo ya registrado") solo se probó en su mecánica de reemplazo del territorio (la ciudad desaparece del conjunto). La parte sobre evidencias que siguen en la blockchain y el mapa público no se puede probar todavía — esas piezas llegan en it. 8+ y it. 24+.
+
+**Cubre:** US-011, US-012 · R-TA-03, R-AUD-04 (escritura), R-AUD-05 (base).
+
+### Iteración 7 — Sincronización SECOP II
+**Entregable:**
+- cliente SODA;
+- tarea programada a las 02:00 y sincronización inmediata al dar de alta, reactivar o cambiar territorio;
+- filtro de tipo "Obra";
+- upsert por `id_contrato` con restricción de unicidad;
+- contratos anulados pasan a `cancelled`, sin borrarse nunca;
+- los territorios sin organizaciones activas no se consultan.
+
+**Done-when:** US-013 (12 casos), US-032 (5) y US-033 (5) en verde con fixtures grabadas de SECOP II.
+
+**✅ Cumplido (21/22 casos, 1 pendiente documentado):** US-032 5/5, US-033 5/5 y US-013 11/12 (`ProcessSecopContractRowTest`, `SyncSecopContractsTest`), más 10 tests técnicos: cliente SODA (`SecopClientTest` 2), variantes reales de nombres (`MunicipalityMatcherTest` +2, con 27 pares grabados), estado real "Cancelado", borrado prohibido, fila fuera de territorio, reporte de lo no emparejado en la corrida, hora programada y sincronización acotada a una organización. Suite completa: 131 en verde + 1 `todo`.
+
+- **Fixtures grabadas de la API real** (`tests/fixtures/secop/`, 2026-09-27): filas de obra de Magdalena y Antioquia, recortadas a los campos que se usan y con los nombres de personas naturales seudonimizados. `Http::preventStrayRequests()` en `tests/Pest.php` hace que `make test` falle si algo intenta salir a internet (R-TST-02).
+- **Lo que enseñaron los datos reales** y se corrigió antes del commit:
+  1. SECOP **no** publica "Anulado": publica **"Cancelado"**. Los dos pasan a `cancelled`.
+  2. **67 nombres DIVIPOLA se repiten entre departamentos** (Armenia, Barbosa, San Andrés…). El emparejador buscaba solo por nombre y un contrato de Armenia (Quindío) caía en Armenia (Antioquia). Ahora busca **dentro del departamento** y, sin departamento, no adivina un nombre ambiguo.
+  3. SECOP escribe las ciudades de forma suelta ("Calarca", "Cali", "Cúcuta", "Cartagena", "No Definido"), así que un filtro exacto por ciudad del lado de SECOP perdía contratos. Ahora **se consulta por departamento** (33 nombres; solo Bogotá y San Andrés difieren de DIVIPOLA, `Department::SECOP_NAMES`) y la ciudad se empareja localmente. Una tabla de 13 alias verificados (`MunicipalityMatcher::SECOP_ALIASES`) cubre las capitales con nombre oficial largo. Bogotá es a la vez departamento y único municipio, así que todo lo del Distrito Capital va a 11001. Cobertura medida sobre los 53.398 contratos de obra de SECOP II: 89,9%. El resto es ciudad "No Definido" fuera de Bogotá (3.716) o departamento "No Definido" (1.691), y se descarta y se reporta. No queda ningún otro nombre sin emparejar.
+  4. Antioquia tiene más de 1.000 contratos de obra: el cliente ahora **pagina** (`$order=:id`, `$offset`) con un generador.
+- **Diseño:** `WatchedTerritories` (dominio) dice qué vigila al menos una organización activa y decide qué departamentos consultar y qué filas guardar. Lo que cae fuera no se guarda ni se actualiza (R-SEC-02, R-AUD-06). `ProcessSecopContractRow` devuelve un `SecopRowOutcome` por fila. `SyncSecopContracts` recibe el id de la organización para la sincronización inmediata (alta y cambio de territorio) o nada para la corrida nocturna (`routes/console.php`, hora tomada de `parameters`). Cada corrida queda en `secop_sync_runs`: nuevos, actualizados, descartados, **qué ubicaciones no emparejaron** (`unmatched_locations`) y el error. Eso es lo que leerá el panel de US-014 (it. 22). Si la corrida falla, la cola reintenta hasta 5 veces con espera de 1, 5, 15 y 60 min.
+- `Contract` prohíbe editar fuera de `fromSecop()` y prohíbe **borrar** siempre (R-SEC-01, US-033).
+
+**Alcance parcial, documentado:**
+- La fila "el Super Administrador **reactiva** una organización suspendida" del Esquema de sincronización inmediata queda como `->todo()`: reactivar es US-003a (it. 20), que debe despachar `SyncSecopContracts::dispatch($tenant->id)`.
+- "Con 3 evidencias selladas" (US-033) comparte test con "sin evidencias": las evidencias llegan en la it. 10+. Lo que se prueba en ambos casos es que el contrato nunca se borra.
+
+**Decisiones pendientes:**
+- Los contratos con departamento conocido y ciudad "No Definido" (3.716, p. ej. de las Gobernaciones) hoy se descartan y se reportan, porque todo contrato necesita municipio. Si deben aparecer para quien vigila el departamento entero (cascada de US-015, it. 8), habría que permitir `municipality_code` nulo.
+- La corrida trae cada noche **todo** el histórico de obra del territorio. El upsert no escribe nada si la fila no cambió, pero un filtro incremental por `:updated_at` (o por la ventana de 12 meses de US-016) reduciría la descarga.
+- `raw_payload` guarda la fila completa de SECOP, que incluye datos públicos de representantes legales y supervisores. Se puede recortar a los campos útiles si se prefiere minimizar datos personales.
+
+**Cubre:** US-013, US-032, US-033 · R-SEC-01, R-SEC-02, R-AUD-06, R-INT-03, R-TST-02.
+
+### Iteración 8 — Contratos del territorio: listado, búsqueda y tarjeta pública
+**Entregable:**
+- consultas con cascada DIVIPOLA (un departamento incluye su Gobernación y sus municipios);
+- listado paginado del administrador;
+- búsqueda del veedor con la regla de contratos seleccionables (activos, más Terminados/Liquidados de hasta 12 meses);
+- tarjeta pública del contrato, con aviso de anulado.
+
+**Done-when:** US-015 (5 casos), US-016 (11 casos, adelantada por O1) y US-017 (4 casos) en verde (backend).
+**Cubre:** US-015, US-016, US-017 · R-VC-04.
+
+### Iteración 9 — Ficha de obra por organización y cálculo de riesgo
+**Entregable:** modelo de ficha de obra en la base de cada tenant, más el job diario de "En riesgo" (fecha vencida y contrato aún "En ejecución").
+**Done-when:** US-034 (4 casos) en verde, incluido el negativo *"el estado vive en la ficha, no en el contrato"*.
+**Cubre:** US-034 · R-SEC-01.
+
+### Iteración 10 — Crear reporte: GPS, geocerca y First-Touch
+**Entregable:** endpoint de reporte con:
+- clasificación y comentario;
+- precisión GPS de 50 m o mejor;
+- geocerca con el **radio vigente al capturar**;
+- First-Touch con bloqueo atómico;
+- restricción por territorio;
+- marca de hora sospechosa.
+
+**Done-when:** US-008 (22 casos) en verde, incluida la carrera de dos veedores (test con dos transacciones concurrentes).
+**Cubre:** US-008 · R-GEO-01, R-VC-04, R-SEC-05, R-AUD-05, R-MON-02.
+
+### Iteración 11 — Archivos de evidencia y corrección de ubicación
+**Entregable:**
+- recepción de 1 a 5 fotos o 1 PDF de hasta 10 MB;
+- recálculo del SHA-256 en el servidor, con el mensaje de discrepancia;
+- guardado en MinIO;
+- corrección de ubicación de la ficha, con auditoría.
+
+**Done-when:** los casos de servidor de US-009 en verde (cantidad, combinación, peso, video, discrepancia de hash y "las fotos no se difuminan"), más US-035 (4 casos).
+**Cubre:** US-009 (servidor), US-035 · R-HASH-01 (servidor), R-PRIV-05.
+
+### Iteración 12 — Smart Contract de sellado
+**Entregable:** contrato Solidity en `contracts/` con AccessControl (`RELAYER_ROLE`), rechazo de duplicados y sin operaciones de modificación ni borrado (D4). Incluye script de despliegue a Anvil y a testnet.
+**Done-when:**
+- US-020a (4 casos) como `forge test` en verde;
+- `make` tiene un target que despliega en Anvil y deja la dirección en la configuración;
+- el Jenkinsfile corre `forge test`.
+
+**Cubre:** US-020a · R-BLK-02, R-BLK-03, R-SA-01, R-TST-01 (parte blockchain simulada).
+
+### Iteración 13 — Sellado por raíz de Merkle (relayer simulado)
+**Entregable:**
+- árbol de Merkle en el servidor, con una hoja por archivo más una de metadatos con seudónimo (D6, D7);
+- pruebas de inclusión guardadas;
+- estados Recibida → En Cola → Transmitiendo → Sellada (3 confirmaciones);
+- pausa y alerta por falta de saldo;
+- auditoría nocturna de reorganizaciones;
+- interfaz `SealingRelayer` con una implementación falsa que firma contra Anvil.
+
+**Done-when:**
+- US-020b (8 casos) en verde contra Anvil;
+- vectores de prueba de Merkle compartidos (`tests/fixtures/merkle/*.json`) usados por PHP y por JS.
+
+**Cubre:** US-020b · R-BLK-01, R-BLK-05, R-SEC-06, R-PRIV-03.
+
+### Iteración 14 — Relayer gestionado real (testnet)
+**Entregable:** adaptador del proveedor elegido en D5. La llave nunca está en el servidor ni en `.env`.
+**Done-when:**
+- prueba de humo (`make smoke-testnet`): un reporte de prueba llega a "Sellada" en la testnet de Polygon con 3 confirmaciones;
+- una revisión automática confirma que ni el repositorio ni `.env.example` contienen claves privadas.
+
+**Cubre:** R-BLK-04, R-CFG-01, R-TST-01 (prueba de humo en testnet).
+
+### Iteración 15 — Publicación editorial
+**Entregable:**
+- estados Oculto, Publicado, Rechazado y Retirado;
+- publicar de a una;
+- rechazar y retirar con motivo obligatorio;
+- lápida;
+- retiro definitivo;
+- todo con auditoría.
+
+**Done-when:** US-036 (8 casos) y US-037 (6 casos) en verde.
+**Cubre:** US-036, US-037 · R-TA-02, R-USR-02 (backend), R-MON-02.
+
+### Iteración 16 — PWA del veedor: Nuevo Reporte (la pantalla central)
+**Entregable:**
+- flujo buscar obra → GPS (con reintento) → clasificación y comentario → adjuntos;
+- en el teléfono: optimización de fotos a 1920 px, JPEG al 80 % y sin EXIF; limpieza de metadatos del PDF; SHA-256 con Web Crypto;
+- los mensajes exactos de US-008 y US-009.
+
+**Done-when:** Vitest en verde para:
+- GPS denegado;
+- reintento con precisión de 51 m;
+- 6 fotos rechazadas;
+- mezcla de fotos y PDF bloqueada;
+- conversión de HEIC a JPEG sin EXIF;
+- PDF sin metadatos;
+- hash calculado sobre el archivo optimizado;
+- búsqueda desde 3 caracteres con debounce de 300 ms.
+
+**Cubre:** US-008, US-009, US-016 (UI) · R-PRIV-01, R-PRIV-04, R-PRIV-06, R-HASH-01.
+
+### Iteración 17 — Acceso: iniciar sesión y activar la cuenta
+**Entregable:** pantallas mobile-first de inicio de sesión y de activación con contraseña.
+**Done-when:** Vitest de los estados de US-031 y US-030 en verde: credenciales incorrectas, bloqueo, cuenta desactivada, enlace vencido y contraseña débil.
+**Cubre:** US-030, US-031 (UI).
+
+### Iteración 18 — Panel del Administrador de Organización (P1)
+**Entregable:**
+- bandeja de entrada (publicar, rechazar, retirar);
+- invitar veedores;
+- territorio con buscador;
+- contratos;
+- corrección de ubicación en mapa Leaflet/OSM (D8).
+
+**Done-when:** Vitest de cada pantalla con sus estados (carga, error, vacío, éxito) y los mensajes de US-036, US-037, US-005, US-012, US-015 y US-035 en verde.
+**Cubre:** US-005, US-012, US-015, US-035, US-036, US-037 (UI).
+
+### Iteración 19 — Panel global del Super Administrador (P1)
+**Entregable:** alta de organización, Administrador inicial y datos legales.
+**Done-when:** Vitest de los formularios de US-001, US-002 y US-011 en verde, con sus mensajes de error.
+**Cubre:** US-001, US-002, US-011 (UI).
+
+---
+
+## Fase P2 — Semanas 3-4 · Verificación pública y operación
+
+### Iteración 20 — Ciclo de vida de cuentas y organizaciones
+**Entregable:**
+- suspender y reactivar organizaciones, con el mapa visible y aviso, y los reportes offline conservados; **reactivar despacha `SyncSecopContracts::dispatch($tenant->id)`** y cierra el `todo` de US-013 que quedó en `SyncSecopContractsTest` (it. 7);
+- desactivar y reactivar veedores;
+- restablecer contraseña.
+
+**Done-when:** US-003a (6 casos), US-006 (3), US-041-USR (2) y US-039-USR (5) en verde.
+**Cubre:** US-003a, US-006, US-039-USR, US-041-USR · R-AUD-01, R-USR-03, R-VC-01.
+
+### Iteración 21 — Perfil, parámetros y consulta de auditoría
+**Entregable:**
+- nombre y logo de la organización, con limpieza de SVG;
+- pantalla de parámetros globales (usa el historial de la it. 6);
+- consulta del log de auditoría por alcance.
+
+**Done-when:** US-007 (15 casos), US-038-CFG (10) y US-043-MON (3) en verde.
+**Cubre:** US-007, US-038-CFG, US-043-MON · R-SEC-04, R-VC-03, R-CFG-02, R-AUD-04 (consulta).
+
+### Iteración 22 — Robustez del sellado y monitoreo
+**Entregable:**
+- reintentos con backoff hasta 5, "Falla de Sellado" con banner, alerta de cola estancada a las 2 h y relayer caído;
+- panel de salud de SECOP;
+- monitoreo externo de caídas de más de 5 minutos, por Email y Webhook.
+
+**Done-when:**
+- US-021 (5 casos) y US-014 (3) en verde;
+- US-044-MON (2 casos) verificado con la configuración de la herramienta externa y un test del receptor de webhook.
+
+**Cubre:** US-014, US-021, US-044-MON · R-INT-01, R-MON-01.
+
+### Iteración 23 — Recibos, descarga con prueba y script independiente
+**Entregable:**
+- Recibo de Inmutabilidad privado y público;
+- descarga del archivo exacto con su prueba de inclusión;
+- script de verificación en `tools/verify/`, que consulta todas las direcciones históricas del contrato.
+
+**Done-when:** US-023 (3 casos), US-025 (2), US-026 (3) y US-046-INT (4) en verde. El script se prueba contra Anvil con los vectores de la it. 13.
+**Cubre:** US-023, US-025, US-026, US-046-INT · R-INT-04, R-MNT-01, R-MNT-02.
+
+### Iteración 24 — Mapa y línea de tiempo (datos)
+**Entregable:**
+- pines livianos con reglas de color (evidencia publicada más reciente, peor estado de la ficha, Terminados en ventana);
+- línea de tiempo bajo demanda con coordenadas aproximadas;
+- agrupación de contratos en una ficha.
+
+**Done-when:** US-027 (12 casos), US-029 (5) y US-045-INT (3) en verde.
+**Cubre:** US-027, US-029, US-045-INT · R-MAP-01, R-MAP-02, R-PRIV-02, R-INT-05.
+
+### Iteración 25 — Autorización al Super Admin, archivado y resumen
+**Entregable:** autorización de 30 días, revocable; archivado mensual con retorno si llega evidencia; resumen del territorio.
+**Done-when:** US-042-SEC (5 casos), US-048-MNT (4) y US-049-RPT (2) en verde.
+**Cubre:** US-042-SEC, US-048-MNT, US-049-RPT · R-SA-02, R-MNT-04.
+
+### Iteración 26 — Sitio público: mapa, vista de obra y línea de tiempo (la pantalla pública central)
+**Entregable:** mapa Leaflet/OSM con pines por color; vista de obra con la tarjeta del contrato y la línea de tiempo (visor, lápidas, botón "Verificar Sello Blockchain"); aviso de organización suspendida.
+**Done-when:** Vitest de los estados de US-027, US-029 y US-017 en verde (sin obras, carga, lápida, badge de anulado).
+**Cubre:** US-017, US-027, US-029 (UI) · R-AUD-01 (UI).
+
+### Iteración 27 — Validador público, recibo y descarga
+**Entregable:** validador con tres modos (contextual, libre y con prueba adjunta); hash y recomposición de Merkle en el navegador; recibo público; botón de descarga.
+**Done-when:**
+- US-024 (14 casos) en verde con Vitest, usando los vectores de Merkle de la it. 13 y un Smart Contract simulado;
+- UI de US-025 y US-026 en verde.
+
+**Cubre:** US-024, US-025, US-026 (UI) · R-VER-01, R-VER-02, R-MNT-01.
+
+### Iteración 28 — Veedor: Mis Reportes y recibo
+**Entregable:** lista con estado técnico y editorial por separado, rechazo con motivo y recibo en la app.
+**Done-when:** US-010 (10 casos) en verde (backend y Vitest), más la UI de US-023.
+**Cubre:** US-010, US-023 (UI) · R-VC-02, R-USR-02.
+
+### Iteración 29 — Paneles de P2 (administrador y Super Admin)
+**Entregable:** pantallas de US-003a, US-006, US-007, US-014, US-038-CFG, US-039-USR, US-041-USR, US-042-SEC, US-043-MON, US-045-INT y US-049-RPT, más los banners de US-021.
+**Done-when:** Vitest de cada pantalla con sus estados y mensajes exactos en verde.
+**Cubre:** UI de las historias de P2 listadas.
+
+---
+
+## Fase P3 — Semana 5 o posterior · Resiliencia de campo y reportes
+
+### Iteración 30 — Modo sin conexión
+**Entregable:** Service Worker e IndexedDB; bandeja de salida con límites (10 reportes / 50 MB) y vigencia de 7 días con aviso a las 24 h; modal al cerrar sesión; aceptación de un contrato anulado mientras esperaba.
+**Done-when:** US-018 (14 casos) en verde: Vitest y **pruebas de extremo a extremo en un navegador real simulando pérdida de señal** (R-TST-03).
+**Cubre:** US-018 · R-USR-03, R-TST-03.
+
+### Iteración 31 — Obras cercanas y filtros del mapa
+**Entregable:** sugerencia de hasta 5 obras a menos de 500 m con Haversine (D10), y filtros de estado, fechas, presupuesto y municipio.
+**Done-when:** US-019 (7 casos) y US-028 (3) en verde.
+**Cubre:** US-019, US-028.
+
+### Iteración 32 — Operación del Relayer y costos
+**Entregable:** saldo cada 15 minutos con alerta bajo 5 POL; reporte de gas por mes y organización con respaldo del último precio conocido; re-encolado de fallas de sellado.
+**Done-when:** US-022 (4 casos), US-004 (4) y US-047-MNT (2) en verde.
+**Cubre:** US-004, US-022, US-047-MNT · R-VC-03.
+
+### Iteración 33 — Baja de organizaciones e invitaciones
+**Entregable:** baja con doble confirmación, mapa fuera de línea y evidencias verificables; retención de 5 años de los archivos; reenviar y revocar invitaciones.
+**Done-when:** US-003b (6 casos) y US-040-USR (2) en verde.
+**Cubre:** US-003b, US-040-USR · R-AUD-02, R-AUD-03.
+
+### Iteración 34 — Reportes y datos abiertos
+**Entregable:** exportación CSV de la organización; estadísticas públicas; datos abiertos en CSV y JSON; resumen de uso; alerta de inactividad.
+**Done-when:** US-050-RPT (3 casos), US-051-RPT (2), US-052-RPT (4), US-053-RPT (2) y US-054-RPT (4) en verde.
+**Cubre:** US-050..054-RPT · R-PRIV-02, R-PRIV-03 (en los datos abiertos).
+
+### Iteración 35 — Operación y respaldo (bloquea la salida a producción)
+**Entregable:**
+- respaldos programados de PostgreSQL y MinIO, **cada hora**, con retención de 30 días;
+- purga de la tabla de seudónimos a los 5 años;
+- Jenkinsfile con `forge test` y la prueba de humo en testnet antes de cada salida;
+- ejecución y documentación de **una restauración de prueba**.
+
+**Done-when:**
+- existe el runbook `docs/restore.md`, con una restauración real ejecutada que registra **menos de 1 h de datos perdidos** y **menos de 4 h de recuperación**;
+- el pipeline de Jenkins corre sus etapas en verde;
+- test de la purga de seudónimos.
+
+**Cubre:** R-BCK-01, R-BCK-02, R-BCK-03, R-BCK-04, R-BCK-05, R-MNT-03, R-TST-01, R-TST-02, R-CFG-01 (reglas sin Gherkin, O6).
+
+---
+
+## Carga real por fase (sin rebalancear, como se decidió)
+
+| Fase | Semanas | Historias | Iteraciones | Casos ejecutables* |
+|---|---|---|---|---|
+| **P1** | 1-2 | 21 (20 + US-016 adelantada) | **19** (1-19) | 173 |
+| **P2** | 3-4 | 22 | **10** (20-29) | 121 |
+| **P3** | 5+ | 13 | **6** (30-35) | 57 |
+| **Total** | | 56 | **35** | 351 |
+
+\* Filas de `features/*.feature`, contando cada fila de los *Esquemas*.
+
+**Lectura honesta:** la carga no está donde se esperaba.
+- **P1 concentra la mitad del trabajo**: 19 de las 35 iteraciones y cerca del 50 % de los casos, en 2 semanas. Incluye además las piezas de mayor riesgo técnico: el Smart Contract, Merkle y el relayer real (it. 12-14).
+- P2 creció por los huecos de Completitud, pero con 10 iteraciones es más manejable que P1.
+- P3 cabe en una semana solo si P1 y P2 terminan a tiempo.
+
+Si hay que recortar, estas palancas no rompen ninguna regla:
+1. Aceptar P3 como **post-MVP**: el MVP publicable es el fin de P2.
+2. Unir las iteraciones de UI de administración (18-19 y 29) en pantallas funcionales mínimas.
+3. Mover la iteración 14 (relayer real) al inicio de P2, dejando P1 contra Anvil.
+
+La decisión es tuya: el plan no la toma.
+
+## `/audit` — hallazgos y cierre
+<!-- Tras /audit: gaps encontrados, cuáles se cierran como iteraciones nuevas y cuáles se aceptan como deuda. -->
+
+## Deuda técnica aceptada
+<!-- Hallazgos que se dejan conscientemente, con la razón y qué haría falta para retomarlos. -->
