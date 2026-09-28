@@ -1,0 +1,100 @@
+[
+  {
+    "id_contrato": "CO1.PCCNTR.6960260",
+    "referencia_del_contrato": "CSOL-082-2024",
+    "nombre_entidad": "GOBERNACION DEL MAGDALENA",
+    "proveedor_adjudicado": "BARRIO NARIÑO",
+    "descripcion_del_proceso": "AUNAR ESFUERZOS ENTRE EL DEPARTAMENTO DEL MAGDALENA Y LA JUNTA DE ACCION COMUNAL (JAC) DEL BARRIO NARIÑO DEL MUNICIPIO DE ARACATACA DEL DEPARTAMENTO DEL MAGDALENA; EN EL MARCO DEL PROYECTO DESARROLLO DE OBRAS MENORES PARA EL CAMBIO CON PARTICIPACIÓN POPULAR EN EL DEPARTAMENTO DEL MAGDALENA",
+    "tipo_de_contrato": "Obra",
+    "estado_contrato": "En ejecución",
+    "valor_del_contrato": "61600000.000000",
+    "fecha_de_firma": "2024-11-18T00:00:00.000",
+    "fecha_de_fin_del_contrato": "2025-07-30T00:00:00.000",
+    "departamento": "Magdalena",
+    "ciudad": "Santa Marta",
+    "urlproceso": {
+      "url": "https://community.secop.gov.co/Public/Tendering/OpportunityDetail/Index?noticeUID=CO1.NTC.6962218&isFromPublicArea=True&isModal=true&asPopupView=true"
+    }
+  },
+  {
+    "id_contrato": "CO1.PCCNTR.6853522",
+    "referencia_del_contrato": "CSOL-062-2024",
+    "nombre_entidad": "GOBERNACION DEL MAGDALENA",
+    "proveedor_adjudicado": "JUNTA DE ACCION COMUNAL BARRIO LA BONGA PIVIJAY-MAGDALENA",
+    "descripcion_del_proceso": "AUNAR ESFUERZOS ENTRE EL DEPARTAMENTO DEL MAGDALENA Y LA JUNTA DE ACCION COMUNAL (JAC) BARRIO LA BONGA DEL MUNICIPIO DE PIVIJAY; EN EL MARCO DEL PROYECTO DESARROLLO DE OBRAS MENORES PARA EL CAMBIO CON PARTICIPACIÓN POPULAR EN EL DEPARTAMENTO DEL MAGDALENA",
+    "tipo_de_contrato": "Obra",
+    "estado_contrato": "En ejecución",
+    "valor_del_contrato": "61600000.000000",
+    "fecha_de_firma": "2024-10-08T00:00:00.000",
+    "fecha_de_fin_del_contrato": "2025-07-30T00:00:00.000",
+    "departamento": "Magdalena",
+    "ciudad": "Santa Marta",
+    "urlproceso": {
+      "url": "https://community.secop.gov.co/Public/Tendering/OpportunityDetail/Index?noticeUID=CO1.NTC.6827918&isFromPublicArea=True&isModal=true&asPopupView=true"
+    }
+  },
+  {
+    "id_contrato": "CO1.PCCNTR.9576036",
+    "referencia_del_contrato": "002-C21-1400-2026",
+    "nombre_entidad": "ALCALDIA DE CIENAGA MAGDALENA",
+    "proveedor_adjudicado": "CONSORCIO CANALES PLUVIALES 2026",
+    "descripcion_del_proceso": "MANTENIMIENTO Y LIMPIEZA DE LOS CANALES PLUVIALES VIGENCIA 2026 EN EL MUNICIPIO DE CIÉNAGA; MAGDALENA",
+    "tipo_de_contrato": "Obra",
+    "estado_contrato": "Modificado",
+    "valor_del_contrato": "804446581.000000",
+    "fecha_de_firma": "2026-06-24T00:00:00.000",
+    "fecha_de_fin_del_contrato": "2026-08-17T00:00:00.000",
+    "departamento": "Magdalena",
+    "ciudad": "Ciénaga",
+    "urlproceso": {
+      "url": "https://community.secop.gov.co/Public/Tendering/OpportunityDetail/Index?noticeUID=CO1.NTC.10333628&isFromPublicArea=True&isModal=true&asPopupView=true"
+    }
+  },
+  {
+    "id_contrato": "CO1.PCCNTR.8050004",
+    "referencia_del_contrato": "CO1.PCCNTR.8050004",
+    "nombre_entidad": "ALCALDIA MUNICIPAL DE FUNDACION",
+    "proveedor_adjudicado": "PERSONA NATURAL 1 (seudonimizada)",
+    "descripcion_del_proceso": "Sin Descripcion",
+    "tipo_de_contrato": "Obra",
+    "estado_contrato": "Borrador",
+    "valor_del_contrato": "33000000.000000",
+    "departamento": "Magdalena",
+    "ciudad": "Fundación",
+    "urlproceso": {
+      "url": "https://community.secop.gov.co/Public/Tendering/OpportunityDetail/Index?noticeUID=CO1.NTC.8171247&isFromPublicArea=True&isModal=true&asPopupView=true"
+    }
+  },
+  {
+    "id_contrato": "CO1.PCCNTR.9259454",
+    "referencia_del_contrato": "CONTRATO DE OBRA No. 001 DE 2026",
+    "nombre_entidad": "ALCALDIA MUNICIPAL PIVIJAY MAGDALENA",
+    "proveedor_adjudicado": "CONSORCIO IMPLEMENTACION DE SEÑALIZACION VIAL EN EL MUNICIPIO DE PIVIJAY MAGDALENA- N SAMC-007-2025",
+    "descripcion_del_proceso": "IMPLEMENTACIÓN DE SEÑALIZACIÓN VIAL EN EL MUNICIPIO DE\nPIVIJAY; MAGDALENA",
+    "tipo_de_contrato": "Obra",
+    "estado_contrato": "En ejecución",
+    "valor_del_contrato": "106523386.000000",
+    "fecha_de_firma": "2026-02-10T00:00:00.000",
+    "fecha_de_fin_del_contrato": "2026-05-12T00:00:00.000",
+    "departamento": "Magdalena",
+    "ciudad": "No Definido",
+    "urlproceso": {
+      "url": "https://community.secop.gov.co/Public/Tendering/OpportunityDetail/Index?noticeUID=CO1.NTC.9010860&isFromPublicArea=True&isModal=true&asPopupView=true"
+    }
+  },
+  {
+    "id_contrato": "CO1.PCCNTR.581549",
+    "referencia_del_contrato": "CO1.PCCNTR.581549",
+    "nombre_entidad": "SUBCUENTA DEL SISTEMA DE PARQUES NACIONALES NATURALES DEL FONDO NACIONAL AMBIENTAL -FONAM DTCA",
+    "proveedor_adjudicado": "PERSONA NATURAL 2 (seudonimizada)",
+    "descripcion_del_proceso": "Sin Descripcion",
+    "tipo_de_contrato": "Obra",
+    "estado_contrato": "Cancelado",
+    "valor_del_contrato": "304775923.510000",
+    "departamento": "Magdalena",
+    "ciudad": "Santa Marta",
+    "urlproceso": {
+      "url": "https://community.secop.gov.co/Public/Tendering/OpportunityDetail/Index?noticeUID=CO1.NTC.522591&isFromPublicArea=True&isModal=true&asPopupView=true"
+    }
+  }
+]

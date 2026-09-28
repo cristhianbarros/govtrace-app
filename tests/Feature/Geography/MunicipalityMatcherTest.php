@@ -32,3 +32,26 @@ it('matches the municipality name SECOP II sends, normalizing accents and case',
     'unaccented, still resolves to the accented stored name' => ['Cienaga', '47189'],
     'unknown municipality is discarded, not guessed' => ['Villa Inexistente', null],
 ]);
+
+// Iteración 7 — R-TST-02: variantes reales de SECOP II -------------------
+// Pares departamento/ciudad tal como los escribe SECOP II, grabados de la
+// API SODA (dataset jbjy-vk9h) el 2026-09-27. El municipio se busca
+// DENTRO del departamento: 67 nombres DIVIPOLA se repiten entre
+// departamentos (Armenia, Barbosa, San Andrés…).
+
+it('does not guess a municipality name that exists in several departments', function () {
+    expect((new MunicipalityMatcher)->match('Armenia'))->toBeNull()
+        ->and((new MunicipalityMatcher)->match('Armenia', '63')?->code)->toBe('63001');
+});
+
+it('resolves the real SECOP II spellings recorded from the API', function (string $departamento, string $ciudad, ?string $divipola) {
+    $municipio = (new MunicipalityMatcher)->matchSecopLocation($departamento, $ciudad);
+
+    expect($municipio?->code)->toBe($divipola);
+})->with(function () {
+    $variants = secopFixture('location_variants');
+
+    foreach ($variants as $v) {
+        yield "{$v['departamento']} / {$v['ciudad']}" => [$v['departamento'], $v['ciudad'], $v['divipola']];
+    }
+});

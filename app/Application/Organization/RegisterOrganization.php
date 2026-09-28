@@ -7,6 +7,7 @@ use App\Domain\Organization\Nit;
 use App\Domain\Organization\OrganizationName;
 use App\Domain\Organization\Subdomain;
 use App\Infrastructure\Tenancy\Tenant;
+use App\Jobs\SyncSecopContracts;
 
 /**
  * US-001: only the Super Administrator runs this. Registering an
@@ -54,6 +55,13 @@ class RegisterOrganization
         ]);
 
         $tenant->domains()->create(['domain' => $domainName]);
+
+        // US-013, edge "sincronización inmediata al dar de alta": no
+        // espera a la corrida nocturna. Recién creada todavía no tiene
+        // territorio (US-012 es un paso aparte), así que esta primera
+        // corrida no consulta nada; la que trae contratos es la que
+        // despacha ConfigureTerritory.
+        SyncSecopContracts::dispatch($tenant->id);
 
         return $tenant;
     }

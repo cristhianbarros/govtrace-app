@@ -149,6 +149,27 @@
 - los territorios sin organizaciones activas no se consultan.
 
 **Done-when:** US-013 (12 casos), US-032 (5) y US-033 (5) en verde con fixtures grabadas de SECOP II.
+
+**✅ Cumplido (21/22 casos, 1 pendiente documentado):** US-032 5/5, US-033 5/5 y US-013 11/12 (`ProcessSecopContractRowTest`, `SyncSecopContractsTest`), más 10 tests técnicos: cliente SODA (`SecopClientTest` 2), variantes reales de nombres (`MunicipalityMatcherTest` +2, con 27 pares grabados), estado real "Cancelado", borrado prohibido, fila fuera de territorio, reporte de lo no emparejado en la corrida, hora programada y sincronización acotada a una organización. Suite completa: 131 en verde + 1 `todo`.
+
+- **Fixtures grabadas de la API real** (`tests/fixtures/secop/`, 2026-09-27): filas de obra de Magdalena y Antioquia, recortadas a los campos que se usan y con los nombres de personas naturales seudonimizados. `Http::preventStrayRequests()` en `tests/Pest.php` hace que `make test` falle si algo intenta salir a internet (R-TST-02).
+- **Lo que enseñaron los datos reales** y se corrigió antes del commit:
+  1. SECOP **no** publica "Anulado": publica **"Cancelado"**. Los dos pasan a `cancelled`.
+  2. **67 nombres DIVIPOLA se repiten entre departamentos** (Armenia, Barbosa, San Andrés…). El emparejador buscaba solo por nombre y un contrato de Armenia (Quindío) caía en Armenia (Antioquia). Ahora busca **dentro del departamento** y, sin departamento, no adivina un nombre ambiguo.
+  3. SECOP escribe las ciudades de forma suelta ("Calarca", "Cali", "Cúcuta", "Cartagena", "No Definido"), así que un filtro exacto por ciudad del lado de SECOP perdía contratos. Ahora **se consulta por departamento** (33 nombres; solo Bogotá y San Andrés difieren de DIVIPOLA, `Department::SECOP_NAMES`) y la ciudad se empareja localmente. Una tabla de 13 alias verificados (`MunicipalityMatcher::SECOP_ALIASES`) cubre las capitales con nombre oficial largo. Bogotá es a la vez departamento y único municipio, así que todo lo del Distrito Capital va a 11001. Cobertura medida sobre los 53.398 contratos de obra de SECOP II: 89,9%. El resto es ciudad "No Definido" fuera de Bogotá (3.716) o departamento "No Definido" (1.691), y se descarta y se reporta. No queda ningún otro nombre sin emparejar.
+  4. Antioquia tiene más de 1.000 contratos de obra: el cliente ahora **pagina** (`$order=:id`, `$offset`) con un generador.
+- **Diseño:** `WatchedTerritories` (dominio) dice qué vigila al menos una organización activa y decide qué departamentos consultar y qué filas guardar. Lo que cae fuera no se guarda ni se actualiza (R-SEC-02, R-AUD-06). `ProcessSecopContractRow` devuelve un `SecopRowOutcome` por fila. `SyncSecopContracts` recibe el id de la organización para la sincronización inmediata (alta y cambio de territorio) o nada para la corrida nocturna (`routes/console.php`, hora tomada de `parameters`). Cada corrida queda en `secop_sync_runs`: nuevos, actualizados, descartados, **qué ubicaciones no emparejaron** (`unmatched_locations`) y el error. Eso es lo que leerá el panel de US-014 (it. 22). Si la corrida falla, la cola reintenta hasta 5 veces con espera de 1, 5, 15 y 60 min.
+- `Contract` prohíbe editar fuera de `fromSecop()` y prohíbe **borrar** siempre (R-SEC-01, US-033).
+
+**Alcance parcial, documentado:**
+- La fila "el Super Administrador **reactiva** una organización suspendida" del Esquema de sincronización inmediata queda como `->todo()`: reactivar es US-003a (it. 20), que debe despachar `SyncSecopContracts::dispatch($tenant->id)`.
+- "Con 3 evidencias selladas" (US-033) comparte test con "sin evidencias": las evidencias llegan en la it. 10+. Lo que se prueba en ambos casos es que el contrato nunca se borra.
+
+**Decisiones pendientes:**
+- Los contratos con departamento conocido y ciudad "No Definido" (3.716, p. ej. de las Gobernaciones) hoy se descartan y se reportan, porque todo contrato necesita municipio. Si deben aparecer para quien vigila el departamento entero (cascada de US-015, it. 8), habría que permitir `municipality_code` nulo.
+- La corrida trae cada noche **todo** el histórico de obra del territorio. El upsert no escribe nada si la fila no cambió, pero un filtro incremental por `:updated_at` (o por la ventana de 12 meses de US-016) reduciría la descarga.
+- `raw_payload` guarda la fila completa de SECOP, que incluye datos públicos de representantes legales y supervisores. Se puede recortar a los campos útiles si se prefiere minimizar datos personales.
+
 **Cubre:** US-013, US-032, US-033 · R-SEC-01, R-SEC-02, R-AUD-06, R-INT-03, R-TST-02.
 
 ### Iteración 8 — Contratos del territorio: listado, búsqueda y tarjeta pública
@@ -277,7 +298,7 @@
 
 ### Iteración 20 — Ciclo de vida de cuentas y organizaciones
 **Entregable:**
-- suspender y reactivar organizaciones, con el mapa visible y aviso, y los reportes offline conservados;
+- suspender y reactivar organizaciones, con el mapa visible y aviso, y los reportes offline conservados; **reactivar despacha `SyncSecopContracts::dispatch($tenant->id)`** y cierra el `todo` de US-013 que quedó en `SyncSecopContractsTest` (it. 7);
 - desactivar y reactivar veedores;
 - restablecer contraseña.
 

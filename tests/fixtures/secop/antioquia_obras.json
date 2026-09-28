@@ -1,0 +1,87 @@
+[
+  {
+    "id_contrato": "CO1.PCCNTR.8218778",
+    "referencia_del_contrato": "05011292025",
+    "nombre_entidad": "ICBF REGIONAL ANTIOQUIA",
+    "proveedor_adjudicado": "INSOL S.A.S.",
+    "descripcion_del_proceso": "PRESTAR EL SERVICIO DE ADECUACIONES PARA\nLOS INMUEBLES RECIBIDOS EN COMODATOS;\nUBICADOS EN LA CALLE 46 # 42 -40; SEGUNDO\nPISO; PARA EL FUNCIONAMIENTO DE LA UNIDAD\nLOCAL Y EL LOTE DE TERRENO 3 MZ 23 BARRIO\nCARIBE; PARA EL FUNCIONAMIENTO DEL CENTRO\nDE EMERGENCIA; AMBOS UBICADOS EN EL\nMUNICIPIO DE NECO",
+    "tipo_de_contrato": "Obra",
+    "estado_contrato": "En ejecución",
+    "valor_del_contrato": "246539904.000000",
+    "fecha_de_firma": "2025-08-26T00:00:00.000",
+    "fecha_de_fin_del_contrato": "2025-11-30T00:00:00.000",
+    "departamento": "Antioquia",
+    "ciudad": "Medellín",
+    "urlproceso": {
+      "url": "https://community.secop.gov.co/Public/Tendering/OpportunityDetail/Index?noticeUID=CO1.NTC.8527404&isFromPublicArea=True&isModal=true&asPopupView=true"
+    }
+  },
+  {
+    "id_contrato": "CO1.PCCNTR.9544808",
+    "referencia_del_contrato": "6700048428",
+    "nombre_entidad": "INSTITUTO DE DEPORTES Y RECREACION DE MEDELLIN",
+    "proveedor_adjudicado": "CONSORCIO FG ESCENARIOS",
+    "descripcion_del_proceso": "MEJORAMIENTO Y/O MANTENIMIENTO Y/O ADECUACIÓN DE LAS PLACAS Y ESCENARIOS DEPORTIVOS Y RECREATIVOS Y AREAS COMPLEMENTARIAS; ADMINISTRADOS POR EL INDER MEDELLÍN",
+    "tipo_de_contrato": "Obra",
+    "estado_contrato": "En ejecución",
+    "valor_del_contrato": "2605882851.000000",
+    "fecha_de_firma": "2026-06-17T00:00:00.000",
+    "fecha_de_fin_del_contrato": "2026-11-05T00:00:00.000",
+    "departamento": "Antioquia",
+    "ciudad": "Medellín",
+    "urlproceso": {
+      "url": "https://community.secop.gov.co/Public/Tendering/OpportunityDetail/Index?noticeUID=CO1.NTC.10211590&isFromPublicArea=True&isModal=true&asPopupView=true"
+    }
+  },
+  {
+    "id_contrato": "CO1.PCCNTR.5331542",
+    "referencia_del_contrato": "DESur-OC-158-2023",
+    "nombre_entidad": "EMPRESA DE VIVIENDA Y DESARROLLO URBANO Y RURAL DEL MUNICIPIO DE ENVIGADO",
+    "proveedor_adjudicado": "TAMAYO INGENIEROS S.A.S",
+    "descripcion_del_proceso": "REALIZAR LA CONSTRUCCIÓN Y MEJORAMIENTO DE LAS REDES DEL ACUEDUCTO VEREDAL LAS PALMAS FASE 3 DEL MUNICIPIO DE ENVIGADO; EN CUMPLIMIENTO AL ACTA DE EJECUCIÓN N° 9 DEL CONVENIO INTERADMINISTRATIVO ENV-09-09-0898-21.",
+    "tipo_de_contrato": "Obra",
+    "estado_contrato": "terminado",
+    "valor_del_contrato": "196173198.000000",
+    "fecha_de_firma": "2023-08-28T00:00:00.000",
+    "fecha_de_fin_del_contrato": "2023-11-04T00:00:00.000",
+    "departamento": "Antioquia",
+    "ciudad": "Envigado",
+    "urlproceso": {
+      "url": "https://community.secop.gov.co/Public/Tendering/OpportunityDetail/Index?noticeUID=CO1.NTC.4846078&isFromPublicArea=True&isModal=true&asPopupView=true"
+    }
+  },
+  {
+    "id_contrato": "CO1.PCCNTR.5165568",
+    "referencia_del_contrato": "CI-040-2023",
+    "nombre_entidad": "ALCALDIA DE EL PEÑOL",
+    "proveedor_adjudicado": "Empresa Autonoma de El Peñol",
+    "descripcion_del_proceso": "CONTRATO INTERADMINISTRATIVO DE MANDATO SIN REPRESENTACIÓN PARA LA ADMINISTRACIÓN DEL PROYECTO CONSTRUCCIÓN DE PLANTA DE COMPOSTAJE PARA TRATAMIENTO DE RESIDUOS ORGÁNICOS EN LA VEREDA EL SALTO DEL MUNICIPIO DE EL PEÑOL - ETAPA 1",
+    "tipo_de_contrato": "Obra",
+    "estado_contrato": "En ejecución",
+    "valor_del_contrato": "2126640953.000000",
+    "fecha_de_firma": "2023-06-28T00:00:00.000",
+    "fecha_de_fin_del_contrato": "2024-03-28T00:00:00.000",
+    "departamento": "Antioquia",
+    "ciudad": "Peñol",
+    "urlproceso": {
+      "url": "https://community.secop.gov.co/Public/Tendering/OpportunityDetail/Index?noticeUID=CO1.NTC.4662333&isFromPublicArea=True&isModal=true&asPopupView=true"
+    }
+  },
+  {
+    "id_contrato": "CO1.PCCNTR.8126984",
+    "referencia_del_contrato": "CD-032-2025",
+    "nombre_entidad": "EDU ANTIOQUIA",
+    "proveedor_adjudicado": "SOLUCIONES ECOSISTEMA J & G S.A.S",
+    "descripcion_del_proceso": "CONTRATO DE OBRA PARA LA EJECUCIÓN DEL PROYECTO INSTALACIÓN DE ESTUFAS EFICIENTES PARA FAMILIAS RURALES EN ÁREAS DE IMPORTANCIA AMBIENTAL EN EL MUNICIPIO DE SANTA FÉ DE ANTIOQUIA",
+    "tipo_de_contrato": "Obra",
+    "estado_contrato": "En ejecución",
+    "valor_del_contrato": "201079800.000000",
+    "fecha_de_firma": "2025-07-28T00:00:00.000",
+    "fecha_de_fin_del_contrato": "2025-09-30T00:00:00.000",
+    "departamento": "Antioquia",
+    "ciudad": "Santafé De Antioquia",
+    "urlproceso": {
+      "url": "https://community.secop.gov.co/Public/Tendering/OpportunityDetail/Index?noticeUID=CO1.NTC.8500614&isFromPublicArea=True&isModal=true&asPopupView=true"
+    }
+  }
+]

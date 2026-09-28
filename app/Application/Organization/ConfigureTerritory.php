@@ -8,6 +8,7 @@ use App\Domain\Geography\Municipality;
 use App\Domain\Organization\Exceptions\OrganizationValidationException;
 use App\Domain\Organization\OrganizationTerritory;
 use App\Infrastructure\Tenancy\Tenant;
+use App\Jobs\SyncSecopContracts;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -50,6 +51,9 @@ class ConfigureTerritory
             before: ['territory' => $previous],
             after: ['territory' => $picks],
         );
+
+        // US-013, edge "sincronización inmediata al cambiar el territorio".
+        SyncSecopContracts::dispatch($tenant->id);
     }
 
     /**
