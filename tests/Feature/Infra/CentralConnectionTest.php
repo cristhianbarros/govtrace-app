@@ -8,7 +8,9 @@ use App\Domain\Contracts\SecopSyncRun;
 use App\Domain\Geography\Department;
 use App\Domain\Geography\Municipality;
 use App\Domain\Organization\OrganizationTerritory;
+use App\Domain\Sealing\SealingPause;
 use App\Infrastructure\Tenancy\Tenant;
+use App\Models\User as SuperAdmin;
 use Database\Seeders\DivipolaSeeder;
 
 /*
@@ -30,6 +32,8 @@ it('keeps every central model on the central connection', function (string $mode
     OrganizationTerritory::class,
     ParameterValue::class,
     AuditLog::class,
+    SealingPause::class,
+    SuperAdmin::class,
 ]);
 
 it('reads central tables from inside a tenant context', function () {

@@ -31,7 +31,7 @@ RUN set -eux; \
     apt-get update; \
     apt-get install -y --no-install-recommends \
         curl \
-        libpq-dev libicu-dev libzip-dev; \
+        libpq-dev libicu-dev libzip-dev libgmp-dev; \
     rm -rf /var/lib/apt/lists/*
 
 # PHP extensions. Each one has a reason; nothing is installed "just in case":
@@ -42,8 +42,9 @@ RUN set -eux; \
 #   opcache   -> realistic performance
 #   pcntl     -> graceful SIGTERM in queue:work / schedule:work
 #   redis     -> phpredis client (REDIS_CLIENT=phpredis)
+#   gmp       -> stellar-php-sdk: sealing on Stellar (it. 13)
 RUN set -eux; \
-    docker-php-ext-install -j"$(nproc)" pdo_pgsql intl bcmath zip opcache pcntl; \
+    docker-php-ext-install -j"$(nproc)" pdo_pgsql intl bcmath zip opcache pcntl gmp; \
     pecl install redis-6.2.0; \
     docker-php-ext-enable redis
 

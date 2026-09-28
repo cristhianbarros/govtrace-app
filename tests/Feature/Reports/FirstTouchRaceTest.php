@@ -21,7 +21,7 @@ use Illuminate\Support\Facades\Storage;
  *
  * La transacción del veedor A queda abierta en este proceso, ya con la
  * ubicación fijada. La del veedor B corre en otro proceso
- * (tests/support/create_report_in_parallel.php) y TIENE que quedarse
+ * (tests/Support/create_report_in_parallel.php) y TIENE que quedarse
  * esperando el bloqueo de A: solo cuando Postgres muestra a B esperando,
  * A confirma. Así la carrera ocurre de verdad, sin depender de la suerte.
  *
@@ -48,7 +48,7 @@ afterEach(function () {
 function startParallelReport(Tenant $tenant, OrganizationUser $veedor, string $secopContractId, array $position): array
 {
     $process = proc_open(
-        [PHP_BINARY, base_path('tests/support/create_report_in_parallel.php'), $tenant->id, (string) $veedor->id, $secopContractId, (string) $position[0], (string) $position[1]],
+        [PHP_BINARY, base_path('tests/Support/create_report_in_parallel.php'), $tenant->id, (string) $veedor->id, $secopContractId, (string) $position[0], (string) $position[1]],
         [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
         $pipes,
         base_path(),

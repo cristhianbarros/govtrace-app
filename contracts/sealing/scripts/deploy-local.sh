@@ -3,9 +3,10 @@
 # su ID en .env. Corre dentro del contenedor "soroban" (make contract-deploy).
 #
 # Las cuentas son de DESARROLLO: las crea Stellar CLI y las fondea friendbot.
-# Sus llaves quedan en la configuración de la CLI, en .cache/ (fuera de git),
-# y nunca en el repositorio ni en .env (R-BLK-04). La custodia en
-# producción es la decisión D11 de specs/PLAN.md.
+# Sus llaves quedan en la configuración de la CLI, en .cache/, y en el .env
+# local para que Laravel firme los sellos (it. 13). Los dos están fuera de
+# git: ninguna llave va al repositorio ni a .env.example (R-BLK-04). La
+# custodia en producción es la decisión D11 de specs/PLAN.md.
 set -eu
 
 . "$(dirname "$0")/stellar-local.sh"
@@ -36,6 +37,8 @@ set_env STELLAR_NETWORK_PASSPHRASE "\"$STELLAR_NETWORK_PASSPHRASE\""
 set_env STELLAR_SEALING_CONTRACT_ID "$contract_id"
 set_env STELLAR_SEALER_ADDRESS "$sealer"
 set_env STELLAR_SPONSOR_ADDRESS "$sponsor"
+set_env STELLAR_SEALER_SECRET "$(stellar keys show govtrace-sealer)"
+set_env STELLAR_SPONSOR_SECRET "$(stellar keys show govtrace-sponsor)"
 
 echo "Contrato de sellado desplegado en la red local: $contract_id"
 echo "  selladora:     $sealer"

@@ -1,5 +1,6 @@
 // Declarative pipeline: Build (Docker) -> Format Check (Pint) -> Test Backend (Pest) -> Test Frontend (Vitest)
-// -> Test Contract (Soroban: rustfmt, clippy, cargo test and the exact WASM interface).
+// -> Test Contract (Soroban: rustfmt, clippy, cargo test and the exact WASM interface)
+// -> Test Stellar (sealing against a local standalone network with the contract deployed).
 // It drives the same Makefile targets developers use, so CI and local runs cannot drift.
 // The Jenkins agent only needs Docker (with the compose plugin) and make.
 pipeline {
@@ -19,6 +20,7 @@ pipeline {
         PG_PORT        = '15432'
         DOCKER_NETWORK = 'govtrace_ci_net'
         DOCKER_SUBNET  = '172.29.250.0/24'
+        STELLAR_PORT   = '18100'
     }
 
     stages {
@@ -57,6 +59,15 @@ pipeline {
                 // Sealing Smart Contract (it. 12). Runs in the Rust + Stellar CLI
                 // container; needs no Stellar network.
                 sh 'make contract-test'
+            }
+        }
+
+        stage('Test Stellar') {
+            steps {
+                // Sealing end to end (it. 13): a fresh local standalone network,
+                // the contract deployed on it, and the "stellar" test group
+                // (fee bump paid by the sponsor, duplicates, report -> Sellada).
+                sh 'make stellar-up && make contract-deploy && make test-stellar'
             }
         }
     }

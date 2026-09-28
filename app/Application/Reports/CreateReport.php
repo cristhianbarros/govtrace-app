@@ -2,6 +2,7 @@
 
 namespace App\Application\Reports;
 
+use App\Application\Sealing\QueueReportForSealing;
 use App\Domain\Configuration\Parameters;
 use App\Domain\Contracts\Contract;
 use App\Domain\Organization\User;
@@ -16,6 +17,8 @@ use App\Domain\Reports\Report;
 use App\Domain\Reports\ReportClassification;
 use App\Domain\Reports\ReportComment;
 use App\Domain\Reports\SuspiciousCaptureTime;
+use App\Domain\Sealing\ReportSeal;
+use App\Domain\Sealing\SealStatus;
 use App\Domain\Worksites\Worksite;
 use App\Domain\Worksites\WorksiteContract;
 use Carbon\CarbonInterface;
@@ -32,8 +35,8 @@ use Throwable;
  *
  * Los archivos (US-009) se verifican antes de tocar la base: si el hash
  * que el servidor recalcula no coincide con el del teléfono, no se guarda
- * nada. Si coinciden, se guardan byte a byte en el disco "evidencias" y
- * quedan en cola para el sellado (seal_status = pending).
+ * nada. Si coinciden, se guardan byte a byte en el disco "evidencias", y
+ * el reporte queda "Recibida" y luego "En Cola" para el sellado (US-020b).
  *
  * First-Touch (R-GEO-01) con bloqueo atómico: la ficha se lee con
  * SELECT … FOR UPDATE, así que de dos veedores enviando a la vez el
@@ -57,7 +60,7 @@ class CreateReport
         $radiusMeters = (int) (Parameters::valueAt('geofence_radius_meters', $input->capturedAt)
             ?? throw new RuntimeException('Falta el parámetro geofence_radius_meters.'));
 
-        return DB::transaction(function () use ($veedor, $input, $receivedAt, $classification, $comment, $reading, $evidenceSet, $contract, $radiusMeters) {
+        $report = DB::transaction(function () use ($veedor, $input, $receivedAt, $classification, $comment, $reading, $evidenceSet, $contract, $radiusMeters) {
             $worksite = $this->lockedWorksiteOf($contract);
             $officialLocation = $worksite->location();
 
@@ -83,8 +86,16 @@ class CreateReport
 
             $this->storeEvidences($report, $evidenceSet);
 
+            // US-020b: "Recibida", con la misma transacción que el reporte.
+            ReportSeal::create(['report_id' => $report->id, 'status' => SealStatus::Received, 'received_at' => $receivedAt]);
+
             return $report;
         });
+
+        // Ya confirmado: "En Cola" y el trabajo de sellado despachado.
+        (new QueueReportForSealing)->handle($report);
+
+        return $report;
     }
 
     /**
@@ -116,7 +127,6 @@ class CreateReport
                     'size_bytes' => $upload->sizeBytes,
                     'sha256' => $upload->serverSha256(),
                     'storage_path' => $path,
-                    'seal_status' => 'pending',
                 ]);
             }
         } catch (Throwable $e) {

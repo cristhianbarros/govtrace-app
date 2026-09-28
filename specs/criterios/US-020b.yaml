@@ -1,20 +1,22 @@
 story_id: "US-020b"
-titulo_historia: "Como Sistema quiero encolar el hash validado de cada evidencia y registrarlo en el Smart Contract vía el relayer gestionado, que firma y paga el gas, para garantizar la inmutabilidad sin fricción para el usuario"
+titulo_historia: "Como Sistema quiero encolar el hash validado de cada evidencia y registrarlo en el Smart Contract de Soroban, con la comisión patrocinada por GovTrace (fee bump), para garantizar la inmutabilidad sin fricción para el usuario"
 bloque: "B7 — Sellado"
+# Pivote a Stellar (2026-09-28): reemplaza la versión Polygon (relayer gestionado, gas, 3 confirmaciones, reorganizaciones).
 criterios_aceptacion:
   escenarios_exito:
-    - "La evidencia recorre 4 estados: Recibida (pasó las validaciones del servidor) → En Cola (job asignado) → Transmitiendo (transacción enviada al RPC, con TxHash) → Sellada (confirmada en la red)"
-    - "Una evidencia pasa a 'Sellada' cuando su transacción tiene al menos 3 bloques de confirmación en Polygon"
+    - "La evidencia recorre 4 estados: Recibida (pasó las validaciones del servidor) → En Cola (trabajo de sellado asignado) → Transmitiendo (transacción enviada al RPC de Stellar, con su hash) → Sellada (incluida con éxito en un ledger cerrado)"
+    - "Una evidencia pasa a 'Sellada' cuando la red incluye su transacción en un ledger cerrado; en Stellar eso es definitivo, sin confirmaciones adicionales (R-BLK-06)"
   validaciones_reglas:
     - "Se sella UNA raíz de Merkle por reporte (1 transacción por reporte, sin importar si tiene 1 o 5 archivos); las hojas son los SHA-256 de cada archivo MÁS una hoja final con el hash del JSON de metadatos (lat/lng, comentario, timestamp y un SEUDÓNIMO del veedor en lugar de su ID, R-PRIV-03), de modo que el contexto geográfico y temporal también queda sellado"
-    - "El servidor calcula su propia raíz de Merkle y las pruebas de inclusión a partir de los hashes ya verificados (R-HASH-01) e ignora cualquier raíz enviada por el teléfono; guarda la prueba de cada archivo en PostgreSQL y envía la raíz a la blockchain (ajuste de Completitud SEC)"
-    - "R-BLK-01: el veedor nunca ve billeteras ni gas"
-    - "R-BLK-04: la firma la hace el relayer gestionado/KMS, nunca el servidor"
+    - "El JSON de metadatos es canónico (claves ordenadas, sin espacios, UTF-8), para que el navegador y el script de verificación lo recompongan byte a byte"
+    - "El servidor calcula su propia raíz de Merkle y las pruebas de inclusión a partir de los hashes ya verificados (R-HASH-01) e ignora cualquier raíz enviada por el teléfono; guarda la prueba de cada archivo en PostgreSQL y envía la raíz a la red (R-SEC-06)"
+    - "El contrato recibe la raíz y la referencia de la obra (SHA-256 de «organización:ficha»); la hora la pone la red (R-BLK-02)"
+    - "R-BLK-01: el veedor nunca crea cuentas de Stellar, ni ve billeteras, firmas ni comisiones en XLM"
+    - "R-BLK-04: la cuenta selladora firma la invocación y la patrocinadora paga la comisión con fee bump; ninguna llave secreta está en el repositorio ni en .env.example"
   manejo_errores: []
   requisitos_ux: []
   casos_edge:
-    - {caso: "El Relayer se queda sin saldo (MATIC/POL)", resultado: "La transacción falla en la estimación de gas; los jobs quedan en pausa y el Super Administrador recibe una alerta crítica (email) para fondear la billetera"}
-    - {caso: "Reorganización profunda de Polygon deja huérfano el bloque de una evidencia ya 'Sellada'", resultado: "Un job nocturno de auditoría cruza la base de datos con la blockchain, detecta que el TxHash ya no existe y devuelve la evidencia a 'En Cola' para resellarla automáticamente"}
+    - {caso: "La cuenta patrocinadora se queda sin XLM", resultado: "El envío falla; los trabajos de sellado quedan en pausa y el Super Administrador recibe una alerta crítica (email) para fondearla. Cuando vuelve a tener saldo, el sellado se reanuda solo"}
 validacion_smart:
   specific: true
   measurable: true

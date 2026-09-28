@@ -4,11 +4,14 @@ use App\Application\Organization\ConfigureTerritory;
 use App\Application\Organization\RegisterOrganization;
 use App\Domain\Reports\Evidence;
 use App\Domain\Reports\Report;
+use App\Domain\Sealing\ReportSeal;
 use App\Infrastructure\Tenancy\Tenant;
+use App\Jobs\SealReport;
 use Database\Seeders\DivipolaSeeder;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 
 /*
@@ -59,13 +62,15 @@ it('queues the evidence for sealing when the hash the server recomputes matches 
     sendReport($this->veedor, ['files' => [$photo], 'hashes' => [$phoneHash]])->assertCreated();
 
     $evidence = storedEvidences($this->tenant)->sole();
+    $seal = $this->tenant->run(fn () => ReportSeal::query()->where('report_id', $evidence->report_id)->sole());
 
-    // "Encolada para el sellado": queda pendiente hasta que el lote de
-    // Merkle de la it. 13 la recoja.
+    // "Encolada para el sellado": el reporte queda "En Cola" y su trabajo
+    // de sellado (it. 13, US-020b) queda despachado.
     expect($evidence->sha256)->toBe($phoneHash)
-        ->and($evidence->seal_status)->toBe('pending')
+        ->and($seal->status->label())->toBe('En Cola')
         ->and($evidence->kind)->toBe('photo')
         ->and(Storage::disk('evidencias')->exists($evidence->storage_path))->toBeTrue();
+    Queue::assertPushed(SealReport::class);
 });
 
 it('accepts 1 to 5 photos or a single PDF, never mixed and never none', function (Closure $archivos, bool $aceptado) {
