@@ -106,3 +106,11 @@ it('does not tell whether an account exists: a wrong token or an unknown user lo
     'sin token' => ['/set-password/1'],
     'usuario inexistente' => ['/set-password/999?token=otro'],
 ]);
+
+it('takes the veedor from the old dashboard address to "Nuevo Reporte"', function () {
+    $this->tenant->run(fn () => $this->veedor->forceFill(['is_active' => true])->save());
+
+    $this->actingAs($this->veedor, 'tenant')
+        ->get('http://veeduria-smr.govtrace.localhost/veedor/dashboard')
+        ->assertRedirect('http://veeduria-smr.govtrace.localhost/reports/new');
+});
