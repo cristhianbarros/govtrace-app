@@ -2,6 +2,7 @@
 
 namespace App\Domain\Sealing;
 
+use App\Domain\Reports\Exceptions\EvidenceIsImmutable;
 use App\Domain\Reports\Report;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Model;
@@ -27,6 +28,25 @@ class ReportSeal extends Model
         'transmitted_at' => 'datetime',
         'sealed_at' => 'datetime',
     ];
+
+    /** Once written, the seal stays as it is (R-TA-02): the root, what it seals, and the ledger that closed it. */
+    private const WRITTEN_ONCE = ['report_id', 'merkle_root', 'metadata_json', 'worksite_reference', 'ledger', 'sealed_at'];
+
+    protected static function booted(): void
+    {
+        static::deleting(fn () => throw EvidenceIsImmutable::cannotDelete());
+
+        static::updating(function (self $seal) {
+            $rewritten = array_values(array_filter(
+                self::WRITTEN_ONCE,
+                fn (string $field) => $seal->isDirty($field) && $seal->getOriginal($field) !== null,
+            ));
+
+            if ($rewritten) {
+                throw EvidenceIsImmutable::cannotAlter($rewritten);
+            }
+        });
+    }
 
     public function report(): BelongsTo
     {

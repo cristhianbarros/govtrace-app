@@ -490,6 +490,34 @@ La prueba de humo ahora pone la cota de cordura (< 1 XLM) en los dos sellos. Ext
 **Done-when:** US-036 (8 casos) y US-037 (6 casos) en verde.
 **Cubre:** US-036, US-037 · R-TA-02, R-USR-02 (backend), R-MON-02.
 
+**✅ Cumplido (2026-09-28):**
+- **US-036, 8/8 casos**, en `tests/Feature/Publication/ReviewInboxTest.php`, contra los endpoints reales. Más 2 reglas derivadas: solo lo sellado llega a la bandeja y se publica; cada decisión va al log de auditoría.
+- **US-037, 6/6 casos**, en `tests/Feature/Publication/WithdrawEvidenceTest.php`.
+- Los 21 tests se vieron en rojo antes de implementar (404: no existían las rutas).
+- Suite rápida: 268 en verde + 1 `todo`. `make test-stellar`: 4/4.
+
+- **"Evidencia" es el reporte entero**, con todos sus archivos: se publica, se rechaza o se retira entero, porque se selló entero (una raíz por reporte, US-020b).
+- **Estados editoriales** (`App\Domain\Reports\EditorialStatus`), aparte del estado de sellado. Columnas en `reports`: `editorial_status`, `editorial_reason` y `editorial_decided_at`.
+  - Oculto → Publicado → Retirado (lápida).
+  - Oculto → Rechazado (nunca público, sin lápida).
+  - Retirado y Rechazado son finales. Las reglas y los mensajes viven en `Report::publish()`, `reject()` y `withdraw()`.
+- **Endpoints** del Administrador de Organización:
+  - `GET /inbox`: la bandeja, con las evidencias ocultas y selladas, la marca de hora sospechosa y las acciones de cada fila;
+  - `POST /reports/{id}/publish`, `/reject` y `/withdraw`.
+
+  Un motivo faltante responde 422 en `reason` ("Rechazar exige un motivo." / "Retirar exige un motivo."). Una decisión que el estado no permite responde 409, con su mensaje. No hay endpoint de publicación masiva.
+- **Auditoría** (R-AUD-04): `evidence.published`, `.rejected` y `.withdrawn`, con quién, cuándo, el estado anterior y el nuevo, y el motivo. Cada decisión se aplica con la fila bloqueada. Si el log falla, la decisión no se aplica.
+- **Lo público**:
+  - `Report::onPublicMap()` son las publicadas; la it. 24 arma los pines sobre esto;
+  - `PublicTimeline` da las tarjetas de una obra. La retirada es una lápida: sin archivos ni comentario, con el aviso "🚫 Evidencia retirada…" y el sello para auditoría externa.
+- **R-TA-02 en el dominio**: `Report`, `Evidence` y `ReportSeal` no se borran. Tampoco se altera lo que envió el veedor, el archivo ni el sello ya escrito. Solo cambia el estado editorial.
+- **R-USR-02 (backend)**: `Report::editorialStatusForVeedor()` da "En Revisión", "Publicado", "Rechazada" (con motivo) o "Retirado". La pantalla es "Mis Reportes" (it. 28).
+- **Seguridad: sesión por organización.** Los usuarios viven en la base de cada organización, con ids que se repiten entre ellas, y las sesiones se guardan en la base central. Una cookie de sesión copiada a otro subdominio autenticaba al usuario con el mismo id de la otra organización. El test lo mostró: el Administrador de Santa Marta publicaba una evidencia de Ciénaga (200). Las rutas de tenant ahora usan `ScopeSessions` de stancl/tenancy: una sesión vale solo en la organización donde se abrió, y en otra responde 403.
+- **Por confirmar** (derivadas, fáciles de cambiar):
+  1. Publicar exige que la evidencia esté "Sellada", y la bandeja solo muestra las selladas. Lo publicado tiene que poder verificarse (US-024).
+  2. El veedor ve "Retirado" en una evidencia retirada, sin el motivo; US-010 no lo define. Se revisa en la it. 28.
+  3. Una retirada deja de contar para el mapa; queda solo como lápida en la línea de tiempo. Se revisa con los colores de pin de la it. 24.
+
 ### Iteración 16 — PWA del veedor: Nuevo Reporte (la pantalla central)
 **Entregable:**
 - flujo buscar obra → GPS (con reintento) → clasificación y comentario → adjuntos;
