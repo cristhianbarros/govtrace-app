@@ -11,8 +11,11 @@ export function scaledSize(width, height, maxSide = MAX_PHOTO_SIDE) {
     return { width: Math.round(width * scale), height: Math.round(height * scale) };
 }
 
-// Segmentos de un JPEG que no son la imagen: APP1 a APP15 (EXIF, XMP, ICC…) y COM.
-const isMetadata = (marker) => (marker >= 0xe1 && marker <= 0xef) || marker === 0xfe;
+// Segmentos de un JPEG que no son la imagen: APP1 a APP15 (EXIF, XMP, ICC…) y
+// COM. Se conserva APP14 "Adobe": no lleva datos personales y los JPEG en
+// CMYK, comunes dentro de los PDF, lo necesitan para sus colores.
+const APP14 = 0xee;
+const isMetadata = (marker) => ((marker >= 0xe1 && marker <= 0xef) || marker === 0xfe) && marker !== APP14;
 
 /** El JPEG sin sus segmentos de metadatos; los de la imagen quedan byte a byte. */
 export function stripJpegMetadata(bytes) {

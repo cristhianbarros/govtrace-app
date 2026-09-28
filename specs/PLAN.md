@@ -560,9 +560,9 @@ Además, con el nombre de su escenario: reporte exitoso (FormData con archivos, 
 - `captured_at` es la hora de la lectura de GPS, la que certifica la presencia en la obra.
 - Backend: `NewReportScreenTest` (3 casos). Suite: 271 en verde + 1 `todo`.
 - `config/inertia.php`: las páginas están en `resources/js/Pages`, con mayúscula; Inertia las buscaba en `pages`.
-- **Por confirmar:**
-  1. **HEIC.** La foto HEIC la decodifica el navegador: Safari, que es donde el iPhone la produce (además, al elegirla desde el selector, iOS suele entregarla ya en JPEG). Un Android con HEIC en un navegador que no la lee recibe "No se pudo leer la foto. Tómela de nuevo con la cámara del teléfono." Un decodificador WASM (libheif, ~1 MB) solo si aparece ese caso.
-  2. **Imágenes dentro del PDF.** Una foto con EXIF incrustada en un PDF (p. ej. un acta de Word con fotos) conserva su EXIF dentro del PDF; R-PRIV-04 pide limpiar los metadatos del documento, no los de sus imágenes. Si hace falta, se limpia con el mismo `stripJpegMetadata`.
+- **Decisiones con el usuario (2026-09-28):**
+  1. **HEIC, aprobado.** La foto HEIC la decodifica el navegador: Safari, que es donde el iPhone la produce. Mantener liviano el paquete de Vue es prioridad, así que no hay decodificador WASM. Un Android con HEIC en un navegador que no la lee recibe "No se pudo leer la foto. Tómela de nuevo con la cámara del teléfono."
+  2. **Fotos dentro del PDF, ajustado** (rama `fix/pdf-embedded-exif`). Cada imagen JPEG del PDF (`DCTDecode`) pasa por el mismo `stripJpegMetadata` que las fotos: sale sin EXIF y sin coordenadas GPS, y la imagen queda byte a byte. Si un JPEG va además comprimido con otro filtro, o no se deja leer, el PDF se **rechaza**: "Este PDF trae imágenes que no se pueden limpiar. Expórtelo de nuevo o adjunte fotos en lugar del PDF." Nunca se sube sin limpiar. Se conserva el segmento APP14 "Adobe", sin datos personales, porque los JPEG en CMYK, comunes en los PDF, lo necesitan para sus colores. Tests: `pdf.test.js` (acta con una foto con GPS; imagen no limpiable) y `photos.test.js` (APP14).
 
 ### Iteración 17 — Acceso: iniciar sesión y activar la cuenta
 **Entregable:** pantallas mobile-first de inicio de sesión y de activación con contraseña.

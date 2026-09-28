@@ -3,21 +3,9 @@
 // (JPEG, lado mayor de 1920 px, calidad 80 %) y se sube sin EXIF, con sus
 // coordenadas GPS incluidas. Decodificar y dibujar la imagen es del
 // navegador (canvas); aquí se prueba lo que la app decide y el JPEG que sale.
-import { readFileSync } from 'node:fs';
 import { describe, expect, it, vi } from 'vitest';
+import { ascii, cleanJpeg, contains, jpegWithExif } from './jpeg-fixtures.js';
 import { optimizePhoto, scaledSize, stripJpegMetadata } from './photos.js';
-
-const cleanJpeg = new Uint8Array(readFileSync(new URL('../../../../tests/fixtures/evidence/foto.jpg', import.meta.url)));
-const ascii = (text) => new TextEncoder().encode(text);
-
-/** El JPEG de prueba con un segmento APP1 "Exif" con coordenadas, justo después del SOI. */
-function jpegWithExif() {
-    const payload = new Uint8Array([...ascii('Exif\0\0'), ...ascii('MM\0*GPSLatitude=11.2408;GPSLongitude=-74.1990')]);
-    const app1 = new Uint8Array([0xff, 0xe1, 0, payload.length + 2, ...payload]);
-    return new Uint8Array([...cleanJpeg.slice(0, 2), ...app1, ...cleanJpeg.slice(2)]);
-}
-
-const contains = (bytes, text) => Buffer.from(bytes).includes(Buffer.from(text));
 
 describe('optimizePhoto', () => {
     it('converts a 4000x3000 HEIC photo with GPS in its EXIF into a 1920 px JPEG at 80 %, without EXIF', async () => {
@@ -55,6 +43,13 @@ describe('stripJpegMetadata', () => {
 
         expect(clean).toEqual(cleanJpeg);
         expect(contains(clean, 'Carlos')).toBe(false);
+    });
+
+    it('keeps the APP14 "Adobe" segment, without which a CMYK JPEG changes color', () => {
+        const adobe = new Uint8Array([0xff, 0xee, 0, 2 + 12, ...ascii('Adobe'), 0, 100, 0, 0, 0, 0, 2]);
+        const cmyk = new Uint8Array([...cleanJpeg.slice(0, 2), ...adobe, ...cleanJpeg.slice(2)]);
+
+        expect(stripJpegMetadata(cmyk)).toEqual(cmyk);
     });
 
     it('rejects a file that is not a JPEG', () => {
