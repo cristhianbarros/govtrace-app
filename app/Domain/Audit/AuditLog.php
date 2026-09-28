@@ -3,6 +3,7 @@
 namespace App\Domain\Audit;
 
 use Illuminate\Database\Eloquent\Model;
+use Stancl\Tenancy\Database\Concerns\CentralConnection;
 
 /**
  * R-AUD-04: quién, cuándo, qué acción, valor anterior y nuevo. Escrito
@@ -13,6 +14,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class AuditLog extends Model
 {
+    use CentralConnection;
+
     public const UPDATED_AT = null;
 
     protected $fillable = [

@@ -57,7 +57,7 @@ it('marks the worksite "en riesgo" only when its contract expired and SECOP stil
 
     $tenant = (new RegisterOrganization)->handle('900123456-8', 'Veeduría Ciudadana Santa Marta', 'veeduria-smr');
     riskyContract(['end_date' => $fechaFin, 'status' => $estado]);
-    $worksiteId = $tenant->run(fn () => Worksite::create(['secop_contract_id' => 'CO1.PCCNTR.RIESGO'])->id);
+    $worksiteId = worksiteWithContracts($tenant, ['CO1.PCCNTR.RIESGO'], null)->id;
 
     (new CalculateWorksitesAtRisk)->handle();
 
@@ -80,7 +80,7 @@ it('saves the calculated risk in the ficha de obra, never touching the contract 
     $contract = riskyContract();
     $originalStatus = $contract->status;
     $originalUpdatedAt = $contract->updated_at;
-    $worksiteId = $tenant->run(fn () => Worksite::create(['secop_contract_id' => 'CO1.PCCNTR.RIESGO'])->id);
+    $worksiteId = worksiteWithContracts($tenant, ['CO1.PCCNTR.RIESGO'], null)->id;
 
     (new CalculateWorksitesAtRisk)->handle();
 
@@ -108,8 +108,8 @@ it('only recalculates the worksites of active organizations, leaving suspended o
     riskyContract(['secop_contract_id' => 'CO1.PCCNTR.ACTIVA']);
     riskyContract(['secop_contract_id' => 'CO1.PCCNTR.SUSPENDIDA']);
 
-    $activeWorksiteId = $active->run(fn () => Worksite::create(['secop_contract_id' => 'CO1.PCCNTR.ACTIVA'])->id);
-    $suspendedWorksiteId = $suspended->run(fn () => Worksite::create(['secop_contract_id' => 'CO1.PCCNTR.SUSPENDIDA'])->id);
+    $activeWorksiteId = worksiteWithContracts($active, ['CO1.PCCNTR.ACTIVA'], null)->id;
+    $suspendedWorksiteId = worksiteWithContracts($suspended, ['CO1.PCCNTR.SUSPENDIDA'], null)->id;
 
     (new CalculateWorksitesAtRisk)->handle();
 
@@ -118,6 +118,25 @@ it('only recalculates the worksites of active organizations, leaving suspended o
 
     $active->delete();
     $suspended->delete();
+    $this->travelBack();
+});
+
+it('a worksite grouping several contracts is at risk when any of them expired while still "En ejecución"', function () {
+    // US-045-INT (it. 29) agrupa contratos en una ficha — p. ej. una obra
+    // con varias fases. Basta con que una fase siga "En ejecución" con la
+    // fecha vencida para que la obra entera quede en riesgo (it. 10).
+    $this->travelTo('2026-09-27');
+
+    $tenant = (new RegisterOrganization)->handle('900123456-8', 'Veeduría Ciudadana Santa Marta', 'veeduria-smr');
+    riskyContract(['secop_contract_id' => 'CO1.PCCNTR.FASE1', 'status' => 'Terminado']);
+    riskyContract(['secop_contract_id' => 'CO1.PCCNTR.FASE2', 'status' => 'En ejecución']);
+    $worksiteId = worksiteWithContracts($tenant, ['CO1.PCCNTR.FASE1', 'CO1.PCCNTR.FASE2'], null)->id;
+
+    (new CalculateWorksitesAtRisk)->handle();
+
+    expect($tenant->run(fn () => Worksite::find($worksiteId)->at_risk))->toBeTrue();
+
+    $tenant->delete();
     $this->travelBack();
 });
 

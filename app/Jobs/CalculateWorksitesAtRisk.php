@@ -33,13 +33,15 @@ class CalculateWorksitesAtRisk implements ShouldQueue
 
     private function recalculateForCurrentTenant(): void
     {
-        Worksite::query()->get()->each(function (Worksite $worksite) {
-            $contract = Contract::query()->where('secop_contract_id', $worksite->secop_contract_id)->first();
-
-            $atRisk = $contract !== null
-                && $contract->status === 'En ejecución'
-                && $contract->end_date !== null
-                && $contract->end_date->isPast();
+        Worksite::query()->with('contracts')->get()->each(function (Worksite $worksite) {
+            // Una ficha puede agrupar varios contratos (R-INT-05, p. ej.
+            // las fases de una obra): basta con que uno siga "En
+            // ejecución" con su fecha de terminación ya pasada.
+            $atRisk = Contract::query()
+                ->whereIn('secop_contract_id', $worksite->contracts->pluck('secop_contract_id'))
+                ->where('status', 'En ejecución')
+                ->whereDate('end_date', '<', today())
+                ->exists();
 
             if ($worksite->at_risk !== $atRisk) {
                 $worksite->update(['at_risk' => $atRisk]);

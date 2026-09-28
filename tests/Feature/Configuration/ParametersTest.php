@@ -38,3 +38,12 @@ it('never updates a row in place — a change always inserts a new version', fun
 
     expect($countAfter)->toBe($countBefore + 1);
 });
+
+it('answers a moment before any recorded version with the first version, the value in force since the start (it. 10)', function () {
+    // Un teléfono con el reloj atrasado puede reportar una hora de
+    // captura anterior a la instalación: ahí regían los valores iniciales.
+    Parameters::set('test_param', 'first-value', now()->subDays(10));
+    Parameters::set('test_param', 'second-value', now()->subDay());
+
+    expect(Parameters::valueAt('test_param', now()->subYears(3)))->toBe('first-value');
+});

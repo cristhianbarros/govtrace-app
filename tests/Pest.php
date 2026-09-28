@@ -1,7 +1,13 @@
 <?php
 
+use App\Domain\Contracts\Contract;
+use App\Domain\Organization\Roles;
+use App\Domain\Organization\User as OrganizationUser;
+use App\Domain\Worksites\Worksite;
+use App\Infrastructure\Tenancy\Tenant;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
 
 /*
@@ -46,4 +52,98 @@ pest()->extend(TestCase::class)
 function secopFixture(string $name): array
 {
     return json_decode(file_get_contents(__DIR__."/fixtures/secop/{$name}.json"), true);
+}
+
+/*
+| Reportes (it. 10) — compartidos por CreateReportTest y FirstTouchRaceTest.
+*/
+
+/** The official location of the worksite in features/US-008.feature (Santa Marta). */
+function santaMartaWorksiteLocation(): array
+{
+    return [11.2408, -74.1990];
+}
+
+function reportingMember(Tenant $tenant, string $email, Roles $role = Roles::Observer): OrganizationUser
+{
+    return $tenant->run(function () use ($email, $role) {
+        $member = OrganizationUser::create(['name' => 'Miembro de prueba', 'email' => $email, 'password' => 'Veeduria#2026']);
+        $member->assignRole($role->value);
+
+        return $member;
+    });
+}
+
+/**
+ * A contract a veedor of a Magdalena-watching organization may report on.
+ *
+ * @param  array<string, mixed>  $overrides
+ */
+function reportableContract(string $secopContractId, array $overrides = []): Contract
+{
+    return Contract::fromSecop(fn () => Contract::create(array_merge([
+        'secop_contract_id' => $secopContractId,
+        'entity_name' => 'Alcaldía Distrital de Santa Marta',
+        'object' => 'Pavimentación Calle 30',
+        'contract_type' => 'Obra',
+        'status' => 'En ejecución',
+        'signed_at' => '2026-01-15',
+        'end_date' => '2026-12-31',
+        'department_code' => '47',
+        'municipality_code' => '47001',
+    ], $overrides)));
+}
+
+/**
+ * @param  list<string>  $secopContractIds
+ * @param  array{0: float, 1: float}|null  $location  null = ficha sin ubicación (Spatial-Null)
+ */
+function worksiteWithContracts(Tenant $tenant, array $secopContractIds, ?array $location): Worksite
+{
+    return $tenant->run(function () use ($secopContractIds, $location) {
+        $worksite = Worksite::create([
+            'latitude' => $location[0] ?? null,
+            'longitude' => $location[1] ?? null,
+            'located_at' => $location ? now() : null,
+        ]);
+
+        foreach ($secopContractIds as $secopContractId) {
+            $worksite->contracts()->create(['secop_contract_id' => $secopContractId]);
+        }
+
+        return $worksite;
+    });
+}
+
+/**
+ * A point $meters to the north of $origin, on the same sphere the
+ * geofence uses (R = 6.371 km) — so a distance there comes out exact.
+ *
+ * @param  array{0: float, 1: float}  $origin
+ * @return array{0: float, 1: float}
+ */
+function pointMetersNorthOf(array $origin, float $meters): array
+{
+    return [$origin[0] + rad2deg($meters / 6_371_000), $origin[1]];
+}
+
+/**
+ * POST /reports as $veedor. By default a valid report: 120 m from the
+ * worksite of CO1.PCCNTR.1234567, 15 m of GPS accuracy, captured 2 min ago.
+ *
+ * @param  array<string, mixed>  $overrides
+ */
+function sendReport(OrganizationUser $veedor, array $overrides = []): TestResponse
+{
+    [$latitude, $longitude] = pointMetersNorthOf(santaMartaWorksiteLocation(), 120);
+
+    return test()->actingAs($veedor, 'tenant')->postJson('http://veeduria-smr.govtrace.localhost/reports', array_merge([
+        'secop_contract_id' => 'CO1.PCCNTR.1234567',
+        'classification' => 'Retraso',
+        'comment' => 'Obra detenida hace 2 meses',
+        'latitude' => $latitude,
+        'longitude' => $longitude,
+        'accuracy_meters' => 15,
+        'captured_at' => now()->subMinutes(2)->toIso8601String(),
+    ], $overrides));
 }

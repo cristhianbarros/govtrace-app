@@ -2,8 +2,12 @@
 
 namespace App\Domain\Contracts;
 
+use App\Domain\Configuration\Parameters;
 use App\Domain\Geography\Department;
 use App\Domain\Geography\Municipality;
+use App\Domain\Organization\WatchedTerritories;
+use Carbon\CarbonInterface;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use RuntimeException;
@@ -16,14 +20,20 @@ use Stancl\Tenancy\Database\Concerns\CentralConnection;
  * below, not just documented: any update outside {@see self::fromSecop()}
  * throws, and a delete always does.
  *
- * CentralConnection (it. 9): App\Jobs\CalculateWorksitesAtRisk reads
- * contracts from INSIDE each tenant's own context (Tenant::run()) — sin
- * esto, Eloquent usaría la conexión "tenant" que Stancl deja activa ahí,
- * y "contracts" no existe en esa base.
+ * CentralConnection: contracts are read from INSIDE a tenant's context
+ * too (the risk job, a veedor creating a report) — sin esto, Eloquent
+ * usaría la conexión "tenant" que Stancl deja activa ahí, y "contracts"
+ * no existe en esa base.
  */
 class Contract extends Model
 {
     use CentralConnection;
+
+    /** US-016: statuses a veedor can always pick to report on. */
+    public const ALWAYS_REPORTABLE_STATUSES = ['En ejecución', 'Celebrado', 'Adjudicado'];
+
+    /** US-016: closed statuses, reportable only within closed_contract_report_window_months of their end date. */
+    public const RECENTLY_CLOSED_STATUSES = ['Terminado', 'Liquidado'];
 
     private static bool $allowingSecopWrite = false;
 
@@ -75,6 +85,36 @@ class Contract extends Model
         'end_date' => 'date',
         'raw_payload' => 'array',
     ];
+
+    /**
+     * R-VC-04: contracts inside the territory an organization watches. A
+     * department watched whole brings its Gobernación (no municipality)
+     * and every municipality; a municipality watched on its own, only its
+     * contracts.
+     */
+    public function scopeInTerritory(Builder $query, WatchedTerritories $watched): void
+    {
+        $query->where(fn (Builder $query) => $query
+            ->whereIn('department_code', $watched->departmentCodes())
+            ->orWhereIn('municipality_code', $watched->municipalityCodes()));
+    }
+
+    /**
+     * US-016: contracts a veedor may report on at $moment — active ones,
+     * plus Terminado/Liquidado for a while after their end date; never an
+     * annulled one. The window is the one in force at $moment (R-AUD-05).
+     */
+    public function scopeReportableAt(Builder $query, CarbonInterface $moment): void
+    {
+        $windowMonths = (int) (Parameters::valueAt('closed_contract_report_window_months', $moment) ?? 12);
+        $closedSince = $moment->copy()->subMonths($windowMonths);
+
+        $query->where(fn (Builder $query) => $query
+            ->whereIn('status', self::ALWAYS_REPORTABLE_STATUSES)
+            ->orWhere(fn (Builder $query) => $query
+                ->whereIn('status', self::RECENTLY_CLOSED_STATUSES)
+                ->where('end_date', '>=', $closedSince)));
+    }
 
     public function department(): BelongsTo
     {

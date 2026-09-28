@@ -4,6 +4,7 @@ namespace App\Domain\Geography;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Stancl\Tenancy\Database\Concerns\CentralConnection;
 
 /**
  * A DIVIPOLA department (DANE). Central reference data, shared by every
@@ -11,6 +12,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class Department extends Model
 {
+    use CentralConnection;
+
     protected $primaryKey = 'code';
 
     protected $keyType = 'string';
