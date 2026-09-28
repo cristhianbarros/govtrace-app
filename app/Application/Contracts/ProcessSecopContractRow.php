@@ -38,13 +38,33 @@ class ProcessSecopContractRow
             return SecopRowOutcome::NotWorks;
         }
 
-        $municipality = $this->matcher->matchSecopLocation((string) ($row['departamento'] ?? ''), (string) ($row['ciudad'] ?? ''));
+        $departamento = (string) ($row['departamento'] ?? '');
+        $ciudad = (string) ($row['ciudad'] ?? '');
 
-        if (! $municipality) {
+        $department = $this->matcher->matchDepartment($departamento);
+
+        if (! $department) {
             return SecopRowOutcome::Unmatched;
         }
 
-        if ($watched && ! $watched->covers($municipality)) {
+        $municipality = $this->matcher->matchSecopLocation($departamento, $ciudad);
+
+        if ($municipality) {
+            $departmentCode = $municipality->department_code;
+            $municipalityCode = $municipality->code;
+            $covered = ! $watched || $watched->covers($municipality);
+        } elseif ($this->matcher->normalize($ciudad) === 'NO DEFINIDO') {
+            // US-015/US-016 (it. 8): "un departamento incluye la
+            // Gobernación y todos sus municipios" — SECOP publica los
+            // contratos de la Gobernación con ciudad "No Definido".
+            $departmentCode = $department->code;
+            $municipalityCode = null;
+            $covered = ! $watched || $watched->coversDepartmentCode($department->code);
+        } else {
+            return SecopRowOutcome::Unmatched;
+        }
+
+        if (! $covered) {
             return SecopRowOutcome::OutOfTerritory;
         }
 
@@ -63,8 +83,8 @@ class ProcessSecopContractRow
                 'signed_at' => $row['fecha_de_firma'] ?? null,
                 'end_date' => $row['fecha_de_fin_del_contrato'] ?? null,
                 'status' => $status,
-                'department_code' => $municipality->department_code,
-                'municipality_code' => $municipality->code,
+                'department_code' => $departmentCode,
+                'municipality_code' => $municipalityCode,
                 'secop_url' => $row['urlproceso']['url'] ?? null,
                 'raw_payload' => $row,
             ],

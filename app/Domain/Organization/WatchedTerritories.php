@@ -47,6 +47,29 @@ final class WatchedTerritories
     }
 
     /**
+     * Whether a DEPARTMENT-LEVEL contract (a Gobernación, no municipality
+     * of its own — US-015/US-016, it. 8) falls inside the territory.
+     * Watching a single municipality of the department is not enough: it
+     * has to be the whole department that's watched.
+     */
+    public function coversDepartmentCode(string $departmentCode): bool
+    {
+        return in_array($departmentCode, $this->departmentCodes, true);
+    }
+
+    /** @return list<string> departments watched whole (US-015/016: Gobernación + every municipality) */
+    public function departmentCodes(): array
+    {
+        return $this->departmentCodes;
+    }
+
+    /** @return list<string> municipalities watched on their own */
+    public function municipalityCodes(): array
+    {
+        return $this->municipalityCodes;
+    }
+
+    /**
      * Departments to ask SECOP about: the ones watched whole, plus the
      * ones holding a watched municipality.
      *

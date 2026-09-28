@@ -174,3 +174,27 @@ it('ignores a row outside the watched territory without storing or updating it',
     expect($outcome)->toBe(SecopRowOutcome::OutOfTerritory)
         ->and(Contract::query()->exists())->toBeFalse();
 });
+
+// US-015/US-016 (it. 8): un contrato de la Gobernación (departamento
+// conocido, ciudad "No Definido") se guarda sin municipio propio.
+
+it('stores a Gobernación contract at the department level when the department is watched whole', function () {
+    $wholeMagdalena = new WatchedTerritories(departmentCodes: ['47'], municipalityCodes: []);
+
+    $outcome = (new ProcessSecopContractRow)->handle(secopRow(['ciudad' => 'No Definido']), $wholeMagdalena);
+
+    $contract = Contract::query()->where('secop_contract_id', 'CO1.PCCNTR.1234567')->first();
+
+    expect($outcome)->toBe(SecopRowOutcome::Inserted)
+        ->and($contract->department_code)->toBe('47')
+        ->and($contract->municipality_code)->toBeNull();
+});
+
+it('ignores a Gobernación contract when only one of its municipalities is watched, not the whole department', function () {
+    $onlySantaMarta = new WatchedTerritories(departmentCodes: [], municipalityCodes: ['47001']);
+
+    $outcome = (new ProcessSecopContractRow)->handle(secopRow(['ciudad' => 'No Definido']), $onlySantaMarta);
+
+    expect($outcome)->toBe(SecopRowOutcome::OutOfTerritory)
+        ->and(Contract::query()->exists())->toBeFalse();
+});
