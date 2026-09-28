@@ -75,6 +75,16 @@
 - Alta del tenant con stancl, con su dominio `<subdominio>.govtrace.localhost`.
 
 **Done-when:** US-001 (22 casos) en verde. Incluye NIT duplicado, DV inválido, subdominio duplicado, reservado, mal formado y fuera de rango, más el negativo "solo el Super Admin asigna el subdominio".
+
+**✅ Cumplido:** `app/Domain/Organization/{Nit,Subdomain,OrganizationName}.php` (value objects inmutables) y `Exceptions/OrganizationValidationException.php` con los mensajes exactos. `app/Application/Organization/RegisterOrganization.php` valida, comprueba duplicados y crea el tenant + su dominio en un solo paso (alta = aprobación). `tests/Feature/Organization/RegisterOrganizationTest.php`: **22/22 en verde**.
+
+**Hallazgo de infraestructura (corregido aquí):** `routes/tenant.php` existía desde el arranque del proyecto pero **nunca se cargaba** — `bootstrap/app.php` solo registraba `routes/web.php`. Ningún subdominio de organización respondía. Se agregó el callback `then:` de `withRouting()` para incluirlo.
+
+**Tres decisiones técnicas de esta iteración, no anticipadas en el plan:**
+1. **Columnas reales en `tenants`.** El trait `VirtualColumn` de stancl mete todo atributo salvo `id` en un JSON `data`, salvo que se declare `getCustomColumns()`. Sin eso, la comprobación de NIT duplicado no se puede indexar ni consultar. Se sobrescribió en `App\Infrastructure\Tenancy\Tenant`.
+2. **Inmutabilidad del subdominio como invariante, no como permiso.** Ninguna historia del SPEC (US-007 solo nombre/logo, US-011 solo NIT) permite cambiar el subdominio después del alta — ni siquiera el Super Admin. Se implementó como una regla de `App\Infrastructure\Tenancy\Domain` (bloquea el `UPDATE` de la columna `domain`), no como una verificación de rol, porque el rol todavía no existe (llega en la it. 4) y, sobre todo, porque la capacidad de cambiarlo no existe para nadie.
+3. **Los tests de esta historia no usan `RefreshDatabase`.** Crear una organización ejecuta `CREATE DATABASE` sobre la misma conexión central, y Postgres rechaza ese comando dentro de una transacción — que es justamente lo que envuelve `RefreshDatabase` en cada test. Se limpia a mano en `afterEach` (borrar el tenant dispara el borrado de su base).
+
 **Cubre:** US-001 · R-SA-03.
 
 ### Iteración 4 — Identidad y acceso

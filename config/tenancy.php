@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
+use App\Infrastructure\Tenancy\Domain;
 use App\Infrastructure\Tenancy\Tenant;
 use Stancl\Tenancy\Bootstrappers\CacheTenancyBootstrapper;
 use Stancl\Tenancy\Bootstrappers\DatabaseTenancyBootstrapper;
 use Stancl\Tenancy\Bootstrappers\FilesystemTenancyBootstrapper;
 use Stancl\Tenancy\Bootstrappers\QueueTenancyBootstrapper;
-use Stancl\Tenancy\Database\Models\Domain;
 use Stancl\Tenancy\TenantDatabaseManagers\MySQLDatabaseManager;
 use Stancl\Tenancy\TenantDatabaseManagers\PostgreSQLDatabaseManager;
 use Stancl\Tenancy\TenantDatabaseManagers\SQLiteDatabaseManager;
@@ -25,6 +25,13 @@ return [
      * Only relevant if you're using the domain or subdomain identification middleware.
      */
     'central_domains' => array_filter(array_map('trim', explode(',', (string) env('TENANCY_CENTRAL_DOMAINS', 'govtrace.localhost,localhost,127.0.0.1')))),
+
+    /**
+     * The apex domain every organization's subdomain is appended to at
+     * registration (US-001): "<subdomain>.<apex_domain>". Change this per
+     * environment (e.g. govtrace.app in production) via .env, not here.
+     */
+    'apex_domain' => env('TENANCY_APEX_DOMAIN', 'govtrace.localhost'),
 
     /**
      * Tenancy bootstrappers are executed when tenancy is initialized.
