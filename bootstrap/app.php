@@ -26,6 +26,10 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleInertiaRequests::class,
         ]);
 
+        // Without a session, to the login of wherever the visitor is: the
+        // organization's on its subdomain, or the global panel's.
+        $middleware->redirectGuestsTo(fn () => url('/login'));
+
         // Not auto-registered outside Laravel's classic Kernel (D3, US-005).
         $middleware->alias([
             'role' => RoleMiddleware::class,

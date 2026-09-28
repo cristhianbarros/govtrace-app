@@ -9,8 +9,8 @@ foreach (config('tenancy.central_domains') as $domain) {
     Route::domain($domain)->group(function () {
         Route::get('/', fn () => Inertia::render('Home'))->name('home');
 
-        // US-031: Super Administrator only. The Vue login page arrives in
-        // it. 17 (specs/PLAN.md) — this is the backend the form will post to.
+        // US-031: Super Administrator only (the screen, it. 17).
+        Route::get('/login', fn () => Inertia::render('Auth/Login', ['context' => 'Panel global']))->name('login.show');
         Route::post('/login', [LoginController::class, 'store'])->name('login');
 
         // Placeholder until it. 19 builds the real panel.

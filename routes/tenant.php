@@ -44,13 +44,13 @@ Route::middleware([
         return 'This is your multi-tenant application. The id of the current tenant is '.tenant('id');
     });
 
-    // US-031: Administrador de Organización y Veedor. La pantalla Vue
-    // llega en it. 17 (specs/PLAN.md) — esto es el backend al que postea
-    // el formulario.
+    // US-031: Administrador de Organización y Veedor (la pantalla, it. 17).
+    Route::get('/login', fn () => Inertia::render('Auth/Login', ['context' => tenant('name')]))->name('tenant.login.show');
     Route::post('/login', [LoginController::class, 'store'])->name('tenant.login');
 
-    // US-030: consume el enlace de US-002 (Administrador inicial) o
-    // US-005 (invitación de veedor) — mismo token, mismo formulario.
+    // US-030: el enlace de US-002 (Administrador inicial) o US-005
+    // (invitación de veedor) — mismo token, misma pantalla.
+    Route::get('/set-password/{user}', [SetPasswordController::class, 'show'])->whereNumber('user')->name('tenant.set-password.show');
     Route::post('/set-password/{user}', [SetPasswordController::class, 'store'])->name('tenant.set-password.store');
 
     // Placeholders hasta que it. 18/it. 19 construyan los paneles reales.

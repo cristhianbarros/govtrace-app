@@ -15,7 +15,7 @@ class AcceptInvitation
 {
     public function handle(User $user, string $plainToken, string $newPassword): void
     {
-        if (! $this->tokenIsValid($user, $plainToken)) {
+        if (! $this->isValid($user, $plainToken)) {
             throw InvitationRejected::expiredOrInvalid();
         }
 
@@ -27,7 +27,8 @@ class AcceptInvitation
         ])->save();
     }
 
-    private function tokenIsValid(User $user, string $plainToken): bool
+    /** El enlace vale: el token es el del correo y no pasaron las 48 horas. */
+    public function isValid(User $user, string $plainToken): bool
     {
         if (! $user->invitation_token_hash || ! $user->invitation_expires_at) {
             return false;

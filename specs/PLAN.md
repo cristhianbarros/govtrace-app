@@ -569,6 +569,22 @@ Además, con el nombre de su escenario: reporte exitoso (FormData con archivos, 
 **Done-when:** Vitest de los estados de US-031 y US-030 en verde: credenciales incorrectas, bloqueo, cuenta desactivada, enlace vencido y contraseña débil.
 **Cubre:** US-030, US-031 (UI).
 
+**✅ Cumplido (2026-09-28):** Vitest 77 en verde (15 nuevos), vistos en rojo antes de implementar:
+- `Pages/Auth/Login.test.js`: credenciales incorrectas, bloqueo tras 5 intentos y cuenta desactivada (el mensaje exacto del servidor, y la contraseña se vacía); las validaciones del formulario (correo sin dominio, contraseña vacía) no envían nada.
+- `Pages/Auth/SetPassword.test.js`: activación exitosa (envía token, contraseña y confirmación); enlace vencido (sin formulario, con el motivo); las 5 reglas de contraseña débil; contraseñas distintas; y el enlace que vence con el formulario abierto.
+- `testing/inertia.js`: un doble de `useForm` de Inertia. El test decide qué responde el servidor.
+
+Backend (`AccessScreensTest`, 9 casos, vistos en rojo):
+- `GET /login` en el subdominio (con el nombre de la organización) y en el panel global ("Panel global").
+- `GET /set-password/{id}?token=`: si el enlace vale, trae el correo de la cuenta y a dónde enviar. Si no, el mensaje de `InvitationRejected`, igual para un token equivocado, un usuario que no existe o un enlace vencido, **sin revelar si la cuenta existe**. `AcceptInvitation::isValid()` es la misma regla del POST.
+- Sin sesión, una pantalla protegida lleva al inicio de sesión de donde se esté: `redirectGuestsTo(url('/login'))`. Antes iba al del panel central.
+- Tras entrar (login o activación), `Inertia::location()` hace una visita completa al panel del rol, porque la sesión y su token CSRF cambiaron. Un POST que no viene de Inertia sigue recibiendo la redirección de siempre: los tests de la it. 4 y 5 no cambian.
+
+Suite: 280 en verde + 1 `todo`, estable en 5 corridas seguidas.
+
+- **Arreglo de aislamiento en `LoginTest` (it. 4).** El test del Super Administrador dejaba `root@govtrace.app` en la base central. Una corrida completa lo tapaba, porque un test posterior la limpia; correr solo `tests/Feature/Auth` y luego la suite fallaba con un correo duplicado. Ahora su `afterEach` lo borra, y el archivo pasa dos veces seguidas.
+- **Observación:** `APP_LOCALE=en`. Los mensajes por defecto de Laravel (`required`, `email`, `confirmed`) salen en inglés si alguien se salta la pantalla; las pantallas validan antes, en español. Traducir `lang/es` queda para cuando se toque la configuración regional.
+
 ### Iteración 18 — Panel del Administrador de Organización (P1)
 **Entregable:**
 - bandeja de entrada (publicar, rechazar, retirar);
