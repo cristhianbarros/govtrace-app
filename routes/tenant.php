@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Domain\Organization\Roles;
+use App\Http\Controllers\Tenant\ContractSearchController;
 use App\Http\Controllers\Tenant\EditorialController;
 use App\Http\Controllers\Tenant\InviteObserverController;
 use App\Http\Controllers\Tenant\LoginController;
@@ -10,6 +11,7 @@ use App\Http\Controllers\Tenant\ReportController;
 use App\Http\Controllers\Tenant\SetPasswordController;
 use App\Http\Controllers\Tenant\WorksiteLocationController;
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 use Stancl\Tenancy\Middleware\ScopeSessions;
@@ -71,9 +73,13 @@ Route::middleware([
             Route::post('/reports/{report}/withdraw', [EditorialController::class, 'withdraw'])->whereNumber('report')->name('reports.withdraw');
         });
 
-        // US-008: solo el Veedor de Campo crea reportes (la PWA, it. 16).
+        // US-008: solo el Veedor de Campo crea reportes, desde la PWA (it. 16).
         Route::middleware('role:'.Roles::Observer->value.',tenant')->group(function () {
+            Route::get('/reports/new', fn () => Inertia::render('Veedor/NewReport'))->name('reports.new');
             Route::post('/reports', [ReportController::class, 'store'])->name('reports.store');
+
+            // US-016: "Buscar Obra".
+            Route::get('/contracts/search', ContractSearchController::class)->name('contracts.search');
         });
     });
 });
