@@ -1,6 +1,7 @@
 <?php
 
 use App\Domain\Configuration\Parameters;
+use App\Jobs\CalculateWorksitesAtRisk;
 use App\Jobs\SyncSecopContracts;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -27,4 +28,11 @@ try {
 Schedule::job(new SyncSecopContracts)
     ->dailyAt($secopSyncHour)
     ->name('secop-sync-nightly')
+    ->onOneServer();
+
+// US-034: una hora después de la sincronización de las 02:00 — calcula
+// el riesgo con los contratos ya actualizados, no con los del día anterior.
+Schedule::job(new CalculateWorksitesAtRisk)
+    ->dailyAt('03:00')
+    ->name('calculate-worksites-at-risk')
     ->onOneServer();

@@ -1,0 +1,131 @@
+<?php
+
+use App\Application\Organization\RegisterOrganization;
+use App\Domain\Contracts\Contract;
+use App\Domain\Worksites\Worksite;
+use App\Infrastructure\Tenancy\Tenant;
+use App\Jobs\CalculateWorksitesAtRisk;
+use Database\Seeders\DivipolaSeeder;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+
+/*
+ * Iteración 9 — Ficha de obra por organización y cálculo de riesgo
+ * (specs/PLAN.md). Traduce features/US-034.feature: el Esquema de 3
+ * filas + el escenario "el estado vive en la ficha, no en el contrato"
+ * (4 casos), más 2 tests técnicos (el job programado, y que solo
+ * recalcula organizaciones activas — es el primer job que entra al
+ * contexto de cada tenant, así que probar el aislamiento importa).
+ *
+ * Sin RefreshDatabase — registrar la organización de las Antecedentes
+ * ejecuta CREATE DATABASE.
+ */
+
+beforeEach(function () {
+    $this->artisan('migrate');
+    (new DivipolaSeeder)->run();
+});
+
+afterEach(function () {
+    if (tenant()) {
+        tenancy()->end();
+    }
+
+    Tenant::query()->get()->each->delete();
+    DB::table('contracts')->delete();
+});
+
+/**
+ * @param  array<string, mixed>  $overrides
+ */
+function riskyContract(array $overrides = []): Contract
+{
+    return Contract::fromSecop(fn () => Contract::create(array_merge([
+        'secop_contract_id' => 'CO1.PCCNTR.RIESGO',
+        'entity_name' => 'Alcaldía de Santa Marta',
+        'contract_type' => 'Obra',
+        'status' => 'En ejecución',
+        'department_code' => '47',
+        'municipality_code' => '47001',
+        'end_date' => '2026-09-26',
+    ], $overrides)));
+}
+
+it('marks the worksite "en riesgo" only when its contract expired and SECOP still shows it "En ejecución"', function (string $fechaFin, string $estado, bool $enRiesgo) {
+    $this->travelTo('2026-09-27');
+
+    $tenant = (new RegisterOrganization)->handle('900123456-8', 'Veeduría Ciudadana Santa Marta', 'veeduria-smr');
+    riskyContract(['end_date' => $fechaFin, 'status' => $estado]);
+    $worksiteId = $tenant->run(fn () => Worksite::create(['secop_contract_id' => 'CO1.PCCNTR.RIESGO'])->id);
+
+    (new CalculateWorksitesAtRisk)->handle();
+
+    $atRisk = $tenant->run(fn () => Worksite::find($worksiteId)->at_risk);
+
+    expect($atRisk)->toBe($enRiesgo);
+
+    $tenant->delete();
+    $this->travelBack();
+})->with([
+    'vencido y aún En ejecución' => ['2026-09-26', 'En ejecución', true],
+    'todavía no vence' => ['2026-09-28', 'En ejecución', false],
+    'vencido pero ya Terminado' => ['2026-09-26', 'Terminado', false],
+]);
+
+it('saves the calculated risk in the ficha de obra, never touching the contract itself', function () {
+    $this->travelTo('2026-09-27');
+
+    $tenant = (new RegisterOrganization)->handle('900123456-8', 'Veeduría Ciudadana Santa Marta', 'veeduria-smr');
+    $contract = riskyContract();
+    $originalStatus = $contract->status;
+    $originalUpdatedAt = $contract->updated_at;
+    $worksiteId = $tenant->run(fn () => Worksite::create(['secop_contract_id' => 'CO1.PCCNTR.RIESGO'])->id);
+
+    (new CalculateWorksitesAtRisk)->handle();
+
+    $atRisk = $tenant->run(fn () => Worksite::find($worksiteId)->at_risk);
+    $contract->refresh();
+
+    // R-SEC-01: el contrato de SECOP no cambia; "en riesgo" solo existe
+    // en la ficha de obra de la organización.
+    expect($atRisk)->toBeTrue()
+        ->and($contract->status)->toBe($originalStatus)
+        ->and($contract->updated_at)->toEqual($originalUpdatedAt)
+        ->and(Schema::hasColumn('contracts', 'at_risk'))->toBeFalse();
+
+    $tenant->delete();
+    $this->travelBack();
+});
+
+it('only recalculates the worksites of active organizations, leaving suspended ones untouched', function () {
+    $this->travelTo('2026-09-27');
+
+    $active = (new RegisterOrganization)->handle('900123456-8', 'Veeduría Ciudadana Santa Marta', 'veeduria-smr');
+    $suspended = (new RegisterOrganization)->handle('890000062-6', 'Veeduría Paisa', 'veeduria-paisa');
+    $suspended->update(['status' => 'suspended']);
+
+    riskyContract(['secop_contract_id' => 'CO1.PCCNTR.ACTIVA']);
+    riskyContract(['secop_contract_id' => 'CO1.PCCNTR.SUSPENDIDA']);
+
+    $activeWorksiteId = $active->run(fn () => Worksite::create(['secop_contract_id' => 'CO1.PCCNTR.ACTIVA'])->id);
+    $suspendedWorksiteId = $suspended->run(fn () => Worksite::create(['secop_contract_id' => 'CO1.PCCNTR.SUSPENDIDA'])->id);
+
+    (new CalculateWorksitesAtRisk)->handle();
+
+    expect($active->run(fn () => Worksite::find($activeWorksiteId)->at_risk))->toBeTrue()
+        ->and($suspended->run(fn () => Worksite::find($suspendedWorksiteId)->at_risk))->toBeFalse();
+
+    $active->delete();
+    $suspended->delete();
+    $this->travelBack();
+});
+
+it('is scheduled to run once a day, after the SECOP sync it depends on', function () {
+    Artisan::call('schedule:list');
+
+    // 03:00, una hora después de la sincronización de las 02:00
+    // (routes/console.php) — calcular el riesgo con contratos viejos no
+    // tendría sentido.
+    expect(Artisan::output())->toMatch('/0 3 \* \* \*\s+calculate-worksites-at-risk/');
+});

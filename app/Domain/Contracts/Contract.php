@@ -7,6 +7,7 @@ use App\Domain\Geography\Municipality;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use RuntimeException;
+use Stancl\Tenancy\Database\Concerns\CentralConnection;
 
 /**
  * A SECOP II public works contract. Central, one copy shared by every
@@ -14,9 +15,16 @@ use RuntimeException;
  * the only source of truth, nobody edits these fields by hand. Enforced
  * below, not just documented: any update outside {@see self::fromSecop()}
  * throws, and a delete always does.
+ *
+ * CentralConnection (it. 9): App\Jobs\CalculateWorksitesAtRisk reads
+ * contracts from INSIDE each tenant's own context (Tenant::run()) — sin
+ * esto, Eloquent usaría la conexión "tenant" que Stancl deja activa ahí,
+ * y "contracts" no existe en esa base.
  */
 class Contract extends Model
 {
+    use CentralConnection;
+
     private static bool $allowingSecopWrite = false;
 
     /**

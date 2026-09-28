@@ -197,6 +197,15 @@
 ### Iteración 9 — Ficha de obra por organización y cálculo de riesgo
 **Entregable:** modelo de ficha de obra en la base de cada tenant, más el job diario de "En riesgo" (fecha vencida y contrato aún "En ejecución").
 **Done-when:** US-034 (4 casos) en verde, incluido el negativo *"el estado vive en la ficha, no en el contrato"*.
+
+**✅ Cumplido (4/4 casos + 2 técnicos):** `CalculateWorksitesAtRiskTest` — el Esquema de 3 filas, el escenario de separación estado/contrato, más el job programado y el aislamiento entre organizaciones (activa vs. suspendida). Suite completa: 159 en verde + 1 `todo`.
+
+- **`worksites`** (`App\Domain\Worksites\Worksite`) es la primera tabla **por tenant** de una historia funcional (antes solo `users`): vive en la base de cada organización (`database/migrations/tenant/`), separada del `Contract` central — así "en riesgo" nunca toca el contrato de SECOP (R-SEC-01). Por ahora una ficha ancla un solo contrato; agrupar varios en una misma ficha es US-045-INT (it. 29, R-INT-05) y no se adelantó.
+- **`CalculateWorksitesAtRisk`** es el primer job que entra al contexto de cada tenant (`Tenant::run()`) para leer también una tabla **central** (`Contract`) desde adentro. Eso expuso un problema real: sin `$connection` explícito, Eloquent usa la conexión por defecto, y Stancl Tenancy la reapunta a la base del tenant mientras `run()` está activo — `Contract::query()` habría fallado ahí ("relation contracts does not exist"). Se corrigió con el trait oficial del paquete, `Stancl\Tenancy\Database\Concerns\CentralConnection`, en `Contract` (el único modelo central que este job toca; los demás no lo necesitan todavía).
+- Programado a las **03:00**, una hora después de la sincronización SECOP de las 02:00 — calcular el riesgo con contratos de ayer no tendría sentido. Recorre solo organizaciones activas, igual que `SyncSecopContracts`.
+
+**Decisión pendiente:** `CentralConnection` solo se aplicó a `Contract`. Si una iteración futura lee otra tabla central (`Department`, `Parameters`, etc.) desde dentro de `Tenant::run()` — muy probable en la it. 10, que valida el contrato y el radio de geocerca al crear un reporte desde el contexto del veedor — va a tropezar con el mismo problema y necesita el mismo trait.
+
 **Cubre:** US-034 · R-SEC-01.
 
 ### Iteración 10 — Crear reporte: GPS, geocerca y First-Touch
