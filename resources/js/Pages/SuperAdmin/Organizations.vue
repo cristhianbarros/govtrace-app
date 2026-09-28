@@ -2,11 +2,11 @@
 // US-001 y US-011: el listado de organizaciones del Super Administrador,
 // desde donde da de alta una nueva y corrige el NIT de una existente (a
 // solicitud formal de la organización). US-003a: suspenderla o reactivarla.
-import { Head, Link } from '@inertiajs/vue3';
+import { Link } from '@inertiajs/vue3';
 import { onMounted, ref } from 'vue';
 import LoadState from '@/Components/LoadState.vue';
 import RowAction from '@/Components/RowAction.vue';
-import AppLayout from '@/Layouts/AppLayout.vue';
+import SuperAdminLayout from '@/Layouts/SuperAdminLayout.vue';
 import { useLoader } from '@/composables/useLoader.js';
 import { fetchOrganizationDetail, fetchOrganizations, reactivateOrganization, suspendOrganization, updateOrganizationNit } from '@/services/api.js';
 import { errorMessage } from '@/services/errors.js';
@@ -51,15 +51,11 @@ onMounted(load);
 </script>
 
 <template>
-    <Head title="Organizaciones" />
-    <AppLayout title="Panel global">
+    <SuperAdminLayout title="Organizaciones">
         <div class="flex flex-col gap-4">
-            <div class="flex items-center justify-between">
-                <h2 class="text-xl font-semibold">Organizaciones</h2>
-                <Link href="/admin/organizations/new" class="rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white">
-                    + Nueva organización
-                </Link>
-            </div>
+            <Link href="/admin/organizations/new" class="self-start rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white">
+                + Nueva organización
+            </Link>
 
             <p v-if="saved" role="status" class="rounded-lg bg-emerald-50 p-3 text-sm font-semibold text-emerald-800">{{ saved }}</p>
 
@@ -118,5 +114,5 @@ onMounted(load);
                 </ul>
             </LoadState>
         </div>
-    </AppLayout>
+    </SuperAdminLayout>
 </template>

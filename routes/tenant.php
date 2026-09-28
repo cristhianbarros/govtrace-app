@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Domain\Organization\Roles;
 use App\Http\Controllers\Auth\PasswordResetController;
+use App\Http\Controllers\Tenant\AuditController;
 use App\Http\Controllers\Tenant\ContractListController;
 use App\Http\Controllers\Tenant\ContractSearchController;
 use App\Http\Controllers\Tenant\EditorialController;
@@ -11,6 +12,8 @@ use App\Http\Controllers\Tenant\EvidenceFileController;
 use App\Http\Controllers\Tenant\InviteObserverController;
 use App\Http\Controllers\Tenant\LoginController;
 use App\Http\Controllers\Tenant\ObserverController;
+use App\Http\Controllers\Tenant\OrganizationLogoController;
+use App\Http\Controllers\Tenant\OrganizationProfileController;
 use App\Http\Controllers\Tenant\ReportController;
 use App\Http\Controllers\Tenant\SetPasswordController;
 use App\Http\Controllers\Tenant\TerritoryController;
@@ -52,7 +55,10 @@ Route::middleware([
     });
 
     // US-031: Administrador de Organización y Veedor (la pantalla, it. 17).
-    Route::get('/login', fn () => Inertia::render('Auth/Login', ['context' => tenant('name')]))->name('tenant.login.show');
+    Route::get('/login', fn () => Inertia::render('Auth/Login', ['context' => tenant()->displayName()]))->name('tenant.login.show');
+
+    // US-007: el logo, público (lo muestra el mapa de la organización).
+    Route::get('/organization/logo', [OrganizationLogoController::class, 'show'])->name('organization.logo');
     Route::post('/login', [LoginController::class, 'store'])->name('tenant.login');
 
     // US-030: el enlace de US-002 (Administrador inicial) o US-005
@@ -91,7 +97,10 @@ Route::middleware([
             Route::get('/evidences/{evidence}/file', [EvidenceFileController::class, 'show'])->whereNumber('evidence')->name('evidences.file');
 
             // El panel del Administrador (it. 18): cada pantalla pide sus datos al JSON de abajo.
-            foreach (['inbox' => 'Admin/Inbox', 'observers' => 'Admin/Observers', 'territory' => 'Admin/Territory', 'contracts' => 'Admin/Contracts', 'worksites' => 'Admin/Worksites'] as $screen => $component) {
+            foreach ([
+                'inbox' => 'Admin/Inbox', 'observers' => 'Admin/Observers', 'territory' => 'Admin/Territory', 'contracts' => 'Admin/Contracts',
+                'worksites' => 'Admin/Worksites', 'organization' => 'Admin/Organization', 'audit' => 'Admin/Audit',
+            ] as $screen => $component) {
                 Route::get("/admin/{$screen}", fn () => Inertia::render($component))->name("admin.{$screen}");
             }
             Route::get('/observers', [ObserverController::class, 'index'])->name('observers.index');
@@ -102,6 +111,12 @@ Route::middleware([
             Route::put('/territory', [TerritoryController::class, 'update'])->name('territory.update');
             Route::get('/contracts', ContractListController::class)->name('contracts.index');
             Route::get('/worksites', [WorksiteController::class, 'index'])->name('worksites.index');
+
+            // US-007: nombre de fantasía y logo. US-043-MON: el log de auditoría de la organización.
+            Route::get('/organization/profile', [OrganizationProfileController::class, 'show'])->name('organization.profile.show');
+            Route::post('/organization/profile', [OrganizationProfileController::class, 'update'])->name('organization.profile.update');
+            Route::get('/audit', [AuditController::class, 'index'])->name('audit.index');
+            Route::get('/audit/{entry}', [AuditController::class, 'show'])->whereNumber('entry')->name('audit.show');
         });
 
         // US-008: solo el Veedor de Campo crea reportes, desde la PWA (it. 16).

@@ -1,9 +1,9 @@
 <script setup>
 // US-001 y US-002: dar de alta una organización, y en el mismo paso
 // asignar su Administrador inicial si ya se conoce (nombre y correo).
-import { Head, Link } from '@inertiajs/vue3';
+import { Link } from '@inertiajs/vue3';
 import { reactive, ref } from 'vue';
-import AppLayout from '@/Layouts/AppLayout.vue';
+import SuperAdminLayout from '@/Layouts/SuperAdminLayout.vue';
 import { registerOrganization } from '@/services/api.js';
 import { errorMessage } from '@/services/errors.js';
 
@@ -44,13 +44,9 @@ async function submit() {
 </script>
 
 <template>
-    <Head title="Nueva organización" />
-    <AppLayout title="Panel global">
+    <SuperAdminLayout title="Nueva organización">
         <div class="flex flex-col gap-4">
-            <div class="flex items-center gap-2">
-                <Link href="/admin/organizations" class="text-sm font-semibold text-slate-700 underline">← Organizaciones</Link>
-            </div>
-            <h2 class="text-xl font-semibold">Nueva organización</h2>
+            <Link href="/admin/organizations" class="text-sm font-semibold text-slate-700 underline">← Organizaciones</Link>
 
             <p v-if="sent" role="status" class="rounded-lg bg-emerald-50 p-3 text-sm font-semibold text-emerald-800">{{ sent }}</p>
             <p v-if="refused" role="alert" class="rounded-lg bg-red-50 p-3 text-sm text-red-800">{{ refused }}</p>
@@ -89,5 +85,5 @@ async function submit() {
                 </button>
             </form>
         </div>
-    </AppLayout>
+    </SuperAdminLayout>
 </template>

@@ -19,7 +19,7 @@ Característica: Parámetros operativos configurables por el Super Administrador
       | radio de geocerca                   | 500 m    | 300 m    |
       | ventana de Terminados y Liquidados  | 12 meses | 6 meses  |
       | vigencia de invitaciones            | 48 h     | 72 h     |
-      | umbral de saldo del Relayer         | 5 POL    | 10 POL   |
+      | umbral de saldo de la patrocinadora | 50 XLM   | 80 XLM   |
       | hora de sincronización              | 02:00    | 03:30    |
 
   @complexity:low @negative

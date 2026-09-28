@@ -8,8 +8,9 @@ import NewReport from './NewReport.vue';
 import ContractSearch from '@/Components/ContractSearch.vue';
 import EvidencePicker from '@/Components/EvidencePicker.vue';
 import { sendReport } from '@/services/api.js';
+import { page } from '@/testing/inertia.js';
 
-vi.mock('@inertiajs/vue3', () => ({ Head: { render: () => null } }));
+vi.mock('@inertiajs/vue3', async () => await import('@/testing/inertia.js'));
 vi.mock('@/services/api.js', () => ({ searchContracts: vi.fn(async () => []), sendReport: vi.fn() }));
 
 const GPS_DENIED =
@@ -177,5 +178,18 @@ describe('Nuevo Reporte', () => {
         expect(wrapper.text()).toContain(message);
         expect(wrapper.text()).not.toContain(SUCCESS);
         expect(wrapper.text()).toContain('foto1.jpg');
+    });
+
+    it('shows the name and logo the organization chose, as soon as it changes them (US-007)', async () => {
+        page.props.organization = 'Ojo Ciudadano SMR';
+        page.props.organizationLogo = '/organization/logo?v=logo-abc';
+        const wrapper = mount(NewReport);
+
+        expect(wrapper.get('h1').text()).toBe('Ojo Ciudadano SMR');
+        expect(wrapper.get('header img').attributes('src')).toBe('/organization/logo?v=logo-abc');
+        expect(wrapper.get('h2').text()).toBe('Nuevo Reporte');
+
+        page.props.organization = 'Veeduría Ciudadana Santa Marta';
+        page.props.organizationLogo = null;
     });
 });

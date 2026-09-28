@@ -4,7 +4,7 @@
 // → clasificación y comentario → adjuntos → enviar. El servidor vuelve a
 // validar todo (geocerca, hashes…); si rechaza, se muestra su motivo y el
 // reporte queda para intentar de nuevo.
-import { Head } from '@inertiajs/vue3';
+import { Head, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import ContractSearch from '@/Components/ContractSearch.vue';
@@ -13,6 +13,8 @@ import { cannotUpload } from '@/lib/evidence/attachments.js';
 import { capturePosition, formatMeters, imprecisionMessage, isPreciseEnough } from '@/lib/geolocation.js';
 import { sendReport } from '@/services/api.js';
 import { errorMessages } from '@/services/errors.js';
+
+const page = usePage();
 
 const CLASSIFICATIONS = ['Avance', 'Retraso', 'Abandono'];
 const MAX_COMMENT_LENGTH = 500;
@@ -100,8 +102,11 @@ function startOver() {
 
 <template>
     <Head title="Nuevo Reporte" />
-    <AppLayout title="Nuevo Reporte">
+    <!-- El nombre y el logo que la organización eligió (US-007). -->
+    <AppLayout :title="page.props.organization ?? 'GovTrace'" :logo="page.props.organizationLogo">
         <div class="flex flex-col gap-5">
+            <h2 class="text-xl font-semibold">Nuevo Reporte</h2>
+
             <p v-if="sent" role="status" class="rounded-lg bg-emerald-50 p-3 text-sm font-semibold text-emerald-800">{{ SUCCESS_MESSAGE }}</p>
 
             <!-- 1. La obra -->

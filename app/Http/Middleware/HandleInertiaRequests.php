@@ -35,10 +35,18 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        // Una sola lectura por respuesta, compartida por el nombre y el logo.
+        $display = null;
+        $fresh = function () use (&$display) {
+            return $display ??= tenant()->freshDisplay();
+        };
+
         return [
             ...parent::share($request),
-            // El nombre de la organización, en su subdominio; null en el panel global.
-            'organization' => tenancy()->initialized ? tenant('name') : null,
+            // La organización, en su subdominio: su nombre de fantasía (o el legal)
+            // y su logo (US-007); null en el panel global.
+            'organization' => fn () => tenancy()->initialized ? $fresh()['name'] : null,
+            'organizationLogo' => fn () => tenancy()->initialized ? $fresh()['logo'] : null,
             // US-003a: el aviso de organización suspendida, en cada pantalla pública.
             'organizationNotice' => fn () => tenancy()->initialized ? tenant()->freshStatus()->publicNotice() : null,
             // Un mensaje de una sola vez tras una redirección (p. ej. "Su contraseña fue cambiada").

@@ -17,4 +17,12 @@ describe('AppLayout', () => {
         expect(mount(AppLayout).find('nav').exists()).toBe(false);
         expect(mount(AppLayout, { slots: { nav: '<a>Inicio</a>' } }).find('nav').exists()).toBe(true);
     });
+
+    it('shows the organization logo next to the title, when it has one (US-007)', () => {
+        expect(mount(AppLayout, { props: { title: 'Ojo Ciudadano SMR' } }).find('header img').exists()).toBe(false);
+
+        const img = mount(AppLayout, { props: { title: 'Ojo Ciudadano SMR', logo: '/organization/logo?v=logo-abc' } }).get('header img');
+        expect(img.attributes('src')).toBe('/organization/logo?v=logo-abc');
+        expect(img.attributes('alt')).toBe('Logo de Ojo Ciudadano SMR');
+    });
 });

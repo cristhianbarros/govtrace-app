@@ -20,8 +20,17 @@ describe('AdminLayout', () => {
             ['Territorio', '/admin/territory'],
             ['Contratos', '/admin/contracts'],
             ['Obras', '/admin/worksites'],
+            ['Organización', '/admin/organization'],
         ]);
         expect(wrapper.get('nav a[aria-current="page"]').text()).toBe('Contratos');
         expect(wrapper.text()).toContain('contenido');
+    });
+
+    it('shows the logo of the organization in the header (US-007)', () => {
+        page.props.organizationLogo = '/organization/logo?v=logo-abc';
+        const wrapper = mount(AdminLayout, { props: { title: 'Bandeja de entrada' } });
+
+        expect(wrapper.get('header img').attributes('src')).toBe('/organization/logo?v=logo-abc');
+        page.props.organizationLogo = null;
     });
 });

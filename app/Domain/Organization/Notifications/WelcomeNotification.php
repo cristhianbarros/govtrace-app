@@ -13,7 +13,10 @@ use Illuminate\Notifications\Notification;
  */
 class WelcomeNotification extends Notification
 {
-    public function __construct(public readonly string $url) {}
+    public function __construct(
+        public readonly string $url,
+        public readonly int $validityHours = 48,
+    ) {}
 
     /**
      * @return array<int, string>
@@ -30,6 +33,6 @@ class WelcomeNotification extends Notification
             ->greeting("Hola, {$notifiable->name}")
             ->line('Se creó tu cuenta en GovTrace.')
             ->action('Establecer mi contraseña', $this->url)
-            ->line('Este enlace expira en 48 horas.');
+            ->line("Este enlace expira en {$this->validityHours} horas.");
     }
 }
