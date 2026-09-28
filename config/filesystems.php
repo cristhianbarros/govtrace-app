@@ -47,6 +47,23 @@ return [
             'report' => false,
         ],
 
+        // Evidence files (photos, PDFs), sealed hashes and Merkle proofs — never
+        // deleted, only retired with a tombstone (specs/SPEC.md R-PRIV-01,
+        // decisiones de arquitectura). MinIO locally (docker-compose "minio"
+        // service, D2), a real S3 bucket in production.
+        'evidencias' => [
+            'driver' => 's3',
+            'key' => env('EVIDENCE_AWS_ACCESS_KEY_ID', env('AWS_ACCESS_KEY_ID')),
+            'secret' => env('EVIDENCE_AWS_SECRET_ACCESS_KEY', env('AWS_SECRET_ACCESS_KEY')),
+            'region' => env('EVIDENCE_AWS_DEFAULT_REGION', env('AWS_DEFAULT_REGION', 'us-east-1')),
+            'bucket' => env('EVIDENCE_AWS_BUCKET', 'evidencias'),
+            'url' => env('EVIDENCE_AWS_URL'),
+            'endpoint' => env('EVIDENCE_AWS_ENDPOINT'),
+            'use_path_style_endpoint' => env('EVIDENCE_AWS_USE_PATH_STYLE_ENDPOINT', true),
+            'throw' => false,
+            'report' => false,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),

@@ -24,7 +24,7 @@
 | # | Tema | Propuesta | Se necesita en |
 |---|---|---|---|
 | D1 | Cola de trabajos | Driver `database`, con un servicio `worker` en el docker-compose base. Sin Horizon ni Redis en el MVP. | it. 1 |
-| D2 | Archivos de evidencia | MinIO (compatible con S3) en docker-compose para desarrollo y CI; S3 en producción | it. 1 |
+| D2 | Archivos de evidencia | LocalStack (compatible con S3) en docker-compose para desarrollo y CI; S3 en producción. *Ajustada en it. 1: MinIO ya no se descarga sin login desde 2025.* | it. 1 |
 | D3 | Roles y permisos | `spatie/laravel-permission`, preferencia expresada en el discovery | it. 4 |
 | D4 | Smart Contract | Solidity con Foundry (`forge test`), y Anvil como blockchain local en un perfil de docker-compose (R-TST-01) | it. 12 |
 | D5 | Relayer gestionado (R-BLK-04) | **Elegir proveedor:** Gelato, AWS KMS u otro. Verificar antes si OpenZeppelin Defender sigue operando. | it. 14 |
@@ -47,15 +47,17 @@
 
 ### Iteración 1 — Infraestructura del MVP
 
-**Entregable:** el docker-compose suma MinIO (bucket `evidencias`) y un `worker` de cola (D1, D2), y `make setup` funciona desde cero.
+**Entregable:** el docker-compose suma un `worker` de cola (D1) y un almacenamiento de objetos S3-compatible con su bucket `evidencias` (D2), y `make setup` funciona desde cero.
 **Done-when:**
 - `make setup` desde un clon limpio termina sin errores;
-- `make ps` muestra app, proxy, pgsql, scheduler, minio y worker en *healthy*;
+- `make ps` muestra app, proxy, pgsql, scheduler, storage y worker en *healthy*;
 - `curl -s -o /dev/null -w "%{http_code}" http://govtrace.localhost:8080/up` devuelve `200`;
-- `tests/Feature/HealthCheckTest.php` y el nuevo `tests/Feature/Infra/ObjectStorageTest.php` (escribe y lee un objeto en MinIO) en verde;
+- `tests/Feature/HealthCheckTest.php` y el nuevo `tests/Feature/Infra/ObjectStorageTest.php` (escribe y lee un objeto en el disco `evidencias`) en verde;
 - `make test-all` en verde.
 
-**Cubre:** infraestructura base · D1, D2 · R-BCK-03 (el almacenamiento queda preparado para respaldo).
+**✅ Cumplido:** `docker-compose.yml` con el servicio `storage` y `worker` (con su propio healthcheck de proceso, no el de Apache que trae la imagen); `config/filesystems.php` con el disco `evidencias` (driver `s3`); `docker/storage/init-bucket.sh` crea el bucket al arrancar. `tests/Feature/Infra/ObjectStorageTest.php` (2) y `QueueTest.php` (2) en verde. `tests/infra/verify-stack.sh` confirma los 6 servicios *healthy* y `/up` en 200.
+**Decisión que cambió D2:** MinIO ya no se puede descargar sin iniciar sesión (`minio/minio` y el mirror de Bitnami rechazan el pull anónimo desde 2025). Se usa **LocalStack** (`localstack/localstack:3.8`) en su lugar: mismo API S3, gratis, se descarga sin problema. La producción sigue apuntando a un bucket S3 real.
+**Cubre:** infraestructura base · D1, D2 (ajustada) · R-BCK-03 (el almacenamiento queda preparado para respaldo).
 
 ### Iteración 2 — Datos de referencia: DIVIPOLA y emparejamiento
 **Entregable:** tabla central de departamentos y municipios cargada con un seeder, desde el archivo oficial DIVIPOLA versionado en `database/data/`. Servicio de emparejamiento normalizado, sin tildes ni mayúsculas.

@@ -110,6 +110,57 @@ services:
       retries: 20
       start_period: 20s
 
+  # ---------------------------------------------------------- storage -----
+  # S3-compatible object storage for evidence files (D2, specs/PLAN.md it.1).
+  # LocalStack, not MinIO: MinIO gated its images behind a login in 2025
+  # (docker.io/minio/minio and the Bitnami mirror both now refuse anonymous
+  # pulls), so it is no longer a "just docker compose up" dependency. A real
+  # S3 bucket is still the target in production (config/filesystems.php).
+  # The init script (mounted read-only) creates the bucket on first boot.
+  storage:
+    image: localstack/localstack:3.8
+    environment:
+      SERVICES: s3
+      DEFAULT_REGION: "${EVIDENCE_AWS_DEFAULT_REGION:-us-east-1}"
+      EVIDENCE_BUCKET: "${MINIO_BUCKET:-evidencias}"
+    volumes:
+      - storage_data:/var/lib/localstack
+      - ./docker/storage/init-bucket.sh:/etc/localstack/init/ready.d/init-bucket.sh:ro
+    ports:
+      - "${LOCAL_IP:-127.0.0.1}:${MINIO_PORT:-9000}:4566"
+    networks: [govtrace]
+    security_opt: [no-new-privileges:true]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:4566/_localstack/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+
+  # ------------------------------------------------------------- worker ----
+  # Laravel ships with QUEUE_CONNECTION=database (D1, specs/PLAN.md it.1):
+  # no Redis needed for the MVP queue, so the worker only depends on pgsql.
+  worker:
+    <<: *app-base
+    command: php artisan queue:work --tries=3 --max-time=3600
+    user: "${PUID:-1000}:${PGID:-1000}"
+    environment:
+      <<: *app-env
+      XDEBUG_MODE: "off"
+    depends_on:
+      pgsql:
+        condition: service_healthy
+    stop_grace_period: 60s
+    healthcheck:
+      # Overrides the Dockerfile's Apache-based HEALTHCHECK: this container
+      # never starts a web server, so that check would always fail here.
+      test: ["CMD-SHELL", "grep -q queue:work /proc/1/cmdline"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
   # ========================= optional profiles ============================
 
   adminer:
@@ -137,9 +188,10 @@ services:
     security_opt: [no-new-privileges:true]
     command: sh
 
-  # --- async profile: redis + queue worker -------------------------------
-  # Laravel ships with QUEUE_CONNECTION=database. Switch to redis in .env
-  # only when the spec needs a real async pipeline.
+  # --- async profile: redis, opt-in, not used by the MVP queue -----------
+  # Laravel ships with QUEUE_CONNECTION=database (D1); the worker above
+  # runs unconditionally against it. Redis stays available for whoever
+  # needs it directly (cache experiments, a future async pipeline).
   redis:
     image: redis:7-alpine
     command: redis-server --save "" --maxmemory 128mb --maxmemory-policy allkeys-lru
@@ -152,21 +204,6 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
-
-  worker:
-    <<: *app-base
-    command: php artisan queue:work --tries=3 --max-time=3600
-    user: "${PUID:-1000}:${PGID:-1000}"
-    environment:
-      <<: *app-env
-      XDEBUG_MODE: "off"
-    depends_on:
-      pgsql:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    profiles: [async]
-    stop_grace_period: 60s
 
 networks:
   govtrace:
@@ -184,4 +221,5 @@ networks:
 
 volumes:
   pgsql_data:
+  storage_data:
   composer_cache:
