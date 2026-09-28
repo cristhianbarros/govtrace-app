@@ -1,7 +1,9 @@
 <?php
 
 use App\Application\Organization\ConfigureTerritory;
+use App\Application\Organization\ReactivateOrganization;
 use App\Application\Organization\RegisterOrganization;
+use App\Application\Organization\SuspendOrganization;
 use App\Domain\Contracts\Contract;
 use App\Domain\Contracts\SecopSyncRun;
 use App\Infrastructure\Tenancy\Tenant;
@@ -211,7 +213,7 @@ it('schedules the nightly sync at 02:00 by default', function () {
 });
 
 // Esquema "Sincronización inmediata al activar una organización o cambiar
-// su territorio" — una fila por test porque la de reactivar queda pendiente.
+// su territorio" — una fila por test.
 
 it('queues an immediate sync when the Super Administrator registers an organization', function () {
     Queue::fake();
@@ -221,8 +223,15 @@ it('queues an immediate sync when the Super Administrator registers an organizat
     Queue::assertPushed(SyncSecopContracts::class, fn (SyncSecopContracts $job) => $job->organizationId === $tenant->id);
 });
 
-it('queues an immediate sync when the Super Administrator reactivates a suspended organization')
-    ->todo('Reactivar una organización es US-003a (iteración 20): esa acción debe despachar SyncSecopContracts con el id de la organización.');
+it('queues an immediate sync when the Super Administrator reactivates a suspended organization', function () {
+    $tenant = (new RegisterOrganization)->handle('900123456-8', 'Veeduría Ciudadana Santa Marta', 'veeduria-smr');
+    (new SuspendOrganization)->handle($tenant);
+    Queue::fake();
+
+    (new ReactivateOrganization)->handle($tenant);
+
+    Queue::assertPushed(SyncSecopContracts::class, fn (SyncSecopContracts $job) => $job->organizationId === $tenant->id);
+});
 
 it('queues an immediate sync when an Organization Administrator changes the territory', function () {
     Queue::fake();

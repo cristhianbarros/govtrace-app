@@ -660,6 +660,41 @@ Suite: 325 en verde + 1 `todo`, estable en dos corridas.
 **Done-when:** US-003a (6 casos), US-006 (3), US-041-USR (2) y US-039-USR (5) en verde.
 **Cubre:** US-003a, US-006, US-039-USR, US-041-USR · R-AUD-01, R-USR-03, R-VC-01.
 
+**✅ Cumplido (2026-09-28, con Opus xhigh):** la iteración se subió de Sonnet a Opus al abrirla, porque revoca sesiones abiertas y bloquea organizaciones (control de acceso).
+
+Backend en verde, vistos en rojo antes de implementar (404 o clases inexistentes):
+- `SuspendOrganizationTest`: US-003a, 6/6 casos más 4 derivados;
+- `DeactivateObserverTest`: US-006, 3/3, y US-041-USR, 2/2, más 5 derivados;
+- `PasswordResetTest`: US-039-USR, 5/5 casos más 3 derivados;
+- se cerró el `todo` de US-013 en `SyncSecopContractsTest`: reactivar despacha `SyncSecopContracts`.
+
+Vitest: 158 en verde (18 nuevos). Suite: 355 en verde, estable en dos corridas, ya sin `todo`.
+
+- **Suspender y reactivar organizaciones** (US-003a), desde el panel global, con confirmación y auditoría (`organization.suspended` / `.reactivated`):
+  - suspendida, ninguno de sus usuarios entra: el login responde "La organización veedora ha sido temporalmente suspendida. Contacte a soporte";
+  - no acepta reportes: la app recibe 403 con ese motivo y conserva los suyos;
+  - su sitio público sigue en línea. Cada pantalla pública recibe `organizationNotice` con el aviso, que el mapa mostrará en la it. 26, y las evidencias publicadas siguen con su sello.
+  - Reactivar deja entrar de inmediato y dispara la sincronización SECOP. Un reporte capturado hace 3 días entra sin marca de hora sospechosa.
+- **Desactivar y reactivar veedores** (US-006, US-041-USR), desde el panel del Administrador, con confirmación y auditoría (`observer.deactivated` / `.reactivated`):
+  - el estado es "Inactivo";
+  - sus reportes se conservan con su autoría;
+  - desactivar también anula una invitación pendiente, así el enlace viejo no reactiva la cuenta;
+  - reactivar devuelve la misma cuenta y contraseña;
+  - un Administrador no aparece como veedor (404).
+- **Revocación inmediata:** el middleware `EnsureAccountIsUsable`, en todas las rutas autenticadas de la organización, lee **de la base** en cada petición si la organización está suspendida y si la cuenta sigue activa (`Tenant::freshStatus()`, `is_active`). No confía en el usuario ni en la organización que ya están en memoria, que pueden ser anteriores al cambio. Así cierra la sesión en su siguiente petición: la app recibe 403 con el motivo y una pantalla vuelve al login con el mensaje. Las sesiones se guardan en la base central sin la organización del usuario, y los ids se repiten entre organizaciones, así que borrar filas de sesión por usuario no es posible. **Prueba de mutación:** si el middleware usa el `is_active` en memoria, el test de revocación falla justo después de desactivar (200 en vez de 403).
+- **Restablecer contraseña** (US-039-USR), en el subdominio y también para el Super Administrador en el panel global:
+  - enlace por correo, de 60 minutos y un solo uso;
+  - la respuesta es siempre "Si el correo existe, recibirás un enlace";
+  - no se envía el enlace a una cuenta inactiva ni a una invitación pendiente: la invitación se acepta con su propio enlace, dentro de sus 48 horas;
+  - el broker de Laravel se arma en cada llamada (`PasswordResets`), porque el del manager guarda su conexión a la base y dentro de una organización tiene que ser la suya;
+  - la pantalla del enlace muestra el motivo si venció o ya se usó. El login ofrece "¿Olvidó su contraseña?" y confirma el cambio;
+  - **prueba de mutación:** si la validez del enlace siempre diera "válido", los dos casos de enlace vencido o usado fallan.
+- **Hallazgos en los tests:**
+  - un dataset de Pest con un parámetro tipado `Closure` se entrega tal cual, sin evaluarlo. El "estropear el enlace" no hacía nada hasta quitar la capa extra; se encontró porque el caso nunca había estado en rojo por la razón correcta;
+  - `->map->only()` no sirve sobre arreglos.
+- `RowAction.vue`: una acción por fila con confirmación opcional y el motivo del servidor en la fila; la usan los dos paneles.
+- **Pendiente para después:** restablecer la contraseña no cierra otras sesiones abiertas de esa cuenta; no lo pide US-039.
+
 ### Iteración 21 — Perfil, parámetros y consulta de auditoría
 **Entregable:**
 - nombre y logo de la organización, con limpieza de SVG;

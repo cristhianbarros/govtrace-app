@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Central\LoginController;
 use App\Http\Controllers\Central\OrganizationController;
 use Illuminate\Support\Facades\Route;
@@ -14,6 +15,12 @@ foreach (config('tenancy.central_domains') as $domain) {
         Route::get('/login', fn () => Inertia::render('Auth/Login', ['context' => 'Panel global']))->name('login.show');
         Route::post('/login', [LoginController::class, 'store'])->name('login');
 
+        // US-039-USR: el Super Administrador también restablece su contraseña.
+        Route::get('/forgot-password', [PasswordResetController::class, 'requestForm'])->name('password.request');
+        Route::post('/forgot-password', [PasswordResetController::class, 'sendLink'])->name('password.email');
+        Route::get('/reset-password/{token}', [PasswordResetController::class, 'resetForm'])->name('password.reset');
+        Route::post('/reset-password', [PasswordResetController::class, 'reset'])->name('password.update');
+
         Route::middleware('auth:web')->group(function () {
             // El panel del Super Administrador abre en el listado de organizaciones (it. 19).
             Route::get('/dashboard', fn () => redirect('/admin/organizations'))->name('super-admin.dashboard');
@@ -24,6 +31,8 @@ foreach (config('tenancy.central_domains') as $domain) {
             Route::post('/admin/organizations', [OrganizationController::class, 'store'])->name('admin.organizations.store');
             Route::get('/admin/organizations/{tenant}', [OrganizationController::class, 'show'])->name('admin.organizations.detail');
             Route::put('/admin/organizations/{tenant}/nit', [OrganizationController::class, 'updateNit'])->name('admin.organizations.update-nit');
+            Route::post('/admin/organizations/{tenant}/suspend', [OrganizationController::class, 'suspend'])->name('admin.organizations.suspend');
+            Route::post('/admin/organizations/{tenant}/reactivate', [OrganizationController::class, 'reactivate'])->name('admin.organizations.reactivate');
         });
     });
 }

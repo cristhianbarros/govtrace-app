@@ -39,6 +39,10 @@ class HandleInertiaRequests extends Middleware
             ...parent::share($request),
             // El nombre de la organización, en su subdominio; null en el panel global.
             'organization' => tenancy()->initialized ? tenant('name') : null,
+            // US-003a: el aviso de organización suspendida, en cada pantalla pública.
+            'organizationNotice' => fn () => tenancy()->initialized ? tenant()->freshStatus()->publicNotice() : null,
+            // Un mensaje de una sola vez tras una redirección (p. ej. "Su contraseña fue cambiada").
+            'flash' => fn () => ['status' => $request->session()->get('status')],
         ];
     }
 }

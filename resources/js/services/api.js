@@ -29,6 +29,10 @@ export const decideOnEvidence = (reportId, decision, reason) => dataOf(http.post
 export const fetchObservers = async () => (await dataOf(http.get('/observers'))).data;
 export const inviteObserver = (email) => dataOf(http.post('/observers/invite', { email }));
 
+/** US-006 / US-041-USR */
+export const deactivateObserver = (id) => dataOf(http.post(`/observers/${id}/deactivate`));
+export const reactivateObserver = (id) => dataOf(http.post(`/observers/${id}/reactivate`));
+
 /** US-012 */
 export const fetchTerritory = async () => (await dataOf(http.get('/territory'))).data;
 export const searchTerritories = async (keyword) => (await dataOf(http.get('/territory/search', { params: { q: keyword } }))).data;
@@ -51,3 +55,7 @@ export const registerOrganization = (data) => dataOf(http.post('/admin/organizat
 /** US-011 */
 export const fetchOrganizationDetail = async (id) => (await dataOf(http.get(`/admin/organizations/${id}`))).data;
 export const updateOrganizationNit = (id, nit) => dataOf(http.put(`/admin/organizations/${id}/nit`, { nit }));
+
+/** US-003a */
+export const suspendOrganization = (id) => dataOf(http.post(`/admin/organizations/${id}/suspend`));
+export const reactivateOrganization = (id) => dataOf(http.post(`/admin/organizations/${id}/reactivate`));

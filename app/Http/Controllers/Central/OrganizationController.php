@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Central;
 
+use App\Application\Organization\ReactivateOrganization;
 use App\Application\Organization\RegisterOrganizationWithAdministrator;
+use App\Application\Organization\SuspendOrganization;
 use App\Application\Organization\UpdateOrganizationLegalData;
 use App\Domain\Organization\Exceptions\OrganizationValidationException;
 use App\Http\Controllers\Controller;
@@ -84,6 +86,37 @@ class OrganizationController extends Controller
         }
 
         return response()->json(['message' => 'El NIT ha sido actualizado.']);
+    }
+
+    /** US-003a */
+    public function suspend(string $tenant): JsonResponse
+    {
+        return $this->changeStatus(
+            fn (Tenant $organization) => (new SuspendOrganization)->handle($organization),
+            $tenant,
+            'Organización suspendida. Sus usuarios ya no pueden entrar; su mapa público sigue disponible.',
+        );
+    }
+
+    /** US-003a */
+    public function reactivate(string $tenant): JsonResponse
+    {
+        return $this->changeStatus(
+            fn (Tenant $organization) => (new ReactivateOrganization)->handle($organization),
+            $tenant,
+            'Organización reactivada. Sus usuarios ya pueden volver a entrar.',
+        );
+    }
+
+    private function changeStatus(callable $change, string $tenant, string $message): JsonResponse
+    {
+        try {
+            $change(Tenant::query()->findOrFail($tenant));
+        } catch (OrganizationValidationException $e) {
+            throw ValidationException::withMessages(['status' => $e->getMessage()]);
+        }
+
+        return response()->json(['message' => $message]);
     }
 
     /** Which form field an OrganizationValidationException is about, for the alta screen. */

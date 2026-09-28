@@ -1,23 +1,25 @@
 <script setup>
 // US-005: invitar veedores por correo (el enlace vence en 48 horas) y ver
-// el equipo con el estado de cada invitación.
+// el equipo con el estado de cada invitación. US-006 y US-041-USR:
+// desactivar a un veedor (su sesión se cierra de inmediato) y reactivarlo.
 import { onMounted, ref } from 'vue';
 import LoadState from '@/Components/LoadState.vue';
+import RowAction from '@/Components/RowAction.vue';
 import { useLoader } from '@/composables/useLoader.js';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { isEmail } from '@/lib/credentials.js';
-import { fetchObservers, inviteObserver } from '@/services/api.js';
+import { deactivateObserver, fetchObservers, inviteObserver, reactivateObserver } from '@/services/api.js';
 import { errorMessage } from '@/services/errors.js';
 
 const { data: team, loading, error, load } = useLoader(fetchObservers);
 
 const email = ref('');
 const sending = ref(false);
-const sent = ref(null);
+const notice = ref(null);
 const refused = ref(null);
 
 async function invite() {
-    sent.value = null;
+    notice.value = null;
     refused.value = null;
     if (!isEmail(email.value)) {
         refused.value = 'Escriba un correo electrónico válido.';
@@ -26,7 +28,7 @@ async function invite() {
 
     sending.value = true;
     try {
-        sent.value = (await inviteObserver(email.value.trim())).message;
+        notice.value = (await inviteObserver(email.value.trim())).message;
         email.value = '';
         await load();
     } catch (failure) {
@@ -34,6 +36,11 @@ async function invite() {
     } finally {
         sending.value = false;
     }
+}
+
+async function changed(message) {
+    notice.value = message;
+    await load();
 }
 
 const statusStyle = {
@@ -63,13 +70,29 @@ onMounted(load);
             </button>
         </form>
 
-        <p v-if="sent" role="status" class="rounded-lg bg-emerald-50 p-3 text-sm font-semibold text-emerald-800">{{ sent }}</p>
+        <p v-if="notice" role="status" class="rounded-lg bg-emerald-50 p-3 text-sm font-semibold text-emerald-800">{{ notice }}</p>
 
         <LoadState :loading="loading" :error="error" :empty="team?.length === 0" loading-text="Cargando veedores…" empty-text="Aún no ha invitado veedores." @retry="load">
             <ul class="flex flex-col divide-y divide-slate-100 rounded-lg bg-white">
-                <li v-for="member in team" :key="member.email" class="flex items-center justify-between gap-2 px-3 py-3 text-sm">
-                    <span class="truncate">{{ member.email }}</span>
-                    <span class="shrink-0 rounded px-2 py-0.5 text-xs font-semibold" :class="statusStyle[member.status] ?? 'bg-slate-100 text-slate-700'">{{ member.status }}</span>
+                <li v-for="member in team" :key="member.id" class="flex flex-col gap-2 px-3 py-3 text-sm">
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="truncate">{{ member.email }}</span>
+                        <span class="shrink-0 rounded px-2 py-0.5 text-xs font-semibold" :class="statusStyle[member.status] ?? 'bg-slate-100 text-slate-700'">{{ member.status }}</span>
+                    </div>
+                    <RowAction
+                        v-if="member.status === 'Inactivo'"
+                        label="Reactivar"
+                        :run="() => reactivateObserver(member.id)"
+                        @done="changed"
+                    />
+                    <RowAction
+                        v-else
+                        label="Desactivar"
+                        confirm-label="Confirmar desactivación"
+                        warning="Su sesión se cerrará de inmediato y no podrá enviar reportes. Sus reportes anteriores se conservan."
+                        :run="() => deactivateObserver(member.id)"
+                        @done="changed"
+                    />
                 </li>
             </ul>
         </LoadState>

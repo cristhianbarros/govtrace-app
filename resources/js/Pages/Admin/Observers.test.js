@@ -3,7 +3,7 @@
 import { flushPromises, mount } from '@vue/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import Observers from './Observers.vue';
-import { fetchObservers, inviteObserver } from '@/services/api.js';
+import { deactivateObserver, fetchObservers, inviteObserver, reactivateObserver } from '@/services/api.js';
 
 vi.mock('@inertiajs/vue3', async () => await import('@/testing/inertia.js'));
 vi.mock('@/services/api.js');
@@ -58,7 +58,12 @@ describe('Veedores', () => {
             { email: 'laura@correo.co', status: 'Invitación pendiente' },
         ]);
 
-        expect(wrapper.findAll('li').map((row) => row.text())).toEqual(['carlos@correo.coActivo', 'laura@correo.coInvitación pendiente']);
+        const rows = wrapper.findAll('li').map((row) => row.text());
+        expect(rows).toHaveLength(2);
+        expect(rows[0]).toContain('carlos@correo.co');
+        expect(rows[0]).toContain('Activo');
+        expect(rows[1]).toContain('laura@correo.co');
+        expect(rows[1]).toContain('Invitación pendiente');
     });
 
     it('Invitación exitosa: confirms it, clears the field and refreshes the team', async () => {
@@ -90,5 +95,52 @@ describe('Veedores', () => {
 
         expect(inviteObserver).not.toHaveBeenCalled();
         expect(wrapper.text()).toContain('Escriba un correo electrónico válido.');
+    });
+});
+
+describe('Desactivar y reactivar veedores', () => {
+    const button = (wrapper, text) => wrapper.findAll('button').find((candidate) => candidate.text() === text);
+    const carlos = (status) => ({ id: 7, email: 'carlos@correo.co', status });
+
+    it('Desactivación con revocación inmediata de sesiones: asks to confirm, then deactivates and refreshes the team', async () => {
+        const wrapper = await openObservers([carlos('Activo')]);
+        deactivateObserver.mockResolvedValue({ message: 'Veedor desactivado. Su sesión quedó cerrada y ya no puede enviar reportes.' });
+        fetchObservers.mockResolvedValue([carlos('Inactivo')]);
+
+        await button(wrapper, 'Desactivar').trigger('click');
+        expect(deactivateObserver).not.toHaveBeenCalled();
+        expect(wrapper.text()).toContain('Su sesión se cerrará de inmediato y no podrá enviar reportes. Sus reportes anteriores se conservan.');
+
+        await button(wrapper, 'Confirmar desactivación').trigger('click');
+        await flushPromises();
+
+        expect(deactivateObserver).toHaveBeenCalledWith(7);
+        expect(wrapper.get('[role="status"]').text()).toBe('Veedor desactivado. Su sesión quedó cerrada y ya no puede enviar reportes.');
+        expect(wrapper.get('li').text()).toContain('Inactivo');
+        expect(button(wrapper, 'Reactivar')).toBeDefined();
+    });
+
+    it('Reactivación de un veedor: brings him back with his account', async () => {
+        const wrapper = await openObservers([carlos('Inactivo')]);
+        reactivateObserver.mockResolvedValue({ message: 'Veedor reactivado. Ya puede volver a iniciar sesión.' });
+        fetchObservers.mockResolvedValue([carlos('Activo')]);
+
+        expect(button(wrapper, 'Desactivar')).toBeUndefined();
+        await button(wrapper, 'Reactivar').trigger('click');
+        await flushPromises();
+
+        expect(reactivateObserver).toHaveBeenCalledWith(7);
+        expect(wrapper.get('[role="status"]').text()).toBe('Veedor reactivado. Ya puede volver a iniciar sesión.');
+    });
+
+    it('shows why the server refused, on that veedor', async () => {
+        const wrapper = await openObservers([carlos('Activo')]);
+        deactivateObserver.mockRejectedValue({ response: { status: 422, data: { message: 'El veedor ya está inactivo.', errors: { status: ['El veedor ya está inactivo.'] } } } });
+
+        await button(wrapper, 'Desactivar').trigger('click');
+        await button(wrapper, 'Confirmar desactivación').trigger('click');
+        await flushPromises();
+
+        expect(wrapper.get('li [role="alert"]').text()).toBe('El veedor ya está inactivo.');
     });
 });

@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Domain\Organization\Roles;
+use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Tenant\ContractListController;
 use App\Http\Controllers\Tenant\ContractSearchController;
 use App\Http\Controllers\Tenant\EditorialController;
@@ -15,6 +16,7 @@ use App\Http\Controllers\Tenant\SetPasswordController;
 use App\Http\Controllers\Tenant\TerritoryController;
 use App\Http\Controllers\Tenant\WorksiteController;
 use App\Http\Controllers\Tenant\WorksiteLocationController;
+use App\Http\Middleware\EnsureAccountIsUsable;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
@@ -58,8 +60,16 @@ Route::middleware([
     Route::get('/set-password/{user}', [SetPasswordController::class, 'show'])->whereNumber('user')->name('tenant.set-password.show');
     Route::post('/set-password/{user}', [SetPasswordController::class, 'store'])->name('tenant.set-password.store');
 
+    // US-039-USR: restablecer la contraseña con un enlace por correo.
+    Route::get('/forgot-password', [PasswordResetController::class, 'requestForm'])->name('tenant.password.request');
+    Route::post('/forgot-password', [PasswordResetController::class, 'sendLink'])->name('tenant.password.email');
+    Route::get('/reset-password/{token}', [PasswordResetController::class, 'resetForm'])->name('tenant.password.reset');
+    Route::post('/reset-password', [PasswordResetController::class, 'reset'])->name('tenant.password.update');
+
     // Placeholders hasta que it. 18/it. 19 construyan los paneles reales.
-    Route::middleware('auth:tenant')->group(function () {
+    // EnsureAccountIsUsable: una organización suspendida o una cuenta
+    // desactivada cierran la sesión en su siguiente petición (US-003a, US-006).
+    Route::middleware(['auth:tenant', EnsureAccountIsUsable::class])->group(function () {
         // El panel del Administrador abre en la bandeja de entrada (it. 18).
         Route::get('/organization/dashboard', fn () => redirect('/admin/inbox'))->name('organization.dashboard');
         // El panel del veedor es "Nuevo Reporte" hasta "Mis Reportes" (it. 28).
@@ -85,6 +95,8 @@ Route::middleware([
                 Route::get("/admin/{$screen}", fn () => Inertia::render($component))->name("admin.{$screen}");
             }
             Route::get('/observers', [ObserverController::class, 'index'])->name('observers.index');
+            Route::post('/observers/{observer}/deactivate', [ObserverController::class, 'deactivate'])->whereNumber('observer')->name('observers.deactivate');
+            Route::post('/observers/{observer}/reactivate', [ObserverController::class, 'reactivate'])->whereNumber('observer')->name('observers.reactivate');
             Route::get('/territory', [TerritoryController::class, 'show'])->name('territory.show');
             Route::get('/territory/search', [TerritoryController::class, 'search'])->name('territory.search');
             Route::put('/territory', [TerritoryController::class, 'update'])->name('territory.update');

@@ -66,6 +66,31 @@ class OrganizationValidationException extends DomainException
         return new self('Solo el Super Administrador, desde el panel global, puede editar el NIT o los datos legales de una organización.');
     }
 
+    public static function cannotChangeStatusFromTenantContext(): self
+    {
+        return new self('Solo el Super Administrador, desde el panel global, puede suspender o reactivar una organización.');
+    }
+
+    public static function alreadySuspended(): self
+    {
+        return new self('La organización seleccionada ya se encuentra en estado suspendido.');
+    }
+
+    public static function alreadyActive(): self
+    {
+        return new self('La organización seleccionada ya se encuentra activa.');
+    }
+
+    public static function observerAlreadyInactive(): self
+    {
+        return new self('El veedor ya está inactivo.');
+    }
+
+    public static function observerAlreadyActive(): self
+    {
+        return new self('El veedor ya está activo.');
+    }
+
     public static function emptyTerritory(): self
     {
         return new self('Debe seleccionar al menos un departamento o municipio para delimitar el territorio de vigilancia.');

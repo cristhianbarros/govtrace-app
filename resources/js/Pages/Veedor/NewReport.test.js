@@ -162,4 +162,20 @@ describe('Nuevo Reporte', () => {
         expect(wrapper.text()).not.toContain(SUCCESS);
         expect(wrapper.find('form').exists()).toBe(true);
     });
+
+    it.each([
+        ['Un veedor en campo intenta enviar un reporte con su organización suspendida', 'La organización veedora ha sido temporalmente suspendida. Contacte a soporte'],
+        ['El veedor desactivado intenta sincronizar su cola local', 'Su cuenta ha sido desactivada. No es posible sincronizar nuevos reportes.'],
+    ])('%s: shows why, and keeps the report in the phone', async (_scenario, message) => {
+        sendReport.mockRejectedValue({ response: { status: 403, data: { message } } });
+        const wrapper = await onWorksite(reading(10));
+
+        await fillReport(wrapper);
+        await wrapper.get('form').trigger('submit');
+        await flushPromises();
+
+        expect(wrapper.text()).toContain(message);
+        expect(wrapper.text()).not.toContain(SUCCESS);
+        expect(wrapper.text()).toContain('foto1.jpg');
+    });
 });

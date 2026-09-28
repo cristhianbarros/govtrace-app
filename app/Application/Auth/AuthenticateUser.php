@@ -3,6 +3,7 @@
 namespace App\Application\Auth;
 
 use App\Domain\Auth\Exceptions\AuthenticationRejected;
+use App\Domain\Organization\OrganizationStatus;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
@@ -39,6 +40,13 @@ class AuthenticateUser
         }
 
         $user = Auth::guard($guard)->user();
+
+        // US-003a: nobody of a suspended organization gets in while it lasts.
+        if ($guard === 'tenant' && tenant()?->freshStatus() === OrganizationStatus::Suspended) {
+            Auth::guard($guard)->logout();
+
+            throw AuthenticationRejected::organizationSuspended();
+        }
 
         if (! ($user->is_active ?? true)) {
             Auth::guard($guard)->logout();
