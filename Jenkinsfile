@@ -1,4 +1,5 @@
-// Declarative pipeline: Build (Docker) -> Format Check (Pint) -> Test Backend (Pest) -> Test Frontend (Vitest).
+// Declarative pipeline: Build (Docker) -> Format Check (Pint) -> Test Backend (Pest) -> Test Frontend (Vitest)
+// -> Test Contract (Soroban: rustfmt, clippy, cargo test and the exact WASM interface).
 // It drives the same Makefile targets developers use, so CI and local runs cannot drift.
 // The Jenkins agent only needs Docker (with the compose plugin) and make.
 pipeline {
@@ -48,6 +49,14 @@ pipeline {
         stage('Test Frontend') {
             steps {
                 sh 'make test-front'
+            }
+        }
+
+        stage('Test Contract') {
+            steps {
+                // Sealing Smart Contract (it. 12). Runs in the Rust + Stellar CLI
+                // container; needs no Stellar network.
+                sh 'make contract-test'
             }
         }
     }

@@ -7,6 +7,10 @@ x-app-base: &app-base
     context: .
     dockerfile: docker/app/Dockerfile
     target: dev              # base -> dev | vendor | assets | qa
+    # The RUN steps of a build use Docker's default bridge (docker0,
+    # 172.17.0.0/16), which a VPN can hijack with its own routes: no DNS,
+    # no internet. The host's network stack always works. See .env.docker.
+    network: "${DOCKER_BUILD_NETWORK:-host}"
     args:
       PUID: "${PUID:-1000}"
       PGID: "${PGID:-1000}"
@@ -205,6 +209,49 @@ services:
       timeout: 3s
       retries: 5
 
+  # --- Perfil "stellar" (it. 12, D4): sellado en Stellar / Soroban --------
+  # Red local standalone: la misma imagen que levanta `stellar container
+  # start local`. RPC y friendbot en http://stellar:8000 dentro de la red de
+  # Docker. Protocolo 27 y límites de testnet, como la red principal: lo que
+  # funciona aquí cabe allá. Su estado se reinicia con el contenedor.
+  stellar:
+    image: stellar/quickstart:v670-b1459.1-latest
+    command: ["--local", "--enable", "core,rpc", "--limits", "testnet", "--protocol-version", "27"]
+    ports:
+      - "${LOCAL_IP:-127.0.0.1}:${STELLAR_PORT:-8100}:8000"
+    networks: [govtrace]
+    profiles: [stellar]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS -X POST -H 'Content-Type: application/json' -d '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"getHealth\"}' http://127.0.0.1:8000/rpc | grep -q healthy"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+  # Rust + Stellar CLI (docker/soroban/Dockerfile): compila, prueba y
+  # despliega el contrato de contracts/sealing. Se usa con `make contract-*`.
+  soroban:
+    build:
+      context: docker/soroban
+      network: "${DOCKER_BUILD_NETWORK:-host}"   # same reason as the app image
+    image: govtrace-soroban:dev
+    user: "${PUID:-1000}:${PGID:-1000}"
+    working_dir: /workspace/contracts/sealing
+    environment:
+      # Las identidades de desarrollo de Stellar CLI quedan en .cache/ (fuera de git).
+      HOME: /workspace/.cache/stellar-home
+      STELLAR_RPC_URL: http://stellar:8000/rpc
+      STELLAR_NETWORK_PASSPHRASE: "Standalone Network ; February 2017"
+      STELLAR_FRIENDBOT_URL: http://stellar:8000/friendbot
+    volumes:
+      - .:/workspace
+      - cargo_registry:/usr/local/cargo/registry
+    networks: [govtrace]
+    profiles: [stellar]
+    security_opt: [no-new-privileges:true]
+    command: sh
+
 networks:
   govtrace:
     name: "${DOCKER_NETWORK:-govtrace_net}"
@@ -223,3 +270,4 @@ volumes:
   pgsql_data:
   storage_data:
   composer_cache:
+  cargo_registry:

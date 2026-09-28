@@ -1,0 +1,29 @@
+[package]
+name = "govtrace-sealing"
+version = "0.1.0"
+edition = "2021"
+publish = false
+rust-version = "1.91"
+description = "GovTrace — Smart Contract de sellado en Soroban (US-020a)"
+license = "MIT"
+
+[lib]
+crate-type = ["lib", "cdylib"]
+doctest = false
+
+[dependencies]
+# Protocolo 27, el de la red principal al 2026-09-28 (D4).
+soroban-sdk = "=27.0.6"
+
+[dev-dependencies]
+soroban-sdk = { version = "=27.0.6", features = ["testutils"] }
+
+[profile.release]
+opt-level = "z"
+overflow-checks = true
+debug = 0
+strip = "symbols"
+debug-assertions = false
+panic = "abort"
+codegen-units = 1
+lto = true
