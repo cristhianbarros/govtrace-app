@@ -1,5 +1,6 @@
 <?php
 
+use App\Domain\Organization\User as OrganizationUser;
 use App\Models\User;
 
 return [
@@ -38,9 +39,20 @@ return [
     */
 
     'guards' => [
+        // Central domain only: the Super Administrator (App\Models\User,
+        // central "users" table). US-031.
         'web' => [
             'driver' => 'session',
             'provider' => 'users',
+        ],
+
+        // Tenant domains only: Administrador de Organización and Veedor
+        // (App\Domain\Organization\User, one users table per tenant
+        // database — R-USR-01, a correo can be a different account in
+        // each organization). US-031.
+        'tenant' => [
+            'driver' => 'session',
+            'provider' => 'tenant_users',
         ],
     ],
 
@@ -65,6 +77,11 @@ return [
         'users' => [
             'driver' => 'eloquent',
             'model' => env('AUTH_MODEL', User::class),
+        ],
+
+        'tenant_users' => [
+            'driver' => 'eloquent',
+            'model' => OrganizationUser::class,
         ],
 
         // 'users' => [

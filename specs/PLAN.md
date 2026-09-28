@@ -95,6 +95,15 @@
 - asignación del Administrador inicial con su correo de bienvenida.
 
 **Done-when:** US-002 (6 casos) y US-031 (9 casos) en verde.
+
+**✅ Cumplido:** 15/15 tests en verde (`tests/Feature/Organization/AssignInitialAdministratorTest.php` y `tests/Feature/Auth/LoginTest.php`).
+
+**Diseño de identidad (dos espacios de usuarios, no uno):** el Super Administrador vive en la tabla `users` **central** (`App\Models\User`, guard `web`); el Administrador de Organización y el Veedor viven en la tabla `users` **de cada tenant** (`App\Domain\Organization\User`, guard `tenant`), instalada por una migración nueva en `database/migrations/tenant/`. `spatie/laravel-permission` (D3) también se migra por tenant, con dos roles sembrados por una migración (no un seeder aparte) para que estén listos apenas se crea la organización. `App\Domain\Auth\Exceptions\AuthenticationRejected` + `app/Application/Auth/AuthenticateUser.php` implementan el bloqueo de 5 intentos / 15 min (mismo código para ambos guards) y la cuenta desactivada. `AssignInitialAdministrator` reutiliza `WelcomeNotification` con un enlace de 48 h, pensado para que la it. 5 (invitar veedores) lo reuse tal cual.
+
+**Rutas y paneles placeholder.** No hay pantallas Vue todavía (llegan en it. 17-19): se agregaron rutas mínimas (`POST /login` central y de tenant, `GET /dashboard` · `/organization/dashboard` · `/veedor/dashboard`) solo para que el backend sea probable por HTTP de punta a punta. Se reemplazan por las páginas reales en su iteración correspondiente.
+
+**Hallazgo corregido en código de producción (no solo en el test):** `$tenant->run($callback)` de stancl **no es exception-safe** — si el `$callback` lanza, nunca revierte el contexto de tenancy ni purga la conexión, dejando el resto del *request* corriendo contra la base de datos del tenant equivocado. `AssignInitialAdministrator` ya no usa `$tenant->run()`; inicializa el tenancy a mano dentro de un `try/finally`. Vale para cualquier código futuro que use `$tenant->run()` con lógica que pueda lanzar.
+
 **Cubre:** US-002, US-031 · R-SEC-03, R-VER-02 (la zona pública no pide sesión).
 
 ### Iteración 5 — Invitaciones de veedores
