@@ -5,9 +5,10 @@ namespace App\Http\Controllers\Auth;
 use App\Application\Auth\AuthenticateUser;
 use App\Domain\Auth\Exceptions\AuthenticationRejected;
 use App\Http\Controllers\Controller;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Inertia\Inertia;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 /**
  * US-031: the actual guard and where each role lands differ between the
@@ -21,7 +22,7 @@ abstract class LoginController extends Controller
 
     abstract protected function redirectTo(): string;
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request): SymfonyResponse
     {
         $credentials = $request->validate([
             'email' => ['required', 'string', 'email'],
@@ -36,6 +37,8 @@ abstract class LoginController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended($this->redirectTo());
+        // Una visita completa, no una de Inertia: la sesión y su token CSRF
+        // acaban de cambiar (a un POST normal le llega la redirección de siempre).
+        return Inertia::location(redirect()->intended($this->redirectTo()));
     }
 }

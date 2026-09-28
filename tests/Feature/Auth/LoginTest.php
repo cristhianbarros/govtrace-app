@@ -25,6 +25,10 @@ afterEach(function () {
     }
 
     Tenant::query()->get()->each->delete();
+
+    // El Super Administrador vive en la base central, que ningún otro paso
+    // limpia: sin esto, correr este archivo dos veces choca con su correo.
+    User::query()->where('email', 'root@govtrace.app')->delete();
 });
 
 /**
