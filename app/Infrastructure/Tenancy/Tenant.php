@@ -29,4 +29,16 @@ class Tenant extends BaseTenant implements TenantWithDatabase
     {
         return ['id', 'nit', 'name', 'status'];
     }
+
+    /**
+     * For the Super Administrador's panel (it. 19). Only "active" exists
+     * today; suspender/dar de baja (US-003a, US-003b) add to this in it. 20.
+     */
+    public function statusLabel(): string
+    {
+        return match ($this->status) {
+            'active' => 'Activa',
+            default => $this->status,
+        };
+    }
 }

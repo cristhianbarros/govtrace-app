@@ -631,6 +631,22 @@ Suite: 307 en verde + 1 `todo`.
 **Done-when:** Vitest de los formularios de US-001, US-002 y US-011 en verde, con sus mensajes de error.
 **Cubre:** US-001, US-002, US-011 (UI).
 
+**✅ Cumplido (2026-09-28):** Vitest 15 en verde (140 en total). Backend `SuperAdminPanelTest`, 17 casos, vistos en rojo antes de implementar (404: no existían las rutas ni las pantallas).
+
+| Pantalla | Qué hace |
+|---|---|
+| **Organizaciones** `/admin/organizations` (US-001, US-011) | Listado con NIT, subdominio y estado; "Editar NIT" abre un formulario inline por fila (pide el detalle con `GET /admin/organizations/{id}` para tener el `id`, que el listado no expone) y guarda con `PUT .../nit`. |
+| **Nueva organización** `/admin/organizations/new` (US-001, US-002) | Un solo formulario: nombre, NIT y subdominio, más un Administrador inicial opcional (nombre y correo) — si se llena uno de los dos, se exige el otro. `RegisterOrganizationWithAdministrator` hace las dos altas en un paso; si el Administrador es inválido, deshace el alta completa (borra el tenant recién creado, libera el subdominio). |
+
+- **Backend nuevo:** `GET /admin/organizations/data` (el listado), `POST /admin/organizations` (alta + Administrador inicial), `GET /admin/organizations/{id}` y `PUT /admin/organizations/{id}/nit`. Todas detrás de `auth:web` (guardia del Super Administrador); sin sesión, redirigen a `/login`.
+- `/dashboard` ahora abre el listado de organizaciones, en vez del texto de marcador de la it. 4.
+- `Tenant::statusLabel()`: hoy solo "Activa" (único estado que existe); suspender/dar de baja (US-003a/b) lo extienden en la it. 20.
+- Reutiliza `LoadState`, `useLoader` y `services/errors.js` de la it. 18 — sin layout aparte: el panel global es una sola sección de `AppLayout`, no una barra de navegación con varias pantallas como la del Administrador.
+- **Aislamiento del test de acceso sin sesión:** `actingAs()` dentro de un test deja la sesión autenticada para las peticiones siguientes del mismo test; una comprobación de "invitado" tiene que ir en su propio `it()`, no reutilizar el mismo request tras un `actingAs()` anterior (se encontró al escribir esta prueba: pasaba con 200 en vez de redirigir).
+
+Suite: 325 en verde + 1 `todo`, estable en dos corridas.
+**Cubre (además):** US-013 (dispara la sincronización SECOP al dar de alta, ya existente desde la it. 3).
+
 ---
 
 ## Fase P2 — Semanas 3-4 · Verificación pública y operación

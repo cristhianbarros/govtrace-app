@@ -41,3 +41,13 @@ export const fetchContracts = ({ sort, direction, page }) => dataOf(http.get('/c
 export const fetchWorksites = async () => (await dataOf(http.get('/worksites'))).data;
 export const correctWorksiteLocation = (worksiteId, { latitude, longitude }) =>
     dataOf(http.patch(`/worksites/${worksiteId}/location`, { latitude, longitude }));
+
+// El Super Administrador (panel global) ---------------------------------------
+
+/** US-001 */
+export const fetchOrganizations = async () => (await dataOf(http.get('/admin/organizations/data'))).data;
+export const registerOrganization = (data) => dataOf(http.post('/admin/organizations', data));
+
+/** US-011 */
+export const fetchOrganizationDetail = async (id) => (await dataOf(http.get(`/admin/organizations/${id}`))).data;
+export const updateOrganizationNit = (id, nit) => dataOf(http.put(`/admin/organizations/${id}/nit`, { nit }));
