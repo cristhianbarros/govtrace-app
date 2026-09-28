@@ -6,6 +6,7 @@ use App\Domain\Organization\User;
 use App\Domain\Worksites\Worksite;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * What a veedor sends from the worksite (US-008). Lives in the
@@ -31,6 +32,12 @@ class Report extends Model
     public function worksite(): BelongsTo
     {
         return $this->belongsTo(Worksite::class);
+    }
+
+    /** Its files: 1 to 5 photos or 1 PDF (US-009). */
+    public function evidences(): HasMany
+    {
+        return $this->hasMany(Evidence::class);
     }
 
     public function user(): BelongsTo

@@ -57,6 +57,36 @@ class ReportValidationException extends DomainException
         return new self("Se encuentra a {$distanceKm} km de la ubicación oficial de la obra. Para prevenir fraudes, debe acercarse a un radio de {$radiusMeters} metros del proyecto.", 'location');
     }
 
+    public static function evidenceRequired(): self
+    {
+        return new self('Adjunte de 1 a 5 fotos o un documento PDF.', 'files');
+    }
+
+    public static function unsupportedEvidenceType(): self
+    {
+        return new self('Solo se aceptan fotos en JPEG o un documento PDF; los videos y otros archivos no están permitidos.', 'files');
+    }
+
+    public static function evidenceTooLarge(): self
+    {
+        return new self('Cada archivo puede pesar máximo 10 MB.', 'files');
+    }
+
+    public static function invalidEvidenceCombination(): self
+    {
+        return new self('Un reporte lleva de 1 a 5 fotos o un único PDF; no se pueden mezclar.', 'files');
+    }
+
+    public static function tooManyPhotos(int $maxPhotos): self
+    {
+        return new self("Un reporte admite máximo {$maxPhotos} fotos.", 'files');
+    }
+
+    public static function evidenceHashMismatch(): self
+    {
+        return new self('Alerta de seguridad: El archivo fue alterado o corrompido durante la transmisión (el hash del servidor no coincide con el de su celular). Por favor, intente de nuevo.', 'files');
+    }
+
     public static function contractNotFound(): self
     {
         return new self('No se encontró el contrato seleccionado.', 'secop_contract_id');

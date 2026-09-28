@@ -13,6 +13,7 @@
 use App\Application\Reports\CreateReport;
 use App\Application\Reports\NewReport;
 use App\Domain\Organization\User;
+use App\Domain\Reports\EvidenceUpload;
 use App\Domain\Reports\Exceptions\ReportValidationException;
 use App\Infrastructure\Tenancy\Tenant;
 use Illuminate\Contracts\Console\Kernel;
@@ -24,6 +25,9 @@ $app->make(Kernel::class)->bootstrap();
 
 [, $tenantId, $veedorId, $secopContractId, $latitude, $longitude] = $argv;
 
+// Los archivos van a un directorio temporal, no al S3 del entorno.
+config(['filesystems.disks.evidencias' => ['driver' => 'local', 'root' => sys_get_temp_dir().'/govtrace-race-evidence']]);
+
 $result = Tenant::query()->findOrFail($tenantId)->run(function () use ($veedorId, $secopContractId, $latitude, $longitude) {
     try {
         $report = (new CreateReport)->handle(User::query()->findOrFail($veedorId), new NewReport(
@@ -34,6 +38,7 @@ $result = Tenant::query()->findOrFail($tenantId)->run(function () use ($veedorId
             longitude: (float) $longitude,
             accuracyMeters: 10.0,
             capturedAt: now(),
+            files: [EvidenceUpload::fromPath(__DIR__.'/../fixtures/evidence/foto.jpg')],
         ));
 
         return ['status' => 'accepted', 'report_id' => $report->id];

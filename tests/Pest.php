@@ -5,6 +5,7 @@ use App\Domain\Organization\Roles;
 use App\Domain\Organization\User as OrganizationUser;
 use App\Domain\Worksites\Worksite;
 use App\Infrastructure\Tenancy\Tenant;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Testing\TestResponse;
@@ -127,15 +128,36 @@ function pointMetersNorthOf(array $origin, float $meters): array
     return [$origin[0] + rad2deg($meters / 6_371_000), $origin[1]];
 }
 
+/** A real JPEG, as the PWA sends it: already optimized, no EXIF (R-PRIV-06). */
+function evidencePhoto(string $name = 'foto.jpg'): UploadedFile
+{
+    return UploadedFile::fake()->createWithContent($name, file_get_contents(__DIR__.'/fixtures/evidence/foto.jpg'));
+}
+
+/** A real one-page PDF, metadata already cleaned by the PWA (R-PRIV-04). */
+function evidencePdf(string $name = 'acta.pdf'): UploadedFile
+{
+    return UploadedFile::fake()->createWithContent($name, file_get_contents(__DIR__.'/fixtures/evidence/acta.pdf'));
+}
+
+/** The SHA-256 the phone computes before sending (R-HASH-01). */
+function sha256Of(UploadedFile $file): string
+{
+    return hash_file('sha256', $file->getRealPath());
+}
+
 /**
  * POST /reports as $veedor. By default a valid report: 120 m from the
- * worksite of CO1.PCCNTR.1234567, 15 m of GPS accuracy, captured 2 min ago.
+ * worksite of CO1.PCCNTR.1234567, 15 m of GPS accuracy, captured 2 min
+ * ago, with 1 photo and its SHA-256 (the hashes follow the files unless
+ * the test overrides them).
  *
  * @param  array<string, mixed>  $overrides
  */
 function sendReport(OrganizationUser $veedor, array $overrides = []): TestResponse
 {
     [$latitude, $longitude] = pointMetersNorthOf(santaMartaWorksiteLocation(), 120);
+    $files = $overrides['files'] ?? [evidencePhoto()];
 
     return test()->actingAs($veedor, 'tenant')->postJson('http://veeduria-smr.govtrace.localhost/reports', array_merge([
         'secop_contract_id' => 'CO1.PCCNTR.1234567',
@@ -145,5 +167,7 @@ function sendReport(OrganizationUser $veedor, array $overrides = []): TestRespon
         'longitude' => $longitude,
         'accuracy_meters' => 15,
         'captured_at' => now()->subMinutes(2)->toIso8601String(),
+        'files' => $files,
+        'hashes' => array_map(sha256Of(...), $files),
     ], $overrides));
 }

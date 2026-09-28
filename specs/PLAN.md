@@ -276,6 +276,28 @@ Con esto US-016 pasa de 11 a 17 casos, US-034 de 4 a 6 y US-008 de 22 a 25, todo
 - corrección de ubicación de la ficha, con auditoría.
 
 **Done-when:** los casos de servidor de US-009 en verde (cantidad, combinación, peso, video, discrepancia de hash y "las fotos no se difuminan"), más US-035 (4 casos).
+
+**✅ Cumplido:**
+- **US-009, servidor:** 13 casos en `ReportEvidenceTest`: el hash que coincide y encola, cantidad y combinación (7), peso (2), video, "no se difuminan" y hash alterado.
+- **US-035:** 4 casos en `CorrectWorksiteLocationTest`, más 2 técnicos (solo el Administrador corrige; se rechazan coordenadas imposibles).
+- Suite completa: 228 en verde + 1 `todo`.
+
+- **Los archivos viajan en el mismo `POST /reports`** (`files[]` + `hashes[]`, en el mismo orden). Las reglas viven en `App\Domain\Reports`:
+  - `EvidenceSet`: de 1 a 5 fotos o 1 PDF, sin mezclar; 10 MB por archivo; recálculo del SHA-256.
+  - `EvidenceKind`: JPEG o PDF, **detectado por el contenido del archivo**, no por el nombre. Un video renombrado a `.jpg` no pasa.
+  - `EvidenceUpload`.
+
+  Todo se verifica **antes** de tocar la base: con un solo byte alterado no queda ni reporte, ni evidencia, ni objeto guardado, y el veedor recibe el mensaje textual de los criterios.
+- **Evidencia = cada archivo** (`evidences`, en la base del tenant): lo que se sella (it. 12-13), se verifica y se descarga (US-024/026). Se guarda **byte a byte** en el disco `evidencias` (S3) bajo `{organización}/reports/{reporte}/{sha256}.{jpg|pdf}`: nada se difumina ni se re-codifica (R-PRIV-05, R-PRIV-06). "Encolada para el sellado" es `seal_status = pending`; el lote de Merkle de la it. 13 la recoge. Si falla el guardado de un archivo, se borran los ya subidos y la transacción deshace el reporte.
+- **`PATCH /worksites/{id}/location`** (solo el Administrador de Organización), con `CorrectWorksiteLocation`: mueve la ubicación oficial (`Worksite::relocateTo`) y deja en `audit_logs` quién, cuándo, las coordenadas anteriores y las nuevas. El mensaje de éxito usa el radio vigente. La misma obra en otra organización no se toca, porque cada ficha vive en su propia base.
+- El escenario de US-008 "una ubicación oficial errónea se corrige" ahora usa este endpoint real. En la it. 10 lo simulaba cambiando la ficha.
+- Las fixtures de archivos (`tests/fixtures/evidence/`) son una JPEG y un PDF mínimos, pero reales. El contenedor no tiene GD, y la app no lo necesita: el servidor nunca procesa imágenes.
+
+**Alcance parcial, documentado:**
+- Los escenarios de US-009 que ocurren en el teléfono quedan para la PWA (it. 16): optimizar la foto a JPEG de 1920 px con calidad 80 %, purgar el EXIF, limpiar los metadatos del PDF y no dejar mezclar fotos y PDF. El servidor no puede limpiar nada sin cambiar el hash que se sella.
+- "Arrastrando el pin" y "escribiendo latitud y longitud" son la pantalla del Administrador (it. 18). Al backend le llegan las mismas coordenadas, así que las dos filas del Esquema ejercitan la misma petición.
+- El cruce de dos organizaciones que vigilan la misma obra se probó con dos fichas independientes; la ficha "Acueducto Gaira" con nombre sigue siendo US-045-INT (it. 29).
+
 **Cubre:** US-009 (servidor), US-035 · R-HASH-01 (servidor), R-PRIV-05.
 
 ### Iteración 12 — Smart Contract de sellado

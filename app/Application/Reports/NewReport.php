@@ -2,6 +2,7 @@
 
 namespace App\Application\Reports;
 
+use App\Domain\Reports\EvidenceUpload;
 use Carbon\CarbonInterface;
 
 /**
@@ -18,5 +19,7 @@ final class NewReport
         public readonly ?float $longitude,
         public readonly ?float $accuracyMeters,
         public readonly CarbonInterface $capturedAt,
+        /** @var list<EvidenceUpload> the photos or the PDF, each with the hash the phone computed */
+        public readonly array $files,
     ) {}
 }

@@ -7,6 +7,7 @@ use App\Http\Controllers\Tenant\InviteObserverController;
 use App\Http\Controllers\Tenant\LoginController;
 use App\Http\Controllers\Tenant\ReportController;
 use App\Http\Controllers\Tenant\SetPasswordController;
+use App\Http\Controllers\Tenant\WorksiteLocationController;
 use Illuminate\Support\Facades\Route;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
@@ -52,6 +53,9 @@ Route::middleware([
         // US-005: solo el Administrador de Organización invita veedores.
         Route::middleware('role:'.Roles::Administrator->value.',tenant')->group(function () {
             Route::post('/observers/invite', [InviteObserverController::class, 'store'])->name('observers.invite');
+
+            // US-035: corregir la ubicación oficial de una obra de la organización.
+            Route::patch('/worksites/{worksite}/location', [WorksiteLocationController::class, 'update'])->name('worksites.location.update');
         });
 
         // US-008: solo el Veedor de Campo crea reportes (la PWA, it. 16).
