@@ -79,7 +79,7 @@ it('logs in the Veedor de Campo from its subdomain', function () {
     $this->post("http://{$domain}/login", [
         'email' => 'carlos@correo.co',
         'password' => 'Veeduria#2026',
-    ])->assertRedirect("http://{$domain}/veedor/dashboard");
+    ])->assertRedirect("http://{$domain}/reports/new"); // "Nuevo Reporte", hasta "Mis Reportes" (it. 28)
 });
 
 it('rejects incorrect credentials', function () {

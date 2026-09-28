@@ -624,6 +624,8 @@ Además: `AdminLayout` (el nombre de la organización y una barra de navegación
 
 Suite: 307 en verde + 1 `todo`.
 
+- **Ajuste aprobado por el usuario (2026-09-28, rama `fix/veedor-entra-a-nuevo-reporte`):** hasta "Mis Reportes" (it. 28), el veedor entra a "Nuevo Reporte" al iniciar sesión o activar su cuenta; `/veedor/dashboard` también lleva ahí. El Administrador entra a su bandeja.
+
 ### Iteración 19 — Panel global del Super Administrador (P1)
 **Entregable:** alta de organización, Administrador inicial y datos legales.
 **Done-when:** Vitest de los formularios de US-001, US-002 y US-011 en verde, con sus mensajes de error.

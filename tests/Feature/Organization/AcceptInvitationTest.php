@@ -45,7 +45,8 @@ it('activates the account and logs the user in immediately', function () {
         'password_confirmation' => 'Veeduria#2026',
     ]);
 
-    $response->assertRedirect("http://{$this->domain}/veedor/dashboard");
+    // Hasta "Mis Reportes" (it. 28), el veedor entra a su pantalla central.
+    $response->assertRedirect("http://{$this->domain}/reports/new");
     $this->assertAuthenticatedAs($this->veedor->fresh(), 'tenant');
 
     $this->tenant->run(function () {

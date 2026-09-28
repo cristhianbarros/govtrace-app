@@ -14,6 +14,7 @@ class RoleBasedDashboard
     {
         return $user->hasRole(Roles::Administrator->value)
             ? route('organization.dashboard')
-            : route('veedor.dashboard');
+            // Hasta "Mis Reportes" (it. 28), el veedor entra a "Nuevo Reporte", su pantalla central.
+            : route('reports.new');
     }
 }

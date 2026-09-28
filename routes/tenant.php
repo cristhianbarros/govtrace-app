@@ -62,7 +62,8 @@ Route::middleware([
     Route::middleware('auth:tenant')->group(function () {
         // El panel del Administrador abre en la bandeja de entrada (it. 18).
         Route::get('/organization/dashboard', fn () => redirect('/admin/inbox'))->name('organization.dashboard');
-        Route::get('/veedor/dashboard', fn () => 'Veedor Dashboard')->name('veedor.dashboard');
+        // El panel del veedor es "Nuevo Reporte" hasta "Mis Reportes" (it. 28).
+        Route::get('/veedor/dashboard', fn () => redirect('/reports/new'))->name('veedor.dashboard');
 
         // US-005: solo el Administrador de Organización invita veedores.
         Route::middleware('role:'.Roles::Administrator->value.',tenant')->group(function () {
