@@ -513,7 +513,7 @@ La prueba de humo ahora pone la cota de cordura (< 1 XLM) en los dos sellos. Ext
 - **R-TA-02 en el dominio**: `Report`, `Evidence` y `ReportSeal` no se borran. Tampoco se altera lo que envió el veedor, el archivo ni el sello ya escrito. Solo cambia el estado editorial.
 - **R-USR-02 (backend)**: `Report::editorialStatusForVeedor()` da "En Revisión", "Publicado", "Rechazada" (con motivo) o "Retirado". La pantalla es "Mis Reportes" (it. 28).
 - **Seguridad: sesión por organización.** Los usuarios viven en la base de cada organización, con ids que se repiten entre ellas, y las sesiones se guardan en la base central. Una cookie de sesión copiada a otro subdominio autenticaba al usuario con el mismo id de la otra organización. El test lo mostró: el Administrador de Santa Marta publicaba una evidencia de Ciénaga (200). Las rutas de tenant ahora usan `ScopeSessions` de stancl/tenancy: una sesión vale solo en la organización donde se abrió, y en otra responde 403.
-- **Por confirmar** (derivadas, fáciles de cambiar):
+- **Decisiones derivadas, aprobadas por el usuario (2026-09-28)** por ser consistentes con la promesa de inmutabilidad y el alcance del MVP:
   1. Publicar exige que la evidencia esté "Sellada", y la bandeja solo muestra las selladas. Lo publicado tiene que poder verificarse (US-024).
   2. El veedor ve "Retirado" en una evidencia retirada, sin el motivo; US-010 no lo define. Se revisa en la it. 28.
   3. Una retirada deja de contar para el mapa; queda solo como lápida en la línea de tiempo. Se revisa con los colores de pin de la it. 24.
@@ -535,6 +535,34 @@ La prueba de humo ahora pone la cota de cordura (< 1 XLM) en los dos sellos. Ext
 - búsqueda desde 3 caracteres con debounce de 300 ms.
 
 **Cubre:** US-008, US-009, US-016 (UI) · R-PRIV-01, R-PRIV-04, R-PRIV-06, R-HASH-01.
+
+**✅ Cumplido (2026-09-28):** Vitest 59 en verde (48 nuevos), cada uno visto en rojo antes de implementar. Los 8 puntos del Done-when:
+
+| Done-when | Dónde |
+|---|---|
+| GPS denegado | `Pages/Veedor/NewReport.test.js` ("Permiso de GPS denegado"), `lib/geolocation.test.js` |
+| Reintento con precisión de 51 m | `NewReport.test.js` ("Precisión mínima del GPS de 50 m"): con 51 m pide reintentar y no deja enviar; con 15 m, sí |
+| 6 fotos rechazadas | `lib/evidence/attachments.test.js`, `Components/EvidencePicker.test.js` |
+| Mezcla de fotos y PDF bloqueada | los mismos: con fotos, el selector solo ofrece fotos; con el PDF, nada más |
+| HEIC a JPEG sin EXIF | `lib/evidence/photos.test.js`: 4000×3000 → 1920×1440 al 80 %; el EXIF con GPS se quita del JPEG, byte a byte |
+| PDF sin metadatos | `lib/evidence/pdf.test.js`, con un PDF real: sin Info (autor, software, fechas) ni XMP |
+| Hash sobre el archivo optimizado | `lib/evidence/prepare.test.js`: SHA-256 con Web Crypto sobre lo que se sube |
+| Búsqueda desde 3 caracteres con debounce de 300 ms | `Components/ContractSearch.test.js`, con temporizadores falsos |
+
+Además, con el nombre de su escenario: reporte exitoso (FormData con archivos, hashes, posición, clasificación y comentario, más el mensaje de éxito), clasificación obligatoria, comentario de 0/500/501, sin archivos, videos, 10 y 10,1 MB, búsqueda sin resultados, y los rechazos del servidor (geocerca y hash) mostrados con sus palabras.
+
+- **Pantalla** `GET /reports/new` (Inertia, `Veedor/NewReport`). El flujo es buscar obra → GPS (con "Reintentar GPS") → clasificación y comentario → adjuntos → enviar a `POST /reports`. Si el servidor rechaza, se muestra su motivo y el reporte queda para reintentar.
+- **"Buscar Obra"**: nuevo `GET /contracts/search?q=`, solo para el veedor, sobre `SearchSelectableContracts` (it. 8). Una respuesta vieja que llega tarde se ignora.
+- **En el teléfono**, en `resources/js/lib/`:
+  - foto: el navegador la decodifica respetando la orientación, se escala sin agrandar y sin difuminar (R-PRIV-05), se codifica en JPEG al 80 % y se le quitan los segmentos APP1–APP15 y COM (EXIF, XMP, ICC, comentarios);
+  - PDF: `pdf-lib` (MIT) quita el diccionario Info y todo `/Metadata`, también dentro de flujos comprimidos. Se carga solo cuando se adjunta un PDF, así el paquete principal pesa 83 KB gzip y no 258;
+  - las reglas y los mensajes son los mismos del servidor (`EvidenceSet`, `GpsReading`, `ReportValidationException`).
+- `captured_at` es la hora de la lectura de GPS, la que certifica la presencia en la obra.
+- Backend: `NewReportScreenTest` (3 casos). Suite: 271 en verde + 1 `todo`.
+- `config/inertia.php`: las páginas están en `resources/js/Pages`, con mayúscula; Inertia las buscaba en `pages`.
+- **Por confirmar:**
+  1. **HEIC.** La foto HEIC la decodifica el navegador: Safari, que es donde el iPhone la produce (además, al elegirla desde el selector, iOS suele entregarla ya en JPEG). Un Android con HEIC en un navegador que no la lee recibe "No se pudo leer la foto. Tómela de nuevo con la cámara del teléfono." Un decodificador WASM (libheif, ~1 MB) solo si aparece ese caso.
+  2. **Imágenes dentro del PDF.** Una foto con EXIF incrustada en un PDF (p. ej. un acta de Word con fotos) conserva su EXIF dentro del PDF; R-PRIV-04 pide limpiar los metadatos del documento, no los de sus imágenes. Si hace falta, se limpia con el mismo `stripJpegMetadata`.
 
 ### Iteración 17 — Acceso: iniciar sesión y activar la cuenta
 **Entregable:** pantallas mobile-first de inicio de sesión y de activación con contraseña.
