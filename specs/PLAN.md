@@ -129,6 +129,14 @@
 - US-011 (4 casos) y US-012 (4 casos) en verde;
 - test que prueba que la tabla de parámetros devuelve el valor vigente en una fecha pasada, base de R-AUD-05.
 
+**✅ Cumplido:** 8/8 casos (`UpdateOrganizationLegalDataTest` 4, `ConfigureTerritoryTest` 4) + 3 tests de `ParametersTest`. Infraestructura nueva, central en las tres:
+
+- **`audit_logs`** (`App\Domain\Audit\AuditLog`, con `AuditLog::record(...)`): quién, cuándo, acción, antes y después. Solo `UpdateOrganizationLegalData` escribe en esta iteración; el resto de acciones que R-AUD-04 lista (publicar/rechazar evidencia, invitar veedor, cambio de territorio…) se conectan en sus propias iteraciones — no se retrocedió a instrumentar it. 3/4/5.
+- **`organization_territories`** (central, no por tenant, porque la sincronización SECOP de la it. 7 necesita leer el territorio de todas las organizaciones sin abrir cada base): una fila por departamento o municipio elegido. `ConfigureTerritory` reemplaza el conjunto completo en una transacción.
+- **`parameters`** (`App\Domain\Configuration\Parameters`): nunca se actualiza una fila, se inserta una versión nueva con su propia `effective_from` — así `valueAt($clave, $fecha)` puede responder "qué valor regía en esa fecha", la base literal de R-AUD-05. Sembrada con los 5 valores por defecto conocidos (geocerca 500 m, ventana 12 meses, invitación 48 h, umbral Relayer 5 POL, sincronización 02:00). **No se reconectaron** los usos ya hardcodeados de esos valores (US-018's 48h, US-008's 500m, etc.) — eso le corresponde a la it. 21, que construye el panel de US-038-CFG.
+
+**Alcance parcial, documentado:** el escenario *edge* de US-012 ("quitar una ciudad no borra lo ya registrado") solo se probó en su mecánica de reemplazo del territorio (la ciudad desaparece del conjunto). La parte sobre evidencias que siguen en la blockchain y el mapa público no se puede probar todavía — esas piezas llegan en it. 8+ y it. 24+.
+
 **Cubre:** US-011, US-012 · R-TA-03, R-AUD-04 (escritura), R-AUD-05 (base).
 
 ### Iteración 7 — Sincronización SECOP II
