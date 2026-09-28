@@ -1,0 +1,23 @@
+story_id: "US-012"
+titulo_historia: "Como Administrador de Organización quiero configurar desde mi panel las ciudades y/o departamentos que vigila mi organización para que el mapa y las obras disponibles correspondan a nuestro territorio"
+bloque: "B2 — Configuración de la organización"
+criterios_aceptacion:
+  escenarios_exito:
+    - "El Administrador accede al módulo de cobertura territorial con un selector con buscador de Departamentos y Municipios de Colombia"
+    - "Selecciona uno o varios territorios (ej. Departamento de Antioquia, Municipio de Medellín) y guarda"
+    - "Al guardar, el mapa y la sincronización SECOP se restringen exclusivamente a los contratos de esas zonas (R-VC-04)"
+  validaciones_reglas:
+    - "Debe seleccionarse al menos un territorio (departamento o municipio)"
+    - "Los códigos geográficos (DIVIPOLA) deben pertenecer a la tabla oficial de departamentos y municipios soportada por el sistema"
+  manejo_errores:
+    - {caso: "Territorio vacío", mensaje: "Debe seleccionar al menos un departamento o municipio para delimitar el territorio de vigilancia."}
+  requisitos_ux:
+    - "Selector con buscador de departamentos y municipios"
+  casos_edge:
+    - {caso: "La organización quita una ciudad de su territorio", resultado: "Las obras y evidencias ya registradas o selladas en esa ciudad NO se borran de la base de datos ni de la blockchain; dejan de aparecer en el mapa de los veedores de esa organización (pero las ya publicadas siguen visibles en el mapa público) y el motor SECOP deja de sincronizar nuevos contratos de ese municipio desde ese momento"}
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true

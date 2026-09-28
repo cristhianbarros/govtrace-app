@@ -1,0 +1,20 @@
+# Copy to compose.override.yml (NOT versioned) for personal tweaks.
+# Docker Compose applies it automatically when present.
+services:
+
+  # Direct access to the app bypassing the proxy, for debugging.
+  # app:
+  #   ports:
+  #     - "127.0.0.1:8081:80"
+
+  # Vite dev server (HMR) from the node container.
+  # node:
+  #   ports:
+  #     - "127.0.0.1:5173:5173"
+
+  # Memory cap for Postgres on constrained machines.
+  # pgsql:
+  #   deploy:
+  #     resources:
+  #       limits:
+  #         memory: 512M

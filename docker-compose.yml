@@ -1,0 +1,187 @@
+name: govtrace
+
+# Shared base for every service that runs the application image and code.
+# Repeating it per service guarantees they drift apart one day.
+x-app-base: &app-base
+  build:
+    context: .
+    dockerfile: docker/app/Dockerfile
+    target: dev              # base -> dev | vendor | assets | qa
+    args:
+      PUID: "${PUID:-1000}"
+      PGID: "${PGID:-1000}"
+      TZ:   "${TZ:-UTC}"
+  image: govtrace-app:dev
+  environment: &app-env
+    PUID: "${PUID:-1000}"
+    PGID: "${PGID:-1000}"
+    TZ:   "${TZ:-UTC}"
+    DOCKER_SUBNET: "${DOCKER_SUBNET:-172.29.0.0/24}"
+  volumes:
+    - .:/var/www/html
+    - ./docker/app/xdebug.ini:/usr/local/etc/php/conf.d/zzz-xdebug.ini:ro
+    - composer_cache:/tmp/composer
+  extra_hosts:
+    # Not native on Linux. Declaring it makes the same xdebug.client_host work
+    # on Linux, WSL2 and Docker Desktop.
+    - "host.docker.internal:host-gateway"
+  networks: [govtrace]
+  security_opt:
+    - no-new-privileges:true
+  restart: unless-stopped
+
+services:
+
+  # ---------------------------------------------------------------- app ----
+  app:
+    <<: *app-base
+    depends_on:
+      pgsql:
+        condition: service_healthy
+    # expose, not ports: only the proxy may reach it. Two entry points would
+    # mean two behaviours depending on where the request came in.
+    expose: ["80"]
+
+  # -------------------------------------------------------------- proxy ----
+  proxy:
+    image: nginx:1.27-alpine
+    volumes:
+      - ./docker/proxy/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "${LOCAL_IP:-127.0.0.1}:${HTTP_PORT:-8080}:80"
+    depends_on:
+      app:
+        condition: service_healthy
+    networks: [govtrace]
+    read_only: true
+    tmpfs:
+      - /var/cache/nginx
+      - /var/run
+    security_opt: [no-new-privileges:true]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/robots.txt"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # ---------------------------------------------------------- scheduler ----
+  scheduler:
+    <<: *app-base
+    command: php artisan schedule:work
+    user: "${PUID:-1000}:${PGID:-1000}"
+    environment:
+      <<: *app-env
+      XDEBUG_MODE: "off"
+    depends_on:
+      pgsql:
+        condition: service_healthy
+    # Default is 10s: a running task would be cut mid-write.
+    stop_grace_period: 60s
+    healthcheck:
+      # procps is not in the image; PID 1 is the exec'd artisan process.
+      test: ["CMD-SHELL", "grep -q schedule:work /proc/1/cmdline"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # -------------------------------------------------------------- pgsql ----
+  pgsql:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB:       "${DB_DATABASE:-govtrace}"
+      POSTGRES_USER:     "${DB_USERNAME:-govtrace}"
+      POSTGRES_PASSWORD: "${DB_PASSWORD:-secret}"
+      TZ:                "${TZ:-UTC}"
+      PGTZ:              "${TZ:-UTC}"
+    volumes:
+      - pgsql_data:/var/lib/postgresql/data
+      - ./docker/pgsql/init:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "${LOCAL_IP:-127.0.0.1}:${PG_PORT:-5432}:5432"
+    networks: [govtrace]
+    security_opt: [no-new-privileges:true]
+    restart: unless-stopped
+    healthcheck:
+      # pg_isready does not authenticate: no password visible in "ps".
+      test: ["CMD-SHELL", "pg_isready -q -h 127.0.0.1 -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+  # ========================= optional profiles ============================
+
+  adminer:
+    image: adminer:4-standalone
+    environment:
+      ADMINER_DEFAULT_SERVER: pgsql
+    networks: [govtrace]
+    profiles: [tools]
+    security_opt: [no-new-privileges:true]
+    restart: unless-stopped
+
+  node:
+    image: node:22-alpine
+    working_dir: /var/www/html
+    user: "${PUID:-1000}:${PGID:-1000}"
+    environment:
+      HOME: /tmp
+      # Inside the project, not a named volume: a named volume would be
+      # created owned by root and npm would fail with EACCES.
+      NPM_CONFIG_CACHE: /var/www/html/.cache/npm
+    volumes:
+      - .:/var/www/html
+    networks: [govtrace]
+    profiles: [frontend]
+    security_opt: [no-new-privileges:true]
+    command: sh
+
+  # --- async profile: redis + queue worker -------------------------------
+  # Laravel ships with QUEUE_CONNECTION=database. Switch to redis in .env
+  # only when the spec needs a real async pipeline.
+  redis:
+    image: redis:7-alpine
+    command: redis-server --save "" --maxmemory 128mb --maxmemory-policy allkeys-lru
+    networks: [govtrace]
+    profiles: [async]
+    security_opt: [no-new-privileges:true]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  worker:
+    <<: *app-base
+    command: php artisan queue:work --tries=3 --max-time=3600
+    user: "${PUID:-1000}:${PGID:-1000}"
+    environment:
+      <<: *app-env
+      XDEBUG_MODE: "off"
+    depends_on:
+      pgsql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    profiles: [async]
+    stop_grace_period: 60s
+
+networks:
+  govtrace:
+    name: "${DOCKER_NETWORK:-govtrace_net}"
+    driver: bridge
+    ipam:
+      config:
+        # Fixed subnet so RemoteIPTrustedProxy (vhost.conf) can trust exactly
+        # this range. Change it in .env.docker if it collides with a VPN route.
+        - subnet: "${DOCKER_SUBNET:-172.29.0.0/24}"
+    driver_opts:
+      # Lower it (e.g. 1354) if a VPN with a smaller MTU hangs large responses
+      # only inside containers.
+      com.docker.network.driver.mtu: "${DOCKER_MTU:-1500}"
+
+volumes:
+  pgsql_data:
+  composer_cache:

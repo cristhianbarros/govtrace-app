@@ -1,0 +1,20 @@
+story_id: "US-033"
+titulo_historia: "Como Sistema quiero sincronizar solo los contratos nuevos o modificados para no duplicar registros ni saturar la base de datos"
+bloque: "B4 — Sincronización SECOP"
+criterios_aceptacion:
+  escenarios_exito:
+    - "Cada contrato recibido se inserta si es nuevo o se actualiza si ya existe y cambió (upsert idempotente), sin duplicar registros"
+  validaciones_reglas:
+    - "Identificador único del contrato: 'id_contrato' de SECOP II"
+    - "La base de datos tiene una restricción de unicidad sobre ese identificador"
+  manejo_errores: []
+  requisitos_ux: []
+  casos_edge:
+    - {caso: "Un contrato ya sincronizado pasa a 'Anulado' o es retirado de SECOP y tiene evidencias o sellos asociados", resultado: "Su estado interno pasa a 'cancelled' y nunca se elimina físicamente"}
+    - {caso: "Un contrato ya sincronizado pasa a 'Anulado' o es retirado de SECOP y NO tiene evidencias ni sellos", resultado: "Se conserva igual con estado 'cancelled'; nunca se elimina físicamente"}
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true

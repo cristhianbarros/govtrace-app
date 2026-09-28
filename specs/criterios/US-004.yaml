@@ -1,0 +1,19 @@
+story_id: "US-004"
+titulo_historia: "Como Super Administrador quiero visualizar un reporte del consumo de transacciones y gas en Polygon agrupado por organización para controlar la rentabilidad y los costos de infraestructura del SaaS"
+bloque: "B11 — Monitoreo y costos"
+criterios_aceptacion:
+  escenarios_exito:
+    - "En el dashboard central, el Super Administrador ve una tabla agrupada por mes y por organización"
+    - "Columnas: Nombre de la ONG, Total de evidencias selladas, Gas total consumido y Costo estimado en USD"
+    - "La conversión POL→USD se obtiene de un API de precios externo (tipo CoinGecko)"
+  validaciones_reglas: []
+  manejo_errores:
+    - {caso: "El API de precios POL/USD no responde", resultado: "El reporte usa el último precio conocido y muestra su fecha"}
+  requisitos_ux: []
+  casos_edge: []
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true

@@ -1,0 +1,21 @@
+story_id: "US-029"
+titulo_historia: "Como Verificador Público quiero hacer clic en el pin de una obra y ver, además de los datos del contrato, una línea de tiempo cronológica con sus evidencias publicadas para comprobar la evolución o el estancamiento de la obra"
+bloque: "B8 — Mapa y publicación"
+criterios_aceptacion:
+  escenarios_exito:
+    - "Al hacer clic en un pin se abre una línea de tiempo vertical ordenada por fecha (datos cargados bajo demanda, R-MAP-02)"
+    - "Cada tarjeta muestra: fecha/hora, clasificación, comentario, miniaturas de las fotos (con visor) y un botón destacado 'Verificar Sello Blockchain'"
+    - "Si se muestran las coordenadas de la evidencia, son aproximadas (redondeadas a ~100 m), nunca las exactas (R-PRIV-02)"
+  validaciones_reglas:
+    - "Publicación manual: toda evidencia sellada nace 'Oculta'; solo aparece en el mapa y en la línea de tiempo cuando el Administrador de Organización pulsa 'Publicar' (US-036)"
+  manejo_errores: []
+  requisitos_ux:
+    - "Visor de fotos al tocar una miniatura"
+  casos_edge:
+    - {caso: "El Administrador revoca una evidencia que ya estaba publicada", resultado: "La tarjeta NO desaparece: se convierte en una 'lápida' que oculta fotos y comentario y muestra \"🚫 Evidencia retirada por la organización por incumplimiento de políticas.\"; el sello criptográfico sigue disponible para auditoría externa (US-037)"}
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true

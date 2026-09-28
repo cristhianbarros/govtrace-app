@@ -1,0 +1,119 @@
+# ---------------------------------------------------------------------------
+# Dockerised development environment for govtrace-app.
+# Only Docker (with the compose plugin) and make are needed on the host.
+# ---------------------------------------------------------------------------
+COMPOSE  ?= docker compose --env-file .env.docker
+# -u workspace everywhere: "docker compose exec" enters as root by default,
+# and that is what leaves vendor/ owned by root on the host.
+EXEC     ?= $(COMPOSE) exec -u workspace app
+RUN      ?= $(COMPOSE) run --rm --no-deps -u workspace app
+NODE     ?= $(COMPOSE) --profile frontend run --rm node
+LOCAL_IP ?= $(shell sed -n 's/^LOCAL_IP=//p' .env.docker 2>/dev/null | head -1)
+HTTP_PORT ?= $(shell sed -n 's/^HTTP_PORT=\([0-9]*\).*/\1/p' .env.docker 2>/dev/null | head -1)
+
+.DEFAULT_GOAL := help
+
+.PHONY: help setup up up-tools up-frontend up-async down stop restart logs ps \
+        shell composer artisan migrate psql test test-front test-all lint fmt \
+        npm-install npm-build npm-watch xdebug-on xdebug-off hosts image-qa teardown
+
+help: ## List available commands
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
+	  | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-12s\033[0m %s\n",$$1,$$2}'
+
+# Created only when missing. Re-running make is safe: never overwrites.
+.env.docker:
+	@cp .env.docker.example .env.docker
+	@echo "Created .env.docker from .env.docker.example"
+.env:
+	@cp .env.example .env
+	@echo "Created .env from .env.example"
+# Mounted as a file by compose: if missing, Docker would create a DIRECTORY.
+docker/app/xdebug.ini:
+	@: > docker/app/xdebug.ini
+
+setup: .env.docker .env docker/app/xdebug.ini ## Full bootstrap from scratch (build, deps, key, migrations)
+	@mkdir -p .cache/npm
+	@$(COMPOSE) build
+	@$(RUN) composer install --no-interaction
+	@$(COMPOSE) up -d --wait
+	@grep -q '^APP_KEY=base64:' .env || $(EXEC) php artisan key:generate
+	@$(EXEC) php artisan migrate --force
+	@$(EXEC) php artisan tenants:migrate --force
+	@$(NODE) npm ci
+	@$(NODE) npm run build
+	@echo ""
+	@echo "  Ready -> http://govtrace.localhost:$(HTTP_PORT)  (health: /up)"
+	@echo ""
+
+up: .env.docker docker/app/xdebug.ini ## Start the base services
+	@$(COMPOSE) up -d
+up-tools: .env.docker docker/app/xdebug.ini ## Also start adminer (adminer.govtrace.localhost)
+	@$(COMPOSE) --profile tools up -d
+up-frontend: .env.docker docker/app/xdebug.ini ## Also start the node container
+	@$(COMPOSE) --profile frontend up -d
+up-async: .env.docker docker/app/xdebug.ini ## Also start redis + queue worker
+	@$(COMPOSE) --profile async up -d
+down: ## Stop and remove containers (data is kept)
+	@$(COMPOSE) --profile '*' down
+stop: ## Stop without removing
+	@$(COMPOSE) stop
+restart: ## Restart the services
+	@$(COMPOSE) restart
+logs: ## Follow logs. Usage: make logs S=app
+	@$(COMPOSE) logs -f $(S)
+ps: ## Service status
+	@$(COMPOSE) ps
+
+shell: ## Shell in the app container as user workspace
+	@$(EXEC) bash
+composer: ## Composer in the container. Usage: make composer CMD="require x/y"
+	@$(EXEC) composer $(CMD)
+artisan: ## Artisan in the container. Usage: make artisan CMD="route:list"
+	@$(EXEC) php artisan $(CMD)
+migrate: ## Central + tenant migrations
+	@$(EXEC) php artisan migrate
+	@$(EXEC) php artisan tenants:migrate
+psql: ## psql console on the central database
+	@$(COMPOSE) exec pgsql sh -c 'psql -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"'
+
+test: ## Backend tests (Pest)
+	@$(EXEC) ./vendor/bin/pest $(ARGS)
+test-front: .env.docker ## Frontend tests (Vitest)
+	@$(NODE) npm run test
+test-all: lint test test-front ## Pint + Pest + Vitest (same as CI)
+lint: ## Check style with Pint (does not modify)
+	@$(EXEC) ./vendor/bin/pint --test
+fmt: ## Fix style with Pint
+	@$(EXEC) ./vendor/bin/pint
+
+npm-install: .env.docker ## Install frontend dependencies
+	@mkdir -p .cache/npm
+	@$(NODE) npm ci
+npm-build: .env.docker ## Build the frontend once
+	@$(NODE) npm run build
+npm-watch: .env.docker ## Build the frontend and keep watching
+	@$(NODE) npm run build -- --watch
+
+xdebug-on: ## Enable Xdebug and restart app
+	@cp docker/app/xdebug.ini.disabled docker/app/xdebug.ini
+	@$(COMPOSE) restart app
+	@echo "Xdebug ENABLED (IDE must listen on port 9003)"
+xdebug-off: ## Disable Xdebug and restart app
+	@: > docker/app/xdebug.ini
+	@$(COMPOSE) restart app
+	@echo "Xdebug disabled"
+
+hosts: ## Print the /etc/hosts block (only needed if LOCAL_IP is not 127.0.0.1)
+	@echo "Add these lines to /etc/hosts with sudo:"
+	@echo ""
+	@echo "$(LOCAL_IP)  govtrace.localhost"
+	@echo "$(LOCAL_IP)  adminer.govtrace.localhost"
+
+image-qa: ## Build the immutable qa image (govtrace-app:qa)
+	@docker build -f docker/app/Dockerfile --target qa -t govtrace-app:qa .
+
+teardown: ## DESTRUCTIVE: remove containers AND volumes (database)
+	@printf "DESTRUCTIVE: volumes (database) will be deleted. Type 'yes': " \
+	  && read r && [ "$$r" = "yes" ] || exit 1
+	@$(COMPOSE) --profile '*' down -v

@@ -1,0 +1,21 @@
+story_id: "US-035"
+titulo_historia: "Como Administrador de Organización quiero corregir la ubicación oficial de una obra, dejando registro del cambio, para que una ubicación errónea no bloquee los reportes de mis veedores"
+bloque: "B6/B7 — Captura de evidencia (derivada)"
+criterios_aceptacion:
+  escenarios_exito:
+    - "El Administrador abre la ficha de la obra y ve un mapa interactivo"
+    - "Corrige la ubicación arrastrando el pin libremente o escribiendo latitud y longitud exactas en dos campos"
+    - "Al guardar ve: \"La ubicación oficial de la obra ha sido ajustada. La nueva geocerca de 500m ya está activa para los veedores.\""
+  validaciones_reglas:
+    - "Cada corrección queda en un log de auditoría inmutable con: ID del Administrador, fecha/hora, coordenadas anteriores y coordenadas nuevas"
+    - "La ficha de obra es de la organización: la corrección solo afecta la ubicación y la geocerca de los veedores de esa organización"
+  manejo_errores: []
+  requisitos_ux:
+    - "Mapa interactivo con pin arrastrable y campos de latitud/longitud"
+  casos_edge: []
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true

@@ -1,0 +1,41 @@
+{
+  "permissions": {
+    "allow": [
+      "Read",
+      "Glob",
+      "Grep",
+      "Bash(git status)",
+      "Bash(git log*)",
+      "Bash(git diff*)",
+      "Bash(composer install && php artisan key:generate*)",
+      "Bash(./vendor/bin/pest*)",
+      "Bash(./vendor/bin/pint*)",
+      "Bash(php artisan migrate && php artisan tenants:migrate*)",
+      "Bash(npm run*)",
+      "Bash(npm run test*)",
+      "Bash(docker compose*)",
+      "Bash(make up*)",
+      "Bash(make ps)",
+      "Bash(make logs*)",
+      "Bash(make test*)",
+      "Bash(make lint)",
+      "Bash(make fmt)",
+      "Bash(make migrate)",
+      "Bash(make artisan*)",
+      "Bash(make npm-build)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/pre-commit-check.sh"
+          }
+        ]
+      }
+    ]
+  }
+}

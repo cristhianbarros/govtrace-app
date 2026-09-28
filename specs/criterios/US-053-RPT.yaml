@@ -1,0 +1,17 @@
+story_id: "US-053-RPT"
+titulo_historia: "Como Super Administrador quiero ver un resumen de uso por organización: veedores activos y evidencias recibidas, publicadas, rechazadas y retiradas para seguir la adopción de la plataforma"
+origen: "analisis_completitud"
+clasificacion_gap: "💡 Mejora"
+criterios_aceptacion:
+  escenarios_exito:
+    - "El Super Administrador ve por organización: veedores activos, evidencias recibidas, publicadas, rechazadas y retiradas"
+  validaciones_reglas: []
+  manejo_errores: []
+  requisitos_ux: []
+  casos_edge: []
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true

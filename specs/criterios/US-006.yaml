@@ -1,0 +1,19 @@
+story_id: "US-006"
+titulo_historia: "Como Administrador de Organización quiero desactivar el acceso a un veedor de campo para revocar sus permisos en caso de que deje la organización o cometa infracciones"
+bloque: "B3 — Acceso y equipo"
+criterios_aceptacion:
+  escenarios_exito:
+    - "El Administrador selecciona un veedor activo de su equipo y pulsa 'Desactivar'"
+    - "El sistema cambia el estado del usuario a inactivo y revoca de inmediato sus tokens de sesión activos"
+  validaciones_reglas: []
+  manejo_errores: []
+  requisitos_ux: []
+  casos_edge:
+    - {caso: "El veedor desactivado ya tenía reportes sincronizados o sellados", resultado: "Permanecen intactos en la base de datos y en la blockchain, conservando su autoría"}
+    - {caso: "El veedor desactivado intenta sincronizar reportes de su cola local", resultado: "La API responde HTTP 403 (token revocado), no acepta los datos y la app muestra: \"Su cuenta ha sido desactivada. No es posible sincronizar nuevos reportes.\""}
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true

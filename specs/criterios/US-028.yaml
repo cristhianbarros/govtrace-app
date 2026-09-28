@@ -1,0 +1,18 @@
+story_id: "US-028"
+titulo_historia: "Como Verificador Público quiero filtrar los pines del mapa para enfocar mi análisis"
+bloque: "B8 — Mapa y publicación"
+criterios_aceptacion:
+  escenarios_exito:
+    - "El Verificador filtra los pines por: estado de la obra (Normal, Alerta, En Riesgo), rango de fechas de las evidencias, rango de presupuesto y municipio"
+  validaciones_reglas:
+    - "El botón 'Aplicar' se deshabilita si no se selecciona ningún valor"
+  manejo_errores:
+    - {caso: "Ninguna obra coincide con los filtros o la zona está vacía", mensaje: "No se encontraron obras o evidencias que coincidan con estos filtros en este territorio."}
+  requisitos_ux: []
+  casos_edge: []
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true

@@ -1,0 +1,28 @@
+story_id: "US-007"
+titulo_historia: "Como Administrador de Organización quiero actualizar el nombre de fantasía y el logo de la veeduría para mantener la identidad visual de su observatorio"
+bloque: "B2 — Configuración de la organización"
+criterios_aceptacion:
+  escenarios_exito:
+    - "El Administrador accede a la configuración de su panel, edita el 'Nombre de fantasía' y carga o reemplaza el logo institucional"
+    - "Al pulsar 'Guardar cambios' el sistema almacena la nueva imagen, actualiza la metadata del tenant y refresca de inmediato el branding visible para sus veedores"
+  validaciones_reglas:
+    - "Nombre de fantasía: obligatorio, texto plano, entre 3 y 100 caracteres"
+    - "Logo: solo image/png, image/jpeg o image/svg+xml"
+    - "Logo: peso máximo 2 MB"
+    - "Un logo SVG se acepta, pero el sistema lo limpia de contenido ejecutable (scripts, manejadores de eventos) antes de guardarlo"
+    - "Logo: dimensiones mínimas 128x128 px; por debajo se rechaza"
+    - "R-TA-03: NIT y datos legales no son editables aquí"
+  manejo_errores:
+    - {caso: "Logo con formato no permitido", mensaje: "El formato del archivo no es válido. Solo se permiten imágenes PNG, JPG o SVG."}
+    - {caso: "Logo mayor a 2 MB", mensaje: "El tamaño de la imagen supera el límite permitido de 2 MB."}
+    - {caso: "Logo menor de 128x128 px", mensaje: "La imagen es demasiado pequeña. Las dimensiones mínimas requeridas son de al menos 128x128 píxeles."}
+    - {caso: "Nombre fuera de rango", mensaje: "El nombre de fantasía debe tener entre 3 y 100 caracteres."}
+  requisitos_ux:
+    - "El nuevo branding se refleja de inmediato para los veedores de la organización"
+  casos_edge: []
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true

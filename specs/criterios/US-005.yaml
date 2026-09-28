@@ -1,0 +1,22 @@
+story_id: "US-005"
+titulo_historia: "Como Administrador de Organización quiero invitar nuevos usuarios por correo electrónico asignándoles el rol de veedor de campo para conformar el equipo de supervisión local"
+bloque: "B3 — Acceso y equipo"
+criterios_aceptacion:
+  escenarios_exito:
+    - "El Administrador accede a la gestión de equipo, introduce el correo del nuevo veedor y pulsa 'Enviar invitación'"
+    - "El sistema genera un token seguro con expiración y envía un correo automatizado con el enlace de acceso"
+  validaciones_reglas:
+    - "El token de invitación expira estrictamente a las 48 horas de emitido"
+    - "No se puede invitar un correo que ya esté registrado activamente o que tenga una invitación pendiente en la misma organización"
+    - "El mismo correo puede ser veedor en varias organizaciones: tiene una cuenta independiente en cada una (R-USR-01)"
+    - "R-TA-01: el Administrador no da de alta otras organizaciones"
+  manejo_errores:
+    - {caso: "Correo ya registrado o con invitación pendiente en la organización", mensaje: "Ya existe un usuario registrado o una invitación pendiente con este correo electrónico en la organización."}
+  requisitos_ux: []
+  casos_edge: []
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true

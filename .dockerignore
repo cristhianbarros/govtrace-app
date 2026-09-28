@@ -1,0 +1,25 @@
+# Build context is the repo root (the qa stage bakes the code in).
+# Keep it small and make sure secrets never enter a build context:
+# the whole context stays in the daemon's cache.
+.git
+.github
+.cache
+.claude
+node_modules
+vendor
+public/build
+public/hot
+public/storage
+storage/*
+!storage/.gitignore
+bootstrap/cache/*.php
+.env
+.env.*
+!.env.example
+docker/app/xdebug.ini
+tests
+specs
+sessions
+features
+*.md
+compose.override.yml

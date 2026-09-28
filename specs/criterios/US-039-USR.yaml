@@ -1,0 +1,22 @@
+story_id: "US-039-USR"
+titulo_historia: "Como usuario registrado quiero restablecer mi contraseña yo mismo con un enlace que recibo por correo para recuperar el acceso sin depender de un administrador"
+origen: "analisis_completitud"
+clasificacion_gap: "⚡ Importante"
+criterios_aceptacion:
+  escenarios_exito:
+    - "El usuario solicita restablecer su contraseña y recibe un enlace por correo"
+    - "Con el enlace define una nueva contraseña y recupera el acceso"
+  validaciones_reglas:
+    - "El enlace de restablecimiento vence a la 1 hora de emitido"
+    - "Ante un correo no registrado, la respuesta es neutra: \"Si el correo existe, recibirás un enlace\" (misma respuesta que para uno registrado)"
+    - "La nueva contraseña cumple las mismas reglas de US-030 (8+ caracteres, mayúscula, minúscula, número y símbolo)"
+  manejo_errores:
+    - {caso: "Enlace de restablecimiento vencido o ya usado", mensaje: "El enlace de restablecimiento de contraseña ha expirado o ya ha sido utilizado."}
+  requisitos_ux: []
+  casos_edge: []
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true

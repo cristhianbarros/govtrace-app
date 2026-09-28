@@ -1,0 +1,18 @@
+story_id: "US-049-RPT"
+titulo_historia: "Como Administrador de Organización quiero ver un resumen de mi territorio: obras por color, evidencias por clasificación y por mes, y veedores activos para entender el estado de nuestra veeduría de un vistazo"
+origen: "analisis_completitud"
+clasificacion_gap: "⚡ Importante"
+criterios_aceptacion:
+  escenarios_exito:
+    - "El Administrador ve: número de obras por color, evidencias por clasificación (Avance/Retraso/Abandono) y por mes, y veedores activos"
+  validaciones_reglas:
+    - "Solo datos de su organización"
+  manejo_errores: []
+  requisitos_ux: []
+  casos_edge: []
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true

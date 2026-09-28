@@ -1,0 +1,28 @@
+story_id: "US-018"
+titulo_historia: "Como Veedor de Campo quiero que la aplicación guarde reportes y evidencias localmente cuando no tengo señal y los sincronice automáticamente al recuperar la conectividad para garantizar cero pérdida de datos"
+bloque: "B12 — Offline y proximidad"
+criterios_aceptacion:
+  escenarios_exito:
+    - "Si no hay red o la subida falla por timeout, el reporte se guarda en el teléfono y se muestra: \"📵 Sin conexión. Reporte guardado en el dispositivo. Se enviará automáticamente cuando recupere la señal.\""
+    - "En 'Mis Reportes' aparece una 'Bandeja de salida' con el número de pendientes (ej. '⏳ 2 reportes esperando conexión')"
+    - "Al recuperar señal, los pendientes se suben en segundo plano; cada reporte pasa a la lista normal como 'En Cola' y sale de la bandeja de salida"
+  validaciones_reglas:
+    - "Máximo 10 reportes pendientes o ~50 MB en total en el teléfono"
+    - "Un reporte pendiente vive como máximo 7 días en el teléfono; después pierde validez probatoria y se descarta"
+    - "24 horas antes de descartarlo, la app avisa al veedor"
+    - "Latitud, longitud y timestamp se capturan y congelan en el momento de tomar la foto; son los que entran al hash y los que se validan contra la geocerca, no los del momento de sincronizar"
+  manejo_errores:
+    - {caso: "Almacenamiento local lleno", mensaje: "⚠️ Almacenamiento local lleno. Conéctese a internet para sincronizar los reportes pendientes antes de crear uno nuevo."}
+    - {caso: "Un reporte pendiente vence en 24 horas", mensaje: "⚠️ Tu reporte pendiente de sincronización expirará en 24 horas. Conéctate a una red para enviarlo antes de que se descarte."}
+    - {caso: "Falla al reenviar", mensaje: "🔄 Error al sincronizar con el servidor. Se reintentará en unos minutos."}
+  requisitos_ux:
+    - "Bandeja de salida con contador de pendientes"
+  casos_edge:
+    - {caso: "El veedor intenta cerrar sesión con reportes pendientes", resultado: "La app bloquea la acción con un modal: \"🚨 Tienes reportes sin enviar. Si cierras sesión ahora, se borrarán permanentemente del teléfono. ¿Deseas continuar?\""}
+    - {caso: "El contrato se anula mientras el reporte esperaba en la cola", resultado: "Manda el momento de la captura: el reporte se acepta, se encola para sellado (US-020b) y entra 'Oculto' como cualquier otro (US-036); el Administrador decide si lo publica sabiendo que el contrato cambió de estado en SECOP"}
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true

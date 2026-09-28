@@ -1,0 +1,20 @@
+story_id: "US-020a"
+titulo_historia: "Como Sistema quiero desplegar el Smart Contract de sellado en Polygon con control de acceso (solo RELAYER_ROLE puede sellar) para que ningún tercero pueda registrar sellos falsos"
+bloque: "B7 — Sellado"
+criterios_aceptacion:
+  escenarios_exito:
+    - "El Smart Contract de sellado está desplegado en Polygon y solo la cuenta con RELAYER_ROLE puede invocar la función de sellado (R-BLK-03)"
+    - "El contrato almacena el hash sellado (64 caracteres hex / bytes32) junto al ID de obra y el timestamp (R-BLK-02)"
+  validaciones_reglas:
+    - "Un hash ya registrado no puede volver a registrarse: el contrato rechaza el duplicado con 'Hash ya registrado'"
+    - "Una billetera sin RELAYER_ROLE que intente sellar es rechazada on-chain"
+  manejo_errores:
+    - {caso: "Se intenta registrar un hash que ya existe (p. ej. reenvío malicioso del mismo reporte)", resultado: "La blockchain rechaza la transacción con 'Hash ya registrado' y el servidor descarta el duplicado"}
+  requisitos_ux: []
+  casos_edge: []
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true

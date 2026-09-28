@@ -1,0 +1,23 @@
+story_id: "US-036"
+titulo_historia: "Como Administrador de Organización quiero revisar las evidencias ocultas y publicarlas para decidir qué se muestra en nuestro mapa público"
+bloque: "B9 — Verificación pública (derivada de publicación manual)"
+criterios_aceptacion:
+  escenarios_exito:
+    - "El Administrador ve una 'Bandeja de Entrada' con una tabla de las evidencias en estado 'Oculto'"
+    - "Revisa y publica las evidencias una por una (en el MVP no hay publicación masiva)"
+    - "Al publicar ve: \"Evidencia publicada. Ya es visible en el mapa.\" y la evidencia aparece en el mapa y en la línea de tiempo"
+    - "Desde la bandeja también puede 'Rechazar' una evidencia escribiendo un motivo: pasa a 'Rechazado', nunca se hace pública (sin lápida) y el veedor ve 'Rechazada' con ese motivo (US-010)"
+  validaciones_reglas:
+    - "Toda evidencia sellada nace 'Oculta'"
+    - "Solo el Administrador de su organización puede publicar o rechazar"
+    - "Los reportes marcados por hora sospechosa (R-SEC-05) muestran la marca en la bandeja; no se bloquean ni se rechazan: decide el Administrador"
+  manejo_errores: []
+  requisitos_ux:
+    - "Publicación de una evidencia a la vez, para forzar la revisión responsable"
+  casos_edge: []
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true

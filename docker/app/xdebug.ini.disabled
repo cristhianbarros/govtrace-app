@@ -1,0 +1,11 @@
+; Template enabled by "make xdebug-on". Not loaded as-is.
+zend_extension = xdebug
+
+xdebug.mode                 = debug,develop
+; trigger: only debugs requests carrying XDEBUG_TRIGGER. With "yes" every
+; request would try to connect and, without an IDE listening, wait for timeout.
+xdebug.start_with_request   = trigger
+xdebug.client_host          = host.docker.internal
+xdebug.client_port          = 9003
+xdebug.discover_client_host = false
+xdebug.log_level            = 0

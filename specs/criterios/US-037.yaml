@@ -1,0 +1,22 @@
+story_id: "US-037"
+titulo_historia: "Como Administrador de Organización quiero retirar una evidencia publicada, dejando una lápida visible, para cumplir nuestras políticas sin borrar el rastro"
+bloque: "B9 — Verificación pública (derivada de publicación manual)"
+criterios_aceptacion:
+  escenarios_exito:
+    - "El Administrador retira una evidencia publicada indicando un motivo breve (campo de texto obligatorio)"
+    - "La tarjeta de la línea de tiempo se convierte en lápida: se ocultan fotos y comentario y se muestra \"🚫 Evidencia retirada por la organización por incumplimiento de políticas.\""
+    - "El sello criptográfico sigue disponible para auditoría externa"
+  validaciones_reglas:
+    - "El motivo es obligatorio y se guarda en el log de auditoría con el ID del Administrador y el timestamp"
+    - "El retiro es definitivo: no se puede deshacer en el MVP"
+    - "Revocación lógica: nunca se borra físicamente la evidencia"
+    - "Las evidencias nunca publicadas no se retiran: se 'Rechazan' desde la bandeja (US-036), sin lápida"
+  manejo_errores: []
+  requisitos_ux: []
+  casos_edge: []
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true

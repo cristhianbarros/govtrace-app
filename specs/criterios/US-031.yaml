@@ -1,0 +1,24 @@
+story_id: "US-031"
+titulo_historia: "Como usuario registrado (Super Administrador, Administrador de Organización o Veedor) quiero iniciar sesión para acceder a las herramientas de mi rol"
+bloque: "B3 — Acceso y equipo"
+criterios_aceptacion:
+  escenarios_exito:
+    - "El usuario ingresa a la interfaz de acceso (global para el Super Administrador o del subdominio de su organización), introduce correo y contraseña, y el sistema lo autentica"
+    - "Tras autenticarse es redirigido al panel correspondiente a su rol"
+  validaciones_reglas:
+    - "El correo debe tener formato válido"
+    - "La contraseña no puede estar vacía"
+    - "Tras 5 intentos fallidos de inicio de sesión, la cuenta se bloquea temporalmente durante 15 minutos (R-SEC-03)"
+    - "El Verificador Público no inicia sesión: opera en la sección pública (R-VER-02)"
+  manejo_errores:
+    - {caso: "Credenciales incorrectas", mensaje: "Credenciales incorrectas. Verifique su correo electrónico y contraseña."}
+    - {caso: "5 intentos fallidos consecutivos", mensaje: "Demasiados intentos fallidos. Tu cuenta ha sido bloqueada temporalmente durante 15 minutos."}
+    - {caso: "Cuenta desactivada", mensaje: "Su cuenta se encuentra desactivada. Comuníquese con el administrador de su organización."}
+  requisitos_ux: []
+  casos_edge: []
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true

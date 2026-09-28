@@ -1,0 +1,18 @@
+story_id: "US-034"
+titulo_historia: "Como Sistema quiero ejecutar un Job diario que marque 'en riesgo' las obras cuya fecha de fin de contrato ya pasó para colorear su pin en el mapa"
+bloque: "B8 — Mapa y publicación"
+criterios_aceptacion:
+  escenarios_exito:
+    - "Un Job diario compara la fecha actual con la fecha de terminación del contrato"
+    - "Si la fecha de terminación ya expiró y en SECOP el contrato sigue 'En ejecución', la obra queda 'En riesgo' (pin rojo)"
+  validaciones_reglas:
+    - "El estado calculado se guarda en la ficha de obra de cada organización, nunca en el contrato (R-SEC-01)"
+  manejo_errores: []
+  requisitos_ux: []
+  casos_edge: []
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true

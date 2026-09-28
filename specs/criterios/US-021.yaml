@@ -1,0 +1,22 @@
+story_id: "US-021"
+titulo_historia: "Como Sistema quiero aplicar reintentos con retraso exponencial si el nodo RPC falla, hay congestión o la transacción queda pending/dropped, para que ningún reporte quede huérfano de su sello"
+bloque: "B7 — Sellado"
+criterios_aceptacion:
+  escenarios_exito:
+    - "Ante una falla, el sellado se reintenta con retraso creciente (ej. 1 min, 5 min, 15 min, 1 h, 6 h)"
+  validaciones_reglas:
+    - "Máximo 5 intentos de sellado por evidencia"
+    - "Si el relayer gestionado no responde, el sellado espera y reintenta con esta misma política (R-INT-01)"
+  manejo_errores:
+    - {caso: "Falla el quinto intento", resultado: "La evidencia queda en estado 'Falla de Sellado'. El veedor no ve ningún error"}
+    - {caso: "Hay evidencias en 'Falla de Sellado' en la organización", mensaje: "Alerta: [N] evidencias no pudieron ser selladas en blockchain. Se requiere intervención del soporte técnico.", donde: "banner rojo en el panel del Administrador de Organización"}
+    - {caso: "Una evidencia lleva más de 2 horas 'En Cola'", resultado: "Se alerta al Super Administrador y al Administrador de la organización afectada", mensaje: "⚠️ Alerta de Sistema: Hay evidencias con más de 2 horas estancadas en la cola de sellado. Revisa el estado de la red o del proveedor RPC."}
+  requisitos_ux:
+    - "El veedor no ve errores de sellado"
+  casos_edge: []
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true

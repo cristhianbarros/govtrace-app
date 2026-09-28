@@ -1,0 +1,22 @@
+story_id: "US-038-CFG"
+titulo_historia: "Como Super Administrador quiero ajustar desde el panel global los parámetros operativos (radio de geocerca, ventana de reporte de Terminados/Liquidados, vigencia de invitaciones, umbral de saldo del Relayer y hora de la sincronización) para adaptar la operación sin desplegar código"
+origen: "analisis_completitud"
+clasificacion_gap: "⚡ Importante"
+criterios_aceptacion:
+  escenarios_exito:
+    - "El Super Administrador edita desde el panel global: radio de geocerca (500 m por defecto), ventana de Terminados/Liquidados (12 meses), vigencia de invitaciones (48 h), umbral de saldo del Relayer (5 POL) y hora de sincronización (02:00)"
+    - "Los cambios se aplican sin desplegar código"
+  validaciones_reglas:
+    - "Precisión GPS, archivos por reporte y vigencia offline NO son configurables (fijos en el código)"
+    - "Ningún parámetro es configurable por organización"
+    - "Cada cambio queda en el log de auditoría con valor anterior y nuevo (R-AUD-04)"
+    - "Los reportes se validan con el valor vigente en el momento de la captura (R-AUD-05)"
+  manejo_errores: []
+  requisitos_ux: []
+  casos_edge: []
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true

@@ -1,0 +1,20 @@
+story_id: "US-048-MNT"
+titulo_historia: "Como Sistema quiero archivar fuera de la base principal los contratos sin evidencias cerrados hace más de 5 años para contener el crecimiento de la base central"
+origen: "analisis_completitud"
+clasificacion_gap: "⚡ Importante"
+criterios_aceptacion:
+  escenarios_exito:
+    - "Una tarea programada archiva los contratos sin evidencias cuya fecha de cierre supera los 5 años"
+  validaciones_reglas:
+    - "Nunca se archivan contratos con evidencias"
+    - "Corre cada mes y los mueve a una tabla o almacenamiento de archivo"
+    - "Si llega una evidencia (p. ej. un reporte offline) para un contrato archivado, este vuelve a la base principal"
+  manejo_errores: []
+  requisitos_ux: []
+  casos_edge: []
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true

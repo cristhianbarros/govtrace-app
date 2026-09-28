@@ -1,0 +1,19 @@
+story_id: "US-054-RPT"
+titulo_historia: "Como Super Administrador quiero recibir una alerta cuando una organización lleve 30 días sin actividad para detectar a tiempo organizaciones que abandonan la plataforma"
+origen: "analisis_completitud"
+clasificacion_gap: "💡 Mejora"
+criterios_aceptacion:
+  escenarios_exito:
+    - "Si una organización lleva 30 días sin actividad, el Super Administrador recibe una alerta"
+  validaciones_reglas:
+    - "Actividad = recibir o publicar evidencias; 30 días sin ninguna de las dos dispara la alerta"
+    - "Canal: Email"
+  manejo_errores: []
+  requisitos_ux: []
+  casos_edge: []
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true

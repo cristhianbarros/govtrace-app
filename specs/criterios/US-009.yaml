@@ -1,0 +1,26 @@
+story_id: "US-009"
+titulo_historia: "Como Veedor de Campo quiero adjuntar fotografías y documentos PDF con metadatos automáticos para respaldar visualmente la veeduría"
+bloque: "B6 — Captura de evidencia"
+criterios_aceptacion:
+  escenarios_exito:
+    - "El veedor adjunta fotografías (de 1 a 5) o un único documento PDF al reporte; no se combinan fotos y PDF en el mismo reporte"
+    - "Antes de transmitir, la PWA purga los metadatos EXIF de las imágenes (R-PRIV-01) y calcula el SHA-256 de cada archivo ya purgado (R-HASH-01)"
+    - "El backend recalcula el hash de cada archivo recibido y lo compara con el del teléfono antes de encolar el sellado"
+  validaciones_reglas:
+    - "Un reporte lleva de 1 a 5 fotografías, o exactamente 1 PDF; no se mezclan"
+    - "Peso máximo de 10 MB por archivo"
+    - "Tipos permitidos: fotografías y PDF (sin video)"
+    - "Los metadatos propios del PDF (autor, software, fechas) se limpian en la app antes de calcular el hash (R-PRIV-04)"
+    - "Las fotos NO se difuminan: rostros y placas se publican tal cual y la organización decide al revisar (US-036) (R-PRIV-05)"
+    - "Antes de calcular el hash, la app optimiza cada foto en el teléfono: lado mayor de 1920 px, formato JPEG, calidad 80 %. Se sella exactamente el archivo optimizado; la re-codificación elimina el EXIF y convierte formatos como HEIC (R-PRIV-06)"
+  manejo_errores:
+    - {caso: "El hash recalculado por el servidor no coincide con el del teléfono", mensaje: "Alerta de seguridad: El archivo fue alterado o corrompido durante la transmisión (el hash del servidor no coincide con el de su celular). Por favor, intente de nuevo."}
+  requisitos_ux:
+    - "La app no permite mezclar fotos y PDF en un mismo reporte"
+  casos_edge: []
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true

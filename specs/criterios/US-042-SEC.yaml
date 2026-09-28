@@ -1,0 +1,22 @@
+story_id: "US-042-SEC"
+titulo_historia: "Como Administrador de Organización quiero autorizar en el sistema al Super Administrador para crear reportes o subir evidencias en nombre de mi organización para dar mi consentimiento de forma explícita y trazable (R-SA-02)"
+origen: "analisis_completitud"
+clasificacion_gap: "⚡ Importante"
+criterios_aceptacion:
+  escenarios_exito:
+    - "El Administrador de Organización otorga la autorización desde su panel"
+    - "Solo con esa autorización vigente el Super Administrador puede crear reportes en esa organización"
+  validaciones_reglas:
+    - "La autorización es una por vez, vence a los 30 días y el Administrador de Organización puede revocarla antes"
+    - "Sin autorización, el Super Administrador no puede crear reportes ni subir evidencias en la organización"
+    - "La autorización queda en el log de auditoría (R-AUD-04)"
+  manejo_errores:
+    - {caso: "El Super Administrador intenta crear un reporte sin autorización vigente de la organización", mensaje: "No cuenta con una autorización activa de la organización para realizar esta acción."}
+  requisitos_ux: []
+  casos_edge: []
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true

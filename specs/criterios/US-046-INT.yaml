@@ -1,0 +1,19 @@
+story_id: "US-046-INT"
+titulo_historia: "Como Verificador Público quiero usar un script de verificación independiente, publicado en el repositorio abierto, que compruebe un archivo con su prueba de inclusión solo contra Polygon para verificar aunque GovTrace no esté disponible"
+origen: "analisis_completitud"
+clasificacion_gap: "⚡ Importante"
+criterios_aceptacion:
+  escenarios_exito:
+    - "El script recibe el archivo y su prueba de inclusión descargada, calcula el hash, recompone la raíz de Merkle y la compara con el Smart Contract"
+    - "Consulta todas las direcciones históricas del Smart Contract (R-MNT-01)"
+  validaciones_reglas:
+    - "No consulta ningún servicio de GovTrace"
+  manejo_errores: []
+  requisitos_ux: []
+  casos_edge: []
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true

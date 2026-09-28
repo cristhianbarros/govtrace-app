@@ -1,0 +1,22 @@
+story_id: "US-017"
+titulo_historia: "Como Verificador Público quiero ver los datos clave del contrato oficial en la vista de la obra para contrastar la magnitud de los fondos públicos con la evidencia ciudadana"
+bloque: "B5 — Contratos para los usuarios"
+criterios_aceptacion:
+  escenarios_exito:
+    - "El Verificador entra a la URL pública de la evidencia/obra y ve una tarjeta con el resumen del contrato asociado"
+    - "La tarjeta muestra: Entidad Contratante, Nombre del Contratista, Valor Total (formateado en COP), Plazo de Ejecución y un botón 'Ver original en SECOP' que abre la URL oficial del proceso en una pestaña nueva"
+  validaciones_reglas:
+    - "R-SEC-01: los datos se muestran tal como vienen de SECOP II"
+    - "R-VER-02: no requiere inicio de sesión"
+  manejo_errores: []
+  requisitos_ux:
+    - "Valor Total formateado en pesos colombianos (COP)"
+    - "El enlace a SECOP abre en una pestaña nueva"
+  casos_edge:
+    - {caso: "El contrato pasó a 'cancelled' (anulado/retirado en SECOP) pero ya tenía evidencias", resultado: "La página pública sigue activa y la tarjeta del contrato muestra un badge rojo: \"⚠️ Contrato Anulado/Retirado en SECOP\""}
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true
