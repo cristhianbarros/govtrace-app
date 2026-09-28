@@ -12,11 +12,14 @@ Característica: Cálculo diario de obras en riesgo por fecha vencida
     Cuando se ejecuta el cálculo diario
     Entonces la obra "<resultado>"
 
+    # R-SEC-07: en ejecución según SECOP II son "En ejecución" y "Modificado".
     Ejemplos:
       | fecha_fin  | estado        | resultado                |
       | 2026-09-26 | En ejecución  | queda "En riesgo"        |
       | 2026-09-28 | En ejecución  | no queda "En riesgo"     |
-      | 2026-09-26 | Terminado     | no queda "En riesgo"     |
+      | 2026-09-26 | terminado     | no queda "En riesgo"     |
+      | 2026-09-26 | Modificado    | queda "En riesgo"        |
+      | 2026-09-26 | Suspendido    | no queda "En riesgo"     |
 
   @complexity:medium @negative
   Escenario: El estado calculado vive en la ficha de obra, no en el contrato

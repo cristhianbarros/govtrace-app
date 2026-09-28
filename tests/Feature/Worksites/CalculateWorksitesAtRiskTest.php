@@ -12,9 +12,9 @@ use Illuminate\Support\Facades\Schema;
 
 /*
  * Iteración 9 — Ficha de obra por organización y cálculo de riesgo
- * (specs/PLAN.md). Traduce features/US-034.feature: el Esquema de 3
+ * (specs/PLAN.md). Traduce features/US-034.feature: el Esquema de 5
  * filas + el escenario "el estado vive en la ficha, no en el contrato"
- * (4 casos), más 2 tests técnicos (el job programado, y que solo
+ * (6 casos), más 2 tests técnicos (el job programado, y que solo
  * recalcula organizaciones activas — es el primer job que entra al
  * contexto de cada tenant, así que probar el aislamiento importa).
  *
@@ -70,7 +70,10 @@ it('marks the worksite "en riesgo" only when its contract expired and SECOP stil
 })->with([
     'vencido y aún En ejecución' => ['2026-09-26', 'En ejecución', true],
     'todavía no vence' => ['2026-09-28', 'En ejecución', false],
-    'vencido pero ya Terminado' => ['2026-09-26', 'Terminado', false],
+    'vencido pero ya terminado' => ['2026-09-26', 'terminado', false],
+    // R-SEC-07: "Modificado" (una adición o prórroga) sigue en ejecución.
+    'vencido y Modificado' => ['2026-09-26', 'Modificado', true],
+    'vencido pero Suspendido' => ['2026-09-26', 'Suspendido', false],
 ]);
 
 it('saves the calculated risk in the ficha de obra, never touching the contract itself', function () {
@@ -128,7 +131,7 @@ it('a worksite grouping several contracts is at risk when any of them expired wh
     $this->travelTo('2026-09-27');
 
     $tenant = (new RegisterOrganization)->handle('900123456-8', 'Veeduría Ciudadana Santa Marta', 'veeduria-smr');
-    riskyContract(['secop_contract_id' => 'CO1.PCCNTR.FASE1', 'status' => 'Terminado']);
+    riskyContract(['secop_contract_id' => 'CO1.PCCNTR.FASE1', 'status' => 'terminado']);
     riskyContract(['secop_contract_id' => 'CO1.PCCNTR.FASE2', 'status' => 'En ejecución']);
     $worksiteId = worksiteWithContracts($tenant, ['CO1.PCCNTR.FASE1', 'CO1.PCCNTR.FASE2'], null)->id;
 

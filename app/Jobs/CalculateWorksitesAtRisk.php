@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Domain\Contracts\Contract;
+use App\Domain\Contracts\SecopContractStatus;
 use App\Domain\Worksites\Worksite;
 use App\Infrastructure\Tenancy\Tenant;
 use Illuminate\Bus\Queueable;
@@ -14,7 +15,7 @@ use Illuminate\Queue\SerializesModels;
 /**
  * US-034: cada día, cada organización ACTIVA revisa sus propias fichas
  * de obra y marca "en riesgo" las que su contrato ya venció y SECOP
- * sigue reportando "En ejecución". El estado calculado vive en la ficha
+ * sigue reportando en ejecución (R-SEC-07). El estado calculado vive en la ficha
  * de obra — el contrato de SECOP nunca se toca (R-SEC-01).
  *
  * Recorre las organizaciones una por una (Tenant::run()) porque cada
@@ -35,11 +36,12 @@ class CalculateWorksitesAtRisk implements ShouldQueue
     {
         Worksite::query()->with('contracts')->get()->each(function (Worksite $worksite) {
             // Una ficha puede agrupar varios contratos (R-INT-05, p. ej.
-            // las fases de una obra): basta con que uno siga "En
-            // ejecución" con su fecha de terminación ya pasada.
+            // las fases de una obra): basta con que uno siga en ejecución
+            // según SECOP ("En ejecución" o "Modificado", R-SEC-07) con su
+            // fecha de terminación ya pasada.
             $atRisk = Contract::query()
                 ->whereIn('secop_contract_id', $worksite->contracts->pluck('secop_contract_id'))
-                ->where('status', 'En ejecución')
+                ->statusIn(SecopContractStatus::IN_EXECUTION)
                 ->whereDate('end_date', '<', today())
                 ->exists();
 

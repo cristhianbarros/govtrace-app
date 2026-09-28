@@ -28,15 +28,22 @@ Característica: Buscar la obra por palabra clave
     Cuando busco "Parque Bastidas"
     Entonces el contrato "<resultado>"
 
+    # R-SEC-07: estados tal como los publica SECOP II, sin distinguir mayúsculas.
     Ejemplos:
-      | estado       | cierre                            | resultado      |
-      | En ejecución |                                   | aparece        |
-      | Celebrado    |                                   | aparece        |
-      | Adjudicado   |                                   | aparece        |
-      | Terminado    | terminado hace 11 meses           | aparece        |
-      | Liquidado    | liquidado hace 12 meses           | aparece        |
-      | Liquidado    | liquidado hace 13 meses           | no aparece     |
-      | Anulado      |                                   | no aparece     |
+      | estado            | cierre                  | resultado  |
+      | En ejecución      |                         | aparece    |
+      | Modificado        |                         | aparece    |
+      | Aprobado          |                         | aparece    |
+      | cedido            |                         | aparece    |
+      | Suspendido        |                         | aparece    |
+      | terminado         | terminado hace 11 meses | aparece    |
+      | Cerrado           | cerrado hace 12 meses   | aparece    |
+      | terminado         | terminado hace 13 meses | no aparece |
+      | Cancelado         |                         | no aparece |
+      | Borrador          |                         | no aparece |
+      | enviado Proveedor |                         | no aparece |
+      | En aprobación     |                         | no aparece |
+      | MODIFICADO        |                         | aparece    |
 
   @complexity:medium @negative
   Escenario: Solo aparecen contratos del territorio de la organización

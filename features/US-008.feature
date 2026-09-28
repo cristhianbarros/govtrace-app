@@ -94,10 +94,14 @@ Característica: Crear un reporte de evidencia con ubicación GPS
     Entonces el reporte "<marca>"
     Y si queda marcado lo ven el Administrador de Organización y el Super Administrador
 
+    # R-SEC-05: 5 minutos de tolerancia hacia el futuro (latencia y reloj del teléfono).
     Ejemplos:
       | captura           | marca              |
       | 2026-09-27 09:40  | no queda marcado   |
       | 2026-09-21 10:00  | no queda marcado   |
+      | 2026-09-27 10:04  | no queda marcado   |
+      | 2026-09-27 10:05  | no queda marcado   |
+      | 2026-09-27 10:06  | queda marcado      |
       | 2026-09-27 12:00  | queda marcado      |
       | 2026-09-19 09:00  | queda marcado      |
 
