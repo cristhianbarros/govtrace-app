@@ -39,7 +39,10 @@ it('assigns the initial administrator and sends the welcome notification', funct
 
     $this->tenant->run(function () use ($admin) {
         expect(User::query()->whereKey($admin->id)->exists())->toBeTrue()
-            ->and($admin->hasRole(Roles::Administrator->value))->toBeTrue();
+            ->and($admin->hasRole(Roles::Administrator->value))->toBeTrue()
+            ->and($admin->invitation_token_hash)->not->toBeNull()
+            ->and($admin->invitation_expires_at)->not->toBeNull()
+            ->and(now()->diffInHours($admin->invitation_expires_at))->toBeGreaterThan(47.9);
     });
 
     Notification::assertSentTo($admin, WelcomeNotification::class, function (WelcomeNotification $notification) {

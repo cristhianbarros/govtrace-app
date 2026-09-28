@@ -50,4 +50,14 @@ class OrganizationValidationException extends DomainException
     {
         return new self('El correo electrónico ya se encuentra registrado en el sistema.');
     }
+
+    public static function duplicateObserverEmail(): self
+    {
+        return new self('Ya existe un usuario registrado o una invitación pendiente con este correo electrónico en la organización.');
+    }
+
+    public static function cannotRegisterFromTenantContext(): self
+    {
+        return new self('Solo el Super Administrador, desde el panel global, puede dar de alta una organización.');
+    }
 }

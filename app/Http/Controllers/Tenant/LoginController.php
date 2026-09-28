@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Tenant;
 
-use App\Domain\Organization\Roles;
+use App\Domain\Organization\RoleBasedDashboard;
 use App\Http\Controllers\Auth\LoginController as BaseLoginController;
 use Illuminate\Support\Facades\Auth;
 
@@ -15,10 +15,6 @@ class LoginController extends BaseLoginController
 
     protected function redirectTo(): string
     {
-        $user = Auth::guard('tenant')->user();
-
-        return $user->hasRole(Roles::Administrator->value)
-            ? route('organization.dashboard')
-            : route('veedor.dashboard');
+        return RoleBasedDashboard::routeFor(Auth::guard('tenant')->user());
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Application\Organization;
 
 use App\Domain\Organization\Exceptions\OrganizationValidationException;
+use App\Domain\Organization\InvitationToken;
 use App\Domain\Organization\Notifications\WelcomeNotification;
 use App\Domain\Organization\Roles;
 use App\Domain\Organization\User;
@@ -37,7 +38,7 @@ class AssignInitialAdministrator
                 throw OrganizationValidationException::duplicateAdministratorEmail();
             }
 
-            $plainToken = Str::random(64);
+            $token = InvitationToken::generate();
 
             $user = User::create([
                 'name' => $name,
@@ -45,14 +46,14 @@ class AssignInitialAdministrator
                 // Random and never disclosed: nobody can log in until the
                 // invitation link (below) is used to set a real one.
                 'password' => Str::random(40),
-                'invitation_token_hash' => hash('sha256', $plainToken),
+                'invitation_token_hash' => $token->hash,
                 'invitation_expires_at' => now()->addHours(48),
             ]);
 
             $user->assignRole(Roles::Administrator->value);
 
             $domain = $tenant->domains()->first()->domain;
-            $url = "http://{$domain}/set-password/{$user->id}?token={$plainToken}";
+            $url = "http://{$domain}/set-password/{$user->id}?token={$token->plain}";
 
             $user->notify(new WelcomeNotification($url));
 

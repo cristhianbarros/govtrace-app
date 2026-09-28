@@ -23,6 +23,16 @@ class RegisterOrganization
 {
     public function handle(string $nit, string $name, string $subdomain): Tenant
     {
+        // Structural guard for R-TA-01: the Super Administrator operates
+        // from the central domain, where tenancy is never initialized.
+        // Reaching this method WHILE a tenant is active means the caller
+        // is inside an organization's own context (an Administrador de
+        // Organización can never be central) — reject regardless of who
+        // it is.
+        if (tenant()) {
+            throw OrganizationValidationException::cannotRegisterFromTenantContext();
+        }
+
         $nit = Nit::fromString($nit);
         $subdomain = Subdomain::fromString($subdomain);
         $name = OrganizationName::fromString($name);

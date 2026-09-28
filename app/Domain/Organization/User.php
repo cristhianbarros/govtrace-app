@@ -24,7 +24,10 @@ class User extends Model implements AuthenticatableContract
      */
     protected string $guard_name = 'tenant';
 
-    protected $fillable = ['name', 'email', 'password', 'is_active'];
+    protected $fillable = [
+        'name', 'email', 'password', 'is_active',
+        'invitation_token_hash', 'invitation_expires_at',
+    ];
 
     protected $hidden = ['password', 'remember_token', 'invitation_token_hash'];
 

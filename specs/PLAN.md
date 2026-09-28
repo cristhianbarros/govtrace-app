@@ -109,6 +109,13 @@
 ### Iteración 5 — Invitaciones de veedores
 **Entregable:** invitación con token de 48 h y aceptación con reglas de contraseña. El correo es único por organización y puede repetirse entre organizaciones.
 **Done-when:** US-005 (7 casos) y US-030 (7 casos) en verde.
+
+**✅ Cumplido:** 14/14 casos (`InviteObserverTest` 7 + `AcceptInvitationTest` 7). `InvitationToken` (nuevo, `app/Domain/Organization/`) extrae la generación de token que ya se repetía en `AssignInitialAdministrator`; ambos use cases lo usan ahora (DRY). `AcceptInvitation` + `SetPasswordController` son el consumidor real del enlace que ya generaban US-002 y US-005: valida el token con `hash_equals` + vencimiento, activa la cuenta e inicia sesión de inmediato. `StrongPassword` (regla de validación reusable, `app/Domain/Auth/Rules/`) impone las 4 condiciones de la contraseña con un único mensaje exacto — pensada para reusarse en US-039-USR (it. 20). Se registraron los alias de middleware `role`/`permission`/`role_or_permission` de spatie (no vienen automáticos en el estilo `bootstrap/app.php` de Laravel 11+); `POST /observers/invite` los usa (`role:Administrador de Organización,tenant`).
+
+**Bug de producción encontrado y corregido (no solo en el test):** `invitation_token_hash` e `invitation_expires_at` **no estaban en `$fillable`** de `App\Domain\Organization\User`. `User::create([...])` los descartaba en silencio — la invitación se creaba sin fecha de vencimiento real. El test de la it. 4 no lo detectó porque nunca verificaba ese valor (solo que se enviara un correo); ahora sí lo hace, como regresión.
+
+**El último escenario de US-005** ("el Administrador de Organización no puede dar de alta otras organizaciones") se implementó como una guarda estructural en `RegisterOrganization`: si `tenant()` está activo, rechaza — el Super Administrador nunca opera desde un dominio de tenant, así que esta condición por sí sola basta, sin necesitar todavía el panel/rol completo de la it. 19.
+
 **Cubre:** US-005, US-030 · R-USR-01, R-TA-01.
 
 ### Iteración 6 — Datos legales, territorio, log de auditoría y parámetros
