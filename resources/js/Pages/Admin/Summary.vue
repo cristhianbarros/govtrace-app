@@ -23,6 +23,8 @@ onMounted(load);
 
 <template>
     <AdminLayout title="Resumen del territorio">
+        <!-- US-050-RPT: una descarga del navegador, con su sesión: no pasa por el API en JSON. -->
+        <a href="/export.csv" class="inline-flex min-h-11 items-center self-start rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold">Exportar obras y evidencias (CSV)</a>
         <LoadState :loading="loading" :error="error" loading-text="Cargando el resumen…" empty-text="" @retry="load">
             <template v-if="summary">
                 <section aria-labelledby="worksites" class="rounded-lg bg-white p-3">

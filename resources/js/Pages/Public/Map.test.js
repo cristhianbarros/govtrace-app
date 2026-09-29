@@ -86,6 +86,12 @@ describe('Mapa público', () => {
         expect(router.visit).toHaveBeenCalledWith('/worksite/7');
     });
 
+    it('leads to the statistics of the territory (US-051-RPT)', async () => {
+        const wrapper = await openMap();
+
+        expect(wrapper.get('a[href="/stats"]').text()).toBe('Estadísticas del territorio');
+    });
+
     it('leads to the public validator (US-024)', async () => {
         const wrapper = await openMap();
 

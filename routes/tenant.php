@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Application\Publication\PublicStats;
 use App\Application\Publication\StellarForBrowser;
 use App\Domain\Organization\Roles;
 use App\Http\Controllers\Auth\PasswordResetController;
@@ -10,11 +11,13 @@ use App\Http\Controllers\Tenant\ContractListController;
 use App\Http\Controllers\Tenant\ContractSearchController;
 use App\Http\Controllers\Tenant\EditorialController;
 use App\Http\Controllers\Tenant\EvidenceFileController;
+use App\Http\Controllers\Tenant\ExportController;
 use App\Http\Controllers\Tenant\InviteObserverController;
 use App\Http\Controllers\Tenant\LoginController;
 use App\Http\Controllers\Tenant\MyReportsController;
 use App\Http\Controllers\Tenant\NearbyWorksitesController;
 use App\Http\Controllers\Tenant\ObserverController;
+use App\Http\Controllers\Tenant\OpenDataController;
 use App\Http\Controllers\Tenant\OrganizationLogoController;
 use App\Http\Controllers\Tenant\OrganizationProfileController;
 use App\Http\Controllers\Tenant\PublicEvidenceController;
@@ -64,6 +67,8 @@ Route::middleware([
     Route::middleware(EnsureMapIsOnline::class.':screen')->group(function () {
         Route::get('/', fn () => Inertia::render('Public/Map'))->name('public.map');
         Route::get('/worksite/{worksite}', fn (int $worksite) => Inertia::render('Public/Worksite', ['worksiteId' => $worksite, 'stellar' => StellarForBrowser::props()]))->whereNumber('worksite')->name('public.worksite');
+        // US-051-RPT: las estadísticas del territorio.
+        Route::get('/stats', fn () => Inertia::render('Public/Stats'))->name('public.stats');
     });
     Route::middleware(EnsureMapIsOnline::class)->group(function () {
         // US-027 / US-029: el mapa público — los pines, y lo que pide un clic en uno (it. 24).
@@ -71,7 +76,10 @@ Route::middleware([
         Route::get('/public/worksites/filters', [PublicWorksiteController::class, 'filters'])->name('public.worksites.filters');
         Route::get('/public/worksites/{worksite}', [PublicWorksiteController::class, 'show'])->whereNumber('worksite')->name('public.worksites.show');
         Route::get('/public/evidences/{evidence}/photo', [PublicEvidenceController::class, 'photo'])->whereNumber('evidence')->name('public.evidences.photo');
+        Route::get('/public/stats', fn (PublicStats $stats) => response()->json($stats->handle()))->name('public.stats.data');
     });
+    // US-052-RPT: los datos abiertos, en CSV o JSON.
+    Route::get('/open-data.{format}', OpenDataController::class)->whereIn('format', ['csv', 'json'])->name('public.open-data');
     // US-024: el validador público — el navegador lee el sello en la red por su cuenta.
     Route::get('/verify', fn () => Inertia::render('Public/Validator', ['stellar' => StellarForBrowser::props()]))->name('public.validator');
 
@@ -129,6 +137,8 @@ Route::middleware([
 
             // US-049-RPT: el resumen del territorio.
             Route::get('/summary', SummaryController::class)->name('summary');
+            // US-050-RPT: las obras y evidencias de la organización, en CSV.
+            Route::get('/export.csv', ExportController::class)->name('export');
 
             // US-036 / US-037: la bandeja de entrada y las decisiones
             // editoriales, de a una evidencia (no hay publicación masiva).

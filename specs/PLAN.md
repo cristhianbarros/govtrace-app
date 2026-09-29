@@ -1264,6 +1264,62 @@ Suite: 642 en verde. Vitest: 341. Cada regla nueva se comprobó rompiéndola a p
 **Done-when:** US-050-RPT (3 casos), US-051-RPT (2), US-052-RPT (4), US-053-RPT (2) y US-054-RPT (4) en verde.
 **Cubre:** US-050..054-RPT · R-PRIV-02, R-PRIV-03 (en los datos abiertos).
 
+**✅ Cumplido (2026-09-29, con Opus xhigh):** al abrir la iteración, US-052-RPT pasó de "bloque" a "ledger" (Stellar). De paso, la tabla de historias de la SPEC dejó de nombrar Polygonscan en US-023 y US-025.
+
+Todo en verde, y visto en rojo antes de implementar (rutas y pantallas inexistentes):
+- Pest: `ExportCsvTest`, **US-050-RPT, 3/3**, más 3 derivados: UTF-8 con su marca para la hoja de cálculo, solo el encabezado si no hay nada, y solo el Administrador.
+- Pest: `PublicStatsTest`, **US-051-RPT, 2/2**, más 5 derivados:
+  - no cuentan las rechazadas ni las retiradas;
+  - el mes es el de Colombia;
+  - también está en riesgo una obra con el contrato vencido, como su pin;
+  - un territorio sin evidencias;
+  - las estadísticas salen de línea con el mapa tras una baja.
+- Pest: `OpenDataTest`, **US-052-RPT, 4/4**, más 3 derivados:
+  - descarga como archivo;
+  - sigue disponible tras una baja;
+  - ningún otro formato.
+- Pest: `UsageSummaryTest`, **US-053-RPT, 2/2**, más 3 derivados:
+  - no cuentan como activos un veedor desactivado, una invitación pendiente ni un Administrador;
+  - aparecen todas las organizaciones, con su estado;
+  - la pantalla.
+- Pest: `InactivityAlertTest`, **US-054-RPT, 4/4**, más 6 derivados:
+  - un minuto antes de los 30 días no alerta;
+  - una alerta por período de inactividad;
+  - una organización nueva cuenta desde su registro;
+  - no alerta por una suspendida ni por una dada de baja;
+  - la revisión corre cada día.
+- Vitest, 9 nuevos:
+  - las estadísticas públicas, con los datos abiertos;
+  - el resumen de uso;
+  - "Exportar" en el resumen del Administrador;
+  - "Estadísticas del territorio" en el mapa;
+  - "Uso" en el menú del panel global.
+
+Suite: 677 en verde. Vitest: 350. Cada regla nueva se comprobó rompiéndola a propósito: 31 casos (23 del servidor y 8 de la pantalla). Uno sobrevivía, y era un error del test: "a los 29 días no alerta" en realidad miraba 28 días y 23 horas, porque agosto tiene 31. Ahora mira un minuto antes de los 30 días, y atrapa un umbral de 29.
+
+- **Exportación CSV** (`GET /export.csv`, del Administrador):
+  - una fila por archivo de evidencia, de cualquier estado editorial;
+  - columnas: obra, contrato, municipio, fecha (hora de Colombia), clasificación, estado editorial, hash, comentario y seudónimo del veedor (R-PRIV-03).
+- **Estadísticas públicas** (`/stats` y `GET /public/stats`, sin sesión):
+  - obras en riesgo: los pines rojos del mapa;
+  - evidencias publicadas por mes de captura;
+  - contratos anulados cuya obra tiene evidencias publicadas.
+  - Se llega desde el mapa, y salen de línea con él (US-003b).
+- **Datos abiertos** (`GET /open-data.csv` y `/open-data.json`, sin sesión): un registro por evidencia publicada, con su sello en Stellar, las coordenadas aproximadas (R-PRIV-02) y el seudónimo del veedor. El JSON dice además la organización, la hora y la red.
+- **Resumen de uso** (`/admin/usage`, Super Administrador): por organización, veedores activos, evidencias recibidas, publicadas, rechazadas y retiradas, y su última actividad.
+- **Alerta de inactividad** (`CheckOrganizationActivity`, cada día a las 13:00 UTC, 08:00 en Colombia): la organización activa que lleva 30 días sin recibir ni publicar evidencias le llega al Super Administrador por Email.
+
+**Decisiones de la iteración, para confirmar:**
+1. **La exportación va en una fila por archivo de evidencia**, porque pide "el hash de la evidencia". Incluye todos los estados editoriales: el Administrador los ve todos. Va con la marca UTF-8, para que Excel lea bien las tildes.
+2. **"Obras en riesgo" en las estadísticas son los pines rojos del mapa:** última evidencia de abandono o contrato vencido. No es la marca nocturna de US-034, que solo mira el vencimiento. Así la estadística coincide con lo que el visitante ve.
+3. **Datos abiertos: un registro por evidencia publicada** (un reporte), con dos campos que la SPEC no pedía:
+   - `reporte`, que lleva a su recibo público;
+   - `contrato_de_sellado`, que con `raiz_merkle` basta para leer el sello en Stellar sin GovTrace.
+   No incluye el JSON sellado, que tiene la ubicación exacta: es la inconsistencia R-PRIV-03 vs R-PRIV-02 pendiente de la it. 24.
+4. **Tras una baja, los datos abiertos siguen y las estadísticas salen de línea con el mapa.**
+5. **La actividad** es recibir (según la base de la organización) o publicar (según el log de auditoría). Así, una publicación que después se retira también cuenta. Sin actividad nunca, se cuenta desde el registro.
+6. **Una alerta de inactividad por período,** y solo por Email, como dicen los criterios; no va al webhook de la it. 32. Solo organizaciones activas: una suspendida o dada de baja no se espera que trabaje.
+
 ### Iteración 35 — Operación y respaldo (bloquea la salida a producción)
 **Entregable:**
 - respaldos programados de PostgreSQL y MinIO, **cada hora**, con retención de 30 días;

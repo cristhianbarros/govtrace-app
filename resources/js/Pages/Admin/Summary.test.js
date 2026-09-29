@@ -70,3 +70,12 @@ describe('Resumen del territorio', () => {
         expect(figure(wrapper, 'observers')).toContain('6');
     });
 });
+
+// Iteración 34 — US-050-RPT (UI): exportar las obras y evidencias en CSV.
+describe('Exportar en CSV', () => {
+    it('Exportación con las columnas definidas: offers the CSV of the organization', async () => {
+        const wrapper = await openSummary();
+
+        expect(wrapper.get('a[href="/export.csv"]').text()).toBe('Exportar obras y evidencias (CSV)');
+    });
+});

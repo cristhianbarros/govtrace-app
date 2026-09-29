@@ -102,6 +102,9 @@ export const fetchSealing = () => dataOf(http.get('/admin/sealing/data'));
 export const requeueSeals = (seals) => dataOf(http.post('/admin/sealing/requeue', { seals }));
 export const fetchSealingCosts = () => dataOf(http.get('/admin/costs/data'));
 
+/** US-053-RPT: el resumen de uso por organización. */
+export const fetchUsage = async () => (await dataOf(http.get('/admin/usage/data'))).data;
+
 /** US-003a */
 export const suspendOrganization = (id) => dataOf(http.post(`/admin/organizations/${id}/suspend`));
 export const reactivateOrganization = (id) => dataOf(http.post(`/admin/organizations/${id}/reactivate`));
@@ -117,6 +120,9 @@ export const fetchPins = async (filters = {}) => (await dataOf(http.get('/public
 
 /** US-028: lo que los filtros pueden elegir (los municipios del mapa). */
 export const fetchMapFilters = async () => (await dataOf(http.get('/public/worksites/filters'))).data;
+
+/** US-051-RPT: las estadísticas públicas del territorio. */
+export const fetchPublicStats = () => dataOf(http.get('/public/stats'));
 
 /** US-029 / US-017: la obra, sus contratos y su línea de tiempo, al tocar su pin. */
 export const fetchWorksite = async (id) => (await dataOf(http.get(`/public/worksites/${id}`))).data;
