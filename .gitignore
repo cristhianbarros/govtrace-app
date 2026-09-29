@@ -4,6 +4,10 @@
 .env.backup
 .env.production
 .env.testnet
+# It. 37a: lo que escribe make network-deploy, y los archivos de make network-deploy-check.
+.env.*.deploy
+.env.*.deploy-check
+.env.*.smoke-check
 .phpactor.json
 .phpunit.result.cache
 /.codex

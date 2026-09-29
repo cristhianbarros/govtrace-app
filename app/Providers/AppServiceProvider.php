@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Application\Sealing\SealingNetwork;
+use App\Infrastructure\Stellar\MainnetConfiguration;
 use App\Infrastructure\Stellar\StellarRpc;
 use App\Infrastructure\Stellar\StellarSealingNetwork;
 use Illuminate\Support\ServiceProvider;
@@ -33,6 +34,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // D13: en la red principal, el RPC del navegador no puede faltar ni ser el privado.
+        MainnetConfiguration::assertSafe(config('stellar'));
     }
 }

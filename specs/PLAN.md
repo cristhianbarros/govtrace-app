@@ -1411,26 +1411,71 @@ Salen de `/audit` (`specs/AUDIT.md`). Ninguna bloquea el PR; las dos bloquean la
 Suite: 694 en verde (11 nuevos). Vitest: 351 (1 nuevo). `make trace-check`: 249 de 249. Cada regla nueva se comprobó rompiéndola a propósito: 9 casos, todos atrapados. Además, el rastreo falla si a un test le falta el nombre de su escenario.
 
 ### Iteración 37 — Salida a la red principal (bloquea la salida a producción)
+
+**Dividida el 2026-09-29, a pedido del usuario:** la información de producción no está todavía, y en estas semanas se configura testnet. La 37a hace ahora lo que no la necesita, probado contra testnet y la red local; la 37b espera a producción.
+
+#### Iteración 37a — Preparar la salida, sin datos de producción
 **Entregable:**
-- **red principal de Stellar (R-CFG-01):**
-  - scripts de despliegue y de extensión de la vigencia con la tesorería, los mismos de testnet con la red como parámetro;
-  - el proveedor de RPC (D13), con sus dos endpoints: `STELLAR_RPC_URL` privado y `STELLAR_PUBLIC_RPC_URL` restringido al dominio;
-  - el contrato registrado en `tools/verify/contracts.json`;
-  - una plantilla `.env.production.example` sin secretos;
-- **firma remota (D11 opción b, "antes de la red principal"):** la llave de la selladora no sale del servicio de firma, detrás de la misma interfaz `SealingNetwork`;
-- **respaldos fuera del sitio, automatizados:** cada copia se replica a otro bucket u otra región, y se vigila que la réplica esté al día;
+- **despliegue con la red como parámetro (R-CFG-01, D12, D13):** en testnet o en la red principal, el mismo camino:
+  - la tesorería, ya fondeada, crea y fondea la selladora y la patrocinadora (en la red principal no hay friendbot);
+  - despliega el contrato y extiende su vigencia;
+  - su llave entra solo por el entorno, y las de la selladora y la patrocinadora ni entran: basta con sus direcciones (D11);
+  - la extensión de la vigencia, igual, con la red como parámetro;
+- **`.env.production.example`**, sin secretos, con los dos endpoints de D13;
+- **la aplicación no arranca en la red principal** si falta `STELLAR_PUBLIC_RPC_URL` o si es el mismo RPC privado del servidor (D13);
+- **respaldos fuera del sitio:** cada copia se replica a otro bucket, se borra allá a los 30 días, se puede restaurar desde allá, y el servicio deja de estar sano si la réplica se atrasa;
 - **la restauración de prueba falla si la recuperación pasa de 4 h** (R-BCK-02);
-- **lista de salida:** sembrar la DIVIPOLA en el despliegue, actualizar las credenciales de Jenkins y hacer la restauración de prueba en producción.
+- **`docs/go-live.md`**, con la lista de salida.
 
 **Done-when:**
-- los scripts de despliegue probados de punta a punta contra testnet;
-- la réplica fuera del sitio probada con un segundo bucket;
+- el despliegue probado de punta a punta en testnet: un contrato nuevo, con cuentas creadas por la tesorería y un reporte hasta "Sellada" sobre él;
+- tests de la verificación de arranque, vistos en rojo antes de implementar;
+- `make backup-check` en verde, con la réplica fuera del sitio y el límite de 4 h;
+- cada regla nueva, comprobada rompiéndola a propósito.
+
+**Cubre:** R-CFG-01 (preparación), R-BCK-02 · D11 (a), D12, D13.
+
+**✅ Cumplido (2026-09-29, con Opus xhigh):** cada parte, vista fallar antes de implementarla.
+- **Despliegue con la red como parámetro** (`scripts/deploy-network.sh`, `make network-deploy NETWORK=testnet|mainnet`):
+  - la tesorería, con su llave solo por el entorno (`STELLAR_ACCOUNT`, nunca como argumento ni en un archivo), crea la selladora (1,5 XLM) y la patrocinadora (`SPONSOR_STARTING_XLM`, 100 por defecto) si no existen;
+  - despliega el contrato con la selladora y extiende su vigencia (D12);
+  - de la selladora y la patrocinadora solo entran sus direcciones: sus llaves viven en el gestor de secretos (D11);
+  - escribe solo valores públicos, en `.env.<red>.deploy`, fuera de git.
+  - En la red principal se niega sin `CONFIRM_MAINNET=yes`, porque gasta XLM reales. Usa `STELLAR_MAINNET_RPC_URL`, no el RPC del contenedor, que es el de la red local. Antes de firmar nada comprueba con `getNetwork` que ese RPC sirve de verdad la red principal.
+  - `extend-contract.sh` acepta la red principal y la llave de la tesorería por el entorno (`make network-extend`).
+- **Probado de punta a punta en testnet** (`make network-deploy-check`, con cuentas y contrato desechables): la tesorería crea las cuentas, despliega y extiende; vuelve a extender con su llave por el entorno; no queda ninguna llave escrita ni en la salida; un reporte llega a "Sellada" sobre el contrato nuevo; y la red principal no se toca sin confirmarlo ni con un RPC de otra red.
+  - La primera corrida destapó que `stellar ledger entry fetch` responde bien para una cuenta que no existe (con `entries` vacío): el script creía que ya existía. Ahora mira las entradas.
+- **La aplicación no arranca en la red principal** si falta `STELLAR_PUBLIC_RPC_URL` o si es el mismo endpoint que `STELLAR_RPC_URL`, aunque esté escrito distinto: otra barra final, otras mayúsculas en el dominio (`MainnetConfiguration`, D13). Pest: 8 en verde.
+- **`.env.production.example`**, sin secretos, con los dos endpoints de D13; `make secrets-check` la revisa, y ahora también la llave de la tesorería.
+- **Respaldos fuera del sitio** (`BACKUP_OFFSITE_S3_URL`):
+  - cada copia se replica al terminar: los volcados, por copia; los archivos, a un espejo;
+  - allá se borran a los 30 días, por su fecha;
+  - `fetch-offsite.sh` trae una copia para restaurarla;
+  - el servicio deja de estar sano si la última réplica tiene más de 2 h.
+  - `make backup-check` lo prueba con un segundo bucket de LocalStack: replica, borra la vieja y restaura desde allá.
+- **La restauración de prueba falla si la recuperación pasa de 4 h** (`RESTORE_RTO_SECONDS`, R-BCK-02).
+- **`docs/go-live.md`:** la lista de salida, con lo listo y lo que espera a la 37b.
+
+Suite: 702 en verde (8 nuevos). Vitest: 351. `make backup-check`: 13 comprobaciones en verde. `make network-deploy-check` en testnet: 9 de 9. Cada regla nueva se comprobó rompiéndola a propósito: 12 casos (6 de la verificación de arranque, 4 de los respaldos y 2 de las salvaguardas del despliegue), todos atrapados.
+
+**Decisiones de la iteración, para confirmar:**
+1. **La réplica fuera del sitio guarda los volcados por copia y los archivos en un espejo.** El espejo no guarda 30 días un archivo borrado; para eso, en producción, el bucket de la réplica necesita versionado y una regla de 30 días. Queda en la lista de salida.
+2. **La selladora se crea con 1,5 XLM** (la reserva mínima y un margen: no paga comisiones), y **la patrocinadora con 100 XLM por defecto**, que se ajustan con `SPONSOR_STARTING_XLM`. Esos XLM salen de la tesorería, aparte de los 28 del contrato.
+3. **El verificador independiente no usa el endpoint del navegador**, restringido al dominio: quien verifica desde su equipo indica su RPC con `--rpc`. En `tools/verify/contracts.json`, el `rpc` de la red principal queda en `null`.
+
+#### Iteración 37b — La salida, con producción
+**Entregable:**
+- la cuenta del proveedor de RPC, con sus dos endpoints (D13);
+- **la firma remota (D11 opción b):** la llave de la selladora no sale del servicio de firma, detrás de la misma interfaz `SealingNetwork`. Falta que el usuario elija entre Vault y un KMS;
+- el despliegue en la red principal con la tesorería fondeada (D13) y el contrato registrado en `tools/verify/contracts.json`;
+- la lista de `docs/go-live.md` completa: credenciales de Jenkins, DIVIPOLA sembrada, respaldos fuera del sitio en su bucket real.
+
+**Done-when:**
+- un reporte llega a "Sellada" en la red principal;
 - la restauración de prueba en producción, anotada en `docs/restore.md`, con menos de 1 h de datos perdidos y menos de 4 h de recuperación (R-BCK-05);
-- `docs/go-live.md` con la lista de salida marcada.
+- `docs/go-live.md` con toda la lista marcada.
 
-**Cubre:** R-CFG-01, R-BCK-02, R-BCK-05 · D11 (b), D13.
-
-**✅ Resuelto (D13, 2026-09-29):** la tesorería la fondea el presupuesto operativo central, desde un exchange corporativo (28 XLM iniciales, unos 27 XLM cada ~180 días). El RPC lo da QuickNode o Validation Cloud, con dos endpoints: privado para el servidor y restringido al dominio para el navegador.
+**Cubre:** R-CFG-01, R-BCK-05 · D11 (b), D13.
 
 ## Pivote a Stellar (2026-09-28)
 

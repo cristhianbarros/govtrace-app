@@ -1,0 +1,57 @@
+# Lista de salida a producción
+
+La salida de GovTrace a la red principal de Stellar. Lo que se preparó sin datos de producción está en la **iteración 37a**; lo que espera a producción, en la **37b** (`specs/PLAN.md`).
+
+✅ listo · ⬜ pendiente, con su iteración
+
+## 1. Red principal de Stellar (R-CFG-01, D13)
+
+- ✅ **El despliegue:** `make network-deploy NETWORK=mainnet` hace el mismo camino que se probó de punta a punta en testnet (`make network-deploy-check`).
+  - La tesorería, ya fondeada, crea la selladora y la patrocinadora, despliega el contrato y extiende su vigencia.
+  - Se niega sin `CONFIRM_MAINNET=yes` y con un RPC que no sea de la red principal.
+  - Solo escribe valores públicos, en `.env.mainnet.deploy`.
+- ✅ **La aplicación no arranca en la red principal** si falta `STELLAR_PUBLIC_RPC_URL` o si es el mismo endpoint que `STELLAR_RPC_URL`.
+- ⬜ **Cuenta del proveedor de RPC** (QuickNode o Validation Cloud), con dos endpoints (37b):
+  - uno privado para el servidor, que va en `STELLAR_RPC_URL` y, para el despliegue, en `STELLAR_MAINNET_RPC_URL`;
+  - uno de solo lectura, restringido al dominio de GovTrace y con CORS para el validador del navegador, que va en `STELLAR_PUBLIC_RPC_URL`.
+- ⬜ **Las llaves de la selladora y la patrocinadora**, generadas en el gestor de secretos. Al despliegue solo entran sus direcciones (D11) (37b).
+- ⬜ **La tesorería fondeada**, con el presupuesto operativo central y desde un exchange corporativo (D13) (37b):
+  - 28 XLM para el contrato (subir el código, desplegar la instancia, extender su vigencia);
+  - más el saldo inicial de la patrocinadora (`SPONSOR_STARTING_XLM`, 100 por defecto) y 1,5 XLM de la selladora;
+  - después, unos 27 XLM cada ~180 días para volver a extender la vigencia.
+- ⬜ **El despliegue** (37b):
+  ```bash
+  STELLAR_TREASURY_SECRET=… STELLAR_SEALER_ADDRESS=G… STELLAR_SPONSOR_ADDRESS=G… \
+  STELLAR_MAINNET_RPC_URL=https://… CONFIRM_MAINNET=yes make network-deploy NETWORK=mainnet
+  ```
+  Los valores de `.env.mainnet.deploy` pasan al entorno de producción.
+- ⬜ **El contrato en `tools/verify/contracts.json`**, en "Public Global Stellar Network ; September 2015", para el verificador independiente (R-MNT-01) (37b).
+  - Ahí `rpc` se deja en `null`: el endpoint del navegador está restringido al dominio, así que quien verifica desde su equipo usa `--rpc <su RPC>`.
+- ⬜ **Un reporte hasta "Sellada" en la red principal** (37b).
+- ⬜ **La vigencia del contrato, cada ~180 días:** `make network-extend NETWORK=mainnet`, con la llave de la tesorería. La it. 32 avisa 30 días antes.
+
+## 2. Firma remota (D11, opción b)
+
+- ⬜ **Elegir Vault Transit o un KMS en la nube.** La llave de la selladora no debe salir del servicio de firma; va detrás de la misma interfaz `SealingNetwork` (37b).
+
+## 3. La aplicación
+
+- ✅ **`.env.production.example`**, la plantilla sin secretos. `make secrets-check` revisa que siga así.
+- ⬜ **El entorno de producción, desde esa plantilla.** Los secretos, desde el gestor: `APP_KEY`, `DB_PASSWORD`, `MAIL_PASSWORD`, `EVIDENCE_AWS_SECRET_ACCESS_KEY`, `SEALING_PSEUDONYM_KEY` (fija para siempre) y las llaves de Stellar. `APP_DEBUG=false`.
+- ⬜ **Migraciones y DIVIPOLA:** `php artisan migrate --force`, `php artisan tenants:migrate --force` y `php artisan db:seed --class=DivipolaSeeder`.
+- ⬜ **El worker de la cola y el calendario corriendo.** Las horas del calendario son UTC (deuda aceptada): la sincronización de las 02:00 son las 21:00 en Colombia.
+- ⬜ **Correo SMTP real** para las alertas, y `ALERT_WEBHOOK_URL`, si se usa Slack o Discord.
+
+## 4. Respaldos (R-BCK-01..05)
+
+- ✅ **El servicio `backup`:** una copia cada hora, guardada 30 días, con la restauración de prueba (`make restore-drill`).
+- ✅ **La réplica fuera del sitio** (`BACKUP_OFFSITE_S3_URL`), probada en `make backup-check`: se replica, se borra allá a los 30 días y se restaura desde allá.
+- ⬜ **El volumen de las copias en otro disco u otra máquina** (37b).
+- ⬜ **El bucket de la réplica** en otra cuenta o región, con versionado y una regla que guarde 30 días las versiones anteriores (37b).
+- ⬜ **La restauración de prueba en producción**, con sus datos reales, anotada en `docs/restore.md` (R-BCK-05) (37b).
+
+## 5. Monitoreo y CI
+
+- ⬜ **El monitor externo (Gatus, `ops/monitoring`)** apuntando a producción, con correo y webhook (US-044-MON).
+- ⬜ **Las credenciales de Jenkins** para la prueba de humo en testnet: `stellar-testnet-contract-id` y las dos llaves de testnet. Si se vuelve a correr `make testnet-setup`, el ID cambia.
+- ✅ **El pipeline:** todas sus etapas en verde en un entorno de cero (it. 35 y 36).

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # R-BLK-04 / D11 (it. 14): ninguna llave secreta de Stellar en el repositorio,
-# ni en su historial, ni en .env.example ni en .env.testnet.example. Las
+# ni en su historial, ni en los .env.*.example (desarrollo, testnet y producción). Las
 # llaves se inyectan como variables de entorno al arrancar; si alguna llegara
 # a un commit, habría que darla por comprometida y rotarla — quitarla del
 # último commit no alcanza, sigue en el historial.
@@ -26,10 +26,10 @@ else
   echo "PASS  el historial de git no contiene llaves secretas de Stellar"
 fi
 
-for example in .env.example .env.testnet.example; do
+for example in .env.example .env.testnet.example .env.production.example; do
   if [ ! -f "$example" ]; then
     echo "FAIL  falta $example"; fail=1
-  elif grep -qE '^STELLAR_(SEALER|SPONSOR)_SECRET=.+' "$example"; then
+  elif grep -qE '^STELLAR_(SEALER|SPONSOR|TREASURY)_SECRET=.+' "$example"; then
     echo "FAIL  $example trae un valor en STELLAR_*_SECRET: debe ir vacío"; fail=1
   else
     echo "PASS  $example deja vacías las llaves secretas"

@@ -5,7 +5,7 @@ Runbook de GovTrace para perder lo menos posible y volver a funcionar rápido (R
 | Regla | Qué pide | Cómo se cumple |
 |---|---|---|
 | R-BCK-01 | Perder a lo sumo **1 hora** de datos | Una copia al arrancar y otra cada hora en punto |
-| R-BCK-02 | Volver a funcionar en menos de **4 horas** | Este procedimiento, medido abajo |
+| R-BCK-02 | Volver a funcionar en menos de **4 horas** | Este procedimiento, medido abajo. La restauración de prueba falla si pasa de 4 h (`RESTORE_RTO_SECONDS`) |
 | R-BCK-03 | Respaldar también los archivos de evidencia | Cada copia trae el bucket completo |
 | R-BCK-04 | Guardar las copias **30 días** | La copia más vieja se borra al hacer la siguiente |
 | R-BCK-05 | Una restauración de prueba antes de salir a producción | `make restore-drill`, y en cada ejecución del pipeline (`make backup-check`) |
@@ -31,6 +31,21 @@ El servicio `backup` de `docker-compose.yml` hace una copia al arrancar y otra c
 
 **En producción, el volumen `backup_data` debe estar en otro disco o en otra máquina.** Una copia en el mismo disco que la base no sobrevive a ese disco. Lo mismo vale para el bucket, que tiene que estar fuera del servidor. Las variables `BACKUP_*` de `.env.docker.example` apuntan el servicio al bucket real.
 
+### Réplica fuera del sitio (it. 37a)
+
+Con `BACKUP_OFFSITE_S3_URL`, cada copia se replica, al terminar, a otro bucket, en otra cuenta o en otra región:
+
+```
+s3://<bucket>/copias/<fecha UTC>/     # los volcados de esa copia, su SHA256SUMS y su manifest.json
+s3://<bucket>/evidencias/             # un espejo de los archivos de evidencia
+```
+
+- Los volcados de cada copia se borran allá a los 30 días, por su fecha (R-BCK-04).
+- Los archivos van a un espejo, porque no cambian nunca: subirlos todos cada hora no tendría sentido.
+- **Ese bucket necesita versionado, y una regla que guarde 30 días las versiones anteriores.** Así, un archivo borrado por error se puede recuperar durante 30 días, aunque el espejo ya lo haya quitado.
+- Con la réplica configurada, el servicio `backup` deja de estar sano si la última tiene más de 2 horas.
+- `make backup-check` la prueba con un segundo bucket de LocalStack: replica, borra la de hace 30 días y restaura desde allá.
+
 ## Comandos
 
 | Comando | Qué hace |
@@ -38,7 +53,7 @@ El servicio `backup` de `docker-compose.yml` hace una copia al arrancar y otra c
 | `make backup-now` | Una copia ahora, igual a la de cada hora |
 | `make backup-list` | Las copias guardadas y lo que trae cada una |
 | `make restore-drill` | La restauración de prueba: una copia nueva, restaurada en un PostgreSQL vacío y en un bucket de prueba, verificando cada evidencia |
-| `make backup-check` | Lo anterior, y además que la retención borra a los 30 días, que los archivos se enlazan, y que la restauración de prueba falla ante un archivo alterado o una base que falta |
+| `make backup-check` | Lo anterior, y además: la retención de 30 días, los archivos enlazados, la réplica fuera del sitio y su restauración, y que la restauración de prueba falla ante un archivo alterado, una base que falta o una recuperación de más de 4 h |
 
 La restauración de prueba no toca lo que está en uso: restaura en el servicio descartable `restore-pg` (perfil `restore`) y en un bucket `<bucket>-restore-drill` que borra al terminar. Para restaurar una copia en particular:
 
@@ -56,7 +71,7 @@ Anota la hora a la que empiezas: con ella se mide R-BCK-02.
    ```bash
    docker compose --env-file .env.docker stop proxy app worker scheduler backup
    ```
-2. **Elige la copia.** La más reciente es la última de `make backup-list`: el servicio solo deja con nombre las copias completas. Levanta el contenedor de respaldo sin que haga una copia nueva:
+2. **Elige la copia.** La más reciente es la última de `make backup-list`: el servicio solo deja con nombre las copias completas. Si el disco de las copias también se perdió, tráela de fuera del sitio con `fetch-offsite.sh <copia> /backups/<copia>`, dentro del mismo contenedor. Levanta el contenedor de respaldo sin que haga una copia nueva:
    ```bash
    docker compose --env-file .env.docker run --rm --entrypoint bash backup
    cd /backups/<copia>/postgres && sha256sum -c ../SHA256SUMS      # los volcados, intactos
