@@ -51,7 +51,7 @@ function registerOrganizationWithMember(string $role, string $email, string $pas
     return [$tenant, 'veeduria-smr.govtrace.localhost'];
 }
 
-it('logs in the Super Administrator from the central panel', function () {
+it('Inicio de sesión exitoso y redirección por rol: logs in the Super Administrator from the central panel', function () {
     User::factory()->create(['email' => 'root@govtrace.app', 'password' => 'Veeduria#2026']);
 
     $response = $this->post('http://govtrace.localhost:8080/login', [
@@ -64,7 +64,7 @@ it('logs in the Super Administrator from the central panel', function () {
     $this->assertAuthenticatedAs(User::where('email', 'root@govtrace.app')->first(), 'web');
 });
 
-it('logs in the Administrador de Organización from its subdomain', function () {
+it('Inicio de sesión exitoso y redirección por rol: logs in the Administrador de Organización from its subdomain', function () {
     [, $domain] = registerOrganizationWithMember(Roles::Administrator->value, 'ana.perez@veeduria-smr.org');
 
     $this->post("http://{$domain}/login", [
@@ -73,7 +73,7 @@ it('logs in the Administrador de Organización from its subdomain', function () 
     ])->assertRedirect("http://{$domain}/organization/dashboard");
 });
 
-it('logs in the Veedor de Campo from its subdomain', function () {
+it('Inicio de sesión exitoso y redirección por rol: logs in the Veedor de Campo from its subdomain', function () {
     [, $domain] = registerOrganizationWithMember(Roles::Observer->value, 'carlos@correo.co');
 
     $this->post("http://{$domain}/login", [
@@ -136,7 +136,7 @@ it('rejects a deactivated account even with the correct password', function () {
     $this->assertGuest('tenant');
 });
 
-it('lets a public visitor reach tenant routes without logging in', function () {
+it('El Verificador Público no necesita iniciar sesión: lets a public visitor reach tenant routes without logging in', function () {
     [, $domain] = registerOrganizationWithMember(Roles::Observer->value, 'carlos@correo.co');
 
     $this->get("http://{$domain}/")->assertOk();

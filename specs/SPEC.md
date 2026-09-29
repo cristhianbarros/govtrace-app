@@ -152,7 +152,7 @@ Plataforma Open Source y Mobile-First de veeduría ciudadana, multi-tenant (B2B2
 
 - **R-PRIV-01** — El archivo crudo del sensor nunca se publica. La PWA purga los metadatos EXIF en el teléfono ANTES de calcular el SHA-256; lo que se sube, se sella y se publica es ese archivo sanitizado — US-009, US-026
 - **R-PRIV-02** — Las coordenadas de cada evidencia se muestran al público aproximadas (~100 m), nunca exactas — US-029, US-050-RPT, US-052-RPT
-- **R-PRIV-03** — En el JSON de metadatos sellado, el ID del veedor se reemplaza por un seudónimo antes de sellar; ese JSON se publica — US-020b, US-050-RPT, US-052-RPT
+- **R-PRIV-03** — (enmendada el 2026-09-29) En el JSON de metadatos sellado, el ID del veedor se reemplaza por un seudónimo antes de sellar; se publica el hash de ese JSON, no el JSON, que trae la ubicación exacta (R-PRIV-02) — US-020b, US-050-RPT, US-052-RPT
 - **R-PRIV-04** — La app limpia los metadatos de los PDF (autor, software, fechas) antes de calcular el hash — US-009
 - **R-PRIV-05** — No se difuminan rostros ni placas: se publican tal cual y la organización decide al revisar (US-036). Riesgo aceptado por el usuario — US-009
 - **R-PRIV-06** — Las fotos se optimizan en el teléfono antes del hash: lado mayor 1920 px, JPEG, calidad 80 %; se sella el archivo optimizado — US-009
@@ -171,7 +171,7 @@ Plataforma Open Source y Mobile-First de veeduría ciudadana, multi-tenant (B2B2
 
 ### Configuración
 
-- **R-CFG-01** — Red de sellado: Stellar. Red local *standalone* en Docker para desarrollo, testnet para pruebas y la prueba de humo, red principal (pubnet) al salir a producción — (infra)
+- **R-CFG-01** — Red de sellado: Stellar. Red local *standalone* en Docker para desarrollo, testnet para pruebas y la prueba de humo, red principal (pubnet) al salir a producción. En la red principal, el RPC de Stellar (JSON-RPC de Soroban) lo da un proveedor, QuickNode o Validation Cloud, con dos endpoints: uno privado para el servidor (`STELLAR_RPC_URL`) y otro de solo lectura y restringido al dominio de GovTrace para el validador del navegador (`STELLAR_PUBLIC_RPC_URL`), así el token del proveedor no queda a la vista (D13) — (infra)
 - **R-CFG-02** — Fijos en el código: precisión GPS 50 m, archivos por reporte (5 fotos o 1 PDF, 10 MB), vigencia offline 7 días. Configurables por el Super Admin (globales): geocerca 500 m, ventana 12 meses, invitación 48 h, umbral de saldo de la cuenta patrocinadora (50 XLM — D12 de `specs/PLAN.md`), sincronización 02:00. Ninguno es configurable por organización — US-038-CFG
 
 ### Auditoría e integridad

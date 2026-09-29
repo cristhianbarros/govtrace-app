@@ -2,6 +2,7 @@
 
 namespace App\Application\Organization;
 
+use App\Domain\Audit\AuditLog;
 use App\Domain\Configuration\Parameters;
 use App\Domain\Organization\Exceptions\OrganizationValidationException;
 use App\Domain\Organization\InvitationToken;
@@ -9,6 +10,7 @@ use App\Domain\Organization\Notifications\WelcomeNotification;
 use App\Domain\Organization\Roles;
 use App\Domain\Organization\User;
 use App\Infrastructure\Tenancy\Tenant;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
 /**
@@ -55,6 +57,17 @@ class AssignInitialAdministrator
             ]);
 
             $user->assignRole(Roles::Administrator->value);
+
+            // R-AUD-04: quién lo asignó, y a quién.
+            $actor = Auth::guard('web')->user();
+            AuditLog::record(
+                action: 'organization.administrator_assigned',
+                organizationId: $tenant->id,
+                actorType: 'super_admin',
+                actorId: $actor ? (string) $actor->getKey() : null,
+                actorName: $actor?->name,
+                after: ['user_id' => $user->id, 'name' => $name, 'email' => $email],
+            );
 
             $domain = $tenant->domains()->first()->domain;
             $url = "http://{$domain}/set-password/{$user->id}?token={$token->plain}";

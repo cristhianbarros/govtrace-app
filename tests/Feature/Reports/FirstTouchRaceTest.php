@@ -115,7 +115,7 @@ function waitUntil(Closure $condition, int $seconds): bool
     return false;
 }
 
-it('lets only the first of two simultaneous first reports anchor the worksite, and validates the second one against it', function (bool $worksiteAlreadyExists) {
+it('Dos veedores envían a la vez el primer reporte de una obra sin ubicación: lets only the first of two simultaneous first reports anchor the worksite, and validates the second one against it', function (bool $worksiteAlreadyExists) {
     $tenant = (new RegisterOrganization)->handle('900123456-8', 'Veeduría Ciudadana Santa Marta', 'veeduria-smr');
     (new ConfigureTerritory)->handle($tenant, ['47']);
     $veedorA = reportingMember($tenant, 'ana@correo.co');

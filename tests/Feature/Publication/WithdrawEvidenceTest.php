@@ -112,7 +112,7 @@ it('does not withdraw without a reason', function (array $payload) {
     'solo espacios' => [['reason' => '   ']],
 ]);
 
-it('cannot undo a withdrawal', function () {
+it('El retiro no se puede deshacer: cannot undo a withdrawal', function () {
     editorialDecision($this->administrator, 'withdraw', $this->published, ['reason' => 'Solicitud del afectado'])->assertOk();
 
     editorialDecision($this->administrator, 'publish', $this->published)
@@ -122,7 +122,7 @@ it('cannot undo a withdrawal', function () {
     expect(editorialStatusOf($this->tenant, $this->published))->toBe('Retirado');
 });
 
-it('does not delete the evidence when withdrawing it', function () {
+it('Retirar no borra la evidencia: does not delete the evidence when withdrawing it', function () {
     $before = storedEvidence($this->tenant, $this->published);
 
     editorialDecision($this->administrator, 'withdraw', $this->published, ['reason' => 'Solicitud del afectado'])->assertOk();
@@ -136,7 +136,7 @@ it('does not delete the evidence when withdrawing it', function () {
         ->and($after['seal']->merkle_root)->toBe($before['seal']->merkle_root);
 });
 
-it('does not withdraw an evidence that was never published: it is rejected from the inbox', function () {
+it('Una evidencia nunca publicada no se retira sino que se rechaza: does not withdraw an evidence that was never published: it is rejected from the inbox', function () {
     $hidden = sealedReport($this->tenant, $this->veedor);
 
     editorialDecision($this->administrator, 'withdraw', $hidden, ['reason' => 'Solicitud del afectado'])
@@ -149,7 +149,7 @@ it('does not withdraw an evidence that was never published: it is rejected from 
         ->and(editorialStatusOf($this->tenant, $hidden))->toBe('Oculto');
 });
 
-it('does not let the Administrador delete or alter a sealed evidence', function () {
+it('El Administrador no puede borrar ni alterar una evidencia sellada: does not let the Administrador delete or alter a sealed evidence', function () {
     $before = storedEvidence($this->tenant, $this->published);
     $evidence = $before['report']->evidences->first();
     $admin = test()->actingAs($this->administrator, 'tenant');

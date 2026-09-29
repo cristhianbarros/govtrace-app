@@ -27,7 +27,7 @@ afterEach(function () {
     Tenant::query()->get()->each->delete();
 });
 
-it('updates the NIT and writes an audit log entry', function () {
+it('Actualización exitosa del NIT con registro de auditoría: updates the NIT and writes an audit log entry', function () {
     Auth::guard('web')->login(SuperAdmin::factory()->create(['name' => 'Root Admin']));
 
     $updated = (new UpdateOrganizationLegalData)->handle($this->tenant, '901234567-7');
@@ -44,7 +44,7 @@ it('updates the NIT and writes an audit log entry', function () {
         ->and($entry->after)->toBe(['nit' => '901234567-7']);
 });
 
-it('rejects a NIT already used by another organization', function () {
+it('No se puede cambiar a un NIT que ya usa otra organización: rejects a NIT already used by another organization', function () {
     $other = (new RegisterOrganization)->handle('890000062-6', 'Veeduría Ciénaga', 'veeduria-cienaga');
 
     try {
@@ -54,11 +54,11 @@ it('rejects a NIT already used by another organization', function () {
     }
 })->throws(OrganizationValidationException::class, 'Ya existe una organización registrada con el NIT ingresado.');
 
-it('rejects a NIT with an invalid check digit', function () {
+it('No se puede cambiar a un NIT con dígito de verificación inválido: rejects a NIT with an invalid check digit', function () {
     (new UpdateOrganizationLegalData)->handle($this->tenant, '901234567-2');
 })->throws(OrganizationValidationException::class, 'El NIT ingresado no es válido o el dígito de verificación no coincide con el algoritmo de la DIAN.');
 
-it('never lets code running inside a tenant edit legal data, even for its own organization', function () {
+it('El Administrador de Organización no puede editar el NIT ni los datos legales: never lets code running inside a tenant edit legal data, even for its own organization', function () {
     $tenant = $this->tenant;
 
     expect(fn () => $tenant->run(fn () => (new UpdateOrganizationLegalData)->handle($tenant, '901234567-7')))

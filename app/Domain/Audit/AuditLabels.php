@@ -10,6 +10,8 @@ namespace App\Domain\Audit;
 final class AuditLabels
 {
     private const ACTIONS = [
+        'organization.registered' => 'Dio de alta la organización',
+        'organization.administrator_assigned' => 'Asignó el Administrador inicial',
         'organization.legal_data_updated' => 'Cambió el NIT',
         'organization.territory_configured' => 'Configuró el territorio',
         'organization.suspended' => 'Suspendió la organización',
@@ -23,6 +25,7 @@ final class AuditLabels
         'evidence.published' => 'Publicó una evidencia',
         'evidence.rejected' => 'Rechazó una evidencia',
         'evidence.withdrawn' => 'Retiró una evidencia',
+        'observer.invited' => 'Invitó a un veedor',
         'observer.deactivated' => 'Desactivó a un veedor',
         'observer.reactivated' => 'Reactivó a un veedor',
         'invitation.resent' => 'Reenvió una invitación',

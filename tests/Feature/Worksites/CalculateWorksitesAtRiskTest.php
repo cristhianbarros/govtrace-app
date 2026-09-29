@@ -52,7 +52,7 @@ function riskyContract(array $overrides = []): Contract
     ], $overrides)));
 }
 
-it('marks the worksite "en riesgo" only when its contract expired and SECOP still shows it "En ejecución"', function (string $fechaFin, string $estado, bool $enRiesgo) {
+it('Regla de obra en riesgo: marks the worksite "en riesgo" only when its contract expired and SECOP still shows it "En ejecución"', function (string $fechaFin, string $estado, bool $enRiesgo) {
     $this->travelTo('2026-09-27');
 
     $tenant = (new RegisterOrganization)->handle('900123456-8', 'Veeduría Ciudadana Santa Marta', 'veeduria-smr');
@@ -76,7 +76,7 @@ it('marks the worksite "en riesgo" only when its contract expired and SECOP stil
     'vencido pero Suspendido' => ['2026-09-26', 'Suspendido', false],
 ]);
 
-it('saves the calculated risk in the ficha de obra, never touching the contract itself', function () {
+it('El estado calculado vive en la ficha de obra, no en el contrato: saves the calculated risk in the ficha de obra, never touching the contract itself', function () {
     $this->travelTo('2026-09-27');
 
     $tenant = (new RegisterOrganization)->handle('900123456-8', 'Veeduría Ciudadana Santa Marta', 'veeduria-smr');

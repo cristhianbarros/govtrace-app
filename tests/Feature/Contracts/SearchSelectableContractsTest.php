@@ -81,7 +81,7 @@ it('does not search below the 3-character minimum', function () {
     expect($results)->toBeEmpty();
 });
 
-it('only shows the contracts whose status makes them selectable', function (string $estado, ?int $mesesDesdeElCierre, bool $aparece) {
+it('Qué contratos se pueden seleccionar según su estado: only shows the contracts whose status makes them selectable', function (string $estado, ?int $mesesDesdeElCierre, bool $aparece) {
     searchableContract([
         'secop_contract_id' => 'CO1.PCCNTR.PARQUE',
         'object' => 'Parque Bastidas',
@@ -111,7 +111,7 @@ it('only shows the contracts whose status makes them selectable', function (stri
     'MODIFICADO en mayúsculas' => ['MODIFICADO', null, true],
 ]);
 
-it('only shows contracts within the organization watching them', function () {
+it('Solo aparecen contratos del territorio de la organización: only shows contracts within the organization watching them', function () {
     searchableContract([
         'secop_contract_id' => 'CO1.PCCNTR.MED',
         'department_code' => '05',

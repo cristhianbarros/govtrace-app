@@ -83,7 +83,7 @@ it('accepts a report close to the worksite, with the position, classification an
         ->and($report->received_at)->not->toBeNull();
 });
 
-it('lets the first report anchor the official location of a worksite that has none (First-Touch)', function (bool $worksiteAlreadyExists) {
+it('El primer reporte fija la ubicación de una obra sin ubicación: lets the first report anchor the official location of a worksite that has none (First-Touch)', function (bool $worksiteAlreadyExists) {
     $contract = reportableContract('CO1.PCCNTR.2222222');
     if ($worksiteAlreadyExists) {
         worksiteWithContracts($this->tenant, ['CO1.PCCNTR.2222222'], null);
@@ -121,7 +121,7 @@ it('requires a classification', function () {
     expect(storedReports($this->tenant))->toBeEmpty();
 });
 
-it('only accepts the defined classifications', function (string $clasificacion, bool $aceptada) {
+it('Solo se aceptan las clasificaciones definidas: only accepts the defined classifications', function (string $clasificacion, bool $aceptada) {
     $response = sendReport($this->veedor, ['classification' => $clasificacion]);
 
     $aceptada
@@ -175,7 +175,7 @@ it('rejects a report taken outside the geofence of the worksite', function () {
     expect(storedReports($this->tenant))->toBeEmpty();
 });
 
-it('rejects a report on a contract outside the territory of the organization', function () {
+it('No se puede reportar una obra fuera del territorio de la organización: rejects a report on a contract outside the territory of the organization', function () {
     reportableContract('CO1.PCCNTR.MEDELLIN', ['department_code' => '05', 'municipality_code' => '05001']);
 
     sendReport($this->veedor, ['secop_contract_id' => 'CO1.PCCNTR.MEDELLIN'])
@@ -185,7 +185,7 @@ it('rejects a report on a contract outside the territory of the organization', f
     expect(storedReports($this->tenant))->toBeEmpty();
 });
 
-it('flags a report whose capture time is in the future or older than the 7 days of offline validity', function (string $captura, bool $marcado) {
+it('Se marca el reporte con hora de captura sospechosa: flags a report whose capture time is in the future or older than the 7 days of offline validity', function (string $captura, bool $marcado) {
     $this->travelTo(Carbon::parse('2026-09-27 10:00:00'));
 
     sendReport($this->veedor, ['captured_at' => Carbon::parse($captura)->toIso8601String()])->assertCreated();
@@ -208,7 +208,7 @@ it('flags a report whose capture time is in the future or older than the 7 days 
     'más de 7 días antes' => ['2026-09-19 09:00', true],
 ]);
 
-it('links a report to the whole worksite when the worksite groups several contracts', function () {
+it('En una ficha con varios contratos el reporte se vincula a la ficha completa: links a report to the whole worksite when the worksite groups several contracts', function () {
     // "Acueducto Gaira": agrupar contratos en una ficha es una acción del
     // Administrador (US-045-INT, it. 29); aquí la ficha ya viene agrupada.
     reportableContract('CO1.PCCNTR.1111111');
@@ -224,7 +224,7 @@ it('links a report to the whole worksite when the worksite groups several contra
         ->and($contracts)->toBe(['CO1.PCCNTR.1111111', 'CO1.PCCNTR.3333333']);
 });
 
-it('lets veedores at the real site report once a wrong official location is corrected', function () {
+it('Una ubicación oficial errónea se corrige: lets veedores at the real site report once a wrong official location is corrected', function () {
     // La ubicación quedó fijada a 3 km del sitio real.
     $realSite = santaMartaWorksiteLocation();
     [$wrongLatitude, $wrongLongitude] = pointMetersNorthOf($realSite, 3000);

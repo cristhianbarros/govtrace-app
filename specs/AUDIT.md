@@ -161,3 +161,8 @@ Los **249 escenarios tienen su test** (362 casos contando las filas de los esque
 - **Iteración 37, "Salida a la red principal":** cierra los gaps 3, 4 y 6, y la lista de go-live. Bloquea producción.
 - **Deuda técnica aceptada:** lo que no bloquea ningún criterio (ver `specs/PLAN.md`).
 - **Decisión de spec pendiente:** el texto de R-PRIV-03 (gap 10).
+
+## Seguimiento
+
+- **2026-09-29, decisiones:** el usuario aprobó la enmienda de R-PRIV-03, ya aplicada en la SPEC; las iteraciones 36 y 37; la deuda técnica aceptada, y la red principal (D13 en `specs/PLAN.md`).
+- **2026-09-29, iteración 36:** quedan cerrados los gaps 1, 2, 5, 7, 8 y 9, y el 10 con la enmienda. R-AUD-04, R-MNT-03, R-VC-01, R-PRIV-03 y R-TST-04 pasan a ✅. Siguen abiertos R-CFG-01, R-BCK-02 y R-BCK-05, que son de la iteración 37.

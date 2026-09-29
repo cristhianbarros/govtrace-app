@@ -8,7 +8,7 @@ import { ascii, cleanJpeg, contains, jpegWithExif } from './jpeg-fixtures.js';
 import { optimizePhoto, scaledSize, stripJpegMetadata } from './photos.js';
 
 describe('optimizePhoto', () => {
-    it('converts a 4000x3000 HEIC photo with GPS in its EXIF into a 1920 px JPEG at 80 %, without EXIF', async () => {
+    it('Fotos optimizadas, sin EXIF y con hash calculado en el teléfono: converts a 4000x3000 HEIC photo with GPS in its EXIF into a 1920 px JPEG at 80 %, without EXIF', async () => {
         const heic = new File([ascii('ftypheic…')], 'IMG_0001.HEIC', { type: 'image/heic' });
         const decode = vi.fn(async () => ({ image: 'decoded-image', width: 4000, height: 3000 }));
         // Un codificador que dejara pasar el EXIF: la app lo quita igual.

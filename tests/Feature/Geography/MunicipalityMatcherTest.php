@@ -17,7 +17,7 @@ beforeEach(function () {
     (new DivipolaSeeder)->run();
 });
 
-it('matches the municipality name SECOP II sends, normalizing accents and case', function (string $municipioSecop, ?string $codigoEsperado) {
+it('Emparejamiento normalizado del municipio con la tabla DIVIPOLA: matches the municipality name SECOP II sends, normalizing accents and case', function (string $municipioSecop, ?string $codigoEsperado) {
     $municipio = (new MunicipalityMatcher)->match($municipioSecop);
 
     if ($codigoEsperado === null) {

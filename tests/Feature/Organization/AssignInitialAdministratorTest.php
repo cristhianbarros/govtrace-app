@@ -2,11 +2,14 @@
 
 use App\Application\Organization\AssignInitialAdministrator;
 use App\Application\Organization\RegisterOrganization;
+use App\Domain\Audit\AuditLog;
 use App\Domain\Organization\Exceptions\OrganizationValidationException;
 use App\Domain\Organization\Notifications\WelcomeNotification;
 use App\Domain\Organization\Roles;
 use App\Domain\Organization\User;
 use App\Infrastructure\Tenancy\Tenant;
+use App\Models\User as SuperAdmin;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 
 /*
@@ -30,6 +33,7 @@ afterEach(function () {
     }
 
     Tenant::query()->get()->each->delete();
+    DB::table('audit_logs')->delete();
 });
 
 it('assigns the initial administrator and sends the welcome notification', function () {
@@ -51,7 +55,7 @@ it('assigns the initial administrator and sends the welcome notification', funct
     });
 });
 
-it('rejects an invalid administrator email format and sends no email', function (string $email) {
+it('El correo del Administrador inicial debe tener formato válido: rejects an invalid administrator email format and sends no email', function (string $email) {
     Notification::fake();
 
     $call = fn () => (new AssignInitialAdministrator)->handle($this->tenant, 'Ana Pérez', $email);
@@ -65,8 +69,34 @@ it('rejects an invalid administrator email format and sends no email', function 
     'con espacio' => ['ana perez@veeduria.org'],
 ]);
 
-it('rejects an administrator email already registered in this organization', function () {
+it('El correo del Administrador inicial no puede pertenecer a otro usuario activo del sistema: rejects an administrator email already registered in this organization', function () {
     (new AssignInitialAdministrator)->handle($this->tenant, 'Ana Pérez', 'ana.perez@veeduria-smr.org');
 
     (new AssignInitialAdministrator)->handle($this->tenant, 'Otra Persona', 'ana.perez@veeduria-smr.org');
 })->throws(OrganizationValidationException::class, 'El correo electrónico ya se encuentra registrado en el sistema.');
+
+// Iteración 36 — lo que encontró /audit (specs/AUDIT.md) ------------------------
+
+it('records the assignment in the audit log, with the Super Administrador who did it (R-AUD-04)', function () {
+    Notification::fake();
+    $superAdmin = SuperAdmin::factory()->create();
+    $this->actingAs($superAdmin, 'web');
+
+    $admin = (new AssignInitialAdministrator)->handle($this->tenant, 'Ana Pérez', 'ana.perez@veeduria-smr.org');
+
+    $entry = AuditLog::query()->where('action', 'organization.administrator_assigned')->sole();
+    expect($entry->organization_id)->toBe($this->tenant->id)
+        ->and($entry->actor_type)->toBe('super_admin')
+        ->and($entry->actor_id)->toBe((string) $superAdmin->id)
+        ->and($entry->after)->toBe(['user_id' => $admin->id, 'name' => 'Ana Pérez', 'email' => 'ana.perez@veeduria-smr.org']);
+
+    $superAdmin->delete();
+});
+
+it('does not record an assignment that was rejected', function () {
+    Notification::fake();
+
+    expect(fn () => (new AssignInitialAdministrator)->handle($this->tenant, 'Ana Pérez', 'ana.perez@'))->toThrow(OrganizationValidationException::class);
+
+    expect(AuditLog::query()->where('action', 'organization.administrator_assigned')->exists())->toBeFalse();
+});

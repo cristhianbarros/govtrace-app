@@ -98,7 +98,7 @@ function registerUs013Organizations(): array
     return [$santaMarta, $paisa];
 }
 
-it('the nightly run queries SECOP only for the configured territories and stores each contract once', function () {
+it('Corrida nocturna por los territorios configurados: the nightly run queries SECOP only for the configured territories and stores each contract once', function () {
     fakeSecopApi();
     registerUs013Organizations();
 
@@ -130,7 +130,7 @@ it('the nightly run queries SECOP only for the configured territories and stores
         ->and($runs[1]->only('contracts_inserted', 'contracts_updated'))->toBe(['contracts_inserted' => 0, 'contracts_updated' => 8]);
 });
 
-it('never queries or stores contracts for a territory with no active organization', function () {
+it('No se consultan territorios sin organizaciones activas: never queries or stores contracts for a territory with no active organization', function () {
     fakeSecopApi();
     registerUs013Organizations();
 
@@ -140,7 +140,7 @@ it('never queries or stores contracts for a territory with no active organizatio
     expect(Contract::query()->where('department_code', '11')->exists())->toBeFalse();
 });
 
-it('a territory left without active organizations stops being synced, keeping what was already stored', function () {
+it('Un territorio que se queda sin organizaciones deja de actualizarse: a territory left without active organizations stops being synced, keeping what was already stored', function () {
     fakeSecopApi();
     [, $paisa] = registerUs013Organizations();
 
@@ -190,7 +190,7 @@ it('discards a contract whose municipality does not match DIVIPOLA and reports i
         ->and(Contract::query()->where('secop_contract_id', 'CO1.PCCNTR.INEXISTENTE')->exists())->toBeFalse();
 });
 
-it('records the failure and lets the queue retry with exponential backoff', function () {
+it('Falla de la API de SECOP II: records the failure and lets the queue retry with exponential backoff', function () {
     Http::fake(['www.datos.gov.co/*' => Http::response('', 504)]);
     registerUs013Organizations();
 
@@ -215,7 +215,7 @@ it('schedules the nightly sync at 02:00 by default', function () {
 // Esquema "Sincronización inmediata al activar una organización o cambiar
 // su territorio" — una fila por test.
 
-it('queues an immediate sync when the Super Administrator registers an organization', function () {
+it('Sincronización inmediata al activar una organización o cambiar su territorio: queues an immediate sync when the Super Administrator registers an organization', function () {
     Queue::fake();
 
     $tenant = (new RegisterOrganization)->handle('900123456-8', 'Veeduría Ciudadana Santa Marta', 'veeduria-smr');
@@ -223,7 +223,7 @@ it('queues an immediate sync when the Super Administrator registers an organizat
     Queue::assertPushed(SyncSecopContracts::class, fn (SyncSecopContracts $job) => $job->organizationId === $tenant->id);
 });
 
-it('queues an immediate sync when the Super Administrator reactivates a suspended organization', function () {
+it('Sincronización inmediata al activar una organización o cambiar su territorio: queues an immediate sync when the Super Administrator reactivates a suspended organization', function () {
     $tenant = (new RegisterOrganization)->handle('900123456-8', 'Veeduría Ciudadana Santa Marta', 'veeduria-smr');
     (new SuspendOrganization)->handle($tenant);
     Queue::fake();
@@ -233,7 +233,7 @@ it('queues an immediate sync when the Super Administrator reactivates a suspende
     Queue::assertPushed(SyncSecopContracts::class, fn (SyncSecopContracts $job) => $job->organizationId === $tenant->id);
 });
 
-it('queues an immediate sync when an Organization Administrator changes the territory', function () {
+it('Sincronización inmediata al activar una organización o cambiar su territorio: queues an immediate sync when an Organization Administrator changes the territory', function () {
     Queue::fake();
 
     $tenant = (new RegisterOrganization)->handle('900123456-8', 'Veeduría Ciudadana Santa Marta', 'veeduria-smr');

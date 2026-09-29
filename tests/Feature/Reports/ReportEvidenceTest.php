@@ -56,7 +56,7 @@ function storedEvidences(Tenant $tenant): Collection
     return $tenant->run(fn () => Evidence::query()->orderBy('id')->get());
 }
 
-it('queues the evidence for sealing when the hash the server recomputes matches the phone\'s', function () {
+it('El servidor verifica que el hash coincide antes de encolar el sellado: queues the evidence for sealing when the hash the server recomputes matches the phone\'s', function () {
     $photo = evidencePhoto();
     $phoneHash = sha256Of($photo);
 
@@ -116,7 +116,7 @@ it('rejects a video', function () {
     expect(storedEvidences($this->tenant))->toBeEmpty();
 });
 
-it('stores the photo byte for byte, without blurring faces or plates', function () {
+it('Las fotos no se difuminan: stores the photo byte for byte, without blurring faces or plates', function () {
     // R-PRIV-05: nada se difumina ni se reprocesa en el servidor; lo que se
     // guarda (y se sella) es exactamente lo que el teléfono envió. Decide
     // el Administrador al revisar (US-036, it. 15).
