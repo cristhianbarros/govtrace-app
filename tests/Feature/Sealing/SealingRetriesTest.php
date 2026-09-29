@@ -254,5 +254,5 @@ it('does not spend attempts while sealing is paused for lack of XLM in the spons
 it('checks the sealing queue every 15 minutes', function () {
     Artisan::call('schedule:list');
 
-    expect(Artisan::output())->toMatch('/\*\/15 \* \* \* \*\s+sealing-queue-check/');
+    expect(Artisan::output())->toMatch('/\*\/15\s+\*\s+\*\s+\*\s+\*\s+sealing-queue-check/');
 });

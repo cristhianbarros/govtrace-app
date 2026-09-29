@@ -18,6 +18,7 @@ describe('SuperAdminLayout', () => {
             ['Parámetros', '/admin/parameters'],
             ['Auditoría', '/admin/audit'],
             ['SECOP', '/admin/secop-health'],
+            ['Sellado', '/admin/sealing'],
         ]);
         expect(wrapper.get('nav a[aria-current="page"]').text()).toBe('Parámetros');
         page.url = '/admin/inbox';

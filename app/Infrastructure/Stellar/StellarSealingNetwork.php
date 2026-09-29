@@ -2,6 +2,7 @@
 
 namespace App\Infrastructure\Stellar;
 
+use App\Application\Sealing\ContractLifetime;
 use App\Application\Sealing\Exceptions\RootAlreadySealed;
 use App\Application\Sealing\Exceptions\SealingNetworkError;
 use App\Application\Sealing\Exceptions\SponsorOutOfFunds;
@@ -22,6 +23,9 @@ use Soneso\StellarSDK\Soroban\Responses\SimulateTransactionResponse;
 use Soneso\StellarSDK\TimeBounds;
 use Soneso\StellarSDK\Transaction;
 use Soneso\StellarSDK\TransactionBuilder;
+use Soneso\StellarSDK\Xdr\XdrContractDataDurability;
+use Soneso\StellarSDK\Xdr\XdrLedgerKey;
+use Soneso\StellarSDK\Xdr\XdrSCAddress;
 use Soneso\StellarSDK\Xdr\XdrSCVal;
 
 /**
@@ -93,6 +97,7 @@ final class StellarSealingNetwork implements SealingNetwork
                 $transaction->ledger,
                 CarbonImmutable::createFromTimestamp((int) $transaction->createdAt),
                 $txHash,
+                $this->feeCharged($transaction),
             ),
             GetTransactionResponse::STATUS_NOT_FOUND => null,
             default => throw new SealingNetworkError("La transacción {$txHash} falló en la red ({$transaction->status})."),
@@ -116,12 +121,15 @@ final class StellarSealingNetwork implements SealingNetwork
         }
         $ledger = $fields['ledger']->u32;
 
+        // La que la selló, por su evento "sealed" en ese ledger: tras un envío sin
+        // respuesta, la última anotada puede no ser esa (US-021, US-023).
+        $txHash = $this->rpc->eventTransactionHash($this->contractId, [XdrSCVal::forSymbol('sealed'), $root], $ledger);
+
         return new NetworkSeal(
             $ledger,
             CarbonImmutable::createFromTimestamp((int) $fields['sealed_at']->u64),
-            // La que la selló, por su evento "sealed" en ese ledger: tras un envío sin
-            // respuesta, la última anotada puede no ser esa (US-021, US-023).
-            $this->rpc->eventTransactionHash($this->contractId, [XdrSCVal::forSymbol('sealed'), $root], $ledger),
+            $txHash,
+            $txHash === null ? null : $this->feeCharged($this->rpc->transaction($txHash)),
         );
     }
 
@@ -132,12 +140,39 @@ final class StellarSealingNetwork implements SealingNetwork
 
     public function sponsorCanPay(): bool
     {
-        return $this->rpc->accountBalance($this->sponsorAddress()) >= $this->sponsorMinBalanceXlm * self::STROOPS_PER_XLM;
+        return $this->sponsorBalance() >= $this->sponsorMinBalanceXlm * self::STROOPS_PER_XLM;
+    }
+
+    public function sponsorBalance(): int
+    {
+        return $this->rpc->accountBalance($this->sponsorAddress());
+    }
+
+    public function contractLifetime(): ContractLifetime
+    {
+        $instanceKey = XdrLedgerKey::forContractData(XdrSCAddress::forContractId($this->contractId), XdrSCVal::forLedgerKeyContractInstance(), XdrContractDataDurability::PERSISTENT());
+        $answer = $this->rpc->ledgerEntry($instanceKey);
+        $instance = $answer->entries[0] ?? throw new SealingNetworkError("El contrato {$this->contractId} no existe en la red.");
+
+        // La instancia dice qué código ejecuta: el WASM que subió la tesorería.
+        $wasmId = $instance->getLedgerEntryDataXdr()->contractData->val->instance->executable->wasmIdHex;
+        $code = $this->rpc->ledgerEntry(XdrLedgerKey::forContractCode(hex2bin($wasmId)))->entries[0]
+            ?? throw new SealingNetworkError("El código {$wasmId} del contrato no existe en la red.");
+
+        return new ContractLifetime($answer->latestLedger, $instance->liveUntilLedgerSeq, $code->liveUntilLedgerSeq);
     }
 
     public function sponsorAddress(): string
     {
         return $this->sponsor()->getAccountId();
+    }
+
+    /** What the fee bump charged the sponsor, refunds of unused resources already out; null if the network no longer has it. */
+    private function feeCharged(GetTransactionResponse $transaction): ?int
+    {
+        $result = $transaction->status === GetTransactionResponse::STATUS_SUCCESS ? $transaction->getXdrTransactionResult() : null;
+
+        return $result === null ? null : (int) $result->feeCharged->toString();
     }
 
     /** @return array{0: Transaction, 1: SimulateTransactionResponse} */

@@ -2,6 +2,7 @@
 
 namespace Tests\Support;
 
+use App\Application\Sealing\ContractLifetime;
 use App\Application\Sealing\Exceptions\NetworkUnavailable;
 use App\Application\Sealing\Exceptions\RootAlreadySealed;
 use App\Application\Sealing\Exceptions\SealingNetworkError;
@@ -20,6 +21,12 @@ final class FakeSealingNetwork implements SealingNetwork
     /** A valid contract address (StrKey of sha256("govtrace-fake-sealing-contract")), not deployed anywhere. */
     public const CONTRACT_ID = 'CALFTQY2X3YTEHFZORY7FQJUPXB2BXEGBCCHQVWTKB3WAVA65QHMTSFA';
 
+    /** A valid account address (StrKey of sha256("govtrace-fake-sponsor")), with no secret anywhere. */
+    public const SPONSOR_ADDRESS = 'GCMN776RZKGVGGLLL2KB5YW322QOAA2TAHINWC6322RE2VBX4UWRSNGF';
+
+    /** What a steady seal costs on testnet (it. 14): 0,2425 XLM. */
+    public const FEE_STROOPS = 2_425_000;
+
     /** @var list<array{worksite: string, root: string}> */
     public array $submissions = [];
 
@@ -27,6 +34,14 @@ final class FakeSealingNetwork implements SealingNetwork
     public array $onChain = [];
 
     public bool $sponsorFunded = true;
+
+    /** 1.000 XLM: well above the alert threshold (US-022). */
+    public int $sponsorBalanceStroops = 10_000_000_000;
+
+    public int $balanceReads = 0;
+
+    /** Until which ledger the instance and the code of the contract live (D12). */
+    public ContractLifetime $lifetime;
 
     /** false = la red recibe la transacción pero todavía no cierra el ledger que la incluye. */
     public bool $closesLedgerRightAway = true;
@@ -44,6 +59,12 @@ final class FakeSealingNetwork implements SealingNetwork
     private array $transactions = [];
 
     private int $ledger = 1200;
+
+    public function __construct()
+    {
+        // Recién extendidas por la tesorería: ~180 días.
+        $this->lifetime = new ContractLifetime($this->ledger, $this->ledger + 180 * 17_280, $this->ledger + 180 * 17_280);
+    }
 
     public function submitSeal(string $worksiteReference, string $merkleRoot): string
     {
@@ -78,7 +99,7 @@ final class FakeSealingNetwork implements SealingNetwork
     public function closeLedgerWith(string $txHash): void
     {
         $this->transactions[$txHash]['closed'] = true;
-        $this->onChain[$this->transactions[$txHash]['root']] = new NetworkSeal(++$this->ledger, CarbonImmutable::now()->startOfSecond(), $txHash);
+        $this->onChain[$this->transactions[$txHash]['root']] = new NetworkSeal(++$this->ledger, CarbonImmutable::now()->startOfSecond(), $txHash, self::FEE_STROOPS);
     }
 
     /** La red procesa la transacción y la rechaza. */
@@ -117,7 +138,22 @@ final class FakeSealingNetwork implements SealingNetwork
 
     public function sponsorAddress(): string
     {
-        return 'GFAKESPONSORGOVTRACEDEPRUEBASXXXXXXXXXXXXXXXXXXXXXXXXXX';
+        return self::SPONSOR_ADDRESS;
+    }
+
+    public function sponsorBalance(): int
+    {
+        $this->failIfUnavailable();
+        $this->balanceReads++;
+
+        return $this->sponsorBalanceStroops;
+    }
+
+    public function contractLifetime(): ContractLifetime
+    {
+        $this->failIfUnavailable();
+
+        return $this->lifetime;
     }
 
     private function failIfUnavailable(): void

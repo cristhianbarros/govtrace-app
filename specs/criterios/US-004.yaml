@@ -1,14 +1,18 @@
 story_id: "US-004"
-titulo_historia: "Como Super Administrador quiero visualizar un reporte del consumo de transacciones y gas en Polygon agrupado por organización para controlar la rentabilidad y los costos de infraestructura del SaaS"
+titulo_historia: "Como Super Administrador quiero visualizar un reporte de las comisiones de sellado en Stellar agrupado por mes y por organización para controlar la rentabilidad y los costos de infraestructura del SaaS"
 bloque: "B11 — Monitoreo y costos"
+# Ajustada a Stellar en la it. 32 (pivote del 2026-09-28, D5).
 criterios_aceptacion:
   escenarios_exito:
-    - "En el dashboard central, el Super Administrador ve una tabla agrupada por mes y por organización"
-    - "Columnas: Nombre de la ONG, Total de evidencias selladas, Gas total consumido y Costo estimado en USD"
-    - "La conversión POL→USD se obtiene de un API de precios externo (tipo CoinGecko)"
-  validaciones_reglas: []
+    - "En el panel global, el Super Administrador ve una tabla agrupada por mes y por organización"
+    - "Columnas: Nombre de la organización, Total de evidencias selladas, Comisiones en XLM y Costo estimado en COP"
+    - "La comisión de cada sello es la que la red le cobró a la cuenta patrocinadora (fee bump)"
+    - "La conversión XLM→COP se obtiene de un API de precios externo (CoinGecko)"
+  validaciones_reglas:
+    - "El mes de un sello es el de la hora del ledger que lo incluyó, en la hora de Colombia"
   manejo_errores:
-    - {caso: "El API de precios POL/USD no responde", resultado: "El reporte usa el último precio conocido y muestra su fecha"}
+    - {caso: "El API de precios XLM/COP no responde", resultado: "El reporte usa el último precio conocido y muestra su fecha"}
+    - {caso: "Nunca se obtuvo un precio", resultado: "El reporte muestra las comisiones en XLM, sin costo en COP"}
   requisitos_ux: []
   casos_edge: []
 validacion_smart:

@@ -6,6 +6,8 @@ use App\Http\Controllers\Central\LoginController;
 use App\Http\Controllers\Central\OrganizationController;
 use App\Http\Controllers\Central\OrganizationReportController;
 use App\Http\Controllers\Central\ParameterController;
+use App\Http\Controllers\Central\SealingController;
+use App\Http\Controllers\Central\SealingCostsController;
 use App\Http\Controllers\Central\SecopHealthController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -50,6 +52,13 @@ foreach (config('tenancy.central_domains') as $domain) {
             // US-014: salud de la sincronización con SECOP II.
             Route::get('/admin/secop-health', fn () => Inertia::render('SuperAdmin/SecopHealth'))->name('admin.secop-health.show');
             Route::get('/admin/secop-health/data', SecopHealthController::class)->name('admin.secop-health.data');
+
+            // US-022 y US-047-MNT: la cuenta patrocinadora, la vigencia del contrato y las
+            // fallas de sellado; US-004: las comisiones. Una sola pantalla, "Sellado".
+            Route::get('/admin/sealing', fn () => Inertia::render('SuperAdmin/Sealing'))->name('admin.sealing.show');
+            Route::get('/admin/sealing/data', [SealingController::class, 'data'])->name('admin.sealing.data');
+            Route::post('/admin/sealing/requeue', [SealingController::class, 'requeue'])->name('admin.sealing.requeue');
+            Route::get('/admin/costs/data', SealingCostsController::class)->name('admin.costs.data');
         });
     });
 }
