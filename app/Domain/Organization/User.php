@@ -34,9 +34,30 @@ class User extends Model implements AuthenticatableContract, CanResetPasswordCon
 
     protected $hidden = ['password', 'remember_token', 'invitation_token_hash'];
 
+    /** A reserved domain (RFC 2606): no mail ever reaches it. */
+    public const SUPER_ADMIN_DELEGATE_EMAIL = 'super-admin@govtrace.invalid';
+
+    /**
+     * US-042-SEC: the member who signs the reports the Super Administrador
+     * creates in this organization, once it authorized it (R-SA-02) — a
+     * report always belongs to a member of the organization. Nobody can
+     * log in as it: no password, no invitation, no reset link, no role.
+     */
+    public static function superAdminDelegate(): self
+    {
+        return self::query()->firstOrCreate(
+            ['email' => self::SUPER_ADMIN_DELEGATE_EMAIL],
+            ['name' => 'Super Administrador de GovTrace', 'password' => null, 'is_active' => true],
+        );
+    }
+
     /** US-039-USR: the link goes to this organization's own subdomain. */
     public function sendPasswordResetNotification(#[\SensitiveParameter] $token): void
     {
+        if ($this->email === self::SUPER_ADMIN_DELEGATE_EMAIL) {
+            return; // nadie entra como el Super Administrador (US-042-SEC)
+        }
+
         $domain = tenant()->domains()->first()->domain;
         $url = "http://{$domain}/reset-password/{$token}?email=".urlencode($this->email);
 

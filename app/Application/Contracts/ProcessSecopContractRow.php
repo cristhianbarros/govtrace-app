@@ -3,8 +3,10 @@
 namespace App\Application\Contracts;
 
 use App\Domain\Contracts\Contract;
+use App\Domain\Contracts\ContractArchive;
 use App\Domain\Geography\MunicipalityMatcher;
 use App\Domain\Organization\WatchedTerritories;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 
 /**
@@ -71,24 +73,36 @@ class ProcessSecopContractRow
         $secopStatus = trim((string) ($row['estado_contrato'] ?? ''));
         $status = in_array(Str::lower($secopStatus), self::CANCELLED_STATUSES, true) ? 'cancelled' : ($secopStatus ?: 'Desconocido');
 
-        $contract = Contract::fromSecop(fn () => Contract::updateOrCreate(
-            ['secop_contract_id' => $row['id_contrato']],
-            [
-                'process_number' => $row['referencia_del_contrato'] ?? null,
-                'entity_name' => $row['nombre_entidad'] ?? '',
-                'contractor_name' => $row['proveedor_adjudicado'] ?? null,
-                'object' => $row['descripcion_del_proceso'] ?? null,
-                'contract_type' => $row['tipo_de_contrato'],
-                'value' => $row['valor_del_contrato'] ?? null,
-                'signed_at' => $row['fecha_de_firma'] ?? null,
-                'end_date' => $row['fecha_de_fin_del_contrato'] ?? null,
-                'status' => $status,
-                'department_code' => $departmentCode,
-                'municipality_code' => $municipalityCode,
-                'secop_url' => $row['urlproceso']['url'] ?? null,
-                'raw_payload' => $row,
-            ],
-        ));
+        $attributes = [
+            'process_number' => $row['referencia_del_contrato'] ?? null,
+            'entity_name' => $row['nombre_entidad'] ?? '',
+            'contractor_name' => $row['proveedor_adjudicado'] ?? null,
+            'object' => $row['descripcion_del_proceso'] ?? null,
+            'contract_type' => $row['tipo_de_contrato'],
+            'value' => $row['valor_del_contrato'] ?? null,
+            'signed_at' => $row['fecha_de_firma'] ?? null,
+            'end_date' => $row['fecha_de_fin_del_contrato'] ?? null,
+            'status' => $status,
+            'department_code' => $departmentCode,
+            'municipality_code' => $municipalityCode,
+            'secop_url' => $row['urlproceso']['url'] ?? null,
+            'raw_payload' => $row,
+        ];
+
+        // US-048-MNT: uno archivado sigue archivado, al día; vuelve si SECOP lo reabre.
+        if (ContractArchive::isArchived($row['id_contrato'])) {
+            $endDate = $attributes['end_date'] ? Carbon::parse($attributes['end_date']) : null;
+
+            if (ContractArchive::isArchivable($status, $endDate, today())) {
+                ContractArchive::refresh($row['id_contrato'], $attributes);
+
+                return SecopRowOutcome::Updated;
+            }
+
+            ContractArchive::restore($row['id_contrato']);
+        }
+
+        $contract = Contract::fromSecop(fn () => Contract::updateOrCreate(['secop_contract_id' => $row['id_contrato']], $attributes));
 
         return $contract->wasRecentlyCreated ? SecopRowOutcome::Inserted : SecopRowOutcome::Updated;
     }

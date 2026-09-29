@@ -19,6 +19,8 @@ use App\Http\Controllers\Tenant\PublicWorksiteController;
 use App\Http\Controllers\Tenant\ReceiptController;
 use App\Http\Controllers\Tenant\ReportController;
 use App\Http\Controllers\Tenant\SetPasswordController;
+use App\Http\Controllers\Tenant\SummaryController;
+use App\Http\Controllers\Tenant\SuperAdminAuthorizationController;
 use App\Http\Controllers\Tenant\TerritoryController;
 use App\Http\Controllers\Tenant\WorksiteController;
 use App\Http\Controllers\Tenant\WorksiteGroupController;
@@ -104,6 +106,14 @@ Route::middleware([
             Route::patch('/worksites/{worksite}/location', [WorksiteLocationController::class, 'update'])->name('worksites.location.update');
             // US-045-INT: agrupar varios contratos en una ficha de obra.
             Route::post('/worksites/group', [WorksiteGroupController::class, 'store'])->name('worksites.group');
+
+            // US-042-SEC: autorizar al Super Administrador a reportar en nombre de la organización (30 días).
+            Route::get('/authorizations/super-admin', [SuperAdminAuthorizationController::class, 'show'])->name('authorizations.super-admin.show');
+            Route::post('/authorizations/super-admin', [SuperAdminAuthorizationController::class, 'store'])->name('authorizations.super-admin.store');
+            Route::delete('/authorizations/super-admin', [SuperAdminAuthorizationController::class, 'destroy'])->name('authorizations.super-admin.destroy');
+
+            // US-049-RPT: el resumen del territorio.
+            Route::get('/summary', SummaryController::class)->name('summary');
 
             // US-036 / US-037: la bandeja de entrada y las decisiones
             // editoriales, de a una evidencia (no hay publicación masiva).

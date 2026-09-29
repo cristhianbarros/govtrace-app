@@ -907,6 +907,35 @@ Suite: 494 en verde. Cada regla nueva se comprobó rompiéndola a propósito: 20
 **Done-when:** US-042-SEC (5 casos), US-048-MNT (4) y US-049-RPT (2) en verde.
 **Cubre:** US-042-SEC, US-048-MNT, US-049-RPT · R-SA-02, R-MNT-04.
 
+**✅ Cumplido (2026-09-29, con Opus xhigh):** backend en verde, visto en rojo antes de implementar (clases, tablas o rutas inexistentes):
+- `SuperAdminAuthorizationTest`: US-042-SEC, 5/5, más 5 derivados;
+- `ContractArchiveTest`: US-048-MNT, 4/4, más 6 derivados;
+- `TerritorySummaryTest`: US-049-RPT, 2/2, más 2 derivados.
+
+Suite: 518 en verde. Cada regla nueva se comprobó rompiéndola a propósito: 15 casos, todos atrapados por su test. Las pantallas (la autorización y el resumen) son de la it. 29.
+
+- **Autorización al Super Administrador** (US-042-SEC, R-SA-02):
+  - el Administrador la ve, la otorga o la revoca en `GET · POST · DELETE /authorizations/super-admin`;
+  - vale 30 días, hay una sola vigente a la vez, y otorgarla y revocarla quedan en el log de auditoría;
+  - `LOCK TABLE` evita que dos clics dejen dos vigentes.
+- **El Super Administrador reporta** desde el panel global, en `POST /admin/organizations/{id}/reports`, con el mismo reporte y las mismas reglas que la PWA. `StoreReportRequest` lee ese reporte para los dos, y cada uno queda en el log de auditoría.
+- **Archivado mensual** (US-048-MNT, R-MNT-04): `ArchiveOldContracts` corre el día 1 a las 05:00, tras la sincronización y el cálculo de riesgo. Mueve a `archived_contracts` (base central, mismas columnas y mismo id) los contratos cerrados según SECOP hace más de 5 años que ninguna organización tiene en una ficha.
+  - Si llega un reporte de uno archivado, `CreateReport` lo devuelve a la base principal antes de validar.
+  - La sincronización nocturna, que trae todos los contratos del departamento, mantiene al día la copia archivada, y lo devuelve si SECOP lo reabre.
+- **Resumen del territorio** (US-049-RPT): `GET /summary`, del Administrador, trae las obras por color, las evidencias por clasificación y por mes, y los veedores activos.
+
+**Decisiones de la iteración, para confirmar:**
+1. **El Super Administrador reporta a través de un miembro de sistema de la organización,** "Super Administrador de GovTrace" (`super-admin@govtrace.invalid`). Un reporte siempre pertenece a un miembro de la organización, y su seudónimo sale de ese miembro (D7).
+   - Nadie puede entrar como él: no tiene contraseña, invitación ni rol, y nunca recibe un enlace para restablecer la contraseña.
+   - Su reporte llega oculto a la bandeja, como cualquier otro, y el Administrador decide.
+2. **Una segunda autorización mientras hay una vigente se rechaza,** no se renueva. Para extenderla, se revoca y se otorga otra.
+3. **Qué se archiva:** los contratos "terminado" o "Cerrado" (R-SEC-07) con fecha de fin de hace más de 5 años.
+   - Nunca uno en ejecución (sin cerrar, es de los que están en riesgo) ni uno anulado.
+   - Tampoco uno que alguna organización, activa o suspendida, tenga en una ficha, aunque la ficha no tenga reportes: su vista pública lo muestra. Es más conservador que "sin evidencias".
+4. **El que vuelve por un reporte pasa por las reglas de siempre.** Con la ventana de 12 meses, un contrato cerrado hace 5 años no es reportable: vuelve y el reporte se rechaza, y el archivado siguiente lo vuelve a sacar. Solo se acepta si el Super Administrador amplió la ventana (US-038-CFG).
+5. **Qué cuenta el resumen:** todas las evidencias recibidas, publicadas u ocultas, salvo las rechazadas, porque no eran de la obra. Los meses van en la hora de Colombia. Los colores son los del mapa público. Los veedores activos excluyen a los desactivados y las invitaciones pendientes.
+6. **Hallazgo, fuera del alcance:** el calendario de tareas corre en UTC, que es la zona de la aplicación. La "sincronización 02:00" (R-CFG-02, US-038-CFG) corre a las 21:00 de Colombia, y el cálculo de riesgo a las 22:00. Si la hora del parámetro es de Colombia, basta con `->timezone('America/Bogota')` en `NightlySchedule`. No lo cambié sin confirmarlo.
+
 ### Iteración 26 — Sitio público: mapa, vista de obra y línea de tiempo (la pantalla pública central)
 **Entregable:** mapa Leaflet/OSM con pines por color; vista de obra con la tarjeta del contrato y la línea de tiempo (visor, lápidas, botón "Verificar Sello Blockchain"); aviso de organización suspendida.
 **Done-when:** Vitest de los estados de US-027, US-029 y US-017 en verde (sin obras, carga, lápida, badge de anulado).

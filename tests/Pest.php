@@ -159,10 +159,22 @@ function sha256Of(UploadedFile $file): string
  */
 function sendReport(OrganizationUser $veedor, array $overrides = [], string $host = 'veeduria-smr.govtrace.localhost'): TestResponse
 {
+    return test()->actingAs($veedor, 'tenant')->postJson("http://{$host}/reports", reportPayload($overrides));
+}
+
+/**
+ * What the PWA sends for a report (US-008): from 120 m north of the Santa
+ * Marta worksite, one photo with its SHA-256.
+ *
+ * @param  array<string, mixed>  $overrides
+ * @return array<string, mixed>
+ */
+function reportPayload(array $overrides = []): array
+{
     [$latitude, $longitude] = pointMetersNorthOf(santaMartaWorksiteLocation(), 120);
     $files = $overrides['files'] ?? [evidencePhoto()];
 
-    return test()->actingAs($veedor, 'tenant')->postJson("http://{$host}/reports", array_merge([
+    return array_merge([
         'secop_contract_id' => 'CO1.PCCNTR.1234567',
         'classification' => 'Retraso',
         'comment' => 'Obra detenida hace 2 meses',
@@ -172,7 +184,7 @@ function sendReport(OrganizationUser $veedor, array $overrides = [], string $hos
         'captured_at' => now()->subMinutes(2)->toIso8601String(),
         'files' => $files,
         'hashes' => array_map(sha256Of(...), $files),
-    ], $overrides));
+    ], $overrides);
 }
 
 /**

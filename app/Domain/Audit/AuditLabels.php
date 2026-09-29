@@ -24,6 +24,9 @@ final class AuditLabels
         'observer.reactivated' => 'Reactivó a un veedor',
         'parameter.changed' => 'Cambió un parámetro global',
         'seal.resent' => 'Reenvió el sellado de una evidencia',
+        'super_admin.authorized' => 'Autorizó al Super Administrador a reportar',
+        'super_admin.authorization_revoked' => 'Revocó la autorización al Super Administrador',
+        'report.created_by_super_admin' => 'Creó un reporte en nombre de la organización',
     ];
 
     private const ACTORS = [
