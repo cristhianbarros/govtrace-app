@@ -101,7 +101,7 @@ it('returns the full object text untruncated, leaving the tooltip truncation to 
     expect($page->getCollection()->first()->object)->toBe($longObject);
 });
 
-it('a watched department includes its Gobernación and every one of its municipalities, and nothing outside it', function () {
+it('Un departamento incluye la Gobernación y todos sus municipios, y nada de fuera: a watched department includes its Gobernación and every one of its municipalities, and nothing outside it', function () {
     // La Gobernación: SECOP la publica con departamento conocido y
     // ciudad "No Definido" — no tiene municipio (it. 7 lo descartaba;
     // esta historia obliga a guardarlo como un contrato departamental).

@@ -109,16 +109,16 @@ Route::middleware([
     Route::get('/reset-password/{token}', [PasswordResetController::class, 'resetForm'])->name('tenant.password.reset');
     Route::post('/reset-password', [PasswordResetController::class, 'reset'])->name('tenant.password.update');
 
-    // Placeholders hasta que it. 18/it. 19 construyan los paneles reales.
-    // EnsureAccountIsUsable: una organización suspendida o una cuenta
-    // desactivada cierran la sesión en su siguiente petición (US-003a, US-006).
+    // Con sesión, dentro de la organización. EnsureAccountIsUsable: una
+    // organización suspendida o dada de baja, o una cuenta desactivada,
+    // cierran la sesión en su siguiente petición (US-003a, US-003b, US-006).
     Route::middleware(['auth:tenant', EnsureAccountIsUsable::class])->group(function () {
         // US-018: cerrar sesión (la app del veedor avisa antes si tiene reportes sin enviar).
         Route::post('/logout', [LoginController::class, 'destroy'])->name('tenant.logout');
 
         // El panel del Administrador abre en la bandeja de entrada (it. 18).
         Route::get('/organization/dashboard', fn () => redirect('/admin/inbox'))->name('organization.dashboard');
-        // El panel del veedor es "Nuevo Reporte" hasta "Mis Reportes" (it. 28).
+        // El veedor entra a "Nuevo Reporte", su pantalla central; desde ahí llega a "Mis Reportes".
         Route::get('/veedor/dashboard', fn () => redirect('/reports/new'))->name('veedor.dashboard');
 
         // US-005: solo el Administrador de Organización invita veedores.

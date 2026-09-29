@@ -42,6 +42,8 @@ pipeline {
         stage('Format Check') {
             steps {
                 sh 'make lint'
+                // Every Gherkin scenario has a test named after it (it. 36).
+                sh 'make trace-check'
             }
         }
 

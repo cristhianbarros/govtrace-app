@@ -2,6 +2,7 @@
 
 namespace App\Domain\Audit;
 
+use App\Domain\Audit\Exceptions\AuditLogIsAppendOnly;
 use Illuminate\Database\Eloquent\Model;
 use Stancl\Tenancy\Database\Concerns\CentralConnection;
 
@@ -11,12 +12,21 @@ use Stancl\Tenancy\Database\Concerns\CentralConnection;
  * dentro de cada tenant (publicar/rechazar evidencia, invitar veedor…) —
  * siempre en la base central, para que el Super Administrador pueda
  * consultar todo sin abrir cada base de datos (US-043-MON, it. 21).
+ *
+ * R-MNT-03: se conserva para siempre — una entrada no se edita ni se
+ * borra (it. 36).
  */
 class AuditLog extends Model
 {
     use CentralConnection;
 
     public const UPDATED_AT = null;
+
+    protected static function booted(): void
+    {
+        static::updating(fn () => throw AuditLogIsAppendOnly::make());
+        static::deleting(fn () => throw AuditLogIsAppendOnly::make());
+    }
 
     protected $fillable = [
         'organization_id', 'actor_type', 'actor_id', 'actor_name',

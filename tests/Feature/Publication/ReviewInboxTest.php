@@ -66,7 +66,7 @@ function publicView(Tenant $tenant, int $worksiteId): array
     ]);
 }
 
-it('is born hidden when sealed, and does not show on the public map', function () {
+it('Toda evidencia sellada nace oculta: is born hidden when sealed, and does not show on the public map', function () {
     $reportId = sealedReport($this->tenant, $this->veedor);
 
     $report = $this->tenant->run(fn () => Report::query()->with('seal')->findOrFail($reportId));
@@ -150,14 +150,14 @@ it('does not reject without a reason', function (array $payload) {
     'solo espacios' => [['reason' => '   ']],
 ]);
 
-it('only lets the Administrador de la organización publish', function () {
+it('Solo el Administrador de la organización publica: only lets the Administrador de la organización publish', function () {
     editorialDecision($this->veedor, 'publish', $this->hidden[0])->assertForbidden();
     inbox($this->veedor)->assertForbidden();
 
     expect(editorialStatusOf($this->tenant, $this->hidden[0]))->toBe('Oculto');
 });
 
-it('does not let an Administrador publish evidences of another organization', function () {
+it('Un Administrador no publica evidencias de otra organización: does not let an Administrador publish evidences of another organization', function () {
     // "Veeduría Ciénaga", con su propio Administrador: el primer usuario de
     // su base, con el mismo id que el de Santa Marta en la suya.
     $cienaga = (new RegisterOrganization)->handle('890000062-6', 'Veeduría Ciénaga', 'veeduria-cienaga');

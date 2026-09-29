@@ -76,7 +76,7 @@ it('corrects the official location, and the geofence of the veedores follows it'
     'escribiendo latitud y longitud' => ['campos'],
 ]);
 
-it('records every correction in the audit log: who, when, the previous and the new coordinates', function () {
+it('Cada corrección queda en el log de auditoría: records every correction in the audit log: who, when, the previous and the new coordinates', function () {
     correctLocation($this->administrator, 'veeduria-smr', $this->gaira->id, 11.2408, -74.1990)->assertOk();
 
     $entry = AuditLog::query()->where('action', 'worksite.location_corrected')->sole();
@@ -89,7 +89,7 @@ it('records every correction in the audit log: who, when, the previous and the n
         ->and($entry->after)->toBe(['worksite_id' => $this->gaira->id, 'latitude' => 11.2408, 'longitude' => -74.199]);
 });
 
-it('does not touch the same worksite in another organization', function () {
+it('La corrección no afecta a otra organización: does not touch the same worksite in another organization', function () {
     // "Veeduría Ciénaga" también vigila la obra, con su propia ficha.
     $cienaga = (new RegisterOrganization)->handle('890000062-6', 'Veeduría Ciénaga', 'veeduria-cienaga');
     (new ConfigureTerritory)->handle($cienaga, ['47']);

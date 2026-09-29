@@ -46,11 +46,11 @@ it('rejects an empty territory', function () {
     (new ConfigureTerritory)->handle($this->tenant, []);
 })->throws(OrganizationValidationException::class, 'Debe seleccionar al menos un departamento o municipio para delimitar el territorio de vigilancia.');
 
-it('rejects a code that does not exist in DIVIPOLA', function () {
+it('No se acepta un código geográfico que no esté en la tabla DIVIPOLA: rejects a code that does not exist in DIVIPOLA', function () {
     (new ConfigureTerritory)->handle($this->tenant, ['99999']);
 })->throws(OrganizationValidationException::class);
 
-it('removing a municipality replaces the territory without touching anything else', function () {
+it('Quitar una ciudad no borra lo que ya se registró en ella: removing a municipality replaces the territory without touching anything else', function () {
     (new ConfigureTerritory)->handle($this->tenant, ['47001', '47189']); // Santa Marta + Ciénaga
 
     (new ConfigureTerritory)->handle($this->tenant, ['47001']); // se quita Ciénaga

@@ -47,7 +47,7 @@ function secopRow(array $overrides = []): array
 
 // US-032: solo contratos de tipo "Obra" ------------------------------------
 
-it('keeps or discards a contract by its official SECOP contract type', function (string $tipo, SecopRowOutcome $expected) {
+it('Filtro por el tipo de contrato oficial de SECOP II: keeps or discards a contract by its official SECOP contract type', function (string $tipo, SecopRowOutcome $expected) {
     $outcome = (new ProcessSecopContractRow)->handle(secopRow(['tipo_de_contrato' => $tipo]));
 
     expect($outcome)->toBe($expected)
@@ -62,14 +62,14 @@ it('keeps or discards a contract by its official SECOP contract type', function 
 
 // US-033: sincronización incremental sin duplicados ------------------------
 
-it('inserts a new contract', function () {
+it('Un contrato nuevo se inserta: inserts a new contract', function () {
     $outcome = (new ProcessSecopContractRow)->handle(secopRow());
 
     expect($outcome)->toBe(SecopRowOutcome::Inserted)
         ->and(Contract::query()->where('secop_contract_id', 'CO1.PCCNTR.1234567')->count())->toBe(1);
 });
 
-it('updates an existing contract without duplicating it', function () {
+it('Un contrato modificado se actualiza sin duplicarse: updates an existing contract without duplicating it', function () {
     (new ProcessSecopContractRow)->handle(secopRow(['valor_del_contrato' => '1000000000.000000']));
 
     $outcome = (new ProcessSecopContractRow)->handle(secopRow(['valor_del_contrato' => '1200000000.000000']));
@@ -81,7 +81,7 @@ it('updates an existing contract without duplicating it', function () {
         ->and((float) $contracts->first()->value)->toBe(1200000000.00);
 });
 
-it('the unique constraint on secop_contract_id blocks a duplicate row', function () {
+it('La base de datos impide duplicar el identificador: the unique constraint on secop_contract_id blocks a duplicate row', function () {
     (new ProcessSecopContractRow)->handle(secopRow());
 
     expect(fn () => Contract::fromSecop(fn () => Contract::query()->create([
@@ -94,7 +94,7 @@ it('the unique constraint on secop_contract_id blocks a duplicate row', function
     ])))->toThrow(QueryException::class);
 });
 
-it('a contract SECOP reports as Anulado is marked cancelled, never deleted', function (bool $hasEvidence) {
+it('Un contrato anulado en SECOP nunca se borra: a contract SECOP reports as Anulado is marked cancelled, never deleted', function (bool $hasEvidence) {
     (new ProcessSecopContractRow)->handle(secopRow());
 
     // "con evidencias selladas" no se puede simular todavía (it. 10+); lo
@@ -123,7 +123,7 @@ it('treats the real SECOP II status "Cancelado" as cancelled too (recorded fixtu
 
 // R-SEC-01: nadie edita ni borra un contrato a mano ------------------------
 
-it('rejects a manual edit to a synced contract', function () {
+it('Los datos de un contrato no se pueden editar manualmente: rejects a manual edit to a synced contract', function () {
     (new ProcessSecopContractRow)->handle(secopRow());
 
     $contract = Contract::query()->where('secop_contract_id', 'CO1.PCCNTR.1234567')->first();

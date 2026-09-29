@@ -91,7 +91,7 @@ function sealOf(int $reportId): ReportSeal
     return test()->tenant->run(fn () => ReportSeal::query()->where('report_id', $reportId)->sole());
 }
 
-it('seals a single Merkle root per report: one leaf per file plus the metadata leaf', function () {
+it('Sellado de una sola raíz de Merkle por reporte: seals a single Merkle root per report: one leaf per file plus the metadata leaf', function () {
     $reportId = reportWithThreePhotos();
 
     runSealReport($reportId);
@@ -125,7 +125,7 @@ it('seals a single Merkle root per report: one leaf per file plus the metadata l
     ]]);
 });
 
-it('walks a report through Recibida, En Cola, Transmitiendo and Sellada', function () {
+it('Recorrido de estados hasta "Sellada": walks a report through Recibida, En Cola, Transmitiendo and Sellada', function () {
     $this->network->closesLedgerRightAway = false;
 
     $reportId = reportWithThreePhotos();
@@ -154,7 +154,7 @@ it('walks a report through Recibida, En Cola, Transmitiendo and Sellada', functi
         ->and($sealed->sealed_at)->not->toBeNull();
 });
 
-it('stays Transmitiendo while the network has not closed a ledger with the transaction', function () {
+it('Mientras la red no cierre un ledger con la transacción, la evidencia no está sellada: stays Transmitiendo while the network has not closed a ledger with the transaction', function () {
     $this->network->closesLedgerRightAway = false;
     $reportId = reportWithThreePhotos();
     runSealReport($reportId);
@@ -164,7 +164,7 @@ it('stays Transmitiendo while the network has not closed a ledger with the trans
     expect(sealOf($reportId)->status->label())->toBe('Transmitiendo');
 });
 
-it('seals the root the server computed, ignoring the one the phone sent', function () {
+it('El servidor ignora la raíz enviada por el teléfono: seals the root the server computed, ignoring the one the phone sent', function () {
     $phoneRoot = str_repeat('ab', 32);
 
     $reportId = reportWithThreePhotos(['merkle_root' => $phoneRoot]);
@@ -177,7 +177,7 @@ it('seals the root the server computed, ignoring the one the phone sent', functi
         ->and($this->network->submissions[0]['root'])->toBe($seal->merkle_root);
 });
 
-it('never asks the veedor for a Stellar account, a wallet, a signature or XLM', function () {
+it('El veedor nunca ve billeteras ni comisiones: never asks the veedor for a Stellar account, a wallet, a signature or XLM', function () {
     // R-BLK-01: el reporte se crea sin nada criptográfico, y la respuesta
     // no le devuelve al veedor nada que firmar ni pagar.
     $response = sendReport($this->veedor, ['files' => [distinctPhoto(1)]])->assertCreated();
@@ -190,7 +190,7 @@ it('never asks the veedor for a Stellar account, a wallet, a signature or XLM', 
     expect(sealOf($response->json('id'))->status->label())->toBe('Sellada');
 });
 
-it('the sealer account signs and the sponsor account pays; no secret key in the repository or .env.example', function () {
+it('Firma la cuenta selladora y paga la cuenta patrocinadora: the sealer account signs and the sponsor account pays; no secret key in the repository or .env.example', function () {
     // Que la selladora firme y la patrocinadora pague con fee bump se
     // comprueba en la red real (StellarSealingNetworkTest, make
     // test-stellar). Aquí, que ninguna llave secreta se versiona (R-BLK-04).
@@ -209,7 +209,7 @@ it('the sealer account signs and the sponsor account pays; no secret key in the 
         ->toMatch('/^STELLAR_SPONSOR_SECRET=$/m');
 });
 
-it('pauses sealing and alerts the Super Administrador when the sponsor account runs out of XLM', function () {
+it('La cuenta patrocinadora se queda sin saldo: pauses sealing and alerts the Super Administrador when the sponsor account runs out of XLM', function () {
     $superAdmin = SuperAdmin::factory()->create();
     $this->network->sponsorFunded = false;
 

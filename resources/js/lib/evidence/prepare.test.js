@@ -9,7 +9,7 @@ import { kindOf, prepareEvidence } from './prepare.js';
 const sha256Of = async (file) => createHash('sha256').update(Buffer.from(await file.arrayBuffer())).digest('hex');
 
 describe('prepareEvidence', () => {
-    it('hashes the optimized photo, not the one the camera took', async () => {
+    it('Fotos optimizadas, sin EXIF y con hash calculado en el teléfono: hashes the optimized photo, not the one the camera took', async () => {
         const original = new File(['foto original de 4 MB con EXIF'], 'IMG_0001.HEIC', { type: 'image/heic' });
         const optimized = new File(['foto optimizada, sin EXIF'], 'IMG_0001.jpg', { type: 'image/jpeg' });
         const optimizePhoto = vi.fn(async () => optimized);
@@ -23,7 +23,7 @@ describe('prepareEvidence', () => {
         expect(evidence.sha256).not.toBe(await sha256Of(original));
     });
 
-    it('hashes the PDF once its metadata is cleaned', async () => {
+    it('Los metadatos del PDF se limpian antes del hash: hashes the PDF once its metadata is cleaned', async () => {
         const original = new File(['%PDF con autor'], 'acta.pdf', { type: 'application/pdf' });
         const cleaned = new File(['%PDF sin metadatos'], 'acta.pdf', { type: 'application/pdf' });
         const cleanPdfMetadata = vi.fn(async () => cleaned);

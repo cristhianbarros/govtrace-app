@@ -2,9 +2,11 @@
 
 namespace App\Application\Organization;
 
+use App\Domain\Audit\AuditLog;
 use App\Domain\Organization\Exceptions\OrganizationValidationException;
 use App\Domain\Organization\Roles;
 use App\Domain\Organization\User;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
 /**
@@ -37,6 +39,17 @@ class InviteObserver
 
         // US-038-CFG: con la vigencia configurada hoy (48 h por defecto).
         InvitationLink::issue($user);
+
+        // R-AUD-04: quién invitó, a quién y hasta cuándo vale el enlace.
+        $administrator = Auth::guard('tenant')->user();
+        AuditLog::record(
+            action: 'observer.invited',
+            organizationId: tenant()->getTenantKey(),
+            actorType: 'organization_admin',
+            actorId: $administrator ? (string) $administrator->getKey() : null,
+            actorName: $administrator?->name,
+            after: InvitationLink::audited($user),
+        );
 
         return $user;
     }

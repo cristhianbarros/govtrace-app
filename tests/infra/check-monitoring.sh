@@ -83,7 +83,7 @@ if ! docker logs "$PREFIX-gatus" 2>&1 | grep -q 'Validated 1 endpoints' \
 fi
 pass "Gatus arrancó con ops/monitoring/gatus.yaml y ve a GovTrace en pie"
 
-echo "== 1. Una interrupción corta (3 fallas, menos que el umbral) no genera alerta"
+echo "== 1. Una interrupción de menos de 5 minutos no genera alerta: 3 fallas, menos que el umbral"
 docker stop -t 0 "$PREFIX-target" >/dev/null
 sleep 3
 docker start "$PREFIX-target" >/dev/null
@@ -91,7 +91,7 @@ sleep 5
 [ "$(webhooks)" -eq 0 ] && pass "ningún webhook" || fail "llegó un webhook por una caída corta"
 [ "$(emails)" = "0" ] && pass "ningún correo" || fail "llegó un correo por una caída corta"
 
-echo "== 2. Una caída que supera el umbral alerta por webhook y por correo"
+echo "== 2. Caída de más de 5 minutos: supera el umbral y alerta por webhook y por correo"
 docker stop -t 0 "$PREFIX-target" >/dev/null
 sleep 9
 docker logs "$PREFIX-webhook" 2>/dev/null | grep -q 'RECEIVED .*CAÍDA' && pass "webhook de caída recibido" || fail "no llegó el webhook de caída"

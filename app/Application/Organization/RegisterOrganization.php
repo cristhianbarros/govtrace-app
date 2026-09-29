@@ -2,18 +2,23 @@
 
 namespace App\Application\Organization;
 
+use App\Domain\Audit\AuditLog;
 use App\Domain\Organization\Exceptions\OrganizationValidationException;
 use App\Domain\Organization\Nit;
 use App\Domain\Organization\OrganizationName;
 use App\Domain\Organization\Subdomain;
 use App\Infrastructure\Tenancy\Tenant;
 use App\Jobs\SyncSecopContracts;
+use Illuminate\Support\Facades\Auth;
+use Throwable;
 
 /**
  * US-001: only the Super Administrator runs this. Registering an
  * organization creates the tenant AND its domain in one step — the alta
  * itself is the approval, there is no separate pending state
- * (project-context.md, decisión confirmada en Épicas P4).
+ * (project-context.md, decisión confirmada en Épicas P4). All or nothing:
+ * a failure half way leaves no organization behind (it. 36), and the alta
+ * goes to the audit log (R-AUD-04).
  *
  * Order matters: format/check-digit validation happens before the
  * uniqueness queries, so a malformed NIT never touches the database
@@ -48,13 +53,33 @@ class RegisterOrganization
             throw OrganizationValidationException::duplicateSubdomain();
         }
 
-        $tenant = Tenant::create([
+        $tenant = new Tenant([
             'nit' => $nit->value(),
             'name' => $name->value,
             'status' => 'active',
         ]);
 
-        $tenant->domains()->create(['domain' => $domainName]);
+        try {
+            // Guardarla crea y migra su base (TenantCreated); después, su dominio.
+            $tenant->save();
+            $tenant->domains()->create(['domain' => $domainName]);
+        } catch (Throwable $e) {
+            // Nada a medio crear: el NIT y el subdominio quedan libres otra vez.
+            $this->undo($tenant);
+
+            throw $e;
+        }
+
+        $actor = Auth::guard('web')->user();
+
+        AuditLog::record(
+            action: 'organization.registered',
+            organizationId: $tenant->id,
+            actorType: 'super_admin',
+            actorId: $actor ? (string) $actor->getKey() : null,
+            actorName: $actor?->name,
+            after: ['nit' => $nit->value(), 'name' => $name->value, 'subdomain' => $domainName],
+        );
 
         // US-013, edge "sincronización inmediata al dar de alta": no
         // espera a la corrida nocturna. Recién creada todavía no tiene
@@ -64,5 +89,17 @@ class RegisterOrganization
         SyncSecopContracts::dispatch($tenant->id);
 
         return $tenant;
+    }
+
+    /**
+     * What got created before the failure: its row and, if it got that far,
+     * its database (TenantDeleted drops it). The row goes first; if the
+     * database never existed, dropping it fails, and that is fine.
+     */
+    private function undo(Tenant $tenant): void
+    {
+        if ($tenant->exists) {
+            rescue(fn () => $tenant->delete(), report: false);
+        }
     }
 }

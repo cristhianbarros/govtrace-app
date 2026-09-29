@@ -35,6 +35,7 @@
 | D11 | Custodia de las llaves (R-BLK-04) | ✅ **Resuelta (2026-09-28).** Para el MVP y testnet, **(a)**: las llaves de la selladora y la patrocinadora se inyectan como variables de entorno al arrancar, desde un gestor de secretos (en CI, las credenciales de Jenkins); nunca en el repositorio, su historial ni `.env.example`. La patrocinadora es una **hot wallet**: tiene el saldo de unos días de sellos y la recarga seguido una cuenta de **tesorería** fría, que no vive en el servidor. La selladora no tiene fondos. **Mejora futura, antes de la red principal: (b)** firma remota Ed25519 sin que la llave salga del servicio (p. ej. HashiCorp Vault Transit), detrás de la misma interfaz `SealingNetwork`. | it. 14 |
 | D12 | Umbral de saldo de la cuenta patrocinadora (US-021, US-022, US-038-CFG) | ✅ **Resuelta (2026-09-28).** Umbral de alerta de **50 XLM** (`sponsor_balance_alert_threshold_xlm`, ~200 sellos de 0,2425 XLM); reemplaza al parámetro en POL de la it. 6. La **tesorería** paga el despliegue y la extensión de la vigencia de la instancia y del código del contrato, así la hot wallet solo paga sellos. Se mantiene la vigencia máxima por sello (se revisa en la it. 23). Detalle en la it. 14. | it. 21 |
 | D10 | Proximidad (US-019) | Haversine en SQL, sin PostGIS | it. 31 |
+| D13 | Red principal de Stellar (R-CFG-01, it. 37) | ✅ **Resuelta (2026-09-29).** El RPC de Stellar (JSON-RPC de Soroban, no Horizon) lo da un proveedor, **QuickNode o Validation Cloud**: la red principal no tiene un RPC público gratuito como el de testnet. **Dos endpoints:** `STELLAR_RPC_URL`, privado, para el servidor, y `STELLAR_PUBLIC_RPC_URL`, de solo lectura y restringido al dominio de GovTrace, para el validador del navegador, así el token del proveedor no queda a la vista. La **tesorería la fondea el presupuesto operativo central** del proyecto (el operador del SaaS), desde un exchange corporativo. Presupuesto: **28 XLM iniciales** (subir el código, desplegar la instancia y extender su vigencia), **unos 27 XLM cada ~180 días** para volver a extenderla, y la patrocinadora aparte, con alerta bajo 50 XLM (D12). | it. 37 |
 
 ### Convenciones de pruebas
 - **Backend:** Pest en `tests/Feature/<Épica>/US-XXX…Test.php`, con un test por `Escenario` y el mismo nombre. Cada `Esquema` es un test con `->with()` (dataset).
@@ -1394,11 +1395,26 @@ Salen de `/audit` (`specs/AUDIT.md`). Ninguna bloquea el PR; las dos bloquean la
 
 **Cubre:** R-AUD-04, R-MNT-03, R-VC-01, R-TST-04 · US-001, US-002, US-005.
 
+**✅ Cumplido (2026-09-29, con Opus xhigh):** en verde y visto en rojo antes de implementar, salvo dos tests negativos que ya pasaban (abajo).
+- **Log de auditoría completo (R-AUD-04).** Registran quién, cuándo y qué:
+  - el alta de una organización (`organization.registered`: NIT, nombre y subdominio);
+  - la asignación de su Administrador inicial (`organization.administrator_assigned`);
+  - la invitación de un veedor (`observer.invited`, con la vigencia del enlace).
+  - Un alta o una asignación rechazadas no se registran.
+- **Log inmutable (R-MNT-03):** `AuditLog` no se edita ni se borra (`AuditLogIsAppendOnly`), con la misma guarda que reportes y sellos.
+- **R-VC-01:** el test de que un veedor no puede invitar (403, nadie invitado, ningún correo). Ya pasaba: la ruta estaba protegida por rol y faltaba la prueba. La comprobación rompiéndolo a propósito confirma que atrapa sacar la ruta del grupo del Administrador.
+- **Alta atómica:** si falla en el camino — antes de crear su base, al prepararla o al crear su dominio —, no queda la organización, ni su base, ni su dominio, y el mismo NIT y el mismo subdominio se registran después.
+- **Trazabilidad:** 69 tests de las it. 2 a 13 y 20 (algunos escenarios tienen varios) llevan ahora el nombre de su escenario, y las dos secciones de `check-monitoring.sh` el de los de US-044-MON. **`make trace-check`**, nuevo y en la etapa Format Check del pipeline, comprueba que los 249 escenarios tienen un test con su nombre, y falla si uno lo pierde.
+- **Página del dominio central:** dice qué es GovTrace, que cada organización publica su mapa en su subdominio (R-MAP-01) y lleva al panel global; ya no dice "GovTrace está listo para construirse.". Comentarios desactualizados, corregidos.
+- **Decisiones registradas:** R-PRIV-03 enmendada en la SPEC, y D13, la red principal: RPC de un proveedor con dos endpoints y el presupuesto de la tesorería.
+
+Suite: 694 en verde (11 nuevos). Vitest: 351 (1 nuevo). `make trace-check`: 249 de 249. Cada regla nueva se comprobó rompiéndola a propósito: 9 casos, todos atrapados. Además, el rastreo falla si a un test le falta el nombre de su escenario.
+
 ### Iteración 37 — Salida a la red principal (bloquea la salida a producción)
 **Entregable:**
 - **red principal de Stellar (R-CFG-01):**
   - scripts de despliegue y de extensión de la vigencia con la tesorería, los mismos de testnet con la red como parámetro;
-  - el proveedor de RPC público elegido;
+  - el proveedor de RPC (D13), con sus dos endpoints: `STELLAR_RPC_URL` privado y `STELLAR_PUBLIC_RPC_URL` restringido al dominio;
   - el contrato registrado en `tools/verify/contracts.json`;
   - una plantilla `.env.production.example` sin secretos;
 - **firma remota (D11 opción b, "antes de la red principal"):** la llave de la selladora no sale del servicio de firma, detrás de la misma interfaz `SealingNetwork`;
@@ -1412,9 +1428,9 @@ Salen de `/audit` (`specs/AUDIT.md`). Ninguna bloquea el PR; las dos bloquean la
 - la restauración de prueba en producción, anotada en `docs/restore.md`, con menos de 1 h de datos perdidos y menos de 4 h de recuperación (R-BCK-05);
 - `docs/go-live.md` con la lista de salida marcada.
 
-**Cubre:** R-CFG-01, R-BCK-02, R-BCK-05 · D11 (b).
+**Cubre:** R-CFG-01, R-BCK-02, R-BCK-05 · D11 (b), D13.
 
-**Decisión que necesita al usuario:** el despliegue en la red principal cuesta XLM reales, que pone la tesorería. Hay que elegir quién la fondea y el proveedor de RPC.
+**✅ Resuelto (D13, 2026-09-29):** la tesorería la fondea el presupuesto operativo central, desde un exchange corporativo (28 XLM iniciales, unos 27 XLM cada ~180 días). El RPC lo da QuickNode o Validation Cloud, con dos endpoints: privado para el servidor y restringido al dominio para el navegador.
 
 ## Pivote a Stellar (2026-09-28)
 
@@ -1484,13 +1500,14 @@ La decisión es tuya: el plan no la toma.
 - **Se cierran con iteraciones nuevas:**
   - la 36: log de auditoría completo e inmutable, test negativo de R-VC-01, alta atómica y nombres de los escenarios;
   - la 37: red principal, firma remota, respaldos fuera del sitio y la restauración de prueba en producción.
-- **Decisión de spec pendiente:** enmendar R-PRIV-03 a *"el ID del veedor se reemplaza por un seudónimo antes de sellar; **se publica el hash** de ese JSON, no el JSON, que trae la ubicación exacta (R-PRIV-02)"*. Así la regla dice lo que ya hace el código, y lo que aprobó el usuario el 2026-09-29, del lado de la privacidad.
+- **✅ Aprobada por el usuario (2026-09-29) y aplicada en la SPEC:** la enmienda de R-PRIV-03. Se propuso así: enmendar R-PRIV-03 a *"el ID del veedor se reemplaza por un seudónimo antes de sellar; **se publica el hash** de ese JSON, no el JSON, que trae la ubicación exacta (R-PRIV-02)"*. Así la regla dice lo que ya hace el código, y lo que aprobó el usuario el 2026-09-29, del lado de la privacidad.
 - **Recomendación:** listo para PR. No listo para producción hasta cerrar las it. 36 y 37.
+- **El usuario aprobó el 2026-09-29 las iteraciones 36 y 37 y la deuda técnica aceptada,** y resolvió la red principal (D13).
 
 ## Deuda técnica aceptada
 <!-- Hallazgos que se dejan conscientemente, con la razón y qué haría falta para retomarlos. -->
 
-No bloquean ningún criterio de aceptación. El usuario los conoce (2026-09-29).
+No bloquean ningún criterio de aceptación. **Aceptada por el usuario el 2026-09-29.**
 
 | Deuda | Por qué se acepta | Qué haría falta |
 |---|---|---|

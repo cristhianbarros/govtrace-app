@@ -21,7 +21,7 @@ return new class extends Migration
             $table->char('merkle_root', 64)->nullable()->index();
             // SHA-256 de «organización:ficha» (R-BLK-02): va a la red junto a la raíz.
             $table->char('worksite_reference', 64)->nullable();
-            // El JSON canónico sellado, tal cual (R-PRIV-03: se publica).
+            // El JSON canónico sellado, tal cual. Se publica su hash, no el JSON (R-PRIV-03).
             $table->text('metadata_json')->nullable();
             $table->string('tx_hash')->nullable();
             $table->unsignedInteger('ledger')->nullable();
