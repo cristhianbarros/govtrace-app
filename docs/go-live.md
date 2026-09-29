@@ -33,7 +33,7 @@ La salida de GovTrace a la red principal de Stellar. Lo que se preparó sin dato
 ## 2. Firma remota (D11, opción b)
 
 - ✅ **Elegido: AWS KMS** (2026-09-29).
-- ⬜ **La integración con AWS KMS** (37b). La llave de la selladora no sale de KMS; va detrás de la misma interfaz `SealingNetwork`. Primero se verifica que la llave de KMS sea Ed25519 y firme el hash de la transacción tal cual.
+- ⬜ **La integración con AWS KMS** (37b). La llave de la selladora no sale de KMS; va detrás de la misma interfaz `SealingNetwork`. La llave es `ECC_NIST_EDWARDS25519` con `SIGN_VERIFY`, y se firma con `ED25519_SHA_512` y `MessageType=RAW` sobre el hash de la transacción.
 
 ## 3. La aplicación
 
@@ -54,5 +54,5 @@ La salida de GovTrace a la red principal de Stellar. Lo que se preparó sin dato
 ## 5. Monitoreo y CI
 
 - ⬜ **El monitor externo (Gatus, `ops/monitoring`)** apuntando a producción, con correo y webhook (US-044-MON).
-- ⬜ **Las credenciales de Jenkins** para la prueba de humo en testnet: `stellar-testnet-contract-id` y las dos llaves de testnet. Si se vuelve a correr `make testnet-setup`, el ID cambia.
+- ⬜ **Las credenciales de Jenkins** para la prueba de humo en testnet, con el contrato oficial `CAKUYPROMNYKZCMCNI2N5RTWZE3JZ7RR4Q2W5FNVQNPANNMQPLJ4PLDY`: `stellar-testnet-contract-id`, `stellar-testnet-sealer-secret` y `stellar-testnet-sponsor-secret`. Las llaves salen de las identidades `govtrace-37a-sealer` y `govtrace-37a-sponsor`.
 - ✅ **El pipeline:** todas sus etapas en verde en un entorno de cero (it. 35 y 36).
