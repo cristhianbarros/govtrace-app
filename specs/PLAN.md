@@ -1334,6 +1334,44 @@ Suite: 677 en verde. Vitest: 350. Cada regla nueva se comprobó rompiéndola a p
 
 **Cubre:** R-BCK-01, R-BCK-02, R-BCK-03, R-BCK-04, R-BCK-05, R-MNT-03, R-TST-01, R-TST-02, R-CFG-01 (reglas sin Gherkin, O6).
 
+**✅ Cumplido (2026-09-29, con Opus xhigh):**
+- **Respaldos** (servicio `backup`, en el stack base):
+  - una copia al arrancar y otra cada hora en punto (R-BCK-01), de cada base de PostgreSQL (la central y la de cada organización, en el formato de `pg_restore`) y del bucket de evidencias (R-BCK-03);
+  - los archivos que no cambiaron se enlazan con la copia anterior, así 24 copias al día no ocupan 24 veces el bucket;
+  - cada copia trae su manifiesto y el SHA-256 de cada volcado, y se borra a los 30 días (R-BCK-04);
+  - una copia a medias nunca queda con el nombre de una completa;
+  - el servicio está sano mientras su última copia tenga menos de 2 horas.
+  - Comandos: `make backup-now` y `make backup-list`.
+- **Restauración de prueba** (`make restore-drill`, R-BCK-05):
+  - restaura la copia en un PostgreSQL vacío y descartable (`restore-pg`) y sus archivos en un bucket de prueba;
+  - verifica que cada organización tiene su base y que cada evidencia tiene su archivo con el mismo SHA-256;
+  - dice cuántos datos se habrían perdido y cuánto tardó.
+  - `make backup-check` prueba además que falla ante un archivo alterado o una base que falta, la retención y los enlaces. Corre en una etapa nueva del pipeline, "Backup & Restore".
+- **Runbook** `docs/restore.md`: qué se respalda, el procedimiento de restauración real paso a paso (probado sobre un servidor que ya tenía las bases), qué se pierde y qué no, y la **restauración real ejecutada**: la copia que el servicio tomó al arrancar, restaurada 14 minutos después, con **14 min 27 s de datos perdidos** (límite 1 h) y **3 s de recuperación** (límite 4 h), con los datos de desarrollo.
+- **Purga de seudónimos** (`PurgeVeedorPseudonyms`, cada día a las 06:30 UTC, R-MNT-03):
+  - borra la fila seudónimo→veedor de quien lleva 5 años sin reportar, en toda organización, con auditoría;
+  - las exportaciones (US-050-RPT, US-052-RPT) ahora calculan el seudónimo sin guardarlo (`VeedorPseudonym::compute`), así nunca devuelven un vínculo ya purgado.
+  - Pest `PseudonymRetentionTest`: 6 en verde, vistos en rojo antes de implementar.
+- **El pipeline, en verde etapa por etapa.** Aquí no hay Jenkins, así que se corrieron los mismos comandos de cada etapa del `Jenkinsfile`, en orden:
+  - en el entorno de desarrollo: Format, Backend (683), Frontend (350), E2E, Contract (6 de `cargo test`), Stellar (11 y el verificador independiente), Backup & Restore, Secrets, Monitoring y **Smoke Testnet**, un reporte hasta "Sellada" en la testnet real;
+  - en un proyecto aislado, con el entorno que pone Jenkins (su propio proyecto, puertos, red y volúmenes), desde un `make setup` de cero: Build, los 7 servicios sanos, Format, Backend (683), Frontend (350), E2E, Contract, Stellar, Backup & Restore y Secrets, todas en verde. Después se desmontó solo ese proyecto.
+  - La prueba de humo en testnet (R-TST-01) y el `cargo test` del contrato ya estaban en el `Jenkinsfile` desde las it. 12 y 14.
+- **Arreglado de paso**, gracias a correr el pipeline en un proyecto de cero:
+  - **`make setup` fallaba en un entorno nuevo, como el de Jenkins.** Esperaba a que todo estuviera sano antes de migrar, y en una base vacía el worker no arranca: la cola lee la tabla de la caché. Ahora levanta la app, migra y después espera al resto;
+  - la E2E de Jenkins habría probado el puerto 8080 y no el suyo (18080): `run-e2e.sh` y `verify-stack.sh` ahora respetan el puerto del entorno, como `docker compose`;
+  - la restauración de prueba ya no da por buena una verificación cuya consulta falla.
+
+Cada regla nueva se comprobó rompiéndola a propósito: 8 casos de la purga de seudónimos, todos atrapados. Los respaldos se prueban solos: `make backup-check` altera una copia y quita una base, y la restauración de prueba tiene que fallar.
+
+**Decisiones de la iteración, para confirmar:**
+1. **El servicio de respaldo vive en el mismo stack** y guarda en un volumen. **En producción ese volumen tiene que estar en otro disco o en otra máquina,** y el bucket de evidencias fuera del servidor: está en el runbook, pero no se automatizó una copia fuera del sitio (por ejemplo, a otro bucket u otra región). Propuesta: decidirlo con la infraestructura de producción.
+2. **Una copia cada hora en punto, más una al arrancar.** El peor caso de datos perdidos es justo 1 h (R-BCK-01).
+3. **Volcados por base, no `pg_dumpall`:** se restaura una organización sola, y no dependen de roles de superusuario, que un PostgreSQL administrado no da.
+4. **La restauración de prueba corre en cada ejecución del pipeline,** no solo antes de una salida: es rápida (~30 s) y así el procedimiento no se echa a perder sin que nadie lo note. R-BCK-05 pedía al menos una antes de producción.
+5. **Los 5 años de un seudónimo cuentan desde el último reporte del veedor,** no desde que se creó el seudónimo: mientras reporta, su vínculo sigue.
+6. **Hay que repetir la restauración de prueba en producción antes de salir** (R-BCK-05): los 3 s son con datos de desarrollo.
+7. **Repetir `make setup` sobre un stack que ya está corriendo** puede fallar en `up --wait`: el proxy se marca enfermo mientras la app se reinicia. Pasa desde antes de esta iteración y no afecta a Jenkins, que parte de cero. Para un stack que ya existe, `make up` alcanza. Si molesta, se resuelve dándole más paciencia al healthcheck del proxy.
+
 ---
 
 ## Pivote a Stellar (2026-09-28)

@@ -165,7 +165,70 @@ services:
       retries: 3
       start_period: 10s
 
+  # ------------------------------------------------------------- backup ----
+  # R-BCK-01..04 (it. 35): una copia de todas las bases y de los archivos de
+  # evidencia al arrancar y cada hora en punto, guardadas 30 días en el
+  # volumen backup_data. En producción ese volumen va en otro disco u otra
+  # máquina (docs/restore.md): una copia en el mismo disco no sobrevive a él.
+  backup:
+    build:
+      context: .
+      dockerfile: docker/backup/Dockerfile
+      network: "${DOCKER_BUILD_NETWORK:-host}"
+    image: govtrace-backup:dev
+    environment:
+      PGHOST: pgsql
+      PGUSER: "${DB_USERNAME:-govtrace}"
+      PGPASSWORD: "${DB_PASSWORD:-secret}"
+      PGDATABASE: "${DB_DATABASE:-govtrace}"
+      BACKUP_S3_ENDPOINT: "${BACKUP_S3_ENDPOINT-http://storage:4566}"
+      BACKUP_S3_BUCKET: "${MINIO_BUCKET:-evidencias}"
+      AWS_ACCESS_KEY_ID: "${BACKUP_AWS_ACCESS_KEY_ID:-test}"
+      AWS_SECRET_ACCESS_KEY: "${BACKUP_AWS_SECRET_ACCESS_KEY:-test}"
+      AWS_DEFAULT_REGION: "${EVIDENCE_AWS_DEFAULT_REGION:-us-east-1}"
+      BACKUP_RETENTION_DAYS: "${BACKUP_RETENTION_DAYS:-30}"
+      BACKUP_INTERVAL_SECONDS: "${BACKUP_INTERVAL_SECONDS:-3600}"
+      # La base de los tests no es un dato: no se respalda.
+      BACKUP_EXCLUDE_DATABASES: "${BACKUP_EXCLUDE_DATABASES:-testing}"
+      TZ: "${TZ:-UTC}"
+    volumes:
+      - backup_data:/backups
+    depends_on:
+      pgsql:
+        condition: service_healthy
+      storage:
+        condition: service_healthy
+    networks: [govtrace]
+    security_opt: [no-new-privileges:true]
+    restart: unless-stopped
+    healthcheck:
+      # Sano mientras la última copia completa tenga menos de 2 horas.
+      test: ["CMD-SHELL", "find /backups -mindepth 1 -maxdepth 1 -type d -name '2*Z' -mmin -130 | grep -q ."]
+      interval: 15s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+
   # ========================= optional profiles ============================
+
+  # R-BCK-05: el PostgreSQL vacío de la restauración de prueba (make
+  # restore-drill). Sin volumen: se descarta al terminar.
+  restore-pg:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: "${DB_USERNAME:-govtrace}"
+      POSTGRES_PASSWORD: "${DB_PASSWORD:-secret}"
+    tmpfs:
+      - /var/lib/postgresql/data
+    networks: [govtrace]
+    profiles: [restore]
+    security_opt: [no-new-privileges:true]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -q -h 127.0.0.1 -U \"$${POSTGRES_USER}\""]
+      interval: 2s
+      timeout: 5s
+      retries: 30
 
   adminer:
     image: adminer:4-standalone
@@ -269,5 +332,6 @@ networks:
 volumes:
   pgsql_data:
   storage_data:
+  backup_data:
   composer_cache:
   cargo_registry:

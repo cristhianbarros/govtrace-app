@@ -7,6 +7,7 @@ use App\Jobs\CheckOrganizationActivity;
 use App\Jobs\CheckSealingQueue;
 use App\Jobs\CheckSponsorBalance;
 use App\Jobs\PurgeDecommissionedEvidence;
+use App\Jobs\PurgeVeedorPseudonyms;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -63,4 +64,11 @@ app(Schedule::class)->job(new PurgeDecommissionedEvidence)
 app(Schedule::class)->job(new CheckOrganizationActivity)
     ->dailyAt('13:00')
     ->name('organization-activity-check')
+    ->onOneServer();
+
+// R-MNT-03: la tabla seudónimo→veedor, 5 años desde su último reporte; cada
+// día a las 06:30 UTC.
+app(Schedule::class)->job(new PurgeVeedorPseudonyms)
+    ->dailyAt('06:30')
+    ->name('veedor-pseudonyms-purge')
     ->onOneServer();

@@ -8,10 +8,14 @@ set -uo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
 COMPOSE="docker compose --env-file .env.docker"
+# El puerto del proxy: el del entorno si lo hay (Jenkins usa el suyo, para no
+# chocar con un entorno de desarrollo), si no el de .env.docker.
+HTTP_PORT=${HTTP_PORT:-$(sed -n 's/^HTTP_PORT=\([0-9]*\).*/\1/p' .env.docker | head -1)}
 IMAGE="mcr.microsoft.com/playwright:v$(sed -n 's/.*"@playwright\/test": "\([0-9.]*\)".*/\1/p' package.json)-noble"
 
 $COMPOSE exec -T app php tests/e2e/fixture.php || { echo "✘ No se pudo preparar la organización de pruebas (¿make up?)."; exit 1; }
 
 docker run --rm --network host --ipc=host --user "$(id -u):$(id -g)" -e HOME=/tmp \
+  -e E2E_BASE_URL="http://veeduria-e2e.govtrace.localhost:${HTTP_PORT:-8080}" \
   -v "$PWD:/work" -w /work "$IMAGE" \
   npx playwright test -c tests/e2e/playwright.config.js "$@"

@@ -19,7 +19,8 @@ HTTP_PORT ?= $(shell sed -n 's/^HTTP_PORT=\([0-9]*\).*/\1/p' .env.docker 2>/dev/
         shell composer artisan migrate psql test test-front test-all lint fmt \
         npm-install npm-build npm-watch xdebug-on xdebug-off hosts image-qa teardown \
         stellar-up contract-test contract-deploy contract-smoke doctor test-stellar \
-        contract-extend testnet-setup testnet-extend smoke-testnet secrets-check monitoring-check verify-check e2e
+        contract-extend testnet-setup testnet-extend smoke-testnet secrets-check monitoring-check verify-check e2e \
+        backup-now backup-list restore-drill backup-check
 
 help: ## List available commands
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -40,10 +41,13 @@ setup: .env.docker .env docker/app/xdebug.ini ## Full bootstrap from scratch (bu
 	@mkdir -p .cache/npm
 	@$(COMPOSE) build
 	@$(RUN) composer install --no-interaction
-	@$(COMPOSE) up -d --wait
+	@# Primero la app y su base, y las migraciones: el worker y el calendario
+	@# usan las tablas de la cola y la caché, y en una base vacía no arrancan.
+	@$(COMPOSE) up -d --wait app
 	@grep -q '^APP_KEY=base64:' .env || $(EXEC) php artisan key:generate
 	@$(EXEC) php artisan migrate --force
 	@$(EXEC) php artisan tenants:migrate --force
+	@$(COMPOSE) up -d --wait
 	@$(NODE) npm ci
 	@$(NODE) npm run build
 	@echo ""
@@ -118,6 +122,15 @@ secrets-check: ## R-BLK-04: no Stellar secret key in the repository, its history
 	@bash tests/infra/check-secrets.sh
 monitoring-check: ## US-044-MON: the external monitor (Gatus) alerts by email and webhook after >5 min down, not for short blips
 	@bash tests/infra/check-monitoring.sh
+
+backup-now: ## R-BCK: take a backup now (the backup service also takes one every hour)
+	@$(COMPOSE) exec -T backup backup.sh
+backup-list: ## R-BCK: the backups kept (30 days) and what each one holds
+	@$(COMPOSE) exec -T backup sh -c 'for d in $$(ls -1d /backups/2*Z 2>/dev/null); do echo "$$(basename $$d)  $$(cat $$d/manifest.json)"; done'
+restore-drill: ## R-BCK-05: restore the latest backup into an empty database and a test bucket, and verify every evidence file
+	@bash tests/infra/restore-drill.sh
+backup-check: ## R-BCK: backups link unchanged files, expire at 30 days, and the restore drill catches a bad file or a missing database
+	@bash tests/infra/check-backup.sh
 
 npm-install: .env.docker ## Install frontend dependencies
 	@mkdir -p .cache/npm

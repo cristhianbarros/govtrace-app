@@ -16,6 +16,7 @@ final class AuditLabels
         'organization.reactivated' => 'Reactivó la organización',
         'organization.decommissioned' => 'Dio de baja la organización',
         'organization.evidence_files_purged' => 'Borró los archivos de evidencia (5 años después de la baja)',
+        'organization.pseudonyms_purged' => 'Borró seudónimos de veedores sin reportes en 5 años',
         'organization.profile_updated' => 'Cambió el nombre o el logo',
         'worksite.location_corrected' => 'Corrigió la ubicación de una obra',
         'worksite.contracts_grouped' => 'Agrupó contratos en una ficha de obra',
