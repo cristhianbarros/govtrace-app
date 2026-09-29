@@ -190,7 +190,7 @@ Plataforma Open Source y Mobile-First de veeduría ciudadana, multi-tenant (B2B2
 
 ### Integraciones
 
-- **R-INT-01** — Si la red de Stellar (su RPC) no responde, o la cuenta patrocinadora no tiene saldo, el sellado espera y reintenta (US-021) — US-021
+- **R-INT-01** — Si la red de Stellar (su RPC) no responde, o la cuenta patrocinadora no tiene saldo, el sellado espera y reintenta (US-021). (Enmendada el 2026-09-29, it. 39.) Si la cuenta selladora tiene otra transacción pendiente —Stellar admite una sola por cuenta— o la red está congestionada, el sello espera su turno y vuelve en unos segundos, sin gastar intentos: varias evidencias a la vez se sellan una por ledger, en orden, y ninguna queda en "Falla de Sellado" por eso. Para el MVP basta una sola cuenta selladora, unos 10 a 12 sellos por minuto — US-021
 - **R-INT-02** — Mapas con OpenStreetMap y teselas abiertas — US-027, US-035
 - **R-INT-03** — Si el API de precios falla, el reporte de costos usa el último precio conocido con su fecha; el municipio SECOP se empareja con DIVIPOLA normalizado y lo no emparejado se descarta y reporta — US-004, US-013, US-014
 - **R-INT-04** — Cada descarga incluye la prueba de inclusión para verificar solo contra Stellar, sin depender de GovTrace. En la red principal, el verificador independiente exige su propio RPC (`--rpc`): no usa el endpoint del navegador, restringido al dominio de GovTrace, y así la verificación no depende de GovTrace ni de su proveedor — US-024, US-026, US-046-INT

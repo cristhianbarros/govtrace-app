@@ -1491,6 +1491,7 @@ Suite: 702 en verde (8 nuevos). Vitest: 351. `make backup-check`: 13 comprobacio
   - Verificado en el modelo del API de KMS que trae la CLI de AWS: la llave es `KeySpec=ECC_NIST_EDWARDS25519` (no "ECC_ED25519"), con `KeyUsage=SIGN_VERIFY`.
   - Se firma con **`ED25519_SHA_512` y `MessageType=RAW`** sobre los 32 bytes del hash de la transacción, que es el Ed25519 puro que verifica Stellar. `ED25519_PH_SHA_512` es Ed25519ph y no sirve para Stellar.
   - Primer paso, la prueba de concepto: crear la llave, derivar su dirección G… de la llave pública, firmar una transacción de testnet y que la red la acepte. Necesita acceso a la cuenta de AWS;
+  - no se puede emular en local (2026-09-29): LocalStack 3.8, el gratuito, no crea llaves Ed25519, y la versión actual exige licencia. La recomendación de cuenta, arquitectura y costos para la prueba en la nube está en `docs/estado-mvp.md`;
 - el despliegue en la red principal con la tesorería fondeada (D13) y el contrato registrado en `tools/verify/contracts.json`;
 - la lista de `docs/go-live.md` completa: credenciales de Jenkins, DIVIPOLA sembrada, respaldos fuera del sitio en su bucket real.
 
@@ -1576,8 +1577,8 @@ Suite: 702 en verde (8 nuevos). Vitest: 351. `make backup-check`: 13 comprobacio
 
 **Cubre:** US-021 (criterio y escenario nuevos: "Varias evidencias a la vez esperan su turno sin gastar intentos"), R-INT-01, R-BLK-04 · US-020b, US-018 (los reportes sin conexión que se envían juntos).
 
-**Decisiones de la iteración — a confirmar por el usuario:**
-1. **Un criterio nuevo en US-021** (`specs/criterios/US-021.yaml` y su escenario en `features/US-021.feature`): varias evidencias a la vez esperan su turno, sin gastar intentos ni quedar en "Falla de Sellado". Y una enmienda a R-INT-01, sin aplicar todavía a la SPEC: "…o la cuenta selladora tiene otra transacción pendiente: el sello espera su turno, sin gastar intentos (it. 39)".
+**Decisiones de la iteración — ✅ aprobadas por el usuario el 2026-09-29.** La enmienda de R-INT-01 ya está en la SPEC.
+1. **Un criterio nuevo en US-021** (`specs/criterios/US-021.yaml` y su escenario en `features/US-021.feature`): varias evidencias a la vez esperan su turno, sin gastar intentos ni quedar en "Falla de Sellado". Y una enmienda a R-INT-01: el sello que encuentra la selladora ocupada espera su turno, sin gastar intentos.
 2. **La congestión tampoco gasta intentos.** `txINSUFFICIENT_FEE` también llega si los ledgers van llenos y piden una comisión mayor. Se trata igual que la otra pendiente: el sello espera, sin quedar en "Falla de Sellado". Si durara horas, avisa la alerta de cola estancada (2 h, US-021). La oferta de inclusión del fee bump ya es alta (casi la comisión de recursos), así que es raro quedar por debajo.
 3. **Una sola selladora alcanza para el MVP**: 10 a 12 sellos por minuto. Si el volumen lo pidiera, el camino son las cuentas de canal (varias transacciones por ledger). Es un cambio de la firma que conviene hacer junto con AWS KMS (37b), porque la selladora pasaría a firmar la autorización de Soroban y no la transacción.
 

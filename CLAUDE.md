@@ -18,7 +18,7 @@ Este repo trabaja con el framework **AI-First**: partiendo de un **caso de negoc
 
 `/discovery` (o su alias `/spec`) **no genera la spec de una pasada** — entrevista por las 5 etapas de BDD 2.0. Al arrancar pregunta el nombre del usuario y crea `sessions/<slug>/`, donde documenta la sesión y guarda el estado (`SHARED-MEMORY.md`) para reanudar con `/discovery resume`. La mecánica vive en `.claude/skills/bdd-discovery/`.
 
-Repite `/test` → `/iterate` por cada iteración del plan. El commit de cada iteración pasa por un hook de pre-commit (`.claude/hooks/pre-commit-check.sh`) que corre `./vendor/bin/pint --test` + `./vendor/bin/pest` (y `npm run test` si hay cambios en `resources/js/` o `tools/`) — si algo falla, el commit se bloquea.
+Repite `/test` → `/iterate` por cada iteración del plan. El commit de cada iteración pasa por un hook de pre-commit (`.claude/hooks/pre-commit-check.sh`) que revisa **solo lo que cambió** respecto del último commit: Pint sobre los PHP modificados; Pest, los tests que cambiaron y los que nombran una clase modificada; Vitest, los tests relacionados con lo modificado en `resources/js/` o `tools/`; y el contrato si cambió `contracts/`. Si algo falla, el commit se bloquea. La suite completa no corre en el hook (tarda ~16 min): córrela con `make test-all` antes de fusionar una iteración; el pipeline (Jenkins) también la corre en cada PR.
 
 ## Stack y comandos
 
