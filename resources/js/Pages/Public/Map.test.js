@@ -85,6 +85,12 @@ describe('Mapa público', () => {
         expect(router.visit).toHaveBeenCalledWith('/worksite/7');
     });
 
+    it('leads to the public validator (US-024)', async () => {
+        const wrapper = await openMap();
+
+        expect(wrapper.get('a[href="/verify"]').text()).toBe('Validar un archivo');
+    });
+
     it('warns that the organization is suspended, and still shows its map', async () => {
         page.props.organizationNotice = SUSPENDED;
 

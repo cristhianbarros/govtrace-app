@@ -65,7 +65,7 @@ const pdfs = () => (props.evidence.files ?? []).filter((file) => file.kind === '
             :aria-expanded="showingSeal"
             @click="showingSeal = !showingSeal"
         >Verificar Sello Blockchain</button>
-        <SealPanel v-if="showingSeal" :receipt-url="evidence.receipt_url" />
+        <SealPanel v-if="showingSeal" :receipt-url="evidence.receipt_url" :report-id="evidence.report_id" />
 
         <PhotoViewer v-if="viewing" :src="viewing.photo_url" :alt="`Foto de la evidencia del ${formatDateTime(evidence.captured_at)}`" @close="viewing = null" />
     </article>

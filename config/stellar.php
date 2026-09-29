@@ -22,6 +22,16 @@ return [
     // es 1 XLM y un sello cuesta ~0,07 XLM (medido en la red local, it. 13).
     'sponsor_min_balance_xlm' => (int) env('STELLAR_SPONSOR_MIN_BALANCE_XLM', 2),
 
+    // US-024: el RPC que consulta el navegador en el validador público — uno
+    // público y con CORS, nunca el de dentro de Docker (rpc_url). Sale de la
+    // red; en la pública hay que elegir un proveedor
+    // (https://developers.stellar.org/docs/data/apis/rpc/providers).
+    'public_rpc_url' => env('STELLAR_PUBLIC_RPC_URL') ?: match (env('STELLAR_NETWORK_PASSPHRASE')) {
+        'Test SDF Network ; September 2015' => 'https://soroban-testnet.stellar.org',
+        'Public Global Stellar Network ; September 2015' => null,
+        default => 'http://127.0.0.1:8100/rpc', // la red local de make stellar-up
+    },
+
     // US-023 / US-025: el botón "Ver en Stellar Expert" del recibo (sus rutas
     // /tx/{hash} y /ledger/{n}). Sale de la red; la local no tiene explorador
     // público, y el recibo va sin el botón.

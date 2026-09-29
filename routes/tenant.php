@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Application\Publication\StellarForBrowser;
 use App\Domain\Organization\Roles;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Tenant\AuditController;
@@ -15,6 +16,7 @@ use App\Http\Controllers\Tenant\ObserverController;
 use App\Http\Controllers\Tenant\OrganizationLogoController;
 use App\Http\Controllers\Tenant\OrganizationProfileController;
 use App\Http\Controllers\Tenant\PublicEvidenceController;
+use App\Http\Controllers\Tenant\PublicProofController;
 use App\Http\Controllers\Tenant\PublicWorksiteController;
 use App\Http\Controllers\Tenant\ReceiptController;
 use App\Http\Controllers\Tenant\ReportController;
@@ -56,7 +58,9 @@ Route::middleware([
     // Público, sin sesión (R-VER-02): el mapa de la organización (US-027) y
     // la vista de cada obra (US-029, US-017). Piden sus datos al API de abajo.
     Route::get('/', fn () => Inertia::render('Public/Map'))->name('public.map');
-    Route::get('/worksite/{worksite}', fn (int $worksite) => Inertia::render('Public/Worksite', ['worksiteId' => $worksite]))->whereNumber('worksite')->name('public.worksite');
+    Route::get('/worksite/{worksite}', fn (int $worksite) => Inertia::render('Public/Worksite', ['worksiteId' => $worksite, 'stellar' => StellarForBrowser::props()]))->whereNumber('worksite')->name('public.worksite');
+    // US-024: el validador público — el navegador lee el sello en la red por su cuenta.
+    Route::get('/verify', fn () => Inertia::render('Public/Validator', ['stellar' => StellarForBrowser::props()]))->name('public.validator');
 
     // US-031: Administrador de Organización y Veedor (la pantalla, it. 17).
     Route::get('/login', fn () => Inertia::render('Auth/Login', ['context' => tenant()->displayName()]))->name('tenant.login.show');
@@ -74,6 +78,7 @@ Route::middleware([
     Route::get('/public/worksites', [PublicWorksiteController::class, 'index'])->name('public.worksites.index');
     Route::get('/public/worksites/{worksite}', [PublicWorksiteController::class, 'show'])->whereNumber('worksite')->name('public.worksites.show');
     Route::get('/public/evidences/{evidence}/photo', [PublicEvidenceController::class, 'photo'])->whereNumber('evidence')->name('public.evidences.photo');
+    Route::get('/public/proofs/{sha256}', [PublicProofController::class, 'show'])->name('public.proofs.show');
     Route::post('/login', [LoginController::class, 'store'])->name('tenant.login');
 
     // US-030: el enlace de US-002 (Administrador inicial) o US-005
