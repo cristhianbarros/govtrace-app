@@ -160,6 +160,8 @@ it('logs the revocation, and a new authorization can follow it', function () {
 });
 
 it('shows the Administrador the authorization in force, for the panel', function () {
+    // Con el reloj quieto: la vigencia se calcula al autorizar y aquí se vuelve a calcular.
+    $this->freezeSecond();
     test()->flushSession();
     $status = fn () => $this->actingAs($this->administrator, 'tenant')->getJson('http://veeduria-smr.govtrace.localhost/authorizations/super-admin')->assertOk()->json('data');
 
