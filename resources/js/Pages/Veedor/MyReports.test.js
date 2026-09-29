@@ -2,10 +2,12 @@
 // cada reporte con su estado técnico y su estado editorial por separado —, y
 // el Recibo de Inmutabilidad de cada uno.
 import { flushPromises, mount } from '@vue/test-utils';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import MyReports from './MyReports.vue';
 import { formatDateTime } from '@/lib/format.js';
-import { fetchMyReports, fetchReceipt } from '@/services/api.js';
+import { configureOutbox } from '@/composables/useOutbox.js';
+import { createOutbox, memoryStore } from '@/lib/outbox.js';
+import { fetchMyReports, fetchReceipt, sendReport } from '@/services/api.js';
 import { page } from '@/testing/inertia.js';
 
 vi.mock('@inertiajs/vue3', async () => await import('@/testing/inertia.js'));
@@ -43,6 +45,74 @@ async function openReceipt(item) {
 beforeEach(() => {
     vi.resetAllMocks();
     page.props = { organization: 'Veeduría Ciudadana Santa Marta', organizationLogo: null, organizationNotice: null };
+    configureOutbox({ store: memoryStore() });
+});
+
+/** A shared outbox with reports captured those many days ago. */
+async function pendingCapturedDaysAgo(...days) {
+    const store = memoryStore();
+    const outbox = createOutbox(store);
+    for (const age of days) {
+        await outbox.add({ fields: { captured_at: new Date(Date.now() - age * 24 * 3600 * 1000).toISOString() }, hashes: ['ab'.repeat(32)], files: [new File(['x'], 'x.jpg')] });
+    }
+    configureOutbox({ store });
+    return outbox;
+}
+
+const signal = (online) => Object.defineProperty(window.navigator, 'onLine', { value: online, configurable: true });
+
+describe('La bandeja de salida en Mis Reportes (US-018)', () => {
+    afterEach(() => {
+        delete window.navigator.onLine;
+    });
+
+    it('Guardado sin conexión: tells how many reports wait for a connection', async () => {
+        await pendingCapturedDaysAgo(0, 0);
+        signal(false);
+
+        const wrapper = await openMyReports();
+
+        expect(wrapper.get('[data-test="outbox"]').text()).toBe('⏳ 2 reportes esperando conexión');
+    });
+
+    it('Envío automático al recuperar la señal: sends them in the background, and they appear with their status', async () => {
+        const outbox = await pendingCapturedDaysAgo(0, 0);
+        sendReport.mockResolvedValue({ id: 99 });
+        signal(false);
+        const wrapper = await openMyReports();
+        expect(wrapper.get('[data-test="outbox"]').text()).toBe('⏳ 2 reportes esperando conexión');
+        fetchMyReports.mockResolvedValue([{ ...queued, id: 99 }, published]);
+
+        signal(true);
+        window.dispatchEvent(new Event('online'));
+        await flushPromises();
+
+        expect(sendReport).toHaveBeenCalledTimes(2);
+        expect(await outbox.pending()).toEqual([]);
+        expect(wrapper.find('[data-test="outbox"]').exists()).toBe(false);
+        expect(items(wrapper)[0].get('[data-test="technical"]').text()).toBe('En Cola');
+    });
+
+    it('Falla al reenviar: the report stays, and the veedor knows it will be retried', async () => {
+        const outbox = await pendingCapturedDaysAgo(0);
+        sendReport.mockRejectedValue(Object.assign(new Error('Network Error'), { request: {} }));
+        const wrapper = await openMyReports();
+
+        window.dispatchEvent(new Event('online'));
+        await flushPromises();
+
+        expect(wrapper.text()).toContain('🔄 Error al sincronizar con el servidor. Se reintentará en unos minutos.');
+        expect(await outbox.pending()).toHaveLength(1);
+    });
+
+    it('Aviso de vencimiento: a report captured 6 days ago is about to expire', async () => {
+        await pendingCapturedDaysAgo(6);
+        signal(false);
+
+        const wrapper = await openMyReports();
+
+        expect(wrapper.text()).toContain('⚠️ Tu reporte pendiente de sincronización expirará en 24 horas. Conéctate a una red para enviarlo antes de que se descarte.');
+    });
 });
 
 describe('Mis Reportes (US-010)', () => {

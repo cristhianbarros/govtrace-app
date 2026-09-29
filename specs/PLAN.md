@@ -1051,6 +1051,44 @@ Suite: 544 en verde. Vitest: 287 en verde (11 nuevos). Cada regla de pantalla nu
 **Done-when:** US-018 (14 casos) en verde: Vitest y **pruebas de extremo a extremo en un navegador real simulando pérdida de señal** (R-TST-03).
 **Cubre:** US-018 · R-USR-03, R-TST-03.
 
+**✅ Cumplido (2026-09-29, con Opus xhigh):** **US-018, 14/14**, en verde y visto en rojo antes de implementar:
+- Vitest, 22 nuevos:
+  - `lib/outbox.test.js`: 9 (guardado tal como se capturó, los 3 límites, las 3 vigencias, los mensajes exactos, el orden);
+  - `lib/sync.test.js`: 4 (envío automático, falla al reenviar, qué se conserva y qué se descarta);
+  - `Veedor/NewReport.test.js`: 3 (guardado sin conexión, sin intento si el teléfono sabe que no hay señal, almacenamiento lleno);
+  - `Veedor/MyReports.test.js`: 4 (el contador, el envío al volver la señal, la falla al reenviar, el aviso de vencimiento);
+  - `VeedorNav.test.js`: 2 (cerrar sesión con pendientes y sin ellos);
+- Pest: `OfflineReportsTest`, 6 (lugar y hora congelados, contrato anulado mientras esperaba, captura después de la anulación, el momento de la anulación a lo largo de las sincronizaciones, anulado desde siempre, cerrar sesión);
+- **Extremo a extremo** (R-TST-03), `make e2e`: Playwright en un Chromium de verdad, contra la app de `make up`. El teléfono pierde la señal al enviar; el reporte queda en IndexedDB; la app abre sin señal (Service Worker) y dice cuántos esperan; al volver la señal, el reporte sube solo y aparece en "Mis Reportes" con su estado. Pasó tres corridas seguidas. Jenkins lo corre en la etapa "E2E".
+
+Suite: 554 en verde. Vitest: 309 en verde. Cada regla nueva se comprobó rompiéndola a propósito: 10 casos, todos atrapados por su test.
+
+- **Bandeja de salida** (`lib/outbox.js`): guarda el reporte tal como se capturó (campos, archivos y hashes) en IndexedDB, un almacén por subdominio.
+  - Límites: 10 reportes y 50 MB.
+  - Vigencia: 7 días desde la captura, con aviso a las 24 horas; después se descarta.
+  - La lógica no sabe dónde guarda: IndexedDB en el navegador, un Map en Vitest.
+- **Sincronización** (`lib/sync.js` y `composables/useOutbox.js`): sube el más antiguo primero, al abrir la app, al volver la señal y cada 5 minutos, una sola a la vez.
+  - Si el servidor no responde, o no puede recibir el reporte por ahora (su error, una sesión vencida, la organización suspendida), el reporte se queda.
+  - Si lo rechaza para siempre (422), se descarta y la app dice por qué.
+- **"Nuevo Reporte"** guarda en la bandeja cuando no hay respuesta, o sin intentar si el teléfono sabe que no tiene señal. **"Mis Reportes"** muestra el contador, el aviso de vencimiento y el de falla.
+- **Service Worker** (`public/sw.js`): las dos pantallas del veedor abren sin señal (primero la red, después la copia), y los archivos de Vite se sirven desde la caché.
+- **Cerrar sesión:** `POST /logout` no existía. Ahora "Salir", en la app del veedor, avisa con el mensaje exacto si hay pendientes. Al confirmar, borra la bandeja y lo que guardó el Service Worker.
+- **Contrato anulado mientras el reporte esperaba:** `contracts.cancelled_at` guarda cuándo vio GovTrace la anulación, y un reporte capturado antes entra, oculto y en cola.
+
+**Hallazgos de la prueba de extremo a extremo.** Los tres primeros son bugs previos que los tests no veían, porque usan otra configuración, y rompían la aplicación fuera de ellos:
+1. **Caché de base de datos** (`CACHE_STORE=database`, en desarrollo y producción). Crear una organización fallaba: su migración limpiaba la caché de permisos y la buscaba en la base de la organización. Además, la caché de Stancl v3 exige etiquetas, que ese almacén no tiene. Arreglo: `TenantCacheBootstrapper` usa etiquetas si el almacén las tiene (como antes, en los tests) y, si no, un prefijo por organización; la caché de base de datos va siempre en la conexión central. Test: `TenantCacheTest`.
+2. **Cola de base de datos** (`QUEUE_CONNECTION=database`). Un trabajo despachado dentro de una organización se guardaba en su base, sin tabla `jobs`: **crear un reporte respondía 500**. Arreglo: la cola siempre en la conexión central (el trabajo lleva su organización). Test: `TenantQueueTest`.
+3. **Frontend en los subdominios.** `asset()` mandaba `public/build` a la ruta de archivos de la organización (`/tenancy/assets/…`, que responde 404). En un navegador de verdad, las pantallas de las organizaciones cargaban sin JavaScript ni estilos. Arreglo: `asset_helper_tenancy => false` (el logo tiene su propia ruta). Test: `TenantAssetsTest`.
+4. **La base de desarrollo no tenía DIVIPOLA.** Sin él no se puede configurar un territorio. La prueba lo carga; conviene que `make setup` también lo haga.
+5. **Si registrar una organización falla a mitad de camino,** queda una organización sin dominio que ocupa el NIT. No lo cambié: con los arreglos de arriba ya no falla, pero `RegisterOrganization` debería deshacer lo creado.
+
+**Decisiones de la iteración, para confirmar:**
+1. **Va a la bandeja solo lo que no tuvo respuesta,** o lo que se envió sin señal. Un rechazo del servidor al enviar se muestra, como antes, para que el veedor lo corrija.
+2. **Un reporte pendiente que el servidor rechaza con 422 se descarta,** con su motivo: reintentarlo no cambiaría la respuesta.
+3. **Una anulación que GovTrace no vio ocurrir no lleva fecha:** un contrato que llegó ya anulado, o que estaba anulado antes de esta columna, no acepta reportes atrasados.
+4. **El Service Worker guarda solo las dos pantallas del veedor y el frontend compilado.** Cerrar sesión borra esas copias, para que en un teléfono compartido el siguiente no vea las del anterior.
+5. **Playwright corre en su contenedor oficial con la red del host,** porque Chrome resuelve `*.localhost` a 127.0.0.1, donde escucha el proxy. En el host no hace falta instalar nada.
+
 ### Iteración 31 — Obras cercanas y filtros del mapa
 **Entregable:** sugerencia de hasta 5 obras a menos de 500 m con Haversine (D10), y filtros de estado, fechas, presupuesto y municipio.
 **Done-when:** US-019 (7 casos) y US-028 (3) en verde.

@@ -97,6 +97,9 @@ Route::middleware([
     // EnsureAccountIsUsable: una organización suspendida o una cuenta
     // desactivada cierran la sesión en su siguiente petición (US-003a, US-006).
     Route::middleware(['auth:tenant', EnsureAccountIsUsable::class])->group(function () {
+        // US-018: cerrar sesión (la app del veedor avisa antes si tiene reportes sin enviar).
+        Route::post('/logout', [LoginController::class, 'destroy'])->name('tenant.logout');
+
         // El panel del Administrador abre en la bandeja de entrada (it. 18).
         Route::get('/organization/dashboard', fn () => redirect('/admin/inbox'))->name('organization.dashboard');
         // El panel del veedor es "Nuevo Reporte" hasta "Mis Reportes" (it. 28).

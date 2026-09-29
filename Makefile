@@ -19,7 +19,7 @@ HTTP_PORT ?= $(shell sed -n 's/^HTTP_PORT=\([0-9]*\).*/\1/p' .env.docker 2>/dev/
         shell composer artisan migrate psql test test-front test-all lint fmt \
         npm-install npm-build npm-watch xdebug-on xdebug-off hosts image-qa teardown \
         stellar-up contract-test contract-deploy contract-smoke doctor test-stellar \
-        contract-extend testnet-setup testnet-extend smoke-testnet secrets-check monitoring-check verify-check
+        contract-extend testnet-setup testnet-extend smoke-testnet secrets-check monitoring-check verify-check e2e
 
 help: ## List available commands
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -87,6 +87,8 @@ test-stellar: ## Sealing tests against the local Stellar network (needs make ste
 	@$(EXEC) ./vendor/bin/pest --group=stellar $(ARGS)
 verify-check: ## Independent verifier (tools/verify) on a published evidence, isolated with the Stellar node alone
 	@bash tests/infra/check-verify.sh
+e2e: .env.docker ## End-to-end in a real Chromium against make up (US-018 offline; needs make up and make npm-build)
+	@bash tests/infra/run-e2e.sh
 test-front: .env.docker ## Frontend tests (Vitest)
 	@$(NODE) npm run test
 test-all: lint test test-front ## Pint + Pest + Vitest (same as CI)

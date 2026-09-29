@@ -56,6 +56,15 @@ pipeline {
             }
         }
 
+        stage('E2E') {
+            steps {
+                // R-TST-03 (it. 30): US-018 in a real Chromium (Playwright) against the
+                // stack make setup brought up — the phone loses its signal, the report
+                // waits in IndexedDB, the app opens offline, and it is sent on its own.
+                sh 'make e2e'
+            }
+        }
+
         stage('Test Contract') {
             steps {
                 // Sealing Smart Contract (it. 12). Runs in the Rust + Stellar CLI

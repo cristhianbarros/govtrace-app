@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 use App\Infrastructure\Tenancy\Domain;
 use App\Infrastructure\Tenancy\Tenant;
-use Stancl\Tenancy\Bootstrappers\CacheTenancyBootstrapper;
+use App\Infrastructure\Tenancy\TenantCacheBootstrapper;
 use Stancl\Tenancy\Bootstrappers\DatabaseTenancyBootstrapper;
 use Stancl\Tenancy\Bootstrappers\FilesystemTenancyBootstrapper;
 use Stancl\Tenancy\Bootstrappers\QueueTenancyBootstrapper;
@@ -41,7 +41,8 @@ return [
      */
     'bootstrappers' => [
         DatabaseTenancyBootstrapper::class,
-        CacheTenancyBootstrapper::class,
+        // Con etiquetas si el almacén las tiene; si no (la base de datos), con un prefijo por organización.
+        TenantCacheBootstrapper::class,
         FilesystemTenancyBootstrapper::class,
         QueueTenancyBootstrapper::class,
         // Stancl\Tenancy\Bootstrappers\RedisTenancyBootstrapper::class, // Note: phpredis is needed
@@ -148,7 +149,9 @@ return [
          * disable asset() helper tenancy and explicitly use tenant_asset() calls in places
          * where you want to use tenant-specific assets (product images, avatars, etc).
          */
-        'asset_helper_tenancy' => true,
+        // El frontend compilado (public/build) es el mismo para todas las organizaciones;
+        // sus archivos propios (el logo, US-007) tienen su propia ruta.
+        'asset_helper_tenancy' => false,
     ],
 
     /**

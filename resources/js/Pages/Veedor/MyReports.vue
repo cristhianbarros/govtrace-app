@@ -4,11 +4,14 @@
 // Publicado, Rechazada con su motivo, Retirado), por separado. Y su Recibo
 // de Inmutabilidad (US-023).
 import { Head, usePage } from '@inertiajs/vue3';
-import { onMounted, ref } from 'vue';
+import { onBeforeUnmount, onMounted, ref } from 'vue';
 import LoadState from '@/Components/LoadState.vue';
 import ReceiptDetails from '@/Components/ReceiptDetails.vue';
 import VeedorNav from '@/Components/VeedorNav.vue';
 import { useLoader } from '@/composables/useLoader.js';
+import { outboxState, startOutboxSync, syncOutbox } from '@/composables/useOutbox.js';
+import { registerServiceWorker } from '@/lib/pwa.js';
+import { MESSAGES, waitingLabel } from '@/lib/outbox.js';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { formatDateTime } from '@/lib/format.js';
 import { errorMessage } from '@/services/errors.js';
@@ -33,13 +36,41 @@ async function toggleReceipt(report) {
     }
 }
 
-onMounted(load);
+// US-018: al abrir y al volver la señal, la bandeja de salida se sube; lo que
+// llegó aparece en la lista.
+async function syncAndReload() {
+    const result = await syncOutbox();
+    if (result?.sent > 0) {
+        await load();
+    }
+}
+
+function onOnline() {
+    syncAndReload();
+}
+
+onMounted(async () => {
+    registerServiceWorker();
+    window.addEventListener('online', onOnline);
+    await load();
+    if ((await startOutboxSync())?.sent > 0) {
+        await load();
+    }
+});
+
+onBeforeUnmount(() => window.removeEventListener('online', onOnline));
 </script>
 
 <template>
     <Head title="Mis Reportes" />
     <AppLayout :title="page.props.organization ?? 'GovTrace'" :logo="page.props.organizationLogo">
         <h2 class="mb-3 text-xl font-semibold">Mis Reportes</h2>
+        <section v-if="outboxState.count > 0 || outboxState.notice || outboxState.rejected.length" aria-label="Bandeja de salida" class="mb-3 flex flex-col gap-2">
+            <p v-if="outboxState.count > 0" data-test="outbox" class="rounded-lg bg-amber-100 p-3 text-sm font-semibold text-amber-900">{{ waitingLabel(outboxState.count) }}</p>
+            <p v-if="outboxState.expiring > 0" role="alert" class="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">{{ MESSAGES.expiring }}</p>
+            <p v-if="outboxState.notice" role="status" class="rounded-lg bg-slate-100 p-3 text-sm">{{ outboxState.notice }}</p>
+            <p v-for="reason in outboxState.rejected" :key="reason" role="alert" class="rounded-lg bg-red-50 p-3 text-sm text-red-800">El servidor rechazó un reporte pendiente: {{ reason }}</p>
+        </section>
         <LoadState
             :loading="loading"
             :error="error"

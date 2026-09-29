@@ -5,13 +5,16 @@
 // validar todo (geocerca, hashes…); si rechaza, se muestra su motivo y el
 // reporte queda para intentar de nuevo.
 import { Head, usePage } from '@inertiajs/vue3';
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import ContractSearch from '@/Components/ContractSearch.vue';
 import EvidencePicker from '@/Components/EvidencePicker.vue';
 import VeedorNav from '@/Components/VeedorNav.vue';
 import { cannotUpload } from '@/lib/evidence/attachments.js';
 import { capturePosition, formatMeters, imprecisionMessage, isPreciseEnough } from '@/lib/geolocation.js';
+import { saveOffline, startOutboxSync } from '@/composables/useOutbox.js';
+import { registerServiceWorker } from '@/lib/pwa.js';
+import { MESSAGES, OutboxFull } from '@/lib/outbox.js';
 import { sendReport } from '@/services/api.js';
 import { errorMessages } from '@/services/errors.js';
 
@@ -30,10 +33,12 @@ const preparingFiles = ref(false);
 const sending = ref(false);
 const serverErrors = ref([]);
 const sent = ref(false);
+const savedOffline = ref(false); // US-018: quedó en la bandeja de salida
 
 async function chooseWorksite(selected) {
     contract.value = selected;
     sent.value = false;
+    savedOffline.value = false;
     await locate();
 }
 
@@ -81,15 +86,53 @@ async function submit() {
     }
 
     try {
+        // US-018: sin señal, ni se intenta: va a la bandeja de salida.
+        if (navigator.onLine === false) {
+            await keepOffline(position);
+            return;
+        }
         await sendReport(form);
         startOver();
         sent.value = true;
     } catch (error) {
-        serverErrors.value = errorMessages(error);
+        if (error?.response) {
+            serverErrors.value = errorMessages(error);
+        } else {
+            await keepOffline(position);
+        }
     } finally {
         sending.value = false;
     }
 }
+
+/** US-018: guardado en el teléfono tal como se capturó — el lugar y la hora quedan congelados. */
+async function keepOffline(position) {
+    try {
+        await saveOffline({
+            fields: {
+                secop_contract_id: contract.value.secop_contract_id,
+                classification: classification.value,
+                comment: comment.value,
+                latitude: String(position.latitude),
+                longitude: String(position.longitude),
+                accuracy_meters: String(position.accuracy),
+                captured_at: position.capturedAt,
+            },
+            hashes: evidences.value.map((evidence) => evidence.sha256),
+            files: evidences.value.map((evidence) => evidence.file),
+        });
+        startOver();
+        savedOffline.value = true;
+    } catch (error) {
+        serverErrors.value = [error instanceof OutboxFull ? error.message : MESSAGES.full];
+    }
+}
+
+// US-018: al abrir "Nuevo Reporte", lo que quedó pendiente se intenta subir.
+onMounted(() => {
+    registerServiceWorker();
+    startOutboxSync();
+});
 
 function startOver() {
     contract.value = null;
@@ -109,6 +152,7 @@ function startOver() {
             <h2 class="text-xl font-semibold">Nuevo Reporte</h2>
 
             <p v-if="sent" role="status" class="rounded-lg bg-emerald-50 p-3 text-sm font-semibold text-emerald-800">{{ SUCCESS_MESSAGE }}</p>
+            <p v-if="savedOffline" role="status" class="rounded-lg bg-amber-100 p-3 text-sm font-semibold text-amber-900">{{ MESSAGES.saved }}</p>
 
             <!-- 1. La obra -->
             <ContractSearch v-if="!contract" @select="chooseWorksite" />
