@@ -19,7 +19,7 @@
 
 ### Decisiones técnicas
 
-✅ Confirmadas D1 a D10. D4 y D5 se reformularon por el **pivote a Stellar** (2026-09-28, ver la sección "Pivote a Stellar"). D11 y D12 quedaron resueltas el 2026-09-28 (secretos inyectados, patrocinadora como *hot wallet*, umbral de 50 XLM y la tesorería paga la vigencia del contrato). No quedan decisiones técnicas abiertas.
+✅ **El 2026-09-29 el usuario aprobó todas las decisiones registradas en este plan**, las de cada iteración incluidas (it. 23 a 35). Fijó como estándares obligatorios para el go-live la desactivación en cascada de la baja (it. 33), los respaldos fuera del sitio y el simulacro de restauración en producción (it. 35). Confirmadas D1 a D10. D4 y D5 se reformularon por el **pivote a Stellar** (2026-09-28, ver la sección "Pivote a Stellar"). D11 y D12 quedaron resueltas el 2026-09-28 (secretos inyectados, patrocinadora como *hot wallet*, umbral de 50 XLM y la tesorería paga la vigencia del contrato). No quedan decisiones técnicas abiertas.
 
 | # | Tema | Propuesta | Se necesita en |
 |---|---|---|---|
@@ -1374,6 +1374,48 @@ Cada regla nueva se comprobó rompiéndola a propósito: 8 casos de la purga de 
 
 ---
 
+## Fase de cierre — Tras la auditoría (2026-09-29)
+
+Salen de `/audit` (`specs/AUDIT.md`). Ninguna bloquea el PR; las dos bloquean la salida a producción.
+
+### Iteración 36 — Trazabilidad y log de auditoría completos
+**Entregable:**
+- el log de auditoría registra también el alta de una organización, la asignación de su Administrador inicial y la invitación de un veedor (R-AUD-04), con sus etiquetas;
+- el log es inmutable: una entrada no se edita ni se borra, con la misma guarda que reportes y sellos (R-MNT-03);
+- el test negativo de un veedor que intenta invitar (R-VC-01);
+- `RegisterOrganization` es atómico: si falla, no queda una organización a medio crear;
+- los 66 tests de las it. 2 a 13 y 20 llevan el nombre de su escenario (convención de CLAUDE.md);
+- la página del dominio central deja de mostrar texto provisional, y se limpian los comentarios desactualizados.
+
+**Done-when:**
+- tests de cada punto, vistos en rojo antes de implementar;
+- el rastreo de escenarios encuentra los 249 nombres en sus tests;
+- cada regla nueva, comprobada rompiéndola a propósito.
+
+**Cubre:** R-AUD-04, R-MNT-03, R-VC-01, R-TST-04 · US-001, US-002, US-005.
+
+### Iteración 37 — Salida a la red principal (bloquea la salida a producción)
+**Entregable:**
+- **red principal de Stellar (R-CFG-01):**
+  - scripts de despliegue y de extensión de la vigencia con la tesorería, los mismos de testnet con la red como parámetro;
+  - el proveedor de RPC público elegido;
+  - el contrato registrado en `tools/verify/contracts.json`;
+  - una plantilla `.env.production.example` sin secretos;
+- **firma remota (D11 opción b, "antes de la red principal"):** la llave de la selladora no sale del servicio de firma, detrás de la misma interfaz `SealingNetwork`;
+- **respaldos fuera del sitio, automatizados:** cada copia se replica a otro bucket u otra región, y se vigila que la réplica esté al día;
+- **la restauración de prueba falla si la recuperación pasa de 4 h** (R-BCK-02);
+- **lista de salida:** sembrar la DIVIPOLA en el despliegue, actualizar las credenciales de Jenkins y hacer la restauración de prueba en producción.
+
+**Done-when:**
+- los scripts de despliegue probados de punta a punta contra testnet;
+- la réplica fuera del sitio probada con un segundo bucket;
+- la restauración de prueba en producción, anotada en `docs/restore.md`, con menos de 1 h de datos perdidos y menos de 4 h de recuperación (R-BCK-05);
+- `docs/go-live.md` con la lista de salida marcada.
+
+**Cubre:** R-CFG-01, R-BCK-02, R-BCK-05 · D11 (b).
+
+**Decisión que necesita al usuario:** el despliegue en la red principal cuesta XLM reales, que pone la tesorería. Hay que elegir quién la fondea y el proveedor de RPC.
+
 ## Pivote a Stellar (2026-09-28)
 
 El proyecto participa en **Stellar Apex**, así que la blockchain pasa de EVM/Polygon a **Stellar**, con Smart Contracts en **Soroban (Rust)**:
@@ -1427,5 +1469,33 @@ La decisión es tuya: el plan no la toma.
 ## `/audit` — hallazgos y cierre
 <!-- Tras /audit: gaps encontrados, cuáles se cierran como iteraciones nuevas y cuáles se aceptan como deuda. -->
 
+**2026-09-29, sobre `main` en `527c3f4`.** El reporte completo, regla por regla, está en `specs/AUDIT.md`.
+
+- **Cobertura técnica:**
+  - Pest 683; Vitest 350;
+  - contrato 6; red local 11 + 1; E2E 1; respaldos 8 comprobaciones; prueba de humo en testnet en verde;
+  - los 7 servicios en `healthy`;
+  - un commit por iteración, de la 1 a la 35.
+  - Había **un test intermitente** (`SuperAdminAuthorizationTest`, dependía del segundo en que corría): se arregló congelando el reloj.
+- **Cobertura funcional:**
+  - los 249 escenarios tienen su test; 66, de las it. 2 a 13 y 20, sin el nombre del escenario;
+  - de las 66 reglas, **58 cubiertas** con código y test negativo, y **8 parciales**: R-VC-01, R-PRIV-03, R-CFG-01, R-AUD-04, R-MNT-03, R-BCK-02, R-BCK-05 y R-TST-04.
+- **Stubs y fakes:** ninguno en producción. Queda el texto provisional de la página del dominio central.
+- **Se cierran con iteraciones nuevas:**
+  - la 36: log de auditoría completo e inmutable, test negativo de R-VC-01, alta atómica y nombres de los escenarios;
+  - la 37: red principal, firma remota, respaldos fuera del sitio y la restauración de prueba en producción.
+- **Decisión de spec pendiente:** enmendar R-PRIV-03 a *"el ID del veedor se reemplaza por un seudónimo antes de sellar; **se publica el hash** de ese JSON, no el JSON, que trae la ubicación exacta (R-PRIV-02)"*. Así la regla dice lo que ya hace el código, y lo que aprobó el usuario el 2026-09-29, del lado de la privacidad.
+- **Recomendación:** listo para PR. No listo para producción hasta cerrar las it. 36 y 37.
+
 ## Deuda técnica aceptada
 <!-- Hallazgos que se dejan conscientemente, con la razón y qué haría falta para retomarlos. -->
+
+No bloquean ningún criterio de aceptación. El usuario los conoce (2026-09-29).
+
+| Deuda | Por qué se acepta | Qué haría falta |
+|---|---|---|
+| `APP_LOCALE=en`: los mensajes por defecto de Laravel (`required`, `email`) salen en inglés si alguien se salta la pantalla | Las pantallas validan antes, en español (aceptada el 2026-09-28) | Traducir `lang/es` |
+| El calendario corre en UTC: la sincronización de las 02:00 son las 21:00 en Colombia | Cada tarea dice su hora en Colombia en `routes/console.php` | `->timezone('America/Bogota')` en cada tarea, o `schedule_timezone` |
+| Repetir `make setup` sobre un stack que ya corre puede fallar en `up --wait`: el proxy se marca enfermo mientras la app reinicia | Jenkins parte de cero; para un stack existente basta `make up` | Más paciencia en el healthcheck del proxy |
+| El nombre de un veedor invitado es la parte local de su correo | Ninguna historia pide el nombre; todo lo público usa el seudónimo | Una historia de perfil del veedor |
+| `make setup` no siembra la DIVIPOLA en desarrollo (la E2E la siembra sola) | Solo afecta a configurar territorios en una base de desarrollo nueva | `db:seed --class=DivipolaSeeder` en `make setup`; para producción entra en la it. 37 |
