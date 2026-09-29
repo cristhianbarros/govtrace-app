@@ -71,7 +71,7 @@ class Contract extends Model
     protected $fillable = [
         'secop_contract_id', 'process_number', 'entity_name', 'contractor_name',
         'object', 'contract_type', 'value', 'signed_at', 'end_date', 'status',
-        'department_code', 'municipality_code', 'secop_url', 'raw_payload',
+        'department_code', 'municipality_code', 'secop_url', 'raw_payload', 'cancelled_at',
     ];
 
     protected $casts = [
@@ -79,6 +79,7 @@ class Contract extends Model
         'signed_at' => 'date',
         'end_date' => 'date',
         'raw_payload' => 'array',
+        'cancelled_at' => 'datetime',
     ];
 
     /**
@@ -99,6 +100,9 @@ class Contract extends Model
      * plus closed ones for a while after their end date; never an
      * annulled one (R-SEC-07). The window is the one in force at $moment
      * (R-AUD-05).
+     *
+     * US-018: one annulled after $moment still takes a report captured then
+     * — it waited without signal in the phone while SECOP annulled it.
      */
     public function scopeReportableAt(Builder $query, CarbonInterface $moment): void
     {
@@ -109,7 +113,10 @@ class Contract extends Model
             ->statusIn(SecopContractStatus::ACTIVE)
             ->orWhere(fn (Builder $query) => $query
                 ->statusIn(SecopContractStatus::CLOSED)
-                ->where('end_date', '>=', $closedSince)));
+                ->where('end_date', '>=', $closedSince))
+            ->orWhere(fn (Builder $query) => $query
+                ->where('status', 'cancelled')
+                ->where('cancelled_at', '>', $moment)));
     }
 
     /**

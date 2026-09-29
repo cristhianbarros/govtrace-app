@@ -6,6 +6,7 @@ use App\Domain\Contracts\Contract;
 use App\Domain\Contracts\ContractArchive;
 use App\Domain\Geography\MunicipalityMatcher;
 use App\Domain\Organization\WatchedTerritories;
+use Carbon\CarbonInterface;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 
@@ -87,6 +88,7 @@ class ProcessSecopContractRow
             'municipality_code' => $municipalityCode,
             'secop_url' => $row['urlproceso']['url'] ?? null,
             'raw_payload' => $row,
+            'cancelled_at' => $status === 'cancelled' ? $this->cancelledSince($row['id_contrato']) : null,
         ];
 
         // US-048-MNT: uno archivado sigue archivado, al día; vuelve si SECOP lo reabre.
@@ -105,5 +107,22 @@ class ProcessSecopContractRow
         $contract = Contract::fromSecop(fn () => Contract::updateOrCreate(['secop_contract_id' => $row['id_contrato']], $attributes));
 
         return $contract->wasRecentlyCreated ? SecopRowOutcome::Inserted : SecopRowOutcome::Updated;
+    }
+
+    /**
+     * US-018: when GovTrace saw it annulled — now, if this sync is the one
+     * that sees it change; the moment already known, if it was annulled
+     * before; none (annulled since always) if it arrives annulled, or was
+     * annulled before this column existed.
+     */
+    private function cancelledSince(string $secopContractId): ?CarbonInterface
+    {
+        $known = Contract::query()->where('secop_contract_id', $secopContractId)->first(['status', 'cancelled_at']);
+
+        return match (true) {
+            $known === null => null,
+            $known->status === 'cancelled' => $known->cancelled_at,
+            default => now(),
+        };
     }
 }

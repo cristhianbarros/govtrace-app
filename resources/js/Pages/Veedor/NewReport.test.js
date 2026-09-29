@@ -7,11 +7,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import NewReport from './NewReport.vue';
 import ContractSearch from '@/Components/ContractSearch.vue';
 import EvidencePicker from '@/Components/EvidencePicker.vue';
+import { configureOutbox, outboxState } from '@/composables/useOutbox.js';
+import { createOutbox, memoryStore } from '@/lib/outbox.js';
 import { sendReport } from '@/services/api.js';
 import { page } from '@/testing/inertia.js';
 
 vi.mock('@inertiajs/vue3', async () => await import('@/testing/inertia.js'));
-vi.mock('@/services/api.js', () => ({ searchContracts: vi.fn(async () => []), sendReport: vi.fn() }));
+vi.mock('@/services/api.js', () => ({ searchContracts: vi.fn(async () => []), sendReport: vi.fn(), logout: vi.fn() }));
 
 const GPS_DENIED =
     'GovTrace requiere acceso a su ubicación exacta para certificar criptográficamente que la evidencia fue tomada en el sitio de la obra. Por favor habilite el GPS.';
@@ -53,6 +55,7 @@ const submitButton = (wrapper) => wrapper.get('button[type="submit"]');
 
 beforeEach(() => {
     sendReport.mockReset();
+    configureOutbox({ store: memoryStore() });
 });
 afterEach(() => {
     delete window.navigator.geolocation;
@@ -191,5 +194,68 @@ describe('Nuevo Reporte', () => {
 
         page.props.organization = 'Veeduría Ciudadana Santa Marta';
         page.props.organizationLogo = null;
+    });
+});
+
+describe('Nuevo Reporte sin conexión (US-018)', () => {
+    const SAVED = '📵 Sin conexión. Reporte guardado en el dispositivo. Se enviará automáticamente cuando recupere la señal.';
+    const FULL = '⚠️ Almacenamiento local lleno. Conéctese a internet para sincronizar los reportes pendientes antes de crear uno nuevo.';
+    const noSignal = Object.assign(new Error('Network Error'), { request: {} });
+
+    /** A shared outbox that already holds `count` reports. */
+    async function outboxHolding(count) {
+        const store = memoryStore();
+        const outbox = createOutbox(store);
+        for (let i = 0; i < count; i++) {
+            await outbox.add({ fields: { captured_at: new Date().toISOString() }, hashes: ['ab'.repeat(32)], files: [new File(['x'], 'x.jpg')] });
+        }
+        configureOutbox({ store });
+        return outbox;
+    }
+
+    it('Guardado sin conexión: keeps the report in the phone, as captured, and says so', async () => {
+        const outbox = await outboxHolding(1);
+        sendReport.mockRejectedValue(noSignal);
+        const wrapper = await onWorksite(reading(15));
+
+        await fillReport(wrapper);
+        await wrapper.get('form').trigger('submit');
+        await flushPromises();
+
+        expect(wrapper.get('[role="status"]').text()).toBe(SAVED);
+        const pending = await outbox.pending();
+        expect(pending).toHaveLength(2);
+        const saved = pending.find((record) => record.fields.captured_at === '2026-09-28T15:00:00.000Z');
+        expect(saved.fields).toMatchObject({ secop_contract_id: 'CO1.PCCNTR.1234567', latitude: '11.2419', longitude: '-74.199', classification: 'Retraso' });
+        expect(saved.files.map((file) => file.name)).toEqual(['foto1.jpg', 'foto2.jpg']);
+        expect(outboxState.count).toBe(2);
+    });
+
+    it('does not even try when the phone knows it has no signal', async () => {
+        const outbox = await outboxHolding(0);
+        const wrapper = await onWorksite(reading(15));
+        Object.defineProperty(window.navigator, 'onLine', { value: false, configurable: true });
+
+        await fillReport(wrapper);
+        await wrapper.get('form').trigger('submit');
+        await flushPromises();
+
+        expect(sendReport).not.toHaveBeenCalled();
+        expect(await outbox.pending()).toHaveLength(1);
+        delete window.navigator.onLine;
+    });
+
+    it('Mensaje de almacenamiento lleno: with 10 pending, the new one is not kept, and the report stays on screen', async () => {
+        const outbox = await outboxHolding(10);
+        sendReport.mockRejectedValue(noSignal);
+        const wrapper = await onWorksite(reading(15));
+
+        await fillReport(wrapper);
+        await wrapper.get('form').trigger('submit');
+        await flushPromises();
+
+        expect(wrapper.get('[role="alert"]').text()).toContain(FULL);
+        expect(await outbox.pending()).toHaveLength(10);
+        expect(wrapper.find('form').exists()).toBe(true);
     });
 });

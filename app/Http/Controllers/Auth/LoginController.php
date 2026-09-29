@@ -6,6 +6,7 @@ use App\Application\Auth\AuthenticateUser;
 use App\Domain\Auth\Exceptions\AuthenticationRejected;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
@@ -40,5 +41,18 @@ abstract class LoginController extends Controller
         // Una visita completa, no una de Inertia: la sesión y su token CSRF
         // acaban de cambiar (a un POST normal le llega la redirección de siempre).
         return Inertia::location(redirect()->intended($this->redirectTo()));
+    }
+
+    /**
+     * Cerrar sesión: la sesión y su token quedan inválidos. La app del veedor
+     * avisa antes si tiene reportes sin enviar en el teléfono (US-018).
+     */
+    public function destroy(Request $request): SymfonyResponse
+    {
+        Auth::guard($this->guard())->logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return response()->noContent();
     }
 }
