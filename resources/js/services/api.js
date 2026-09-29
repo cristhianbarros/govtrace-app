@@ -14,6 +14,9 @@ const dataOf = async (request) => (await request).data;
 /** US-016: obras del territorio que el veedor puede reportar. */
 export const searchContracts = async (keyword) => (await dataOf(http.get('/contracts/search', { params: { q: keyword } }))).data;
 
+/** US-019: hasta 5 obras a menos de la geocerca, de la más cercana a la más lejana. */
+export const fetchNearbyWorksites = async (latitude, longitude) => (await dataOf(http.get('/worksites/nearby', { params: { latitude, longitude } }))).data;
+
 /** US-008: el reporte con sus archivos y sus SHA-256, como multipart. */
 export const sendReport = (form) => dataOf(http.post('/reports', form));
 
@@ -96,8 +99,11 @@ export const reactivateOrganization = (id) => dataOf(http.post(`/admin/organizat
 
 // El sitio público (sin sesión) -----------------------------------------------
 
-/** US-027: los pines del mapa, livianos: [{id, lat, lng, color_pin}] (R-MAP-02). */
-export const fetchPins = async () => (await dataOf(http.get('/public/worksites'))).data;
+/** US-027: los pines del mapa, livianos: [{id, lat, lng, color_pin}] (R-MAP-02); US-028: con filtros. */
+export const fetchPins = async (filters = {}) => (await dataOf(http.get('/public/worksites', { params: filters }))).data;
+
+/** US-028: lo que los filtros pueden elegir (los municipios del mapa). */
+export const fetchMapFilters = async () => (await dataOf(http.get('/public/worksites/filters'))).data;
 
 /** US-029 / US-017: la obra, sus contratos y su línea de tiempo, al tocar su pin. */
 export const fetchWorksite = async (id) => (await dataOf(http.get(`/public/worksites/${id}`))).data;

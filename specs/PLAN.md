@@ -1094,6 +1094,32 @@ Suite: 554 en verde. Vitest: 309 en verde. Cada regla nueva se comprobó rompié
 **Done-when:** US-019 (7 casos) y US-028 (3) en verde.
 **Cubre:** US-019, US-028.
 
+**✅ Cumplido (2026-09-29, con Opus xhigh):** en verde, visto en rojo antes de implementar (rutas y pantallas inexistentes):
+- Pest: `NearbyWorksitesTest`, **US-019, 7/7**, más 3 derivados (la distancia real y no un cuadrado, la geocerca configurada, posición válida y solo veedores);
+- Pest: `MapFiltersTest`, **US-028, los 2 casos del servidor**, más 4 derivados (cada filtro solo y el presupuesto de una ficha agrupada, las fechas en la hora de Colombia, filtros desconocidos, los municipios para elegir);
+- Vitest, 7 nuevos:
+  - "Nuevo Reporte": US-019 en pantalla, con el orden y las distancias, sin obras cercanas y con el GPS denegado;
+  - el mapa: **"Aplicar" deshabilitado sin filtros** (el tercer caso de US-028), los cuatro filtros, ninguna coincidencia, y los municipios con "Limpiar".
+
+Suite: 570 en verde. Vitest: 316 en verde. Cada regla nueva se comprobó rompiéndola a propósito: 12 casos. El que sobrevivía (el radio exacto: sin él, la caja de búsqueda ya excluía a la de 650 m al norte) llevó a un test de esquina: 400 m al norte y 400 m al este son 566 m.
+
+- **Obras cercanas** (`GET /worksites/nearby`, del veedor):
+  - calcula Haversine en SQL (D10) dentro de una caja alrededor del veedor, sin PostGIS;
+  - aplica las reglas de "Buscar Obra": territorio (R-VC-04) y contrato reportable hoy;
+  - devuelve hasta 5 fichas, de la más cercana a la más lejana;
+  - en "Nuevo Reporte", "📍 Obras cercanas" pide el GPS y las lista con su distancia, y tocar una la elige como en el buscador.
+- **Filtros del mapa** (`GET /public/worksites` con `status`, `from`, `to`, `min_value` y `municipality`, validados): la respuesta sigue liviana (R-MAP-02). `GET /public/worksites/filters` da los municipios de las obras del mapa, con sus nombres legibles ("Ciénaga", no "CIÉNAGA"). El mapa tiene un panel "Filtrar obras", plegado para que el mapa quede primero en el teléfono.
+
+**Decisiones de la iteración, para confirmar:**
+1. **El radio de las obras cercanas es el de la geocerca** (500 m, configurable, US-038-CFG): se sugiere hasta donde un reporte sería aceptado.
+2. **De cada ficha se sugiere uno de sus contratos reportables.** El reporte va a la ficha completa de todos modos (R-INT-05).
+3. **Las obras cercanas se piden con un botón,** no al abrir la pantalla. Así la app no pide el GPS sin que el veedor lo busque, y el buscador sigue siendo lo primero para quien ya sabe la obra.
+4. **Cómo se lee cada filtro:**
+   - el estado es el color del pin (Normal, Alerta, En riesgo);
+   - las fechas son las de las evidencias **publicadas**, en la hora de Colombia;
+   - el presupuesto es la suma de los contratos de la ficha, estrictamente mayor;
+   - el municipio es el de cualquiera de sus contratos.
+
 ### Iteración 32 — Operación de la cuenta patrocinadora y costos
 **Entregable:** saldo en XLM de la patrocinadora cada 15 minutos, con alerta bajo el umbral de D12 (50 XLM); aviso antes de que venza la vigencia de la instancia o del código del contrato, para que la tesorería corra la extensión (D12); reporte de comisiones (XLM y COP) por mes y organización, con respaldo del último precio conocido de XLM; re-encolado de fallas de sellado. US-004 y US-022 se ajustan a Stellar al abrir la iteración.
 **Done-when:** US-022 (4 casos), US-004 (4) y US-047-MNT (2) en verde.
