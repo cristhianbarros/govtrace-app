@@ -1,0 +1,141 @@
+# Estado del MVP: lo que falta, por área
+
+Al 2026-09-29, sobre `main` en `77e6030` (iteración 39). Para ir abordándolo: cada punto dice qué falta y, cuando depende de ti, qué hay que decidir.
+
+✅ hecho y probado · ⚠️ a medias · ⬜ falta · 🔒 espera algo externo · ❓ decisión tuya
+
+## Resumen
+
+**El alcance funcional está completo y probado:**
+- las 56 historias del discovery, en 39 iteraciones;
+- los 250 escenarios Gherkin, cada uno con un test que lleva su nombre;
+- 761 tests rápidos de backend, 351 de frontend y 17 contra la red Stellar local;
+- el sellado probado en testnet, también en ráfaga: 7 evidencias en 7 ledgers seguidos.
+
+**Lo que separa esto de un MVP maduro, de más a menos peso:**
+1. **Salir a internet con seguridad:** hoy solo hay HTTP, y faltan HSTS, CSP, proxies de confianza y límites de abuso fuera del inicio de sesión.
+2. **Una prueba real en la nube** (staging en AWS, apuntando a testnet): celulares de verdad, HTTPS y correo real.
+3. **AWS KMS** para la llave de la selladora (37b): espera la cuenta de AWS.
+4. **La revisión visual y de accesibilidad** de todas las pantallas (it. 40).
+5. **La protección de datos personales** (Ley 1581 de 2012): no está en la SPEC.
+6. **La salida a la red principal** (37b): proveedor de RPC, tesorería y restauración con datos reales.
+
+## 1. Interfaz (UX/UI)
+
+| | Qué | Detalle |
+|---|---|---|
+| ✅ | Todas las pantallas de la SPEC | 28 páginas: la app del veedor (PWA, con modo sin conexión), el panel del Administrador, el panel global y el sitio público. Mobile-first por regla: botones de 44 px, y los estados carga / error / vacío / éxito probados en Vitest. |
+| ⬜ | **Nadie las revisó con los ojos** | Los tests prueban el comportamiento, no cómo se ven. **It. 40:** un recorrido con Playwright por cada rol, con capturas en celular y escritorio, y la revisión de cada pantalla. |
+| ⬜ | **Correos con frases en inglés** | "Regards", "If you're having trouble clicking…", "All rights reserved": es la plantilla de Laravel con `APP_LOCALE=en`, también en `.env.production.example` (visto en el log de correo). Los mensajes de validación por defecto, igual (deuda aceptada). Se arregla con `APP_LOCALE=es` y las traducciones en `lang/es`. |
+| ⬜ | Accesibilidad | ❓ La SPEC no fija una meta. Propuesta: en la it. 40, un análisis automático (axe) de cada pantalla, y corregir lo grave: etiquetas, contraste, foco y teclado (WCAG 2.1 AA como referencia). |
+| ⚠️ | Cámara y GPS en un celular | El navegador los exige con HTTPS: en local, solo desde el mismo equipo. Se prueban de verdad en staging. |
+| ⬜ | Perfil del veedor | ❓ Su nombre es la parte local del correo (deuda aceptada). Ninguna historia pide editarlo. |
+| ⚠️ | Mapas | ❓ Las imágenes del mapa vienen de `tile.openstreetmap.org`, cuya política no admite tráfico de producción intenso. Para la red principal, un proveedor de mapas con su propia llave. |
+
+## 2. Requisitos funcionales
+
+| | Qué | Detalle |
+|---|---|---|
+| ✅ | Historias, escenarios y reglas | De las 66 reglas de la SPEC, 64 en ✅ (`specs/AUDIT.md`). |
+| 🔒 | R-CFG-01 y R-BCK-05 | La red principal (preparada y probada en testnet, sin desplegar) y la restauración con datos reales. Esperan producción (37b). |
+| ⚠️ | SECOP II de verdad | Los tests usan respuestas grabadas (R-TST-02). La sincronización contra la API real no se ha visto correr de punta a punta en un entorno desplegado: se comprueba en staging. |
+| ⬜ | Correo real | Hoy sale a un archivo (`make invites`). En staging, por SMTP (Amazon SES). |
+| ⬜ | **Protección de datos personales** | ❓ La SPEC no menciona la Ley 1581 de 2012. GovTrace trata correos, nombres y la ubicación exacta de cada reporte. Hace falta una política de tratamiento de datos publicada y la autorización de cada veedor al activar su cuenta. Primero es una decisión legal; después, una pantalla y el registro de esa autorización. |
+| ⬜ | Doble factor | ❓ No está en la SPEC. La cuenta del Super Administrador controla todas las organizaciones: recomiendo un segundo factor (TOTP) al menos para ella. |
+
+## 3. Requisitos no funcionales
+
+| | Qué | Detalle |
+|---|---|---|
+| ✅ | Respaldos | Cada hora, guardados 30 días, con réplica fuera del sitio y una restauración de prueba que falla si pasa de 4 h. 🔒 Falta la restauración de producción. |
+| ✅ | Sellado bajo carga | Por turnos (it. 39): 10 a 12 sellos por minuto con una selladora, y ninguna ráfaga gasta intentos. |
+| ⬜ | Rotación de logs | La plantilla de producción usa `LOG_STACK=single`: un solo archivo que crece sin límite (en desarrollo ya pesa 345 MB). Se arregla con `daily` y una retención. |
+| ⬜ | Pruebas de carga | ❓ No hay, y la SPEC no fija tiempos de respuesta. ¿Cuántos veedores y visitantes esperas en la primera salida? |
+| ⚠️ | Monitoreo | El monitor externo (Gatus) está configurado y probado (US-044-MON), sin apuntar a un entorno real. No hay seguimiento de errores (tipo Sentry): quedan en el log. |
+| ⚠️ | Calendario en UTC | Deuda aceptada: la sincronización de las 02:00 corre a las 21:00 en Colombia. |
+| ⚠️ | Pipeline | El Jenkinsfile corre completo en un entorno de cero. Faltan las credenciales de testnet de Jenkins (sección 2 de `docs/estado-37b.md`). |
+
+## 4. Seguridad
+
+| | Qué | Detalle |
+|---|---|---|
+| ⬜ | **HTTPS** | El proxy solo escucha HTTP (puerto 80). Hace falta TLS con un certificado **comodín**, porque cada organización es un subdominio. |
+| ⬜ | **Laravel detrás de un proxy** | No confía en ninguno (`trustProxies` sin configurar). Si el TLS termina afuera, Laravel cree que la visita llegó por `http`, y genera enlaces y redirecciones `http`. |
+| ⚠️ | Cabeceras de seguridad | Hay `nosniff`, `Referrer-Policy` y `X-Frame-Options`, y una CSP estricta solo para los logos. Faltan HSTS, una CSP para toda la aplicación (que admita el RPC público de Stellar y los mapas) y `Permissions-Policy` (cámara y ubicación solo para el propio sitio). |
+| ✅ | Cookies de sesión | Cifradas y `Secure` en la plantilla de producción. |
+| ⚠️ | **Límites de abuso** | Hay en el inicio de sesión (5 intentos bloquean 15 minutos, R-SEC-03) y en la recuperación de contraseña (uno por minuto por correo). **No hay en el envío de reportes:** cada reporte se sella y cuesta XLM (~0,28 en testnet), así que una cuenta de veedor comprometida podría vaciar la patrocinadora y ocupar la cola. Tampoco en las API públicas (mapa, datos abiertos, pruebas). ❓ Cuántos reportes por veedor y por hora. |
+| 🔒 | **AWS KMS** (D11 b, 37b) | Elegido. **El emulador local no sirve:** LocalStack 3.8, el gratuito, no soporta llaves Ed25519, y la versión actual exige licencia. La prueba de concepto se hace contra AWS. ❓ Sigue abierta la decisión de pasar también la patrocinadora a KMS (recomendado: es la que tiene los fondos). |
+| ✅ | Llaves fuera del repositorio | `make secrets-check`. En producción, desde un gestor de secretos (pendiente, `docs/go-live.md`). |
+| ⚠️ | Dependencias | Hoy sin vulnerabilidades conocidas: `composer audit` no encuentra ninguna y `npm audit --omit=dev`, 0. Pero ninguna auditoría corre en el pipeline. |
+| ✅ | Lo que ya protege | Una base de datos por organización; los roles probados, incluido el caso negativo; log de auditoría inmutable; SVG saneados; fotos con EXIF rechazadas; hashes recalculados en el servidor; contrato sin `upgrade`; sin `v-html` en el frontend. |
+| ⬜ | Análisis de seguridad | Nadie ha atacado un entorno desplegado (por ejemplo, con OWASP ZAP). Se hace en staging. |
+
+## 5. La prueba real en la nube (staging en AWS)
+
+### ¿Tu cuenta personal o una exclusiva para GovTrace?
+
+**Recomiendo una cuenta exclusiva:**
+- **Aislamiento:** una llave filtrada o un recurso olvidado no toca tu cuenta personal ni tu facturación.
+- **Traspaso:** si GovTrace pasa a una organización o fundación, se entrega la cuenta entera.
+- **Créditos:** hoy, una cuenta nueva recibe **100 USD en créditos**, y hasta **100 USD más** por cinco actividades de 20 USD cada una: lanzar una instancia EC2, configurar RDS, crear una función Lambda, usar Bedrock y crear un presupuesto en AWS Budgets.
+  - Con el **plan gratuito**, AWS no cobra nada hasta que lo pases a pago. Vence a los 6 meses o cuando se acaban los créditos. Si no lo pasas a pago en 90 días, AWS cierra la cuenta.
+  - Tus 20 USD de créditos son de tu cuenta personal: los créditos promocionales no pasan de una cuenta a otra, salvo compartidos dentro de una organización de AWS.
+
+### Qué haces tú en la cuenta nueva
+
+1. Activar MFA en el usuario raíz, y nunca crearle llaves de acceso.
+2. Crear un usuario para el día a día (IAM Identity Center o IAM), también con MFA.
+3. Crear un presupuesto en AWS Budgets con alertas a 5, 10 y 15 USD. Además, es una de las actividades de 20 USD.
+4. Elegir la región: **us-east-1** (Norte de Virginia), la más barata y con todos los servicios.
+5. Para la prueba de concepto de KMS: un usuario o rol limitado a `kms:CreateKey`, `kms:GetPublicKey`, `kms:Sign` y `kms:ScheduleKeyDeletion`, con su perfil configurado en tu equipo. Me dices el nombre del perfil y la región, nunca las llaves.
+
+### La arquitectura que propongo
+
+Una sola máquina, sin balanceador de carga: un balanceador cuesta más que todo lo demás junto.
+
+| Pieza | Para qué | Costo aproximado |
+|---|---|---|
+| **EC2 t4g.small** (2 vCPU ARM, 2 GB) | El mismo stack de Docker, apuntando a testnet con el contrato oficial, sin la red Stellar local. Si 2 GB no alcanzan, t4g.medium (4 GB). | ~12 USD/mes (~24 la t4g.medium) |
+| Rol de la instancia | Permisos solo para firmar con la llave de KMS, los dos buckets y enviar correo. **Ninguna llave guardada en el servidor.** | gratis |
+| **HTTPS con Let's Encrypt** | Un certificado comodín (`*.dominio`), validado por DNS en Route 53. | gratis |
+| Dominio y zona en Route 53 | Cada organización es un subdominio: el comodín va en el DNS y en el certificado. | el dominio, si hay que comprarlo; la zona, 0,50 USD/mes |
+| IP pública | La dirección de la máquina. | 0,005 USD/hora, ~3,65 USD/mes |
+| Disco (EBS gp3, 20 GB) | El sistema, Docker y PostgreSQL. | ~1,60 USD/mes |
+| S3 | Las evidencias, y los respaldos en otro bucket de otra región, con versionado. | centavos |
+| SES | El correo. Empieza en modo sandbox (solo a direcciones verificadas) hasta pedir la salida. | centavos |
+| KMS | La llave de la selladora (y la de la patrocinadora, si lo decides). | 1 USD/mes por llave, más 0,15 USD por cada 10.000 firmas; las firmas asimétricas no entran en la capa gratuita |
+
+**Total: unos 20 USD al mes con la t4g.small, o unos 33 con la t4g.medium.** Con los 100 USD de una cuenta nueva, unos 5 meses de staging; con los 200, los 6 meses del plan gratuito. Con tus 20 USD, cerca de un mes. Los precios son de us-east-1: confírmalos en la calculadora de AWS antes de crear nada.
+
+**Sobre el certificado:** con Let's Encrypt no se paga. Los certificados de ACM son gratis solo detrás de un balanceador o de CloudFront; para usar uno dentro de la máquina, ACM cobra 15 USD por nombre y 149 USD por un comodín.
+
+### Qué hay que construir para staging (una iteración)
+
+- El proxy con HTTPS (Let's Encrypt comodín) y HSTS, y Laravel confiando en ese proxy.
+- Un `docker-compose` de staging: S3 y SES de verdad en vez de LocalStack y el log de correo, y testnet en vez de la red local.
+- Los secretos desde SSM Parameter Store (gratis en su nivel estándar), no en archivos.
+- La firma con KMS (37b), si la prueba de concepto pasa.
+- Un script de despliegue, con su guía, y el monitor externo apuntando a staging.
+
+## 6. Orden propuesto
+
+| # | Qué | Cierra | Modelo |
+|---|---|---|---|
+| 1 | **Tú:** la cuenta de AWS y el perfil de KMS (sección 5) | Desbloquea el 2 y el 4 | — |
+| 2 | **37b, KMS:** la prueba de concepto y la firma detrás de `SealingNetwork` | La llave de la selladora fuera del servidor | Opus max |
+| 3 | **It. 41, salir a internet:** TLS listo, proxies de confianza, HSTS, CSP, `Permissions-Policy`, límites de abuso, auditoría de dependencias en el pipeline, rotación de logs, correos en español | Seguridad (sección 4) | Opus xhigh |
+| 4 | **It. 42, staging en AWS** con testnet | La prueba real | Opus xhigh |
+| 5 | **It. 40, recorrido visual** con Playwright, capturas y accesibilidad | UX/UI (sección 1) | Sonnet |
+| 6 | **37b, red principal:** proveedor de RPC, tesorería, despliegue y restauración con datos reales | Producción | Opus xhigh |
+
+El 3 no necesita AWS: se puede hacer mientras creas la cuenta.
+
+**Decisiones tuyas (❓):**
+- el segundo factor para el Super Administrador;
+- la política de datos personales (Ley 1581) y la autorización de los veedores;
+- la meta de accesibilidad;
+- el límite de reportes por veedor;
+- el perfil del veedor;
+- el proveedor de mapas para la red principal;
+- la patrocinadora en KMS;
+- cuántos usuarios esperas, para las pruebas de carga.

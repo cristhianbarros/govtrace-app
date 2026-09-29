@@ -42,7 +42,7 @@ docker compose --env-file .env.docker --profile stellar run --rm -T soroban stel
 - **Firma:** `SigningAlgorithm=ED25519_SHA_512` con `MessageType=RAW`, sobre los 32 bytes del hash de la transacción. Es el Ed25519 puro que verifica Stellar.
 - **No sirve `ED25519_PH_SHA_512`:** es Ed25519ph, y Stellar rechaza sus firmas.
 
-El emulador local (LocalStack) no respondió al probarlo, así que la prueba tiene que ser contra AWS de verdad.
+**El emulador local no sirve** (probado el 2026-09-29): LocalStack 3.8, el gratuito, no crea llaves `ECC_NIST_EDWARDS25519` (error interno en `CreateKey`), y la versión actual exige una licencia (`LOCALSTACK_AUTH_TOKEN`). La prueba tiene que ser contra AWS. (La primera sonda no respondía por otra razón: el contenedor estaba en la red por defecto de Docker, que la VPN desvía; en la red del proyecto sí responde.)
 
 **La prueba de concepto**, antes de la integración:
 
