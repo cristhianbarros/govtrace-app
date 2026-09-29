@@ -97,7 +97,11 @@ onMounted(load);
                 <p class="text-xs text-slate-500 sm:col-span-2">Solo el Super Administrador lo cambia, a solicitud formal.</p>
             </dl>
 
-            <Link href="/admin/audit" class="text-sm font-semibold text-slate-700 underline">Ver el registro de auditoría</Link>
+            <nav aria-label="Más de la organización" class="flex flex-col gap-2 text-sm font-semibold text-slate-700">
+                <Link href="/admin/summary" class="underline">Resumen del territorio</Link>
+                <Link href="/admin/authorization" class="underline">Autorización al Super Administrador</Link>
+                <Link href="/admin/audit" class="underline">Ver el registro de auditoría</Link>
+            </nav>
         </LoadState>
     </AdminLayout>
 </template>

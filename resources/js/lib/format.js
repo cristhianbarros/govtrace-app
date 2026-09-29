@@ -12,3 +12,8 @@ export const formatDate = (isoDate) => (isoDate ? isoDate.split('-').reverse().j
 
 /** Una hora ISO, en la hora de Colombia. */
 export const formatDateTime = (iso) => dateTime.format(new Date(iso));
+
+const monthOfYear = new Intl.DateTimeFormat('es-CO', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+
+/** "2026-09" → "septiembre de 2026". */
+export const formatMonth = (yearMonth) => monthOfYear.format(new Date(`${yearMonth}-01T00:00:00Z`));

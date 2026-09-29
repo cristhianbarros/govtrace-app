@@ -56,6 +56,17 @@ export const fetchWorksites = async () => (await dataOf(http.get('/worksites')))
 export const correctWorksiteLocation = (worksiteId, { latitude, longitude }) =>
     dataOf(http.patch(`/worksites/${worksiteId}/location`, { latitude, longitude }));
 
+/** US-045-INT: agrupar contratos del territorio en una ficha de obra. */
+export const groupContracts = (name, secopContractIds) => dataOf(http.post('/worksites/group', { name, secop_contract_ids: secopContractIds }));
+
+/** US-049-RPT: el resumen del territorio. */
+export const fetchSummary = async () => (await dataOf(http.get('/summary'))).data;
+
+/** US-042-SEC: la autorización al Super Administrador (30 días). */
+export const fetchSuperAdminAuthorization = async () => (await dataOf(http.get('/authorizations/super-admin'))).data;
+export const authorizeSuperAdmin = () => dataOf(http.post('/authorizations/super-admin'));
+export const revokeSuperAdmin = () => dataOf(http.delete('/authorizations/super-admin'));
+
 // El Super Administrador (panel global) ---------------------------------------
 
 /** US-001 */

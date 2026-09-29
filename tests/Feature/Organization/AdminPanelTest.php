@@ -75,6 +75,9 @@ it('serves each screen of the panel to the Administrador, and none to the veedor
     'territorio' => ['/admin/territory', 'Admin/Territory'],
     'contratos' => ['/admin/contracts', 'Admin/Contracts'],
     'obras' => ['/admin/worksites', 'Admin/Worksites'],
+    // It. 29: US-049-RPT y US-042-SEC.
+    'resumen del territorio' => ['/admin/summary', 'Admin/Summary'],
+    'autorización al Super Administrador' => ['/admin/authorization', 'Admin/SuperAdminAuthorization'],
 ]);
 
 it('opens the panel of the Administrador on the inbox', function () {
