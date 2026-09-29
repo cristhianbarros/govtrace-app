@@ -5,6 +5,7 @@ namespace App\Application\Reports;
 use App\Application\Sealing\QueueReportForSealing;
 use App\Domain\Configuration\Parameters;
 use App\Domain\Contracts\Contract;
+use App\Domain\Contracts\ContractArchive;
 use App\Domain\Organization\User;
 use App\Domain\Organization\WatchedTerritories;
 use App\Domain\Reports\Evidence;
@@ -146,6 +147,8 @@ class CreateReport
     private function reportableContract(string $secopContractId, CarbonInterface $capturedAt): Contract
     {
         $contract = Contract::query()->where('secop_contract_id', $secopContractId)->first()
+            // US-048-MNT: si estaba archivado, vuelve, y el reporte sigue las reglas de siempre.
+            ?? ContractArchive::restore($secopContractId)
             ?? throw ReportValidationException::contractNotFound();
 
         $inTerritory = Contract::query()

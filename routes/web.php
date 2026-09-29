@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Central\AuditController;
 use App\Http\Controllers\Central\LoginController;
 use App\Http\Controllers\Central\OrganizationController;
+use App\Http\Controllers\Central\OrganizationReportController;
 use App\Http\Controllers\Central\ParameterController;
 use App\Http\Controllers\Central\SecopHealthController;
 use Illuminate\Support\Facades\Route;
@@ -36,6 +37,8 @@ foreach (config('tenancy.central_domains') as $domain) {
             Route::put('/admin/organizations/{tenant}/nit', [OrganizationController::class, 'updateNit'])->name('admin.organizations.update-nit');
             Route::post('/admin/organizations/{tenant}/suspend', [OrganizationController::class, 'suspend'])->name('admin.organizations.suspend');
             Route::post('/admin/organizations/{tenant}/reactivate', [OrganizationController::class, 'reactivate'])->name('admin.organizations.reactivate');
+            // US-042-SEC: un reporte en nombre de una organización que lo autorizó (R-SA-02).
+            Route::post('/admin/organizations/{tenant}/reports', [OrganizationReportController::class, 'store'])->name('admin.organizations.reports.store');
 
             // US-038-CFG: parámetros globales. US-043-MON: el log de auditoría completo.
             Route::get('/admin/parameters', fn () => Inertia::render('SuperAdmin/Parameters'))->name('admin.parameters.show');

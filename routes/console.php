@@ -1,6 +1,7 @@
 <?php
 
 use App\Infrastructure\Scheduling\NightlySchedule;
+use App\Jobs\ArchiveOldContracts;
 use App\Jobs\CheckSealingQueue;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Inspiring;
@@ -14,6 +15,13 @@ Artisan::command('inspire', function () {
 // después, el cálculo de obras en riesgo. La hora sale del parámetro
 // (US-038-CFG) cada vez que se arma el calendario: ver NightlySchedule.
 NightlySchedule::register(app(Schedule::class));
+
+// US-048-MNT: el primer día de cada mes, tras la sincronización y el cálculo
+// de riesgo, los contratos cerrados hace más de 5 años salen al archivo.
+app(Schedule::class)->job(new ArchiveOldContracts)
+    ->monthlyOn(1, '05:00')
+    ->name('contracts-archive')
+    ->onOneServer();
 
 // US-021: evidencias con más de 2 horas sin sellar, cada 15 minutos.
 app(Schedule::class)->job(new CheckSealingQueue)
