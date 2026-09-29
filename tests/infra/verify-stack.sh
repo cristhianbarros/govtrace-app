@@ -33,4 +33,9 @@ done
 code=$(curl -s -o /dev/null -w '%{http_code}' -H 'Host: govtrace.localhost' "http://${LOCAL_IP}:${HTTP_PORT}/up")
 if [ "$code" = "200" ]; then echo "PASS  /up -> 200"; else echo "FAIL  /up -> $code"; fail=1; fi
 
+# It. 38: make setup deja los territorios sembrados (DIVIPOLA): sin ellos no se configura ninguna organización.
+db_user=$(sed -n 's/^DB_USERNAME=//p' .env.docker | head -1); db_name=$(sed -n 's/^DB_DATABASE=//p' .env.docker | head -1)
+departments=$($COMPOSE exec -T pgsql psql -U "${db_user:-govtrace}" -d "${db_name:-govtrace}" -Atc 'select count(*) from departments' 2>/dev/null)
+if [ "${departments:-0}" -gt 0 ] 2>/dev/null; then echo "PASS  DIVIPOLA sembrada ($departments departamentos)"; else echo "FAIL  la DIVIPOLA no está sembrada (departamentos: ${departments:-?})"; fail=1; fi
+
 exit $fail

@@ -20,7 +20,8 @@ HTTP_PORT ?= $(shell sed -n 's/^HTTP_PORT=\([0-9]*\).*/\1/p' .env.docker 2>/dev/
         npm-install npm-build npm-watch xdebug-on xdebug-off hosts image-qa teardown \
         stellar-up contract-test contract-deploy contract-smoke doctor test-stellar \
         contract-extend testnet-setup testnet-extend smoke-testnet secrets-check monitoring-check verify-check e2e \
-        backup-now backup-list restore-drill backup-check trace-check network-deploy network-extend network-deploy-check
+        backup-now backup-list restore-drill backup-check trace-check network-deploy network-extend network-deploy-check \
+        admin invites demo
 
 help: ## List available commands
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -47,6 +48,8 @@ setup: .env.docker .env docker/app/xdebug.ini ## Full bootstrap from scratch (bu
 	@grep -q '^APP_KEY=base64:' .env || $(EXEC) php artisan key:generate
 	@$(EXEC) php artisan migrate --force
 	@$(EXEC) php artisan tenants:migrate --force
+	@# La DIVIPOLA: sin territorios no se configura ninguna organización.
+	@$(EXEC) php artisan db:seed --class=DivipolaSeeder --force
 	@$(COMPOSE) up -d --wait
 	@$(NODE) npm ci
 	@$(NODE) npm run build
@@ -93,6 +96,13 @@ verify-check: ## Independent verifier (tools/verify) on a published evidence, is
 	@bash tests/infra/check-verify.sh
 e2e: .env.docker ## End-to-end in a real Chromium against make up (US-018 offline; needs make up and make npm-build)
 	@bash tests/infra/run-e2e.sh
+admin: .env.docker ## The first Super Administrador of a new environment. Usage: make admin EMAIL=ana@x.co [NAME="Ana"] (asks for the password, or generates one)
+	@test -n "$(EMAIL)" || { echo "Uso: make admin EMAIL=ana@correo.co [NAME=\"Ana Directora\"]"; exit 1; }
+	@$(EXEC) php artisan admin:create "$(EMAIL)" $(if $(NAME),--name="$(NAME)")
+invites: .env.docker ## The links of the latest mails (mail goes to a log in development): invitations, password recovery
+	@$(EXEC) php artisan invitations:latest $(if $(LIMIT),--limit=$(LIMIT))
+demo: .env.docker .env docker/app/xdebug.ini ## ONE command for a live demo: the app, the Stellar network and a demo organization with sealed reports
+	@bash docker/demo/demo.sh
 test-front: .env.docker ## Frontend tests (Vitest)
 	@$(NODE) npm run test
 test-all: lint test test-front ## Pint + Pest + Vitest (same as CI)

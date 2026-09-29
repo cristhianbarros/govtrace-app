@@ -6,6 +6,7 @@ use App\Domain\Configuration\Parameters;
 use App\Domain\Organization\InvitationToken;
 use App\Domain\Organization\Notifications\WelcomeNotification;
 use App\Domain\Organization\User;
+use App\Infrastructure\Tenancy\TenantUrl;
 
 /**
  * US-005 and US-040-USR: a new "set your password" link for an invited
@@ -26,7 +27,7 @@ final class InvitationLink
         ])->save();
 
         $domain = tenant()->domains()->first()->domain;
-        $user->notify(new WelcomeNotification("http://{$domain}/set-password/{$user->id}?token={$token->plain}", $validityHours));
+        $user->notify(new WelcomeNotification(TenantUrl::to($domain, "set-password/{$user->id}?token={$token->plain}"), $validityHours));
 
         return $validityHours;
     }

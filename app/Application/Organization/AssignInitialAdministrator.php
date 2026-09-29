@@ -10,6 +10,7 @@ use App\Domain\Organization\Notifications\WelcomeNotification;
 use App\Domain\Organization\Roles;
 use App\Domain\Organization\User;
 use App\Infrastructure\Tenancy\Tenant;
+use App\Infrastructure\Tenancy\TenantUrl;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
@@ -70,7 +71,7 @@ class AssignInitialAdministrator
             );
 
             $domain = $tenant->domains()->first()->domain;
-            $url = "http://{$domain}/set-password/{$user->id}?token={$token->plain}";
+            $url = TenantUrl::to($domain, "set-password/{$user->id}?token={$token->plain}");
 
             $user->notify(new WelcomeNotification($url, $validityHours));
 
