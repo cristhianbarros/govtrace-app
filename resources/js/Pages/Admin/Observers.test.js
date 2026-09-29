@@ -3,7 +3,7 @@
 import { flushPromises, mount } from '@vue/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import Observers from './Observers.vue';
-import { deactivateObserver, fetchObservers, inviteObserver, reactivateObserver } from '@/services/api.js';
+import { deactivateObserver, fetchObservers, inviteObserver, reactivateObserver, resendInvitation, revokeInvitation } from '@/services/api.js';
 
 vi.mock('@inertiajs/vue3', async () => await import('@/testing/inertia.js'));
 vi.mock('@/services/api.js');
@@ -142,5 +142,55 @@ describe('Desactivar y reactivar veedores', () => {
         await flushPromises();
 
         expect(wrapper.get('li [role="alert"]').text()).toBe('El veedor ya está inactivo.');
+    });
+});
+
+// Iteración 33 — US-040-USR (UI): reenviar o revocar una invitación pendiente.
+describe('Reenviar o revocar una invitación', () => {
+    const button = (wrapper, text) => wrapper.findAll('button').find((candidate) => candidate.text() === text);
+    const carlos = (status) => ({ id: 7, email: 'carlos@correo.co', status });
+
+    it('Reenviar una invitación: sends a new link and says until when', async () => {
+        const wrapper = await openObservers([carlos('Invitación pendiente')]);
+        resendInvitation.mockResolvedValue({ message: 'Invitación reenviada a carlos@correo.co. El nuevo enlace vence en 48 horas.' });
+
+        await button(wrapper, 'Reenviar invitación').trigger('click');
+        await flushPromises();
+
+        expect(resendInvitation).toHaveBeenCalledWith(7);
+        expect(wrapper.get('[role="status"]').text()).toBe('Invitación reenviada a carlos@correo.co. El nuevo enlace vence en 48 horas.');
+        expect(fetchObservers).toHaveBeenCalledTimes(2);
+    });
+
+    it('resends an invitation that expired unanswered', async () => {
+        const wrapper = await openObservers([carlos('Invitación vencida')]);
+
+        expect(button(wrapper, 'Reenviar invitación')).toBeDefined();
+        expect(button(wrapper, 'Revocar invitación')).toBeDefined();
+    });
+
+    it('Un enlace revocado no permite activar la cuenta: asks to confirm, then revokes it and the invitation leaves the team', async () => {
+        const wrapper = await openObservers([carlos('Invitación pendiente')]);
+        revokeInvitation.mockResolvedValue({ message: 'Invitación revocada. El enlace enviado a carlos@correo.co ya no es válido.' });
+        fetchObservers.mockResolvedValue([]);
+
+        await button(wrapper, 'Revocar invitación').trigger('click');
+        expect(revokeInvitation).not.toHaveBeenCalled();
+        expect(wrapper.text()).toContain('El enlace enviado dejará de funcionar. Podrá invitar ese correo de nuevo.');
+
+        await button(wrapper, 'Confirmar revocación').trigger('click');
+        await flushPromises();
+
+        expect(revokeInvitation).toHaveBeenCalledWith(7);
+        expect(wrapper.get('[role="status"]').text()).toBe('Invitación revocada. El enlace enviado a carlos@correo.co ya no es válido.');
+        expect(wrapper.text()).toContain('Aún no ha invitado veedores.');
+    });
+
+    it('offers neither to a veedor who already has an account, nor deactivating a pending invitation', async () => {
+        const wrapper = await openObservers([carlos('Activo'), { id: 8, email: 'lucia@correo.co', status: 'Invitación pendiente' }]);
+
+        const [active, pending] = wrapper.findAll('li');
+        expect(active.findAll('button').map((candidate) => candidate.text())).toEqual(['Desactivar']);
+        expect(pending.findAll('button').map((candidate) => candidate.text())).toEqual(['Reenviar invitación', 'Revocar invitación']);
     });
 });

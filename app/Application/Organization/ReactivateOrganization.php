@@ -21,6 +21,10 @@ class ReactivateOrganization
             throw OrganizationValidationException::cannotChangeStatusFromTenantContext();
         }
 
+        if ($tenant->freshStatus() === OrganizationStatus::Decommissioned) {
+            throw OrganizationValidationException::alreadyDecommissioned();
+        }
+
         if ($tenant->freshStatus() !== OrganizationStatus::Suspended) {
             throw OrganizationValidationException::alreadyActive();
         }

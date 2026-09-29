@@ -30,6 +30,7 @@ use App\Http\Controllers\Tenant\WorksiteController;
 use App\Http\Controllers\Tenant\WorksiteGroupController;
 use App\Http\Controllers\Tenant\WorksiteLocationController;
 use App\Http\Middleware\EnsureAccountIsUsable;
+use App\Http\Middleware\EnsureMapIsOnline;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
@@ -59,8 +60,18 @@ Route::middleware([
 ])->group(function () {
     // Público, sin sesión (R-VER-02): el mapa de la organización (US-027) y
     // la vista de cada obra (US-029, US-017). Piden sus datos al API de abajo.
-    Route::get('/', fn () => Inertia::render('Public/Map'))->name('public.map');
-    Route::get('/worksite/{worksite}', fn (int $worksite) => Inertia::render('Public/Worksite', ['worksiteId' => $worksite, 'stellar' => StellarForBrowser::props()]))->whereNumber('worksite')->name('public.worksite');
+    // US-003b: el mapa sale de línea con la baja de la organización; el resto, no.
+    Route::middleware(EnsureMapIsOnline::class.':screen')->group(function () {
+        Route::get('/', fn () => Inertia::render('Public/Map'))->name('public.map');
+        Route::get('/worksite/{worksite}', fn (int $worksite) => Inertia::render('Public/Worksite', ['worksiteId' => $worksite, 'stellar' => StellarForBrowser::props()]))->whereNumber('worksite')->name('public.worksite');
+    });
+    Route::middleware(EnsureMapIsOnline::class)->group(function () {
+        // US-027 / US-029: el mapa público — los pines, y lo que pide un clic en uno (it. 24).
+        Route::get('/public/worksites', [PublicWorksiteController::class, 'index'])->name('public.worksites.index');
+        Route::get('/public/worksites/filters', [PublicWorksiteController::class, 'filters'])->name('public.worksites.filters');
+        Route::get('/public/worksites/{worksite}', [PublicWorksiteController::class, 'show'])->whereNumber('worksite')->name('public.worksites.show');
+        Route::get('/public/evidences/{evidence}/photo', [PublicEvidenceController::class, 'photo'])->whereNumber('evidence')->name('public.evidences.photo');
+    });
     // US-024: el validador público — el navegador lee el sello en la red por su cuenta.
     Route::get('/verify', fn () => Inertia::render('Public/Validator', ['stellar' => StellarForBrowser::props()]))->name('public.validator');
 
@@ -76,18 +87,13 @@ Route::middleware([
     Route::get('/public/evidences/{evidence}/download', [PublicEvidenceController::class, 'download'])->whereNumber('evidence')->name('public.evidences.download');
     Route::get('/public/evidences/{evidence}/proof', [PublicEvidenceController::class, 'proof'])->whereNumber('evidence')->name('public.evidences.proof');
 
-    // US-027 / US-029: el mapa público — los pines, y lo que pide un clic en uno (it. 24).
-    Route::get('/public/worksites', [PublicWorksiteController::class, 'index'])->name('public.worksites.index');
-    Route::get('/public/worksites/filters', [PublicWorksiteController::class, 'filters'])->name('public.worksites.filters');
-    Route::get('/public/worksites/{worksite}', [PublicWorksiteController::class, 'show'])->whereNumber('worksite')->name('public.worksites.show');
-    Route::get('/public/evidences/{evidence}/photo', [PublicEvidenceController::class, 'photo'])->whereNumber('evidence')->name('public.evidences.photo');
     Route::get('/public/proofs/{sha256}', [PublicProofController::class, 'show'])->name('public.proofs.show');
     Route::post('/login', [LoginController::class, 'store'])->name('tenant.login');
 
     // US-030: el enlace de US-002 (Administrador inicial) o US-005
     // (invitación de veedor) — mismo token, misma pantalla.
     Route::get('/set-password/{user}', [SetPasswordController::class, 'show'])->whereNumber('user')->name('tenant.set-password.show');
-    Route::post('/set-password/{user}', [SetPasswordController::class, 'store'])->name('tenant.set-password.store');
+    Route::post('/set-password/{user}', [SetPasswordController::class, 'store'])->whereNumber('user')->name('tenant.set-password.store');
 
     // US-039-USR: restablecer la contraseña con un enlace por correo.
     Route::get('/forgot-password', [PasswordResetController::class, 'requestForm'])->name('tenant.password.request');
@@ -143,6 +149,9 @@ Route::middleware([
             Route::get('/observers', [ObserverController::class, 'index'])->name('observers.index');
             Route::post('/observers/{observer}/deactivate', [ObserverController::class, 'deactivate'])->whereNumber('observer')->name('observers.deactivate');
             Route::post('/observers/{observer}/reactivate', [ObserverController::class, 'reactivate'])->whereNumber('observer')->name('observers.reactivate');
+            // US-040-USR: reenviar o revocar una invitación pendiente.
+            Route::post('/observers/{observer}/invitation/resend', [ObserverController::class, 'resendInvitation'])->whereNumber('observer')->name('observers.invitation.resend');
+            Route::post('/observers/{observer}/invitation/revoke', [ObserverController::class, 'revokeInvitation'])->whereNumber('observer')->name('observers.invitation.revoke');
             Route::get('/territory', [TerritoryController::class, 'show'])->name('territory.show');
             Route::get('/territory/search', [TerritoryController::class, 'search'])->name('territory.search');
             Route::put('/territory', [TerritoryController::class, 'update'])->name('territory.update');

@@ -2,13 +2,14 @@
 // US-005: invitar veedores por correo (el enlace vence en 48 horas) y ver
 // el equipo con el estado de cada invitación. US-006 y US-041-USR:
 // desactivar a un veedor (su sesión se cierra de inmediato) y reactivarlo.
+// US-040-USR: reenviar o revocar una invitación que no se ha aceptado.
 import { onMounted, ref } from 'vue';
 import LoadState from '@/Components/LoadState.vue';
 import RowAction from '@/Components/RowAction.vue';
 import { useLoader } from '@/composables/useLoader.js';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { isEmail } from '@/lib/credentials.js';
-import { deactivateObserver, fetchObservers, inviteObserver, reactivateObserver } from '@/services/api.js';
+import { deactivateObserver, fetchObservers, inviteObserver, reactivateObserver, resendInvitation, revokeInvitation } from '@/services/api.js';
 import { errorMessage } from '@/services/errors.js';
 
 const { data: team, loading, error, load } = useLoader(fetchObservers);
@@ -42,6 +43,9 @@ async function changed(message) {
     notice.value = message;
     await load();
 }
+
+// Una invitación sin aceptar, vigente o vencida: se reenvía o se revoca (US-040-USR).
+const INVITATIONS = ['Invitación pendiente', 'Invitación vencida'];
 
 const statusStyle = {
     Activo: 'bg-emerald-100 text-emerald-800',
@@ -85,6 +89,16 @@ onMounted(load);
                         :run="() => reactivateObserver(member.id)"
                         @done="changed"
                     />
+                    <div v-else-if="INVITATIONS.includes(member.status)" class="flex flex-wrap gap-2">
+                        <RowAction label="Reenviar invitación" :run="() => resendInvitation(member.id)" @done="changed" />
+                        <RowAction
+                            label="Revocar invitación"
+                            confirm-label="Confirmar revocación"
+                            warning="El enlace enviado dejará de funcionar. Podrá invitar ese correo de nuevo."
+                            :run="() => revokeInvitation(member.id)"
+                            @done="changed"
+                        />
+                    </div>
                     <RowAction
                         v-else
                         label="Desactivar"

@@ -14,6 +14,8 @@ final class AuditLabels
         'organization.territory_configured' => 'Configuró el territorio',
         'organization.suspended' => 'Suspendió la organización',
         'organization.reactivated' => 'Reactivó la organización',
+        'organization.decommissioned' => 'Dio de baja la organización',
+        'organization.evidence_files_purged' => 'Borró los archivos de evidencia (5 años después de la baja)',
         'organization.profile_updated' => 'Cambió el nombre o el logo',
         'worksite.location_corrected' => 'Corrigió la ubicación de una obra',
         'worksite.contracts_grouped' => 'Agrupó contratos en una ficha de obra',
@@ -22,8 +24,11 @@ final class AuditLabels
         'evidence.withdrawn' => 'Retiró una evidencia',
         'observer.deactivated' => 'Desactivó a un veedor',
         'observer.reactivated' => 'Reactivó a un veedor',
+        'invitation.resent' => 'Reenvió una invitación',
+        'invitation.revoked' => 'Revocó una invitación',
         'parameter.changed' => 'Cambió un parámetro global',
         'seal.resent' => 'Reenvió el sellado de una evidencia',
+        'seal.requeued' => 'Volvió a encolar una evidencia en Falla de Sellado',
         'super_admin.authorized' => 'Autorizó al Super Administrador a reportar',
         'super_admin.authorization_revoked' => 'Revocó la autorización al Super Administrador',
         'report.created_by_super_admin' => 'Creó un reporte en nombre de la organización',
@@ -32,6 +37,7 @@ final class AuditLabels
     private const ACTORS = [
         'super_admin' => 'Super Administrador',
         'organization_admin' => 'Administrador de Organización',
+        'system' => 'Sistema',
     ];
 
     public static function action(string $action): string

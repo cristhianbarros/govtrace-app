@@ -73,7 +73,7 @@ class OrganizationValidationException extends DomainException
 
     public static function cannotChangeStatusFromTenantContext(): self
     {
-        return new self('Solo el Super Administrador, desde el panel global, puede suspender o reactivar una organización.');
+        return new self('Solo el Super Administrador, desde el panel global, puede suspender, reactivar o dar de baja una organización.');
     }
 
     public static function alreadySuspended(): self
@@ -84,6 +84,28 @@ class OrganizationValidationException extends DomainException
     public static function alreadyActive(): self
     {
         return new self('La organización seleccionada ya se encuentra activa.');
+    }
+
+    /** US-003b: a decommissioned organization stays so — no second decommission, suspension or reactivation. */
+    public static function alreadyDecommissioned(): self
+    {
+        return new self('La organización ya fue dada de baja: es definitivo.');
+    }
+
+    public static function decommissionNotConfirmed(): self
+    {
+        return new self('La primera confirmación venció o no es válida. Vuelva a solicitar la baja.');
+    }
+
+    public static function decommissionSubdomainMismatch(string $subdomain): self
+    {
+        return new self("Escriba el subdominio de la organización ({$subdomain}) para confirmar la baja.");
+    }
+
+    /** US-040-USR: there's no invitation to resend or revoke. */
+    public static function noPendingInvitation(): self
+    {
+        return new self('El veedor no tiene una invitación pendiente.');
     }
 
     public static function observerAlreadyInactive(): self

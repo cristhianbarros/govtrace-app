@@ -5,7 +5,7 @@ criterios_aceptacion:
   escenarios_exito:
     - "El botón 'Descargar archivo original' está en la tarjeta de la evidencia en la línea de tiempo (US-029)"
     - "Descarga el binario exacto que se selló (con EXIF ya purgado en origen, R-PRIV-01), sin recompresión ni marcas de agua, desde el almacenamiento de objetos"
-    - "Junto al archivo se descarga su prueba de inclusión (hojas, camino de Merkle, raíz y TxID) para poder verificarlo solo contra Polygon aunque GovTrace no esté disponible (R-INT-04)"
+    - "Junto al archivo se descarga su prueba de inclusión (hojas, camino de Merkle, raíz y TxID) para poder verificarlo solo contra Stellar aunque GovTrace no esté disponible (R-INT-04)"
   validaciones_reglas:
     - "R-VER-02: sin registro ni inicio de sesión"
     - "Solo se descargan evidencias publicadas (las retiradas muestran lápida)"

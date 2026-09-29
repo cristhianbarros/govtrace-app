@@ -1,6 +1,7 @@
 story_id: "US-003b"
 titulo_historia: "Como Super Administrador quiero dar de baja de forma definitiva a una organización para retirar del sistema a entidades inoperantes aplicando políticas de retención de datos"
 bloque: "B1 — Alta y gobierno de organizaciones"
+# Ajustada a Stellar en la it. 33 (pivote del 2026-09-28): solo el nombre de la red.
 criterios_aceptacion:
   escenarios_exito:
     - "El Super Administrador ejecuta la baja tras una confirmación doble"
@@ -11,9 +12,10 @@ criterios_aceptacion:
     - "Retención: los archivos (fotos y PDF) se conservan 5 años tras la baja y luego se borran; el sello en la blockchain permanece"
   manejo_errores: []
   requisitos_ux:
-    - "La baja exige confirmación doble antes de ejecutarse"
+    - "La baja exige confirmación doble antes de ejecutarse: la primera muestra lo que implica (evidencias selladas, hasta cuándo se conservan los archivos); la segunda pide escribir el subdominio de la organización. La primera confirmación vence a los 10 minutos"
   casos_edge:
-    - {caso: "La organización tiene evidencias ya selladas en Polygon", resultado: "La baja no elimina ni altera los registros on-chain; solo es lógica en la base de datos del tenant y en el control de acceso"}
+    - {caso: "La organización tiene evidencias ya selladas en Stellar", resultado: "La baja no elimina ni altera los registros on-chain; solo es lógica en la base de datos del tenant y en el control de acceso"}
+    - {caso: "La organización ya fue dada de baja", resultado: "No se puede dar de baja de nuevo, ni suspender o reactivar: la baja es definitiva"}
 validacion_smart:
   specific: true
   measurable: true

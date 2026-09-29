@@ -3,7 +3,15 @@
 import { flushPromises, mount } from '@vue/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import Organizations from './Organizations.vue';
-import { fetchOrganizationDetail, fetchOrganizations, reactivateOrganization, suspendOrganization, updateOrganizationNit } from '@/services/api.js';
+import {
+    confirmDecommission,
+    fetchOrganizationDetail,
+    fetchOrganizations,
+    reactivateOrganization,
+    startDecommission,
+    suspendOrganization,
+    updateOrganizationNit,
+} from '@/services/api.js';
 
 vi.mock('@inertiajs/vue3', async () => await import('@/testing/inertia.js'));
 vi.mock('@/services/api.js');
@@ -144,5 +152,78 @@ describe('Suspender y reactivar (US-003a)', () => {
         await flushPromises();
 
         expect(wrapper.get('[data-test="organization-row"] [role="alert"]').text()).toBe(message);
+    });
+});
+
+// Iteración 33 — US-003b (UI): la baja definitiva, con doble confirmación.
+describe('Dar de baja (US-003b)', () => {
+    const first = {
+        token: 'token-de-la-primera',
+        summary: { organization: 'Veeduría Ciudadana Santa Marta', subdomain: 'veeduria-smr', sealed_reports: 5, files_kept_until: '2031-09-29' },
+        message: 'Para confirmar la baja definitiva, escriba el subdominio de la organización: veeduria-smr.',
+    };
+    const DONE = 'Organización dada de baja. Sus usuarios ya no tienen acceso; su mapa salió de línea y sus evidencias siguen verificables.';
+
+    it('Baja lógica tras doble confirmación: says what it implies, asks to type the subdomain, and decommissions', async () => {
+        const wrapper = await openOrganizations([smr]);
+        startDecommission.mockResolvedValue(first);
+        confirmDecommission.mockResolvedValue({ message: DONE });
+        fetchOrganizations.mockResolvedValue([{ ...smr, status: 'Dada de baja' }]);
+
+        // Primera confirmación: lo que implica.
+        await button(wrapper, 'Dar de baja').trigger('click');
+        await flushPromises();
+        expect(startDecommission).toHaveBeenCalledWith('tenant-smr');
+        const dialog = wrapper.get('[data-test="decommission"]');
+        expect(dialog.text()).toContain('5 reportes sellados en Stellar siguen verificables');
+        expect(dialog.text()).toContain('Sus archivos se conservan hasta el 29/09/2031');
+        expect(dialog.text()).toContain(first.message);
+
+        // Segunda: el subdominio escrito.
+        const confirm = () => button(wrapper, 'Dar de baja definitivamente');
+        expect(confirm().attributes('disabled')).toBeDefined();
+        await dialog.get('input').setValue('veeduria-smr');
+        expect(confirm().attributes('disabled')).toBeUndefined();
+        await confirm().trigger('click');
+        await flushPromises();
+
+        expect(confirmDecommission).toHaveBeenCalledWith('tenant-smr', 'token-de-la-primera', 'veeduria-smr');
+        expect(wrapper.get('[role="status"]').text()).toBe(DONE);
+        expect(wrapper.get('[data-test="organization-row"]').text()).toContain('Dada de baja');
+    });
+
+    it('La baja no se ejecuta sin la doble confirmación: cancelling the second leaves it active', async () => {
+        const wrapper = await openOrganizations([smr]);
+        startDecommission.mockResolvedValue(first);
+
+        await button(wrapper, 'Dar de baja').trigger('click');
+        await flushPromises();
+        await button(wrapper, 'Cancelar').trigger('click');
+
+        expect(confirmDecommission).not.toHaveBeenCalled();
+        expect(wrapper.find('[data-test="decommission"]').exists()).toBe(false);
+        expect(wrapper.get('[data-test="organization-row"]').text()).toContain('Activa');
+    });
+
+    it('shows why the server refused the decommission', async () => {
+        const message = 'La primera confirmación venció o no es válida. Vuelva a solicitar la baja.';
+        const wrapper = await openOrganizations([smr]);
+        startDecommission.mockResolvedValue(first);
+        confirmDecommission.mockRejectedValue({ response: { status: 422, data: { message, errors: { token: [message] } } } });
+
+        await button(wrapper, 'Dar de baja').trigger('click');
+        await flushPromises();
+        await wrapper.get('[data-test="decommission"] input').setValue('veeduria-smr');
+        await button(wrapper, 'Dar de baja definitivamente').trigger('click');
+        await flushPromises();
+
+        expect(wrapper.get('[data-test="decommission"] [role="alert"]').text()).toBe(message);
+    });
+
+    it('offers nothing else on a decommissioned organization: it is definitive', async () => {
+        const wrapper = await openOrganizations([{ ...smr, status: 'Dada de baja' }]);
+
+        const row = wrapper.get('[data-test="organization-row"]');
+        expect(row.findAll('button').map((candidate) => candidate.text())).toEqual(['Editar NIT']);
     });
 });

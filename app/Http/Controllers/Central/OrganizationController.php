@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Central;
 
+use App\Application\Organization\DecommissionOrganization;
 use App\Application\Organization\ReactivateOrganization;
 use App\Application\Organization\RegisterOrganizationWithAdministrator;
 use App\Application\Organization\SuspendOrganization;
@@ -106,6 +107,42 @@ class OrganizationController extends Controller
             $tenant,
             'Organización reactivada. Sus usuarios ya pueden volver a entrar.',
         );
+    }
+
+    /** US-003b: the first confirmation — what the decommission implies, and the token for the second. */
+    public function startDecommission(string $tenant): JsonResponse
+    {
+        try {
+            $first = (new DecommissionOrganization)->start(Tenant::query()->findOrFail($tenant));
+        } catch (OrganizationValidationException $e) {
+            throw ValidationException::withMessages(['status' => $e->getMessage()]);
+        }
+
+        return response()->json([
+            ...$first,
+            'message' => "Para confirmar la baja definitiva, escriba el subdominio de la organización: {$first['summary']['subdomain']}.",
+        ]);
+    }
+
+    /** US-003b: the second confirmation, with the subdomain typed. */
+    public function decommission(Request $request, string $tenant): JsonResponse
+    {
+        $data = $request->validate([
+            'token' => ['nullable', 'string'],
+            'subdomain' => ['required', 'string'],
+        ]);
+
+        try {
+            (new DecommissionOrganization)->confirm(Tenant::query()->findOrFail($tenant), $data['token'] ?? null, $data['subdomain']);
+        } catch (OrganizationValidationException $e) {
+            throw ValidationException::withMessages([match (true) {
+                str_contains($e->getMessage(), 'confirmación') => 'token',
+                str_contains($e->getMessage(), 'subdominio') => 'subdomain',
+                default => 'status',
+            } => $e->getMessage()]);
+        }
+
+        return response()->json(['message' => 'Organización dada de baja. Sus usuarios ya no tienen acceso; su mapa salió de línea y sus evidencias siguen verificables.']);
     }
 
     private function changeStatus(callable $change, string $tenant, string $message): JsonResponse
