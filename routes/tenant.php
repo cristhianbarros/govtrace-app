@@ -13,6 +13,7 @@ use App\Http\Controllers\Tenant\EvidenceFileController;
 use App\Http\Controllers\Tenant\InviteObserverController;
 use App\Http\Controllers\Tenant\LoginController;
 use App\Http\Controllers\Tenant\MyReportsController;
+use App\Http\Controllers\Tenant\NearbyWorksitesController;
 use App\Http\Controllers\Tenant\ObserverController;
 use App\Http\Controllers\Tenant\OrganizationLogoController;
 use App\Http\Controllers\Tenant\OrganizationProfileController;
@@ -77,6 +78,7 @@ Route::middleware([
 
     // US-027 / US-029: el mapa público — los pines, y lo que pide un clic en uno (it. 24).
     Route::get('/public/worksites', [PublicWorksiteController::class, 'index'])->name('public.worksites.index');
+    Route::get('/public/worksites/filters', [PublicWorksiteController::class, 'filters'])->name('public.worksites.filters');
     Route::get('/public/worksites/{worksite}', [PublicWorksiteController::class, 'show'])->whereNumber('worksite')->name('public.worksites.show');
     Route::get('/public/evidences/{evidence}/photo', [PublicEvidenceController::class, 'photo'])->whereNumber('evidence')->name('public.evidences.photo');
     Route::get('/public/proofs/{sha256}', [PublicProofController::class, 'show'])->name('public.proofs.show');
@@ -164,8 +166,9 @@ Route::middleware([
             Route::get('/me/reports', [MyReportsController::class, 'index'])->name('reports.mine');
             Route::get('/reports/{report}/receipt', [ReceiptController::class, 'mine'])->whereNumber('report')->name('reports.receipt');
 
-            // US-016: "Buscar Obra".
+            // US-016: "Buscar Obra". US-019: las obras cercanas.
             Route::get('/contracts/search', ContractSearchController::class)->name('contracts.search');
+            Route::get('/worksites/nearby', NearbyWorksitesController::class)->name('worksites.nearby');
         });
     });
 });

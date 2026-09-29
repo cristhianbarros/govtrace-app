@@ -5,7 +5,7 @@ import { flushPromises, mount } from '@vue/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { defineComponent, h } from 'vue';
 import Map from './Map.vue';
-import { fetchPins } from '@/services/api.js';
+import { fetchMapFilters, fetchPins } from '@/services/api.js';
 import { page, router } from '@/testing/inertia.js';
 
 vi.mock('@inertiajs/vue3', async () => await import('@/testing/inertia.js'));
@@ -38,6 +38,7 @@ async function openMap(answer = pins) {
 
 beforeEach(() => {
     vi.resetAllMocks();
+    fetchMapFilters.mockResolvedValue({ municipalities: [{ code: '47189', name: 'Ciénaga' }, { code: '47001', name: 'Santa Marta' }] });
     page.props = { organization: 'Veeduría Ciudadana Santa Marta', organizationLogo: null, organizationNotice: null };
 });
 
@@ -98,5 +99,56 @@ describe('Mapa público', () => {
 
         expect(wrapper.get('[role="status"]').text()).toBe(SUSPENDED);
         expect(wrapper.findAll('[data-test="pin"]')).toHaveLength(3);
+    });
+});
+
+describe('Filtros del mapa (US-028)', () => {
+    const apply = (wrapper) => wrapper.findAll('button').find((button) => button.text() === 'Aplicar');
+
+    it('No se puede aplicar sin elegir ningún filtro', async () => {
+        const wrapper = await openMap();
+
+        expect(apply(wrapper).attributes('disabled')).toBeDefined();
+        await wrapper.get('select#filter-municipality').setValue('47001');
+        expect(apply(wrapper).attributes('disabled')).toBeUndefined();
+    });
+
+    it('Filtrar por estado, fechas, presupuesto y municipio: asks for the pins that meet the 4', async () => {
+        const wrapper = await openMap();
+        fetchPins.mockResolvedValue([pins[2]]);
+
+        await wrapper.get('select#filter-status').setValue('red');
+        await wrapper.get('input#filter-from').setValue('2026-09-01');
+        await wrapper.get('input#filter-to').setValue('2026-09-30');
+        await wrapper.get('input#filter-min-value').setValue('1000000000');
+        await wrapper.get('select#filter-municipality').setValue('47001');
+        await apply(wrapper).trigger('click');
+        await flushPromises();
+
+        expect(fetchPins).toHaveBeenLastCalledWith({ status: 'red', from: '2026-09-01', to: '2026-09-30', min_value: '1000000000', municipality: '47001' });
+        expect(wrapper.findAll('[data-test="pin"]').map((pin) => pin.attributes('data-color'))).toEqual(['red']);
+    });
+
+    it('Ninguna obra coincide: the message of US-028', async () => {
+        const wrapper = await openMap();
+        fetchPins.mockResolvedValue([]);
+
+        await wrapper.get('input#filter-min-value').setValue('900000000000');
+        await apply(wrapper).trigger('click');
+        await flushPromises();
+
+        expect(wrapper.text()).toContain(NO_WORKSITES);
+    });
+
+    it('offers the municipalities of the map, and clears the filters', async () => {
+        const wrapper = await openMap();
+
+        expect(wrapper.findAll('select#filter-municipality option').map((option) => option.text())).toEqual(['Todos', 'Ciénaga', 'Santa Marta']);
+        await wrapper.get('select#filter-status').setValue('yellow');
+        await wrapper.findAll('button').find((button) => button.text() === 'Limpiar').trigger('click');
+        await flushPromises();
+
+        expect(fetchPins).toHaveBeenLastCalledWith({});
+        expect(wrapper.get('select#filter-status').element.value).toBe('');
     });
 });

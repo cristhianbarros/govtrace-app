@@ -15,7 +15,7 @@ import { capturePosition, formatMeters, imprecisionMessage, isPreciseEnough } fr
 import { saveOffline, startOutboxSync } from '@/composables/useOutbox.js';
 import { registerServiceWorker } from '@/lib/pwa.js';
 import { MESSAGES, OutboxFull } from '@/lib/outbox.js';
-import { sendReport } from '@/services/api.js';
+import { fetchNearbyWorksites, sendReport } from '@/services/api.js';
 import { errorMessages } from '@/services/errors.js';
 
 const page = usePage();
@@ -35,7 +35,22 @@ const serverErrors = ref([]);
 const sent = ref(false);
 const savedOffline = ref(false); // US-018: quedó en la bandeja de salida
 
+// US-019: las obras cercanas, desde donde está el veedor.
+const NO_NEARBY = '📍 No se encontraron obras a menos de 500m. Utilice el buscador para encontrarla por nombre o contrato.';
+const nearby = ref({ status: 'idle', list: [] }); // idle | locating | ready | failed
+
+async function findNearby() {
+    nearby.value = { status: 'locating', list: [] };
+    try {
+        const position = await capturePosition();
+        nearby.value = { status: 'ready', list: await fetchNearbyWorksites(position.latitude, position.longitude) };
+    } catch (error) {
+        nearby.value = { status: 'failed', list: [], message: error?.response ? errorMessages(error)[0] : error.message };
+    }
+}
+
 async function chooseWorksite(selected) {
+    nearby.value = { status: 'idle', list: [] };
     contract.value = selected;
     sent.value = false;
     savedOffline.value = false;
@@ -154,7 +169,24 @@ function startOver() {
             <p v-if="sent" role="status" class="rounded-lg bg-emerald-50 p-3 text-sm font-semibold text-emerald-800">{{ SUCCESS_MESSAGE }}</p>
             <p v-if="savedOffline" role="status" class="rounded-lg bg-amber-100 p-3 text-sm font-semibold text-amber-900">{{ MESSAGES.saved }}</p>
 
-            <!-- 1. La obra -->
+            <!-- 1. La obra: una cercana (US-019) o buscada (US-016) -->
+            <section v-if="!contract" class="flex flex-col gap-2">
+                <button type="button" class="min-h-11 rounded-lg border border-slate-300 bg-white px-3 text-base font-semibold" :disabled="nearby.status === 'locating'" @click="findNearby">📍 Obras cercanas</button>
+                <p v-if="nearby.status === 'locating'" class="text-sm text-slate-600">Buscando obras cercanas…</p>
+                <p v-else-if="nearby.status === 'failed'" role="alert" class="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">{{ nearby.message }}</p>
+                <p v-else-if="nearby.status === 'ready' && nearby.list.length === 0" class="rounded-lg bg-white p-3 text-sm text-slate-700">{{ NO_NEARBY }}</p>
+                <ul v-else-if="nearby.status === 'ready'" class="flex flex-col gap-2">
+                    <li v-for="item in nearby.list" :key="item.worksite_id">
+                        <button type="button" data-test="nearby" class="flex w-full items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white p-3 text-left active:bg-slate-100" @click="chooseWorksite(item.contract)">
+                            <span>
+                                <span class="block font-semibold">{{ item.name }}</span>
+                                <span class="block text-sm text-slate-600">{{ item.contract.entity_name }}</span>
+                            </span>
+                            <span data-test="distance" class="shrink-0 text-sm font-semibold text-slate-700">a {{ item.distance_meters }} m</span>
+                        </button>
+                    </li>
+                </ul>
+            </section>
             <ContractSearch v-if="!contract" @select="chooseWorksite" />
             <section v-else class="flex items-start justify-between gap-3 rounded-lg bg-white p-3">
                 <div>

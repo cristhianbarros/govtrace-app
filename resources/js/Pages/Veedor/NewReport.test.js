@@ -9,11 +9,11 @@ import ContractSearch from '@/Components/ContractSearch.vue';
 import EvidencePicker from '@/Components/EvidencePicker.vue';
 import { configureOutbox, outboxState } from '@/composables/useOutbox.js';
 import { createOutbox, memoryStore } from '@/lib/outbox.js';
-import { sendReport } from '@/services/api.js';
+import { fetchNearbyWorksites, sendReport } from '@/services/api.js';
 import { page } from '@/testing/inertia.js';
 
 vi.mock('@inertiajs/vue3', async () => await import('@/testing/inertia.js'));
-vi.mock('@/services/api.js', () => ({ searchContracts: vi.fn(async () => []), sendReport: vi.fn(), logout: vi.fn() }));
+vi.mock('@/services/api.js', () => ({ searchContracts: vi.fn(async () => []), sendReport: vi.fn(), logout: vi.fn(), fetchNearbyWorksites: vi.fn() }));
 
 const GPS_DENIED =
     'GovTrace requiere acceso a su ubicación exacta para certificar criptográficamente que la evidencia fue tomada en el sitio de la obra. Por favor habilite el GPS.';
@@ -257,5 +257,52 @@ describe('Nuevo Reporte sin conexión (US-018)', () => {
         expect(wrapper.get('[role="alert"]').text()).toContain(FULL);
         expect(await outbox.pending()).toHaveLength(10);
         expect(wrapper.find('form').exists()).toBe(true);
+    });
+});
+
+describe('Obras cercanas (US-019)', () => {
+    const NONE = '📍 No se encontraron obras a menos de 500m. Utilice el buscador para encontrarla por nombre o contrato.';
+    const suggestion = (meters) => ({
+        worksite_id: meters,
+        name: `Obra a ${meters} m`,
+        distance_meters: meters,
+        contract: { secop_contract_id: `CO1.PCCNTR.${meters}`, object: `Obra a ${meters} m`, entity_name: 'Alcaldía Distrital de Santa Marta' },
+    });
+
+    async function openNearby(answer, ...gpsAnswers) {
+        fetchNearbyWorksites.mockResolvedValue(answer);
+        phoneGps(...gpsAnswers);
+        const wrapper = mount(NewReport);
+        await wrapper.findAll('button').find((button) => button.text() === '📍 Obras cercanas').trigger('click');
+        await flushPromises();
+        return wrapper;
+    }
+
+    it('Hasta 5 obras dentro de 500 m ordenadas por distancia: from where the veedor is, the closest first', async () => {
+        const wrapper = await openNearby([50, 120, 200, 310, 420].map(suggestion), reading(15), reading(15));
+
+        expect(fetchNearbyWorksites).toHaveBeenCalledWith(11.2419, -74.199);
+        const offered = wrapper.findAll('[data-test="nearby"]');
+        expect(offered.map((item) => item.get('[data-test="distance"]').text())).toEqual(['a 50 m', 'a 120 m', 'a 200 m', 'a 310 m', 'a 420 m']);
+        expect(offered[0].text()).toContain('Obra a 50 m');
+
+        await offered[1].trigger('click');
+        await flushPromises();
+        expect(wrapper.text()).toContain('Obra a 120 m');
+        expect(wrapper.find('[data-test="nearby"]').exists()).toBe(false);
+    });
+
+    it('Ninguna obra cercana: says so, and the search is still there', async () => {
+        const wrapper = await openNearby([], reading(15));
+
+        expect(wrapper.text()).toContain(NONE);
+        expect(wrapper.find('input#contract-search').exists()).toBe(true);
+    });
+
+    it('asks for the GPS first, and says why if it is denied', async () => {
+        const wrapper = await openNearby([], { code: 1, PERMISSION_DENIED: 1 });
+
+        expect(fetchNearbyWorksites).not.toHaveBeenCalled();
+        expect(wrapper.text()).toContain(GPS_DENIED);
     });
 });
