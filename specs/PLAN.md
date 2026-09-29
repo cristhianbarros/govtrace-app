@@ -32,7 +32,7 @@
 | D7 | Seudónimo del veedor (R-PRIV-03) | HMAC del ID del veedor con un secreto del servidor, más una tabla seudónimo→veedor con retención de 5 años (R-MNT-03) | it. 13 |
 | D8 | Mapas | Leaflet con teselas de OpenStreetMap (R-INT-02) | it. 18 |
 | D9 | Frontend | Se mantiene JavaScript, como está la plomería. Filament y TypeScript no se usan salvo que decidas lo contrario. | it. 16 |
-| D11 | Custodia de las llaves (R-BLK-04) | ✅ **Resuelta (2026-09-28).** Para el MVP y testnet, **(a)**: las llaves de la selladora y la patrocinadora se inyectan como variables de entorno al arrancar, desde un gestor de secretos (en CI, las credenciales de Jenkins); nunca en el repositorio, su historial ni `.env.example`. La patrocinadora es una **hot wallet**: tiene el saldo de unos días de sellos y la recarga seguido una cuenta de **tesorería** fría, que no vive en el servidor. La selladora no tiene fondos. **Mejora futura, antes de la red principal: (b)** firma remota Ed25519 sin que la llave salga del servicio (p. ej. HashiCorp Vault Transit), detrás de la misma interfaz `SealingNetwork`. | it. 14 |
+| D11 | Custodia de las llaves (R-BLK-04) | ✅ **Resuelta (2026-09-28).** Para el MVP y testnet, **(a)**: las llaves de la selladora y la patrocinadora se inyectan como variables de entorno al arrancar, desde un gestor de secretos (en CI, las credenciales de Jenkins); nunca en el repositorio, su historial ni `.env.example`. La patrocinadora es una **hot wallet**: tiene el saldo de unos días de sellos y la recarga seguido una cuenta de **tesorería** fría, que no vive en el servidor. La selladora no tiene fondos. **Antes de la red principal: (b)** firma remota Ed25519 sin que la llave salga del servicio, detrás de la misma interfaz `SealingNetwork`. ✅ **Elegido el 2026-09-29: AWS KMS** (it. 37b). Al abrir la 37b se verifica primero que la llave de KMS sea Ed25519, la curva de Stellar, y que firme el hash de 32 bytes de la transacción tal cual. | it. 14, 37b |
 | D12 | Umbral de saldo de la cuenta patrocinadora (US-021, US-022, US-038-CFG) | ✅ **Resuelta (2026-09-28).** Umbral de alerta de **50 XLM** (`sponsor_balance_alert_threshold_xlm`, ~200 sellos de 0,2425 XLM); reemplaza al parámetro en POL de la it. 6. La **tesorería** paga el despliegue y la extensión de la vigencia de la instancia y del código del contrato, así la hot wallet solo paga sellos. Se mantiene la vigencia máxima por sello (se revisa en la it. 23). Detalle en la it. 14. | it. 21 |
 | D10 | Proximidad (US-019) | Haversine en SQL, sin PostGIS | it. 31 |
 | D13 | Red principal de Stellar (R-CFG-01, it. 37) | ✅ **Resuelta (2026-09-29).** El RPC de Stellar (JSON-RPC de Soroban, no Horizon) lo da un proveedor, **QuickNode o Validation Cloud**: la red principal no tiene un RPC público gratuito como el de testnet. **Dos endpoints:** `STELLAR_RPC_URL`, privado, para el servidor, y `STELLAR_PUBLIC_RPC_URL`, de solo lectura y restringido al dominio de GovTrace, para el validador del navegador, así el token del proveedor no queda a la vista. La **tesorería la fondea el presupuesto operativo central** del proyecto (el operador del SaaS), desde un exchange corporativo. Presupuesto: **28 XLM iniciales** (subir el código, desplegar la instancia y extender su vigencia), **unos 27 XLM cada ~180 días** para volver a extenderla, y la patrocinadora aparte, con alerta bajo 50 XLM (D12). | it. 37 |
@@ -1458,15 +1458,29 @@ Suite: 694 en verde (11 nuevos). Vitest: 351 (1 nuevo). `make trace-check`: 249 
 
 Suite: 702 en verde (8 nuevos). Vitest: 351. `make backup-check`: 13 comprobaciones en verde. `make network-deploy-check` en testnet: 9 de 9. Cada regla nueva se comprobó rompiéndola a propósito: 12 casos (6 de la verificación de arranque, 4 de los respaldos y 2 de las salvaguardas del despliegue), todos atrapados.
 
-**Decisiones de la iteración, para confirmar:**
+**Decisiones de la iteración — ✅ aprobadas por el usuario el 2026-09-29:** el espejo con versionado y Lifecycle Rules de S3; los saldos de 1,5 y 100 XLM; y el `--rpc` propio del verificador independiente, que garantiza la descentralización (R-INT-04). Quedan en la SPEC (R-BCK-04, R-BLK-04, R-INT-04).
 1. **La réplica fuera del sitio guarda los volcados por copia y los archivos en un espejo.** El espejo no guarda 30 días un archivo borrado; para eso, en producción, el bucket de la réplica necesita versionado y una regla de 30 días. Queda en la lista de salida.
 2. **La selladora se crea con 1,5 XLM** (la reserva mínima y un margen: no paga comisiones), y **la patrocinadora con 100 XLM por defecto**, que se ajustan con `SPONSOR_STARTING_XLM`. Esos XLM salen de la tesorería, aparte de los 28 del contrato.
 3. **El verificador independiente no usa el endpoint del navegador**, restringido al dominio: quien verifica desde su equipo indica su RPC con `--rpc`. En `tools/verify/contracts.json`, el `rpc` de la red principal queda en `null`.
 
+**Prueba en testnet a pedido del usuario (2026-09-29).** Con el RPC de SDF en las dos variables, porque el bloqueo CORS del endpoint público se aplicará en la infraestructura de la red principal:
+1. Una tesorería nueva, fondeada con friendbot (`GCQVAD3ZZ6RNO4MQWN2BGEFLWTMHGHJZUE57TGU54ZXSNBKEGZDKQDAD`), y `make network-deploy NETWORK=testnet`:
+   - la tesorería creó la selladora `GCUCPDHRG3AVSYBBEHNB3A5QQ4NEFHAKLTGR74FQZJQQCEOMKPXD3NJM` con 1,5 XLM (tx `779145072394cc337df60ea14428716bc9cd76bd9d7637b98370a3d13614a3d4`);
+   - creó la patrocinadora `GCOQRTRH6KYDSAGEGF4R7O4OUM5F5NZJD5ESVFVUALCZ7TOXSXR6S6KU` con 100 XLM (tx `ee17bf773f6c2945b5ce4808b38a48b2112d560a8e9d9c7ce060e8a1392121c6`);
+   - desplegó el contrato **`CAKUYPROMNYKZCMCNI2N5RTWZE3JZ7RR4Q2W5FNVQNPANNMQPLJ4PLDY`** (tx `64e5c481160139c3801365c57078e7664121531a69e5f7de4516463a570574f5`);
+   - extendió la vigencia de la instancia (tx `83770597c2496f2321a1599a4f324b9cab9f7cfafb36167323263478723589e4`) y del código (tx `b6fcf0826245257e2b318501c406018dc1d8f841ac5432a6c5f2def74358130b`).
+2. **Dos reportes hasta "Sellada" por el endpoint privado**, con la aplicación: tx `b8ebde007360e24e73842576181c1002d9bc180aa8e9e2c278928959f5ffd03f` (ledger 4934763) y `caf4acdd4105cd25d47b0672f3605a8178e6d1a43dbbf577c603a93f333e70e8` (ledger 4934764).
+   - Cada sello costó **0,269874 XLM**, un 11 % más que los 0,2425 medidos el 2026-09-28 en testnet. Con esa comisión, el umbral de 50 XLM son unos 185 sellos.
+   - La selladora siguió con 1,5 XLM y la patrocinadora quedó en 99,460252 XLM: pagó solo los dos sellos (D5).
+3. **Los dos sellos leídos como el validador del navegador**, con su misma biblioteca (`tools/verify/lib`) y el endpoint público: raíces `6c60b323…52551b` y `e6e53eda…525066`, en los ledgers 4934763 y 4934764.
+4. **La separación de los endpoints, probada en el código** (`StellarEndpointsTest`, 3 casos), porque con la misma URL en las dos variables la red no puede mostrarla: el servidor consulta solo el privado, y el validador y la vista de una obra reciben solo el público. El privado no aparece en ninguna página.
+- La prueba de humo de testnet ahora anota también el contrato y la raíz de cada sello, para auditarlos.
+- El script decía "creada con 1 XLM" para la selladora (dividía en enteros); ahora dice 1,5.
+
 #### Iteración 37b — La salida, con producción
 **Entregable:**
 - la cuenta del proveedor de RPC, con sus dos endpoints (D13);
-- **la firma remota (D11 opción b):** la llave de la selladora no sale del servicio de firma, detrás de la misma interfaz `SealingNetwork`. Falta que el usuario elija entre Vault y un KMS;
+- **la firma remota (D11 opción b) con AWS KMS**, elegido por el usuario el 2026-09-29: la llave de la selladora no sale de KMS, detrás de la misma interfaz `SealingNetwork`. Primero se verifica que KMS firme en Ed25519 como lo pide Stellar;
 - el despliegue en la red principal con la tesorería fondeada (D13) y el contrato registrado en `tools/verify/contracts.json`;
 - la lista de `docs/go-live.md` completa: credenciales de Jenkins, DIVIPOLA sembrada, respaldos fuera del sitio en su bucket real.
 
