@@ -1477,10 +1477,20 @@ Suite: 702 en verde (8 nuevos). Vitest: 351. `make backup-check`: 13 comprobacio
 - La prueba de humo de testnet ahora anota también el contrato y la raíz de cada sello, para auditarlos.
 - El script decía "creada con 1 XLM" para la selladora (dividía en enteros); ahora dice 1,5.
 
+**Testnet oficial (2026-09-29, a pedido del usuario):** el contrato `CAKUYPROMNYKZCMCNI2N5RTWZE3JZ7RR4Q2W5FNVQNPANNMQPLJ4PLDY` es el entorno oficial de pruebas previo a la red principal.
+- `.env.testnet` (fuera de git) apunta a él y a su selladora y patrocinadora; el anterior, `CABXHM74…`, se guardó fuera del repositorio.
+- `tools/verify/contracts.json` lo lista junto al anterior, cuyos sellos siguen valiendo (R-MNT-01).
+- `make smoke-testnet` pasó con él: tx `4a4729362dc8304985dc32554f38e081903641581f064492f7bc2e32adb2b2bc` y `4bd1cd8113f211deb9a7a39ee1ee614949a513e3227ef7d9a134fff741d44483`, a 0,270728 XLM cada sello.
+- **Queda para el usuario, que tiene acceso a Jenkins: actualizar sus tres credenciales de testnet.** No basta con el ID: el contrato nuevo solo acepta sellos de su propia selladora. Van `stellar-testnet-contract-id` (el ID de arriba), `stellar-testnet-sealer-secret` y `stellar-testnet-sponsor-secret`; las dos llaves salen de las identidades `govtrace-37a-sealer` y `govtrace-37a-sponsor`.
+- **El umbral de alerta sigue en 50 XLM** (el usuario, 2026-09-29): con sellos de ~0,27 XLM son unos 185, días o semanas para fondear la hot wallet.
+
 #### Iteración 37b — La salida, con producción
 **Entregable:**
 - la cuenta del proveedor de RPC, con sus dos endpoints (D13);
-- **la firma remota (D11 opción b) con AWS KMS**, elegido por el usuario el 2026-09-29: la llave de la selladora no sale de KMS, detrás de la misma interfaz `SealingNetwork`. Primero se verifica que KMS firme en Ed25519 como lo pide Stellar;
+- **la firma remota (D11 opción b) con AWS KMS**, elegido por el usuario el 2026-09-29: la llave de la selladora no sale de KMS, detrás de la misma interfaz `SealingNetwork`.
+  - Verificado en el modelo del API de KMS que trae la CLI de AWS: la llave es `KeySpec=ECC_NIST_EDWARDS25519` (no "ECC_ED25519"), con `KeyUsage=SIGN_VERIFY`.
+  - Se firma con **`ED25519_SHA_512` y `MessageType=RAW`** sobre los 32 bytes del hash de la transacción, que es el Ed25519 puro que verifica Stellar. `ED25519_PH_SHA_512` es Ed25519ph y no sirve para Stellar.
+  - Primer paso, la prueba de concepto: crear la llave, derivar su dirección G… de la llave pública, firmar una transacción de testnet y que la red la acepte. Necesita acceso a la cuenta de AWS;
 - el despliegue en la red principal con la tesorería fondeada (D13) y el contrato registrado en `tools/verify/contracts.json`;
 - la lista de `docs/go-live.md` completa: credenciales de Jenkins, DIVIPOLA sembrada, respaldos fuera del sitio en su bucket real.
 

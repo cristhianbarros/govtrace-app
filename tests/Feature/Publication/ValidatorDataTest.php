@@ -122,7 +122,7 @@ it('El validador no exige registro: serves /verify without a session, with what 
             ->where('stellar.network_passphrase', 'Test SDF Network ; September 2015')
             ->where('stellar.explorer_url', 'https://stellar.expert/explorer/testnet')
             // Los oficiales de esa red (tools/verify/contracts.json) y el configurado.
-            ->where('stellar.contracts', ['CABXHM74HFSAZD4FDFDONSIDJOVJBU7ZJXYBCHY3JJDCQUDFTHBT2WUI', 'CAF2JUMJPPMHLXMO3HV4SOT3PSHXSYMAPRPM67FCT4F5UU3NCGKAT3VE']));
+            ->where('stellar.contracts', ['CABXHM74HFSAZD4FDFDONSIDJOVJBU7ZJXYBCHY3JJDCQUDFTHBT2WUI', 'CAKUYPROMNYKZCMCNI2N5RTWZE3JZ7RR4Q2W5FNVQNPANNMQPLJ4PLDY', 'CAF2JUMJPPMHLXMO3HV4SOT3PSHXSYMAPRPM67FCT4F5UU3NCGKAT3VE']));
 });
 
 it('gives the view of a worksite the same, for the contextual mode of each card', function () {
