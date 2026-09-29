@@ -16,6 +16,7 @@ final class AuditLabels
         'organization.reactivated' => 'Reactivó la organización',
         'organization.profile_updated' => 'Cambió el nombre o el logo',
         'worksite.location_corrected' => 'Corrigió la ubicación de una obra',
+        'worksite.contracts_grouped' => 'Agrupó contratos en una ficha de obra',
         'evidence.published' => 'Publicó una evidencia',
         'evidence.rejected' => 'Rechazó una evidencia',
         'evidence.withdrawn' => 'Retiró una evidencia',

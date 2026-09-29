@@ -2,6 +2,7 @@
 
 namespace App\Domain\Reports;
 
+use App\Domain\Geography\GeoPoint;
 use App\Domain\Organization\User;
 use App\Domain\Reports\Exceptions\EditorialDecisionRejected;
 use App\Domain\Reports\Exceptions\EvidenceIsImmutable;
@@ -66,6 +67,12 @@ class Report extends Model
     public function worksite(): BelongsTo
     {
         return $this->belongsTo(Worksite::class);
+    }
+
+    /** Where the veedor was when capturing it (US-008) — exact; the public only sees it approximate (R-PRIV-02). */
+    public function location(): GeoPoint
+    {
+        return new GeoPoint((float) $this->latitude, (float) $this->longitude);
     }
 
     /** Its files: 1 to 5 photos or 1 PDF (US-009). */

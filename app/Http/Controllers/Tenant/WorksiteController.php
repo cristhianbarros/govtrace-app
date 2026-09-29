@@ -25,6 +25,7 @@ class WorksiteController extends Controller
         return response()->json([
             'data' => $worksites->map(fn (Worksite $worksite) => [
                 'id' => $worksite->id,
+                'name' => $worksite->name, // US-045-INT: la que agrupa varios contratos
                 'latitude' => $worksite->location()?->latitude,
                 'longitude' => $worksite->location()?->longitude,
                 'contracts' => $worksite->contracts->map(fn (WorksiteContract $link) => [

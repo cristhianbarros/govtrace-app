@@ -222,6 +222,7 @@ it('lists the worksites of the organization with their official location and the
 
     expect(asAdministrator('GET', '/worksites')->assertOk()->json('data'))->toBe([[
         'id' => $gaira->id,
+        'name' => null, // sin nombre hasta que el Administrador la agrupe (US-045-INT)
         'latitude' => 11.2,
         'longitude' => -74.23,
         'contracts' => [

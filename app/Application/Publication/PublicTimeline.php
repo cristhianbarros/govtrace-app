@@ -2,18 +2,21 @@
 
 namespace App\Application\Publication;
 
+use App\Domain\Geography\GeoPoint;
 use App\Domain\Reports\EditorialStatus;
 use App\Domain\Reports\Evidence;
+use App\Domain\Reports\EvidenceKind;
 use App\Domain\Reports\Report;
 
 /**
  * The cards of a worksite's public timeline, newest first: what each
- * organization publishes on its own map (R-MAP-01). The it. 24 serves it
- * (US-029) and adds the approximate coordinates (R-PRIV-02).
+ * organization publishes on its own map (R-MAP-01), served on a click on
+ * its pin (US-029). Where each evidence was taken, only to about 100 m
+ * (R-PRIV-02).
  *
- * A withdrawn evidence stays as a tombstone (US-037): without its files
- * or its comment, but with its seal, for external audit. Hidden and
- * rejected evidences never show.
+ * A withdrawn evidence stays as a tombstone (US-037): without its files,
+ * its comment or its place, but with its seal, for external audit. Hidden
+ * and rejected evidences never show.
  */
 class PublicTimeline
 {
@@ -46,11 +49,13 @@ class PublicTimeline
             ? ['notice' => self::TOMBSTONE_NOTICE]
             : [
                 'comment' => $report->comment,
-                // US-026: cada archivo, con su descarga y su prueba de inclusión.
+                'approximate_location' => $this->approximately($report->location()),
+                // US-026: cada archivo, con su descarga y su prueba de inclusión; una foto, además, para verla (US-029).
                 'files' => $report->evidences->map(fn (Evidence $evidence) => [
                     'id' => $evidence->id,
                     'kind' => $evidence->kind,
                     'sha256' => $evidence->sha256,
+                    ...($evidence->kind === EvidenceKind::Photo->value ? ['photo_url' => "/public/evidences/{$evidence->id}/photo"] : []),
                     'download_url' => "/public/evidences/{$evidence->id}/download",
                     'proof_url' => "/public/evidences/{$evidence->id}/proof",
                 ])->all(),
@@ -63,5 +68,13 @@ class PublicTimeline
             // US-025: también el de una retirada, para auditoría.
             'receipt_url' => "/public/reports/{$report->id}/receipt",
         ];
+    }
+
+    /** @return array{lat: float, lng: float} */
+    private function approximately(GeoPoint $place): array
+    {
+        $approximate = $place->approximate();
+
+        return ['lat' => $approximate->latitude, 'lng' => $approximate->longitude];
     }
 }

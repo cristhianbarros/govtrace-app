@@ -15,11 +15,13 @@ use App\Http\Controllers\Tenant\ObserverController;
 use App\Http\Controllers\Tenant\OrganizationLogoController;
 use App\Http\Controllers\Tenant\OrganizationProfileController;
 use App\Http\Controllers\Tenant\PublicEvidenceController;
+use App\Http\Controllers\Tenant\PublicWorksiteController;
 use App\Http\Controllers\Tenant\ReceiptController;
 use App\Http\Controllers\Tenant\ReportController;
 use App\Http\Controllers\Tenant\SetPasswordController;
 use App\Http\Controllers\Tenant\TerritoryController;
 use App\Http\Controllers\Tenant\WorksiteController;
+use App\Http\Controllers\Tenant\WorksiteGroupController;
 use App\Http\Controllers\Tenant\WorksiteLocationController;
 use App\Http\Middleware\EnsureAccountIsUsable;
 use Illuminate\Support\Facades\Route;
@@ -67,6 +69,11 @@ Route::middleware([
     Route::get('/public/reports/{report}/receipt', [ReceiptController::class, 'public'])->whereNumber('report')->name('public.reports.receipt');
     Route::get('/public/evidences/{evidence}/download', [PublicEvidenceController::class, 'download'])->whereNumber('evidence')->name('public.evidences.download');
     Route::get('/public/evidences/{evidence}/proof', [PublicEvidenceController::class, 'proof'])->whereNumber('evidence')->name('public.evidences.proof');
+
+    // US-027 / US-029: el mapa público — los pines, y lo que pide un clic en uno (it. 24).
+    Route::get('/public/worksites', [PublicWorksiteController::class, 'index'])->name('public.worksites.index');
+    Route::get('/public/worksites/{worksite}', [PublicWorksiteController::class, 'show'])->whereNumber('worksite')->name('public.worksites.show');
+    Route::get('/public/evidences/{evidence}/photo', [PublicEvidenceController::class, 'photo'])->whereNumber('evidence')->name('public.evidences.photo');
     Route::post('/login', [LoginController::class, 'store'])->name('tenant.login');
 
     // US-030: el enlace de US-002 (Administrador inicial) o US-005
@@ -95,6 +102,8 @@ Route::middleware([
 
             // US-035: corregir la ubicación oficial de una obra de la organización.
             Route::patch('/worksites/{worksite}/location', [WorksiteLocationController::class, 'update'])->name('worksites.location.update');
+            // US-045-INT: agrupar varios contratos en una ficha de obra.
+            Route::post('/worksites/group', [WorksiteGroupController::class, 'store'])->name('worksites.group');
 
             // US-036 / US-037: la bandeja de entrada y las decisiones
             // editoriales, de a una evidencia (no hay publicación masiva).

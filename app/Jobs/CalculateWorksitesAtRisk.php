@@ -3,7 +3,6 @@
 namespace App\Jobs;
 
 use App\Domain\Contracts\Contract;
-use App\Domain\Contracts\SecopContractStatus;
 use App\Domain\Worksites\Worksite;
 use App\Infrastructure\Tenancy\Tenant;
 use Illuminate\Bus\Queueable;
@@ -41,8 +40,7 @@ class CalculateWorksitesAtRisk implements ShouldQueue
             // fecha de terminación ya pasada.
             $atRisk = Contract::query()
                 ->whereIn('secop_contract_id', $worksite->contracts->pluck('secop_contract_id'))
-                ->statusIn(SecopContractStatus::IN_EXECUTION)
-                ->whereDate('end_date', '<', today())
+                ->overdueInExecution(today())
                 ->exists();
 
             if ($worksite->at_risk !== $atRisk) {
