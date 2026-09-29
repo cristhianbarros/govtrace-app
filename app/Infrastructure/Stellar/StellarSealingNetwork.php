@@ -4,6 +4,7 @@ namespace App\Infrastructure\Stellar;
 
 use App\Application\Sealing\ContractLifetime;
 use App\Application\Sealing\Exceptions\RootAlreadySealed;
+use App\Application\Sealing\Exceptions\SealingNetworkBusy;
 use App\Application\Sealing\Exceptions\SealingNetworkError;
 use App\Application\Sealing\Exceptions\SponsorOutOfFunds;
 use App\Application\Sealing\NetworkSeal;
@@ -13,6 +14,7 @@ use Carbon\CarbonImmutable;
 use DateTime;
 use Soneso\StellarSDK\Account;
 use Soneso\StellarSDK\Crypto\KeyPair;
+use Soneso\StellarSDK\FeeBumpTransaction;
 use Soneso\StellarSDK\FeeBumpTransactionBuilder;
 use Soneso\StellarSDK\InvokeContractHostFunction;
 use Soneso\StellarSDK\InvokeHostFunctionOperationBuilder;
@@ -33,6 +35,10 @@ use Soneso\StellarSDK\Xdr\XdrSCVal;
  * de contracts/sealing. La transacción la firma la cuenta selladora y la
  * envuelve en un fee bump la cuenta patrocinadora, que es la única que paga.
  * El veedor no ve nada de esto (R-BLK-01).
+ *
+ * La selladora sella por turnos (it. 39): Stellar admite una sola
+ * transacción pendiente por cuenta, así que un sello espera a que la anterior
+ * entre en un ledger (SealerTurn).
  */
 final class StellarSealingNetwork implements SealingNetwork
 {
@@ -56,41 +62,45 @@ final class StellarSealingNetwork implements SealingNetwork
             throw new SponsorOutOfFunds("La cuenta patrocinadora {$this->sponsorAddress()} no tiene XLM para la comisión.");
         }
 
-        [$transaction, $simulation] = $this->simulate('seal', [XdrSCVal::forBytes(hex2bin($worksiteReference)), XdrSCVal::forBytes(hex2bin($merkleRoot))]);
+        $sealer = $this->sealer()->getAccountId();
 
-        if ($simulation->resultError !== null) {
-            if (str_contains($simulation->resultError, self::HASH_ALREADY_REGISTERED)) {
-                throw new RootAlreadySealed($merkleRoot);
-            }
+        // Una transacción pendiente de la selladora a la vez: la toma desde que existe, antes de
+        // enviarla, así un envío sin respuesta (NetworkUnavailable) sigue con el turno: pudo llegar.
+        $feeBump = SealerTurn::exclusively($sealer, function (SealerTurn $turn) use ($worksiteReference, $merkleRoot) {
+            $turn->waitIfTaken(fn (string $txHash) => $this->rpc->transaction($txHash)->status === GetTransactionResponse::STATUS_NOT_FOUND);
 
-            throw new SealingNetworkError('La simulación del sello falló: '.strtok($simulation->resultError, "\n"));
-        }
+            $feeBump = $this->signedSeal($worksiteReference, $merkleRoot);
+            $turn->takeFor($this->hashOf($feeBump), now()->addSeconds(SealingRetryPolicy::TRANSACTION_VALIDITY_SECONDS + SealerTurn::EXPIRY_GRACE_SECONDS));
 
-        $transaction->setSorobanTransactionData($simulation->getTransactionData());
-        $transaction->addResourceFee($simulation->getMinResourceFee());
-        $transaction->setSorobanAuth($simulation->getSorobanAuth());
-        $transaction->sign($this->sealer(), $this->network());
-
-        // El fee bump cubre la comisión completa de la transacción interna,
-        // incluida la de recursos de Soroban. Stellar cobra lo consumido.
-        $feeBump = (new FeeBumpTransactionBuilder($transaction))
-            ->setBaseFee(max(100, $transaction->getFee()))
-            ->setFeeAccount($this->sponsorAddress())
-            ->build();
-        $feeBump->sign($this->sponsor(), $this->network());
+            return $feeBump;
+        });
+        $txHash = $this->hashOf($feeBump);
 
         $sent = $this->rpc->send($feeBump);
 
-        if ($sent->status !== SendTransactionResponse::STATUS_PENDING && $sent->status !== SendTransactionResponse::STATUS_DUPLICATE) {
-            throw new SealingNetworkError("La red rechazó el sello ({$sent->status}): {$sent->errorResultXdr}");
+        if ($sent->status === SendTransactionResponse::STATUS_PENDING || $sent->status === SendTransactionResponse::STATUS_DUPLICATE) {
+            return $txHash;
         }
 
-        return $sent->hash;
+        if (SendRefusal::meansSealerBusy($sent)) {
+            SealerTurn::holdAfterRefusal($sealer, $txHash);
+
+            throw new SealingNetworkBusy(SealerTurn::RETRY_SECONDS, 'La cuenta selladora tiene otra transacción pendiente ('.SendRefusal::describe($sent).'): este sello espera su turno.');
+        }
+
+        SealerTurn::release($sealer, $txHash);
+
+        throw new SealingNetworkError('La red rechazó el sello ('.SendRefusal::describe($sent).').');
     }
 
     public function transactionStatus(string $txHash): ?NetworkSeal
     {
         $transaction = $this->rpc->transaction($txHash);
+
+        if ($transaction->status !== GetTransactionResponse::STATUS_NOT_FOUND) {
+            // Entró en un ledger, o la red la rechazó: la selladora queda libre para el siguiente sello.
+            SealerTurn::release($this->sealer()->getAccountId(), $txHash);
+        }
 
         return match ($transaction->status) {
             GetTransactionResponse::STATUS_SUCCESS => new NetworkSeal(
@@ -173,6 +183,47 @@ final class StellarSealingNetwork implements SealingNetwork
         $result = $transaction->status === GetTransactionResponse::STATUS_SUCCESS ? $transaction->getXdrTransactionResult() : null;
 
         return $result === null ? null : (int) $result->feeCharged->toString();
+    }
+
+    /**
+     * seal(obra, raíz), firmada por la selladora y envuelta en el fee bump de
+     * la patrocinadora, lista para enviar.
+     *
+     * @throws RootAlreadySealed
+     * @throws SealingNetworkError
+     */
+    private function signedSeal(string $worksiteReference, string $merkleRoot): FeeBumpTransaction
+    {
+        [$transaction, $simulation] = $this->simulate('seal', [XdrSCVal::forBytes(hex2bin($worksiteReference)), XdrSCVal::forBytes(hex2bin($merkleRoot))]);
+
+        if ($simulation->resultError !== null) {
+            if (str_contains($simulation->resultError, self::HASH_ALREADY_REGISTERED)) {
+                throw new RootAlreadySealed($merkleRoot);
+            }
+
+            throw new SealingNetworkError('La simulación del sello falló: '.strtok($simulation->resultError, "\n"));
+        }
+
+        $transaction->setSorobanTransactionData($simulation->getTransactionData());
+        $transaction->addResourceFee($simulation->getMinResourceFee());
+        $transaction->setSorobanAuth($simulation->getSorobanAuth());
+        $transaction->sign($this->sealer(), $this->network());
+
+        // El fee bump cubre la comisión completa de la transacción interna,
+        // incluida la de recursos de Soroban. Stellar cobra lo consumido.
+        $feeBump = (new FeeBumpTransactionBuilder($transaction))
+            ->setBaseFee(max(100, $transaction->getFee()))
+            ->setFeeAccount($this->sponsorAddress())
+            ->build();
+        $feeBump->sign($this->sponsor(), $this->network());
+
+        return $feeBump;
+    }
+
+    /** The hash the network gives the transaction: known before sending it. */
+    private function hashOf(FeeBumpTransaction $feeBump): string
+    {
+        return bin2hex($feeBump->hash($this->network()));
     }
 
     /** @return array{0: Transaction, 1: SimulateTransactionResponse} */

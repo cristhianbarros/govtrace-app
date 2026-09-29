@@ -38,6 +38,8 @@ beforeEach(function () {
     // StellarRpc habla JSON-RPC por el cliente HTTP de Laravel; tests/Pest.php
     // bloquea cualquier salida real, salvo aquí, que es el objetivo.
     Http::allowStrayRequests();
+    // It. 39: enviar un sello toma el turno de la selladora, en la base central.
+    $this->artisan('migrate');
     $this->network = app(SealingNetwork::class);
 });
 

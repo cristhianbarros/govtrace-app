@@ -1,6 +1,6 @@
 <?php
 
 return [
-    // make demo: how long to wait for the worker to seal each demo report before sending the next.
-    'seal_wait_seconds' => (int) env('DEMO_SEAL_WAIT_SECONDS', 60),
+    // make demo: how long to wait for the worker to seal the demo reports (one per ledger) before publishing.
+    'seal_wait_seconds' => (int) env('DEMO_SEAL_WAIT_SECONDS', 180),
 ];

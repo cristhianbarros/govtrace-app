@@ -13,7 +13,8 @@ criterios_aceptacion:
     - {caso: "Una evidencia lleva más de 2 horas 'En Cola'", resultado: "Se alerta al Super Administrador y al Administrador de la organización afectada", mensaje: "⚠️ Alerta de Sistema: Hay evidencias con más de 2 horas estancadas en la cola de sellado. Revisa el estado de la red o del proveedor RPC."}
   requisitos_ux:
     - "El veedor no ve errores de sellado"
-  casos_edge: []
+  casos_edge:
+    - {caso: "Llegan varias evidencias a la vez, de una o de varias organizaciones (una ráfaga, o los reportes sin conexión que se envían al volver la señal)", resultado: "La cuenta selladora admite una sola transacción pendiente a la vez: cada sello espera su turno unos segundos y se envía cuando el anterior entra en un ledger. Esperar el turno no es una falla: no gasta intentos, y ninguna evidencia queda en 'Falla de Sellado' por eso (it. 39)"}
 validacion_smart:
   specific: true
   measurable: true

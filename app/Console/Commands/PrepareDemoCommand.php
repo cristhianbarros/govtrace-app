@@ -9,7 +9,7 @@ use RuntimeException;
 /** make demo — the demonstration organization, with what it takes to walk through every screen. */
 class PrepareDemoCommand extends Command
 {
-    protected $signature = 'demo:prepare {--seal-wait= : Seconds to wait for the worker to seal each report (default: DEMO_SEAL_WAIT_SECONDS, 60)}';
+    protected $signature = 'demo:prepare {--seal-wait= : Seconds to wait for the worker to seal the reports (default: DEMO_SEAL_WAIT_SECONDS, 180)}';
 
     protected $description = 'Prepare the demonstration organization (starts over if it already exists; never runs in production)';
 

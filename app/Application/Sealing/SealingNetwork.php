@@ -3,6 +3,7 @@
 namespace App\Application\Sealing;
 
 use App\Application\Sealing\Exceptions\RootAlreadySealed;
+use App\Application\Sealing\Exceptions\SealingNetworkBusy;
 use App\Application\Sealing\Exceptions\SealingNetworkError;
 use App\Application\Sealing\Exceptions\SponsorOutOfFunds;
 
@@ -20,6 +21,7 @@ interface SealingNetwork
      *
      * @throws RootAlreadySealed la red ya tiene esa raíz ("Hash ya registrado")
      * @throws SponsorOutOfFunds la patrocinadora no tiene XLM para la comisión
+     * @throws SealingNetworkBusy la selladora tiene otra transacción pendiente: el sello espera su turno (it. 39)
      * @throws SealingNetworkError cualquier otro rechazo de la red
      */
     public function submitSeal(string $worksiteReference, string $merkleRoot): string;

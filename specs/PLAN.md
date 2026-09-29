@@ -1515,7 +1515,7 @@ Suite: 702 en verde (8 nuevos). Vitest: 351. `make backup-check`: 13 comprobacio
   - Repetible: cada corrida deja la demostración como nueva, y solo borra la organización del subdominio `veeduria-demo`. **Nunca corre en producción.**
 - `docs/local-environment-setup.md`: la demostración, un guion, el paso a paso a mano y cómo mostrarlo fuera del equipo.
 
-**Hallazgo abierto: los sellos en ráfaga.** Al enviar los 9 reportes de golpe, la red aceptó uno y rechazó los demás con `txINSUFFICIENT_FEE` (`La red rechazó el sello (ERROR): AAAAAACDttH////3AAAAAA==`); con los reintentos a 1, 5 y 15 minutos, se sellaba uno por reintento. Por eso `make demo` envía cada reporte cuando el anterior ya está sellado. En un uso real (un veedor, un reporte) no se nota, pero dos veedores enviando a la vez sí esperarían minutos. No se investigó la causa (la comisión del *fee bump* frente al precio de la red con varias transacciones en el mismo ledger); ver la deuda.
+**Hallazgo abierto: los sellos en ráfaga.** Al enviar los 9 reportes de golpe, la red aceptó uno y rechazó los demás con `txINSUFFICIENT_FEE` (`La red rechazó el sello (ERROR): AAAAAACDttH////3AAAAAA==`); con los reintentos a 1, 5 y 15 minutos, se sellaba uno por reintento. Por eso `make demo` envía cada reporte cuando el anterior ya está sellado. En un uso real (un veedor, un reporte) no se nota, pero dos veedores enviando a la vez sí esperarían minutos. No se investigó la causa (la comisión del *fee bump* frente al precio de la red con varias transacciones en el mismo ledger); ver la deuda. → **Resuelto en la it. 39:** no era la comisión, sino el número de secuencia de la selladora, y además dejaba evidencias en "Falla de Sellado".
 
 **Prueba:**
 - Suite: 741 en verde (39 nuevos: 12 de la demostración, 11 del Super Administrador, 7 de los enlaces de los correos y 6 de `SentLinks` y su comando; los enlaces también ajustaron 3 casos). Vitest sin cambios.
@@ -1528,6 +1528,58 @@ Suite: 702 en verde (8 nuevos). Vitest: 351. `make backup-check`: 13 comprobacio
 **Decisión pendiente del usuario: mostrarlo a otras personas.** `make demo` funciona en el equipo de quien lo corre. Para que otras personas entren hay dos caminos, ninguno probado:
 - **Un túnel** (ngrok, Cloudflare Tunnel): cada organización vive en su subdominio, así que tiene que aceptar subdominios comodín, y hay que cambiar `APP_URL`, `TENANCY_CENTRAL_DOMAINS` y `TENANCY_APEX_DOMAIN`. Con HTTPS, la cámara y el GPS del celular funcionan.
 - **Un entorno intermedio (*staging*) en AWS, apuntando a la testnet:** el recorrido completo con dominio, HTTPS y correo reales, por cuenta de cada quien (`docs/estado-37b.md`).
+
+#### Iteración 39 — Sellar varias evidencias a la vez
+✅ **Cumplido (2026-09-29).** Pedida por el usuario con prioridad ("se podría presentar en producción"), a partir del hallazgo de la it. 38. Complejidad alta (fallas de un sistema distribuido y dinero real): con Opus 5.5 max.
+
+**La causa, probada contra la red local** (sondas en la red standalone, sin la aplicación):
+- **Stellar admite una sola transacción pendiente por cuenta.** Mientras la última de la selladora no entra en un ledger, la red rechaza otra:
+  - con el **mismo número de secuencia** (el que la aplicación leía, porque la cuenta aún no avanzaba): `txINSUFFICIENT_FEE`, pidiendo 8.632.017 stroops, unas 10 veces la comisión. La red lo lee como un intento de *reemplazar* la pendiente, que exige pagar 10 veces más;
+  - con el **número siguiente**: `TRY_AGAIN_LATER`;
+  - con un **número ya gastado** (un RPC que no vio el último ledger): `txBAD_SEQ`, dentro del fee bump o por fuera, según haya o no una pendiente.
+- **Cada rechazo contaba como una falla** (US-021). Los sellos que chocaban tenían el mismo retraso y **volvían a chocar en cada reintento**: se sellaba más o menos una por ronda (al instante, a 1, 6, 21 y 81 minutos). Con **6 o más evidencias a la vez, las que no alcanzaban quedaban en "Falla de Sellado" tras el quinto intento, para siempre**. Pasa con cualquier ráfaga: dos veedores a la vez, o los reportes guardados sin señal que se envían juntos al volver (it. 30).
+- **El candado que debía dejar un sello a la vez no era global.** `WithoutOverlapping('stellar-sealer')` guardaba su llave en la caché, y dentro de una organización la caché lleva su prefijo (`govtrace-cache-tenant_<id>_…`, comprobado en el stack de desarrollo): cada organización tenía el suyo. Y aunque lo hubiera sido, soltaba el candado al enviar, no cuando la transacción entraba en un ledger.
+
+**El arreglo:**
+- **La selladora sella por turnos** (`SealerTurn`, tabla central `sealer_turns`): una fila por cuenta selladora, la misma para todas las organizaciones y todos los workers.
+  - Se toma con `SELECT … FOR UPDATE NOWAIT`: nadie espera un candado; si otro proceso está en su turno, el sello vuelve en 3 s.
+  - Una transacción toma el turno **desde que existe, antes de enviarla**, con su hash calculado localmente: un envío sin respuesta pudo haber llegado.
+  - Lo suelta cuando entra en un ledger, cuando la red la rechaza o cuando vencen sus 4 minutos (más 30 s de margen): después, ya no puede entrar.
+  - Mientras está tomado, se le pregunta a la red por la pendiente como mucho cada 2 s, sin importar cuántos sellos esperen.
+- **"Ocupada" no es una falla** (`SealingNetworkBusy`): el sello vuelve a la cola en 3 s, con sus intentos intactos. `SendRefusal` reconoce las tres respuestas de la red que significan eso; cualquier otro rechazo sigue gastando un intento (US-021), y ahora dice su código (`txBAD_AUTH dentro del fee bump`), no solo el XDR.
+- Si la red dice que la selladora tiene **otra pendiente que el turno no conoce** (enviada desde otra parte, o leída de un RPC atrasado), se la deja en paz un ledger (5 s).
+- **Se quitó el candado de la caché** de `SealReport`: el turno lo reemplaza.
+- `make demo` vuelve a enviar sus 9 reportes de golpe, y ahora es también una prueba de la ráfaga. Además reinicia siempre el worker, que guarda en memoria el código y el `.env` con que arrancó (y la lista de salida pide `queue:restart` tras cada despliegue).
+
+**La capacidad, con una sola selladora:** una transacción por ledger, unos 5 s en testnet y la red principal: cerca de **10 a 12 sellos por minuto** (en testnet, 7 en 40 s). Una ráfaga se sella en orden, sin perder ninguna. Para más, habría que sellar desde varias cuentas de canal con la selladora firmando solo la autorización de Soroban; no se hizo (ver las decisiones).
+
+**Prueba:**
+- **Primero en rojo, contra la red local:** el escenario de 7 evidencias de dos organizaciones, con el código de antes, no llegó a sellarlas todas en 90 s.
+- **En verde contra la red local** (`make test-stellar`, 17 casos, 6 nuevos): las 7 llegan a "Sellada" en ~26 s, ninguna gasta un intento y cada una entra en su propio ledger. Además:
+  - un sello con otra pendiente espera sin armar ni enviar nada;
+  - el turno se suelta en cuanto se ve la transacción en un ledger;
+  - un envío sin respuesta deja el turno con esa transacción, que de verdad entra;
+  - una transacción de la selladora enviada desde otra parte hace esperar al sello (la red la rechaza como "ocupada") y, pasado un ledger, el sello va;
+  - un número de secuencia gastado, de un RPC atrasado, es "ocupada", no una falla.
+- **Las respuestas de la red, tal cual** (`tests/fixtures/stellar`, 5 capturas del RPC): las tres de "ocupada" (con sus dos variantes de `txBAD_SEQ`) y una firma inválida, que sigue siendo una falla. Con otra pendiente, la red mira el turno antes que la firma: una firma mala llega como `txINSUFFICIENT_FEE` y recién sin la pendiente como `txBAD_AUTH`; una falla de verdad se cuenta igual, un turno después.
+- Suite (`make test`): 761 en verde (20 nuevos). El turno se prueba también desde otra conexión, que sostiene el candado: el sello vuelve al instante.
+- `make demo` de cero, en un proyecto aislado de Docker, con el worker de verdad (`--tries=3`): los 9 reportes enviados de golpe llegaron a "Sellada" en 27 s, uno cada ~3 s y cada uno en su ledger, sin gastar un intento; 0 trabajos fallidos, aunque el último esperó unos 27 s volviendo cada 3 s, más veces que las 3 de `--tries` (manda `retryUntil`); 6 publicados y 3 en la bandeja.
+- **En testnet** (el contrato oficial `CAKUYPROMNYKZCMCNI2N5RTWZE3JZ7RR4Q2W5FNVQNPANNMQPLJ4PLDY`, a pedido del usuario): las 7 evidencias de dos organizaciones, en 40,6 s, **en 7 ledgers consecutivos** (4939156 a 4939162): una por ledger, el máximo con una selladora. Costó 1,9915952 XLM de la patrocinadora, 0,2845 por sello. Las transacciones, leídas de los eventos `sealed` del contrato:
+  - `f6d4d858a8a193e28e08e4bd9166171852d40b7de70a1d2a21762db64ee68006` (4939156)
+  - `056a588c98fd6c5a4ffd2bd643261f5362ce1402f14cdb7b10953efa09a3b2a4` (4939157)
+  - `61a28f0781b9aae1ced63691781a76285dda6042ea1ea980a155a346d35f7976` (4939158)
+  - `58d2efdbbfa2579382925b187d2ac37d43f2d601cea5809d3873484c92896f75` (4939159)
+  - `e24699415c4be7f160c71553e423a73697793ec1838a56afa25f2cb8dc756883` (4939160)
+  - `2076a321adfc878b444fc69607a43c4be38c8eb20c1448294265def00798e9ba` (4939161)
+  - `a9a7031197b6389064b307189b95c973cf8a6f5ee629d2dd6197a5eae0e787df` (4939162)
+- Cada regla nueva se comprobó rompiéndola a propósito: **15 casos, todos atrapados** —el trabajo contando "ocupada" como falla; el turno esperando el candado, por organización, preguntando a la red cada vez, sin vencer, soltando el de otra transacción o deshaciendo lo escrito; cada una de las respuestas de "ocupada" leída como falla, y todo rechazo leído como "ocupada"; la transacción sin tomar el turno antes de enviarse; el turno sin soltarse al ver la transacción en un ledger; la selladora sin descanso tras "otra pendiente"; y el adaptador sin reconocer "ocupada"—.
+
+**Cubre:** US-021 (criterio y escenario nuevos: "Varias evidencias a la vez esperan su turno sin gastar intentos"), R-INT-01, R-BLK-04 · US-020b, US-018 (los reportes sin conexión que se envían juntos).
+
+**Decisiones de la iteración — a confirmar por el usuario:**
+1. **Un criterio nuevo en US-021** (`specs/criterios/US-021.yaml` y su escenario en `features/US-021.feature`): varias evidencias a la vez esperan su turno, sin gastar intentos ni quedar en "Falla de Sellado". Y una enmienda a R-INT-01, sin aplicar todavía a la SPEC: "…o la cuenta selladora tiene otra transacción pendiente: el sello espera su turno, sin gastar intentos (it. 39)".
+2. **La congestión tampoco gasta intentos.** `txINSUFFICIENT_FEE` también llega si los ledgers van llenos y piden una comisión mayor. Se trata igual que la otra pendiente: el sello espera, sin quedar en "Falla de Sellado". Si durara horas, avisa la alerta de cola estancada (2 h, US-021). La oferta de inclusión del fee bump ya es alta (casi la comisión de recursos), así que es raro quedar por debajo.
+3. **Una sola selladora alcanza para el MVP**: 10 a 12 sellos por minuto. Si el volumen lo pidiera, el camino son las cuentas de canal (varias transacciones por ledger). Es un cambio de la firma que conviene hacer junto con AWS KMS (37b), porque la selladora pasaría a firmar la autorización de Soroban y no la transacción.
 
 ## Pivote a Stellar (2026-09-28)
 
@@ -1613,4 +1665,4 @@ No bloquean ningún criterio de aceptación. **Aceptada por el usuario el 2026-0
 | Repetir `make setup` sobre un stack que ya corre puede fallar en `up --wait`: el proxy se marca enfermo mientras la app reinicia | Jenkins parte de cero; para un stack existente basta `make up` | Más paciencia en el healthcheck del proxy |
 | El nombre de un veedor invitado es la parte local de su correo | Ninguna historia pide el nombre; todo lo público usa el seudónimo | Una historia de perfil del veedor |
 | ✅ *Cerrada en la it. 38:* `make setup` no siembra la DIVIPOLA en desarrollo (la E2E la siembra sola) | Solo afecta a configurar territorios en una base de desarrollo nueva | `db:seed --class=DivipolaSeeder` en `make setup`; para producción entra en la it. 37 |
-| Varios sellos enviados a la vez: la red acepta uno y rechaza los demás con `txINSUFFICIENT_FEE`; se reintentan a 1, 5 y 15 min (hallazgo de la it. 38) | Un veedor envía un reporte a la vez; solo se nota con varios reportes en el mismo segundo, y todos terminan sellados | Averiguar por qué (la comisión del *fee bump* con varias transacciones en el mismo ledger) y, si hace falta, subirla o reintentar pronto; antes de una salida con muchos veedores |
+| ✅ *Cerrada en la it. 39:* varios sellos enviados a la vez: la red acepta uno y rechaza los demás con `txINSUFFICIENT_FEE`; se reintentan a 1, 5 y 15 min (hallazgo de la it. 38) | Un veedor envía un reporte a la vez; solo se nota con varios reportes en el mismo segundo, y todos terminan sellados | Averiguar por qué (la comisión del *fee bump* con varias transacciones en el mismo ledger) y, si hace falta, subirla o reintentar pronto; antes de una salida con muchos veedores |

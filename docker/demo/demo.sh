@@ -25,12 +25,10 @@ fi
 
 step "2/3 La red Stellar y el contrato de sellado"
 make stellar-up || die "la red Stellar local no arrancó."
-contract_before=$(sed -n 's/^STELLAR_SEALING_CONTRACT_ID=//p' .env)
 $COMPOSE --profile stellar run --rm -T soroban ./scripts/ensure-local-contract.sh || die "no hay contrato de sellado en la red local."
-if [ "$contract_before" != "$(sed -n 's/^STELLAR_SEALING_CONTRACT_ID=//p' .env)" ]; then
-    # El worker es un proceso largo: no ve el contrato nuevo hasta reiniciarse.
-    $COMPOSE restart worker >/dev/null && $COMPOSE up -d --wait worker >/dev/null || die "el worker no volvió a arrancar."
-fi
+# El worker es un proceso largo: guarda en memoria el código y el .env con que arrancó. Se
+# reinicia siempre, para que selle con los de ahora (un contrato nuevo, o un git pull).
+$COMPOSE restart worker >/dev/null && $COMPOSE up -d --wait worker >/dev/null || die "el worker no volvió a arrancar."
 
 step "3/3 La organización de demostración"
 $EXEC php artisan demo:prepare || die "la demostración no quedó lista."
