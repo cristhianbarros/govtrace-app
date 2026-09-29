@@ -17,6 +17,9 @@ export const searchContracts = async (keyword) => (await dataOf(http.get('/contr
 /** US-008: el reporte con sus archivos y sus SHA-256, como multipart. */
 export const sendReport = (form) => dataOf(http.post('/reports', form));
 
+/** US-010: sus reportes, con el estado técnico y el editorial por separado. */
+export const fetchMyReports = async () => (await dataOf(http.get('/me/reports'))).data;
+
 // El Administrador -----------------------------------------------------------
 
 /** US-036 / US-037: "hidden" (por revisar) o "published". */

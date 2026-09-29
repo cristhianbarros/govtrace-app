@@ -1001,6 +1001,25 @@ Suite: 529 en verde. Vitest: 267 en verde. Cada regla nueva se comprobó rompié
 **Done-when:** US-010 (10 casos) en verde (backend y Vitest), más la UI de US-023.
 **Cubre:** US-010, US-023 (UI) · R-VC-02, R-USR-02.
 
+**✅ Cumplido (2026-09-29, con Opus xhigh):** en verde, visto en rojo antes de implementar (ruta y pantalla inexistentes):
+- Pest: `MyReportsTest`, **US-010, 10/10**, más 3 derivados (orden y contenido, retirado sin motivo, solo para veedores y la pantalla);
+- Vitest: `Veedor/MyReports.test.js`, 9: US-010 en pantalla, más carga, error, vacío y pestañas; y la **UI de US-023, 3/3** (recibo sellado, en proceso de sellado, reenviado).
+
+Suite: 542 en verde. Vitest: 276 en verde. Cada regla nueva se comprobó rompiéndola a propósito: 5 casos, todos atrapados por su test.
+
+- **`GET /me/reports`:** los reportes del veedor, solo los suyos (R-VC-02), los más recientes primero, con el estado técnico y el editorial por separado (R-USR-02).
+  - El estado técnico usa `SealStatus::veedorLabel()`: "Falla de Sellado" se ve "En Cola" y el error nunca sale (US-021).
+  - El motivo solo va si se rechazó.
+- **Pantalla "Mis Reportes"** (`/my-reports`): cada reporte con su fecha, clasificación y obra, los dos estados por separado, el motivo del rechazo, y "Ver recibo", que muestra el Recibo de Inmutabilidad (US-023) o el mensaje de sellado en curso.
+- **La app del veedor tiene dos pestañas abajo:** "Nuevo Reporte" y "Mis Reportes".
+- **`ReceiptDetails`:** una sola forma de mostrar un recibo, para el veedor y para el sitio público.
+
+**Decisiones de la iteración, para confirmar:**
+1. **El veedor sigue entrando a "Nuevo Reporte" al iniciar sesión.** Lo pediste "al menos hasta la it. 28", y en la calle reportar es lo primero. "Mis Reportes" queda a un toque, en la pestaña de abajo. Si prefieres que entre a "Mis Reportes", es cambiar el destino de `/veedor/dashboard`.
+2. **Cada reporte muestra su obra (la ficha), no un contrato.** Un reporte pertenece a la ficha completa (R-INT-05) y no guarda cuál de sus contratos eligió el veedor.
+3. **Sin paginación por ahora.** Un veedor envía pocos reportes; si algún día son cientos, se pagina.
+4. **La bandeja de salida con su contador** (US-018) es del modo sin conexión (it. 30).
+
 ### Iteración 29 — Paneles de P2 (administrador y Super Admin)
 **Entregable:** pantallas de US-003a, US-006, US-007, US-014, US-038-CFG, US-039-USR, US-041-USR, US-042-SEC, US-043-MON, US-045-INT y US-049-RPT, más los banners de US-021.
 **Done-when:** Vitest de cada pantalla con sus estados y mensajes exactos en verde.
