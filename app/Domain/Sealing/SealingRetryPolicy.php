@@ -17,6 +17,14 @@ final class SealingRetryPolicy
     /** How long a transaction can go unconfirmed before it counts as a failed attempt. */
     public const CONFIRMATION_DEADLINE_SECONDS = 300;
 
+    /**
+     * Each transaction is valid for this long, and no more (its time bounds,
+     * it. 23): less than the deadline above, so once a seal is given up and
+     * resent, the old transaction can no longer enter a ledger — and the
+     * transaction on the receipt is always the one that sealed.
+     */
+    public const TRANSACTION_VALIDITY_SECONDS = 240;
+
     /** Seconds until the next attempt, or null when there is none left. */
     public static function delayAfter(int $failedAttempts): ?int
     {

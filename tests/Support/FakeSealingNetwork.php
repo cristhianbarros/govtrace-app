@@ -17,6 +17,9 @@ use Carbon\CarbonImmutable;
  */
 final class FakeSealingNetwork implements SealingNetwork
 {
+    /** A valid contract address (StrKey of sha256("govtrace-fake-sealing-contract")), not deployed anywhere. */
+    public const CONTRACT_ID = 'CALFTQY2X3YTEHFZORY7FQJUPXB2BXEGBCCHQVWTKB3WAVA65QHMTSFA';
+
     /** @var list<array{worksite: string, root: string}> */
     public array $submissions = [];
 
@@ -30,6 +33,9 @@ final class FakeSealingNetwork implements SealingNetwork
 
     /** Cuántas llamadas seguidas fallan como si el RPC de Stellar no respondiera (US-021). */
     public int $unavailableCalls = 0;
+
+    /** Cuántos envíos la red recibe, pero su respuesta no llega (timeout): la transacción sí sigue su curso. */
+    public int $timeoutsAfterSending = 0;
 
     /** @var array<string, true> transacciones que la red procesó y rechazó */
     private array $failedTransactions = [];
@@ -57,6 +63,12 @@ final class FakeSealingNetwork implements SealingNetwork
 
         if ($this->closesLedgerRightAway) {
             $this->closeLedgerWith($txHash);
+        }
+
+        if ($this->timeoutsAfterSending > 0) {
+            $this->timeoutsAfterSending--;
+
+            throw new NetworkUnavailable('La red de Stellar no respondió (sendTransaction): cURL error 28: Operation timed out');
         }
 
         return $txHash;
@@ -96,6 +108,11 @@ final class FakeSealingNetwork implements SealingNetwork
     public function sponsorCanPay(): bool
     {
         return $this->sponsorFunded;
+    }
+
+    public function contractId(): string
+    {
+        return self::CONTRACT_ID;
     }
 
     public function sponsorAddress(): string

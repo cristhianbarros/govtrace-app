@@ -12,6 +12,8 @@ REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 cd "$REPO_ROOT"
 
 FRONTEND_DIR="resources/js"
+# El verificador independiente (tools/verify, it. 23) también se prueba con Vitest.
+TOOLS_DIR="tools"
 CONTRACTS_DIR="contracts"
 
 # PHP del host si existe; si no, el contenedor `app` del docker-compose (make up).
@@ -33,7 +35,7 @@ if ! "${PHP_RUN[@]}" ./vendor/bin/pest >&2; then
   exit 2
 fi
 
-if [ -n "$FRONTEND_DIR" ] && [ -d "$FRONTEND_DIR" ] && [ -n "$(git status --porcelain -- "$FRONTEND_DIR")" ]; then
+if [ -n "$FRONTEND_DIR" ] && [ -d "$FRONTEND_DIR" ] && [ -n "$(git status --porcelain -- "$FRONTEND_DIR" "$TOOLS_DIR")" ]; then
   # En el contenedor node (make test-front): los node_modules los instala
   # node:22-alpine, y sus binarios nativos no tienen por qué correr en el host.
   if ! make test-front >&2; then

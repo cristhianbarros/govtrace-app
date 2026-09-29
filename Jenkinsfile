@@ -69,7 +69,9 @@ pipeline {
                 // Sealing end to end (it. 13): a fresh local standalone network,
                 // the contract deployed on it, and the "stellar" test group
                 // (fee bump paid by the sponsor, duplicates, report -> Sellada).
-                sh 'make stellar-up && make contract-deploy && make test-stellar'
+                // Then the independent verifier (it. 23, US-026) on an evidence
+                // GovTrace published, isolated with the Stellar node alone.
+                sh 'make stellar-up && make contract-deploy && make test-stellar && make verify-check'
             }
         }
 

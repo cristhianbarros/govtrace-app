@@ -10,20 +10,20 @@ Característica: Recibo de Inmutabilidad para el veedor
 
   @complexity:low
   Escenario: Recibo de una evidencia sellada
-    Dado que mi reporte está sellado con la raíz "0x9f2c…a1" en la transacción "0xabc…01" del bloque 61234567 el "2026-09-27 10:15:32"
+    Dado que mi reporte está sellado con la raíz "9f2c…a1" en la transacción "abc…01" del ledger 61234567 el "2026-09-27 10:15:32"
     Cuando abro el Recibo de Inmutabilidad del reporte
-    Entonces veo la raíz de Merkle, la transacción, el bloque y la fecha y hora exacta del bloque
-    Y veo el botón "Ver en Polygonscan"
+    Entonces veo la raíz de Merkle, la transacción, el ledger y la fecha y hora exacta del ledger
+    Y veo el botón "Ver en Stellar Expert"
 
   @complexity:low @negative
   Escenario: La evidencia aún no está sellada
     Dado que mi reporte está "En Cola"
     Cuando abro el Recibo de Inmutabilidad del reporte
-    Entonces veo el mensaje "⏳ Su evidencia está en proceso de sellado en la red Polygon. Este proceso toma unos minutos. El recibo criptográfico aparecerá aquí en breve."
+    Entonces veo el mensaje "⏳ Su evidencia está en proceso de sellado en la red Stellar. Este proceso toma unos minutos. El recibo criptográfico aparecerá aquí en breve."
 
   @complexity:medium @edge
-  Escenario: Evidencia re-sellada tras una reorganización
-    Dado que mi reporte se selló en la transacción "0xabc…01" y fue re-sellado en "0xdef…02" tras una reorganización
+  Escenario: Evidencia reenviada tras una transacción que no se incluyó
+    Dado que la transacción "abc…01" de mi reporte no entró en ningún ledger y el sellado se reenvió en "def…02"
     Cuando abro el Recibo de Inmutabilidad del reporte
-    Entonces veo solo la transacción "0xdef…02" y su bloque
-    Y la transacción "0xabc…01" no se muestra
+    Entonces veo solo la transacción "def…02" y su ledger
+    Y la transacción "abc…01" no se muestra

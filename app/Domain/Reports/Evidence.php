@@ -41,4 +41,20 @@ class Evidence extends Model
     {
         return $this->belongsTo(Report::class);
     }
+
+    /** US-026: it downloads by its hash, never by the phone's name — that can carry a person or a place. */
+    public function downloadName(): string
+    {
+        return $this->baseName().'.'.EvidenceKind::from($this->kind)->extension();
+    }
+
+    public function proofName(): string
+    {
+        return $this->baseName().'.prueba.json';
+    }
+
+    private function baseName(): string
+    {
+        return 'evidencia-'.substr($this->sha256, 0, 12);
+    }
 }

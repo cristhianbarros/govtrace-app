@@ -17,7 +17,7 @@ class ReportSeal extends Model
 {
     protected $fillable = [
         'report_id', 'status', 'merkle_root', 'worksite_reference', 'metadata_json',
-        'tx_hash', 'ledger', 'received_at', 'queued_at', 'transmitted_at', 'sealed_at',
+        'tx_hash', 'contract_id', 'ledger', 'received_at', 'queued_at', 'transmitted_at', 'sealed_at',
         'attempts', 'last_error', 'failed_at', 'stuck_alerted_at',
     ];
 
@@ -33,8 +33,8 @@ class ReportSeal extends Model
         'stuck_alerted_at' => 'datetime',
     ];
 
-    /** Once written, the seal stays as it is (R-TA-02): the root, what it seals, and the ledger that closed it. */
-    private const WRITTEN_ONCE = ['report_id', 'merkle_root', 'metadata_json', 'worksite_reference', 'ledger', 'sealed_at'];
+    /** Once written, the seal stays as it is (R-TA-02): the root, what it seals, the ledger that closed it and the contract that keeps it. */
+    private const WRITTEN_ONCE = ['report_id', 'merkle_root', 'metadata_json', 'worksite_reference', 'ledger', 'sealed_at', 'contract_id'];
 
     protected static function booted(): void
     {
@@ -83,16 +83,18 @@ class ReportSeal extends Model
 
     /**
      * La red incluyó la raíz en el ledger $ledger, que cerró a la hora
-     * $sealedAt. Manda el hash que dice la red: tras un reenvío (US-021), la
-     * transacción incluida puede ser la primera y no la última enviada.
+     * $sealedAt, y el contrato $contractId la guarda. Manda el hash que dice
+     * la red: tras un reenvío (US-021), la transacción incluida puede no ser
+     * la última anotada. Si la red ya no lo recuerda, queda la anotada.
      */
-    public function markSealed(int $ledger, CarbonInterface $sealedAt, ?string $txHash): void
+    public function markSealed(int $ledger, CarbonInterface $sealedAt, ?string $txHash, string $contractId): void
     {
         $this->update([
             'status' => SealStatus::Sealed,
             'ledger' => $ledger,
             'sealed_at' => $sealedAt,
             'tx_hash' => $txHash ?? $this->tx_hash,
+            'contract_id' => $contractId,
         ]);
     }
 }

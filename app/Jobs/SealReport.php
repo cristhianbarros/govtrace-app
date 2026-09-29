@@ -7,6 +7,7 @@ use App\Application\Sealing\Exceptions\SealingNetworkError;
 use App\Application\Sealing\Exceptions\SponsorOutOfFunds;
 use App\Application\Sealing\PrepareReportSeal;
 use App\Application\Sealing\SealingNetwork;
+use App\Domain\Audit\AuditLog;
 use App\Domain\Sealing\Notifications\SponsorOutOfFunds as SponsorOutOfFundsAlert;
 use App\Domain\Sealing\ReportSeal;
 use App\Domain\Sealing\SealingPause;
@@ -35,6 +36,8 @@ use Illuminate\Support\Facades\Notification;
  * - La red de Stellar falla (US-021): el intento se cuenta en el sello y se
  *   reintenta a 1 min, 5 min, 15 min y 1 h; tras el quinto, "Falla de
  *   Sellado", sin más intentos automáticos.
+ * - Un reenvío (US-023): el recibo solo muestra la transacción que entró;
+ *   la que no, queda en el log de auditoría, junto a la que la reemplazó.
  */
 class SealReport implements ShouldQueue
 {
@@ -73,6 +76,8 @@ class SealReport implements ShouldQueue
                 return;
             }
 
+            $previous = $seal->tx_hash; // la de un intento anterior, si lo hubo
+
             // Todo lo que habla con la red, junto: cualquier falla suya cuenta como un intento.
             try {
                 if (SealingPause::isActive()) {
@@ -104,13 +109,31 @@ class SealReport implements ShouldQueue
             }
 
             if ($txHash === null) {
-                return; // la red ya la tenía: quedó "Sellada"
+                // La red ya la tenía: quedó "Sellada", con la transacción que la selló.
+                $this->auditResend($previous, $seal->tx_hash);
+
+                return;
             }
 
             $seal->update(['status' => SealStatus::Transmitting, 'tx_hash' => $txHash, 'transmitted_at' => now()]);
+            $this->auditResend($previous, $txHash);
 
             ConfirmSeal::dispatch($this->tenantId, $this->reportId)->delay(now()->addSeconds(ConfirmSeal::RETRY_SECONDS));
         });
+    }
+
+    private function auditResend(?string $previous, ?string $current): void
+    {
+        if ($previous === null || $previous === $current) {
+            return;
+        }
+
+        AuditLog::record(
+            action: 'seal.resent',
+            organizationId: $this->tenantId,
+            before: ['report_id' => $this->reportId, 'tx_hash' => $previous],
+            after: ['report_id' => $this->reportId, 'tx_hash' => $current],
+        );
     }
 
     /**
@@ -124,7 +147,7 @@ class SealReport implements ShouldQueue
         } catch (RootAlreadySealed) {
             $onChain = $network->findSeal($seal->merkle_root)
                 ?? throw new SealingNetworkError("La red rechazó {$seal->merkle_root} como ya registrada, pero no la encuentra.");
-            $seal->markSealed($onChain->ledger, $onChain->sealedAt, $onChain->txHash);
+            $seal->markSealed($onChain->ledger, $onChain->sealedAt, $onChain->txHash, $network->contractId());
 
             return null;
         }

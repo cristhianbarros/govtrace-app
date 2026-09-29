@@ -1,0 +1,47 @@
+{
+    "_comment": "Un sello real de la red local standalone (it. 23): tests/fixtures/evidence/foto.jpg y una hoja de metadatos, sellados por StellarSealingNetwork. Las respuestas del RPC son las que dio la red; los tests de tools/verify las repiten sin red.",
+    "proof": {
+        "format": "govtrace-proof/1",
+        "file": {
+            "name": "evidencia-9b5b32acf022.jpg",
+            "sha256": "9b5b32acf022b77539faff25ee231131e8bc0f01c844db16993ea9849268d696"
+        },
+        "leaves": [
+            "9b5b32acf022b77539faff25ee231131e8bc0f01c844db16993ea9849268d696",
+            "f5b0079e5c7391d46a3d93cb7853df460e4b550ed6a92b4c12642c2c474835b7"
+        ],
+        "leaf_index": 0,
+        "proof": [
+            "f5b0079e5c7391d46a3d93cb7853df460e4b550ed6a92b4c12642c2c474835b7"
+        ],
+        "merkle_root": "c53c3361ddf5de1918e9a1c92b7b87c0c85873bcdfe1ea2123aaa131a4a990b5",
+        "worksite_reference": "9ac84046f3dbd459e9df2e8b4f18c711ce31fffd21394263db2600ac3cf8abfc",
+        "stellar": {
+            "network_passphrase": "Standalone Network ; February 2017",
+            "contract_id": "CAF2JUMJPPMHLXMO3HV4SOT3PSHXSYMAPRPM67FCT4F5UU3NCGKAT3VE",
+            "tx_hash": "7686359b5f4b3c3338cb5a9e844b9071fcc9e835132e5657163f350e655a27b9",
+            "ledger": 38373,
+            "sealed_at": "2026-09-29T01:50:30+00:00"
+        }
+    },
+    "ledger_key_xdr": "AAAABgAAAAELpNGJe9h13Y7Z68k6e3yPeWGAfF7PfKKfC9pTbRGUCQAAABAAAAABAAAAAgAAAA8AAAAEU2VhbAAAAA0AAAAgxTwzYd313hkY6aHJK3uHwMhYc7zf4eohI6qhMaSpkLUAAAAB",
+    "rpc": {
+        "getNetwork": {
+            "friendbotUrl": "http://localhost:8000/friendbot",
+            "passphrase": "Standalone Network ; February 2017",
+            "protocolVersion": 27
+        },
+        "getLedgerEntries": {
+            "entries": [
+                {
+                    "key": "AAAABgAAAAELpNGJe9h13Y7Z68k6e3yPeWGAfF7PfKKfC9pTbRGUCQAAABAAAAABAAAAAgAAAA8AAAAEU2VhbAAAAA0AAAAgxTwzYd313hkY6aHJK3uHwMhYc7zf4eohI6qhMaSpkLUAAAAB",
+                    "xdr": "AAAABgAAAAAAAAABC6TRiXvYdd2O2evJOnt8j3lhgHxez3yinwvaU20RlAkAAAAQAAAAAQAAAAIAAAAPAAAABFNlYWwAAAANAAAAIMU8M2Hd9d4ZGOmhySt7h8DIWHO83+HqISOqoTGkqZC1AAAAAQAAABEAAAABAAAAAwAAAA8AAAAGbGVkZ2VyAAAAAAADAACV5QAAAA8AAAAJc2VhbGVkX2F0AAAAAAAABQAAAABquxlmAAAADwAAAAh3b3Jrc2l0ZQAAAA0AAAAgmshARvPb1Fnp3y6LTxjHEc4x//0hOUJj2yYArDz4q/w=",
+                    "lastModifiedLedgerSeq": 38373,
+                    "liveUntilLedgerSeq": 3148772,
+                    "extXdr": "AAAAAA=="
+                }
+            ],
+            "latestLedger": 38373
+        }
+    }
+}

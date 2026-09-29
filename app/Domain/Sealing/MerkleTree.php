@@ -9,7 +9,8 @@ use InvalidArgumentException;
  * y cada archivo guarda su prueba de inclusión para que el navegador del
  * Verificador recomponga la raíz sin depender de GovTrace.
  *
- * Esquema único, el mismo en el validador (resources/js/lib/merkle.js) y
+ * Esquema único, el mismo en JavaScript (tools/verify/lib/merkle.mjs: el
+ * verificador independiente, y el validador del navegador lo reexporta) y
  * probado con los vectores de tests/fixtures/merkle:
  * - hoja: un SHA-256 de 32 bytes;
  * - nodo: SHA-256(menor || mayor), comparando bytes ("pares ordenados"),

@@ -8,13 +8,13 @@ Característica: Recibo de Inmutabilidad público
   @complexity:low
   Escenario: Recibo público de una evidencia publicada
     Dado que soy un visitante sin sesión en el mapa público de "veeduria-smr"
-    Y una evidencia publicada está sellada en la transacción "0xabc…01" del bloque 61234567
+    Y una evidencia publicada está sellada en la transacción "abc…01" del ledger 61234567
     Cuando abro su Recibo de Inmutabilidad
-    Entonces veo la raíz de Merkle, la transacción, el bloque y la fecha y hora exacta del bloque
-    Y veo el botón "Ver en Polygonscan"
+    Entonces veo la raíz de Merkle, la transacción, el ledger y la fecha y hora exacta del ledger
+    Y veo el botón "Ver en Stellar Expert"
 
   @complexity:medium @edge
-  Escenario: Evidencia re-sellada tras una reorganización
-    Dado que una evidencia publicada fue re-sellada en "0xdef…02" tras una reorganización
+  Escenario: Evidencia reenviada tras una transacción que no se incluyó
+    Dado que una evidencia publicada se reenvió en "def…02" porque su primera transacción no entró en ningún ledger
     Cuando abro su Recibo de Inmutabilidad
-    Entonces veo solo la transacción "0xdef…02"
+    Entonces veo solo la transacción "def…02"
