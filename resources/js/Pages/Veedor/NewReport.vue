@@ -9,6 +9,7 @@ import { computed, ref } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import ContractSearch from '@/Components/ContractSearch.vue';
 import EvidencePicker from '@/Components/EvidencePicker.vue';
+import VeedorNav from '@/Components/VeedorNav.vue';
 import { cannotUpload } from '@/lib/evidence/attachments.js';
 import { capturePosition, formatMeters, imprecisionMessage, isPreciseEnough } from '@/lib/geolocation.js';
 import { sendReport } from '@/services/api.js';
@@ -188,5 +189,8 @@ function startOver() {
                 </form>
             </template>
         </div>
+        <template #nav>
+            <VeedorNav current="/reports/new" />
+        </template>
     </AppLayout>
 </template>

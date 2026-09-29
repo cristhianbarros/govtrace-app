@@ -12,6 +12,7 @@ use App\Http\Controllers\Tenant\EditorialController;
 use App\Http\Controllers\Tenant\EvidenceFileController;
 use App\Http\Controllers\Tenant\InviteObserverController;
 use App\Http\Controllers\Tenant\LoginController;
+use App\Http\Controllers\Tenant\MyReportsController;
 use App\Http\Controllers\Tenant\ObserverController;
 use App\Http\Controllers\Tenant\OrganizationLogoController;
 use App\Http\Controllers\Tenant\OrganizationProfileController;
@@ -154,7 +155,9 @@ Route::middleware([
             Route::get('/reports/new', fn () => Inertia::render('Veedor/NewReport'))->name('reports.new');
             Route::post('/reports', [ReportController::class, 'store'])->name('reports.store');
 
-            // US-023: el recibo de uno de sus reportes (la pantalla, it. 28).
+            // US-010 / US-023: "Mis Reportes", y el recibo de cada uno.
+            Route::get('/my-reports', fn () => Inertia::render('Veedor/MyReports'))->name('reports.mine.show');
+            Route::get('/me/reports', [MyReportsController::class, 'index'])->name('reports.mine');
             Route::get('/reports/{report}/receipt', [ReceiptController::class, 'mine'])->whereNumber('report')->name('reports.receipt');
 
             // US-016: "Buscar Obra".
