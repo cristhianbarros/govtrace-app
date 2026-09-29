@@ -6,6 +6,9 @@
 #   - una copia de más de 30 días se borra;
 #   - la restauración de prueba falla si un archivo no coincide con su
 #     SHA-256, o si falta la base de una organización.
+#   - (it. 37a) cada copia se replica fuera del sitio, se borra allá a los 30
+#     días y se restaura desde allá; y la restauración de prueba falla si
+#     tarda más que el límite de recuperación (R-BCK-02).
 # Y al final, la restauración de prueba de verdad.
 set -uo pipefail
 cd "$(git rev-parse --show-toplevel)"
@@ -68,6 +71,44 @@ in_backup "rm -rf $altered && cp -al $second $altered && rm -f $altered/postgres
 out=$(drill_on "$altered" 2>&1)
 if grep -q "no tiene su base en la copia" <<< "$out"; then pass "detecta una organización sin su base"; else flunk "no detectó la base que faltaba"; fi
 in_backup "rm -rf $altered"
+
+# It. 37a — fuera del sitio: cada copia se replica a otro bucket (aquí, uno
+# de LocalStack), la réplica se borra allá a los 30 días, y desde allá se
+# restaura. Y la restauración de prueba falla si tarda más de 4 h (R-BCK-02).
+offsite=s3://evidencias-offsite
+off() { in_backup "aws --endpoint-url \$BACKUP_S3_ENDPOINT s3 $1"; }
+off "mb $offsite >/dev/null 2>&1; true"
+off "cp $second/manifest.json $offsite/copias/20200101T000000Z/manifest.json --only-show-errors"
+if $COMPOSE exec -T -e BACKUP_OFFSITE_S3_URL=$offsite -e BACKUP_OFFSITE_S3_ENDPOINT=http://storage:4566 backup backup.sh >/dev/null; then
+    replica=$(in_backup "ls -1d /backups/2*Z | tail -1")
+    stamp=$(basename "$replica")
+    remote_dumps=$(off "ls $offsite/copias/$stamp/postgres/" | grep -c '\.dump$')
+    local_dumps=$(in_backup "ls $replica/postgres/*.dump | wc -l")
+    remote_files=$(off "ls $offsite/evidencias/ --recursive" | wc -l)
+    local_files=$(in_backup "find $replica/evidencias -type f | wc -l")
+    if [ "$remote_dumps" -eq "$local_dumps" ] && [ "$remote_files" -eq "$local_files" ] && off "ls $offsite/copias/$stamp/manifest.json" >/dev/null; then
+        pass "la copia se replicó fuera del sitio: $remote_dumps volcados, su manifiesto y $remote_files archivos"
+    else
+        flunk "la réplica fuera del sitio está incompleta ($remote_dumps de $local_dumps volcados, $remote_files de $local_files archivos)"
+    fi
+    if off "ls $offsite/copias/" | grep -q 20200101T000000Z; then flunk "la réplica de hace años sigue fuera del sitio"; else pass "la réplica de más de 30 días se borró fuera del sitio (R-BCK-04)"; fi
+    if in_backup "find /backups/.offsite -mmin -5 | grep -q ."; then pass "anota la última réplica, para que el servicio avise si se atrasa"; else flunk "no anotó la última réplica"; fi
+
+    in_backup "rm -rf /tmp/offsite-check && BACKUP_OFFSITE_S3_URL=$offsite BACKUP_OFFSITE_S3_ENDPOINT=http://storage:4566 fetch-offsite.sh $stamp /tmp/offsite-check/$stamp >/dev/null"
+    out=$(drill_on "/tmp/offsite-check/$stamp" 2>&1)
+    if grep -q "evidencias con su archivo y el mismo SHA-256" <<< "$out" && ! grep -q "^FAIL" <<< "$out"; then
+        pass "se restaura desde la réplica fuera del sitio"
+    else
+        flunk "no se pudo restaurar desde la réplica fuera del sitio"; echo "$out" | tail -3
+    fi
+
+    out=$(in_backup "psql -h restore-pg -d postgres -Atc \"select datname from pg_database where not datistemplate and datname <> 'postgres'\" | xargs -r -n1 dropdb -h restore-pg"; $COMPOSE exec -T -e RESTORE_PGHOST=restore-pg -e RESTORE_RTO_SECONDS=0 backup restore-drill.sh "/tmp/offsite-check/$stamp" 2>&1)
+    if grep -q "FAIL  la recuperación tardó más de" <<< "$out"; then pass "la restauración de prueba falla si tarda más que el límite (R-BCK-02)"; else flunk "no falló al pasar del límite de recuperación"; fi
+else
+    flunk "la copia con réplica fuera del sitio falló"
+fi
+off "rb $offsite --force >/dev/null 2>&1; true"
+in_backup "rm -rf /tmp/offsite-check /backups/.offsite"
 $COMPOSE --profile restore rm -sf restore-pg >/dev/null 2>&1
 
 # Y la restauración de prueba de verdad.

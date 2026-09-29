@@ -20,7 +20,7 @@ HTTP_PORT ?= $(shell sed -n 's/^HTTP_PORT=\([0-9]*\).*/\1/p' .env.docker 2>/dev/
         npm-install npm-build npm-watch xdebug-on xdebug-off hosts image-qa teardown \
         stellar-up contract-test contract-deploy contract-smoke doctor test-stellar \
         contract-extend testnet-setup testnet-extend smoke-testnet secrets-check monitoring-check verify-check e2e \
-        backup-now backup-list restore-drill backup-check trace-check
+        backup-now backup-list restore-drill backup-check trace-check network-deploy network-extend network-deploy-check
 
 help: ## List available commands
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -115,6 +115,12 @@ testnet-setup: .env.docker ## Testnet: funded test accounts + the contract deplo
 	@$(SOROBAN) ./scripts/deploy-testnet.sh
 testnet-extend: .env.docker ## D12: the treasury extends the testnet contract's instance and code (run before they expire)
 	@$(SOROBAN) ./scripts/extend-contract.sh testnet
+network-deploy: .env.docker ## Deploy on NETWORK=testnet|mainnet: the funded treasury (STELLAR_TREASURY_SECRET) creates the accounts, deploys and extends (D12, D13)
+	@$(SOROBAN) env STELLAR_TREASURY_SECRET="$$STELLAR_TREASURY_SECRET" STELLAR_SEALER_ADDRESS="$$STELLAR_SEALER_ADDRESS" STELLAR_SPONSOR_ADDRESS="$$STELLAR_SPONSOR_ADDRESS" STELLAR_MAINNET_RPC_URL="$$STELLAR_MAINNET_RPC_URL" CONFIRM_MAINNET="$$CONFIRM_MAINNET" SPONSOR_STARTING_XLM="$${SPONSOR_STARTING_XLM:-100}" ./scripts/deploy-network.sh $(NETWORK)
+network-extend: .env.docker ## D12 on NETWORK=testnet|mainnet: the treasury (STELLAR_TREASURY_SECRET) extends STELLAR_SEALING_CONTRACT_ID's instance and code
+	@$(SOROBAN) env STELLAR_TREASURY_SECRET="$$STELLAR_TREASURY_SECRET" STELLAR_SEALING_CONTRACT_ID="$$STELLAR_SEALING_CONTRACT_ID" STELLAR_MAINNET_RPC_URL="$$STELLAR_MAINNET_RPC_URL" ./scripts/extend-contract.sh $(NETWORK)
+network-deploy-check: .env.docker ## It. 37a: the main-network deploy, end to end on testnet (throwaway accounts and contract, a report up to "Sellada")
+	@bash tests/infra/check-network-deploy.sh
 smoke-testnet: ## Smoke test on the Stellar testnet: a report up to "Sellada", fee paid by the sponsor (needs .env.testnet)
 	@test -f .env.testnet || { echo "Falta .env.testnet: corre make testnet-setup (en CI lo escribe Jenkins)."; exit 1; }
 	@$(EXEC) sh -c 'set -a; . ./.env.testnet; set +a; ./vendor/bin/pest --group=testnet'

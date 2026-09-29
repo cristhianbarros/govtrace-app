@@ -7,7 +7,8 @@
 #      de cada una tiene su archivo con el mismo SHA-256 — salvo las de una
 #      organización cuyos archivos se borraron por retención (US-003b).
 # Imprime cuántos datos se habrían perdido (desde la copia hasta ahora,
-# R-BCK-01: menos de 1 h) y cuánto tardó (R-BCK-02: menos de 4 h).
+# R-BCK-01: menos de 1 h) y cuánto tardó (R-BCK-02: menos de 4 h, o
+# RESTORE_RTO_SECONDS); falla si pasa de cualquiera de los dos.
 set -euo pipefail
 
 root=${BACKUP_DIR:-/backups}
@@ -79,6 +80,9 @@ done <<< "$tenants"
 [ "$fail" -eq 0 ] || exit 1
 echo "PASS  $organizations organizaciones con su base; $verified evidencias con su archivo y el mismo SHA-256 ($(elapsed "$started") s)"
 
+recovery=$(elapsed "$incident")
+limit=${RESTORE_RTO_SECONDS:-14400}
 echo "Datos perdidos: $(( lost / 60 )) min $(( lost % 60 )) s (desde la copia; R-BCK-01: menos de 1 h)"
-echo "Recuperación: $(elapsed "$incident") s (R-BCK-02: menos de 4 h)"
+echo "Recuperación: $recovery s (R-BCK-02: menos de 4 h)"
 [ "$lost" -lt 3600 ] || { echo "FAIL  la copia tiene más de 1 hora"; exit 1; }
+[ "$recovery" -lt "$limit" ] || { echo "FAIL  la recuperación tardó más de $limit s (R-BCK-02)"; exit 1; }

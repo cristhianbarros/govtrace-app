@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
-# Funciones compartidas por los scripts de Stellar: la red local (it. 12) y
-# testnet (it. 14). Se incluye con ". scripts/stellar-common.sh"; no se
+# Funciones compartidas por los scripts de Stellar: la red local (it. 12),
+# testnet (it. 14) y la red principal (it. 37a). Se incluye con ". scripts/stellar-common.sh"; no se
 # ejecuta sola. Cada script fija antes la red (RPC, passphrase, friendbot) y
 # ENV_FILE, el .env donde escribe; si no, valen los de la red local.
 
@@ -36,15 +36,34 @@ extend_contract() {
   stellar contract fetch --id "$extend_id" --out-file "$deployed_wasm" \
     --rpc-url "$STELLAR_RPC_URL" --network-passphrase "$STELLAR_NETWORK_PASSPHRASE"
 
-  instance_until=$(stellar contract extend --id "$extend_id" \
-    --ledgers-to-extend $((max_entry_ttl - 1)) --ttl-ledger-only --source-account "$extend_payer" \
+  # El pagador por el entorno, no como argumento: si es una llave, no queda a la vista en la lista de procesos.
+  instance_until=$(STELLAR_ACCOUNT="$extend_payer" stellar contract extend --id "$extend_id" \
+    --ledgers-to-extend $((max_entry_ttl - 1)) --ttl-ledger-only \
     --rpc-url "$STELLAR_RPC_URL" --network-passphrase "$STELLAR_NETWORK_PASSPHRASE")
-  code_until=$(stellar contract extend --wasm "$deployed_wasm" \
-    --ledgers-to-extend $((max_entry_ttl - 1)) --ttl-ledger-only --source-account "$extend_payer" \
+  code_until=$(STELLAR_ACCOUNT="$extend_payer" stellar contract extend --wasm "$deployed_wasm" \
+    --ledgers-to-extend $((max_entry_ttl - 1)) --ttl-ledger-only \
     --rpc-url "$STELLAR_RPC_URL" --network-passphrase "$STELLAR_NETWORK_PASSPHRASE")
   rm -f "$deployed_wasm"
 
   echo "Vigencia extendida por la tesorería: instancia hasta el ledger $instance_until, código hasta el $code_until."
+}
+
+# Antes de firmar nada (it. 37a): que el RPC sirva de verdad la red pedida.
+# $1: cómo se nombra esa red en el mensaje.
+assert_network() {
+  served=$(curl -fsS -X POST "$STELLAR_RPC_URL" -H 'Content-Type: application/json' \
+    -d '{"jsonrpc":"2.0","id":1,"method":"getNetwork"}' | jq -r '.result.passphrase')
+  if [ "$served" != "$STELLAR_NETWORK_PASSPHRASE" ]; then
+    echo "El RPC $STELLAR_RPC_URL no es de $1: sirve \"$served\"." >&2
+    exit 1
+  fi
+}
+
+# La red principal de Stellar (it. 37a): su RPC es el endpoint privado del
+# proveedor (D13), nunca el STELLAR_RPC_URL del contenedor, que es la red local.
+use_mainnet() {
+  STELLAR_RPC_URL=${STELLAR_MAINNET_RPC_URL:?Falta STELLAR_MAINNET_RPC_URL: el endpoint privado del proveedor (D13)}
+  STELLAR_NETWORK_PASSPHRASE="Public Global Stellar Network ; September 2015"
 }
 
 # Escribe o reemplaza CLAVE=valor en el .env de Laravel.
