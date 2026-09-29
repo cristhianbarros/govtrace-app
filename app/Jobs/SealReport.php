@@ -147,7 +147,7 @@ class SealReport implements ShouldQueue
         } catch (RootAlreadySealed) {
             $onChain = $network->findSeal($seal->merkle_root)
                 ?? throw new SealingNetworkError("La red rechazó {$seal->merkle_root} como ya registrada, pero no la encuentra.");
-            $seal->markSealed($onChain->ledger, $onChain->sealedAt, $onChain->txHash, $network->contractId());
+            $seal->markSealed($onChain->ledger, $onChain->sealedAt, $onChain->txHash, $network->contractId(), $onChain->feeStroops);
 
             return null;
         }

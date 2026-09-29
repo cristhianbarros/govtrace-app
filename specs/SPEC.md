@@ -46,7 +46,7 @@ Plataforma Open Source y Mobile-First de veeduría ciudadana, multi-tenant (B2B2
 | US-002 | Como **Super Administrador** quiero **asignar el usuario Administrador inicial de una organización aprobada** para **transferirle la autonomía en la gestión de sus propios veedores** | EPIC-009 | discovery_inicial | P1 |
 | US-003a | Como **Super Administrador** quiero **suspender o reactivar una organización activa** para **bloquear o restablecer temporalmente su acceso ante impagos o revisiones de seguridad** | EPIC-009 | discovery_inicial | P2 |
 | US-003b | Como **Super Administrador** quiero **dar de baja de forma definitiva a una organización** para **retirar del sistema a entidades inoperantes aplicando políticas de retención de datos** | EPIC-009 | discovery_inicial | P3 |
-| US-004 | Como **Super Administrador** quiero **visualizar un reporte del consumo de transacciones y gas en Polygon agrupado por organización** para **controlar la rentabilidad y los costos de infraestructura del SaaS** | EPIC-009 | discovery_inicial | P3 |
+| US-004 | Como **Super Administrador** quiero **visualizar un reporte de las comisiones de sellado en Stellar (XLM y su costo en COP) agrupado por mes y por organización** para **controlar la rentabilidad y los costos de infraestructura del SaaS** | EPIC-009 | discovery_inicial | P3 |
 | US-005 | Como **Administrador de Organización** quiero **invitar nuevos usuarios por correo electrónico asignándoles el rol de veedor de campo** para **conformar el equipo de supervisión local** | EPIC-006 | discovery_inicial | P1 |
 | US-006 | Como **Administrador de Organización** quiero **desactivar el acceso a un veedor de campo** para **revocar sus permisos en caso de que deje la organización o cometa infracciones** | EPIC-006 | discovery_inicial | P2 |
 | US-007 | Como **Administrador de Organización** quiero **actualizar el nombre de fantasía y el logo de la veeduría** para **mantener la identidad visual de su observatorio** | EPIC-009 | discovery_inicial | P2 |
@@ -65,7 +65,7 @@ Plataforma Open Source y Mobile-First de veeduría ciudadana, multi-tenant (B2B2
 | US-020a | Como **Sistema** quiero **desplegar el Smart Contract de sellado en Stellar (Soroban) con control de acceso (solo la cuenta selladora puede sellar)** para **que ningún tercero pueda registrar sellos falsos** | EPIC-003 | discovery_inicial | P1 |
 | US-020b | Como **Sistema** quiero **encolar el hash SHA-256 validado de cada evidencia y registrarlo en el Smart Contract de Soroban, con la comisión patrocinada por GovTrace (fee bump)** para **garantizar la inmutabilidad sin fricción para el usuario** | EPIC-003 | discovery_inicial | P1 |
 | US-021 | Como **Sistema** quiero **aplicar reintentos con retraso exponencial si el nodo RPC falla, hay congestión o la transacción queda pending/dropped** para **que ningún reporte quede huérfano de su sello** | EPIC-003 | discovery_inicial | P2 |
-| US-022 | Como **Super Administrador** quiero **ver el saldo MATIC/POL de la billetera del Relayer y recibir alertas (Slack/Email) cuando caiga bajo un umbral** para **recargar fondos antes de que se detenga el sellado** | EPIC-003 | discovery_inicial | P3 |
+| US-022 | Como **Super Administrador** quiero **ver el saldo en XLM de la cuenta patrocinadora y recibir alertas (Slack/Email) cuando caiga bajo un umbral** para **recargarla desde la tesorería antes de que se detenga el sellado** | EPIC-003 | discovery_inicial | P3 |
 | US-023 | Como **Veedor de Campo** quiero **ver en el detalle de mi evidencia confirmada un Recibo de Inmutabilidad (TxID, número de bloque y enlace a Polygonscan)** para **tener la prueba criptográfica independiente de que mi reporte no puede ser alterado** | EPIC-003 | discovery_inicial | P2 |
 | US-024 | Como **Verificador Público** quiero **arrastrar una foto o documento a la herramienta de Validación para que mi navegador recalcule su SHA-256 y consulte el Smart Contract en Polygon** para **obtener un veredicto Auténtico/Alterado que no dependa de la base de datos de GovTrace** | EPIC-005 | discovery_inicial | P2 |
 | US-025 | Como **Verificador Público** quiero **ver públicamente el Recibo de Inmutabilidad (TxID, bloque, timestamp de red y enlace a Polygonscan) junto a cada evidencia confirmada** para **auditar el registro en un explorador de bloques independiente** | EPIC-005 | discovery_inicial | P2 |
@@ -81,7 +81,7 @@ Plataforma Open Source y Mobile-First de veeduría ciudadana, multi-tenant (B2B2
 | US-035 | Como **Administrador de Organización** quiero **corregir la ubicación oficial de una obra, dejando registro del cambio** para **que una ubicación errónea no bloquee los reportes de mis veedores** | EPIC-004 | discovery_inicial | P1 |
 | US-036 | Como **Administrador de Organización** quiero **revisar las evidencias ocultas y publicarlas** para **decidir qué se muestra en nuestro mapa público** | EPIC-004 | discovery_inicial | P1 |
 | US-037 | Como **Administrador de Organización** quiero **retirar una evidencia publicada, dejando una lápida visible** para **cumplir nuestras políticas sin borrar el rastro** | EPIC-004 | discovery_inicial | P1 |
-| US-038-CFG | Como **Super Administrador** quiero **ajustar desde el panel global los parámetros operativos (radio de geocerca, ventana de reporte de Terminados/Liquidados, vigencia de invitaciones, umbral de saldo del Relayer y hora de la sincronización)** para **adaptar la operación sin desplegar código** | EPIC-009 | analisis_completitud (⚡ Importante) | P2 |
+| US-038-CFG | Como **Super Administrador** quiero **ajustar desde el panel global los parámetros operativos (radio de geocerca, ventana de reporte de Terminados/Liquidados, vigencia de invitaciones, umbral de saldo de la cuenta patrocinadora y hora de la sincronización)** para **adaptar la operación sin desplegar código** | EPIC-009 | analisis_completitud (⚡ Importante) | P2 |
 | US-039-USR | Como **usuario registrado** quiero **restablecer mi contraseña yo mismo con un enlace que recibo por correo** para **recuperar el acceso sin depender de un administrador** | EPIC-006 | analisis_completitud (⚡ Importante) | P2 |
 | US-040-USR | Como **Administrador de Organización** quiero **reenviar o revocar una invitación pendiente** para **corregir invitaciones enviadas por error o no atendidas** | EPIC-006 | analisis_completitud (💡 Mejora) | P3 |
 | US-041-USR | Como **Administrador de Organización** quiero **reactivar a un veedor desactivado** para **reincorporarlo al equipo sin crear una cuenta nueva** | EPIC-006 | analisis_completitud (⚡ Importante) | P2 |
@@ -231,11 +231,11 @@ Plataforma Open Source y Mobile-First de veeduría ciudadana, multi-tenant (B2B2
 | POST | `/admin/organizations/{id}/suspend` · `/reactivate` | Suspender o reactivar | Super Admin | US-003a |
 | POST | `/admin/organizations/{id}/decommission` | Baja lógica con doble confirmación | Super Admin | US-003b |
 | GET | `/admin/sync/health` | Panel de salud de la sincronización SECOP | Super Admin | US-014 |
-| GET | `/admin/reports/gas` | Consumo de gas y costo por organización y mes | Super Admin | US-004 |
-| GET | `/admin/relayer/balance` | Saldo del Relayer | Super Admin | US-022 |
+| GET | `/admin/costs/data` | Comisiones de sellado (XLM y COP) por organización y mes | Super Admin | US-004 |
+| GET | `/admin/sealing/data` | Saldo de la cuenta patrocinadora, vigencia del contrato y fallas de sellado | Super Admin | US-022, US-047-MNT |
 | GET · PUT | `/admin/settings` | Parámetros operativos configurables | Super Admin | US-038-CFG |
 | GET | `/admin/audit-log` | Log de auditoría de toda la plataforma | Super Admin | US-043-MON |
-| POST | `/admin/evidences/requeue` | Volver a encolar fallas de sellado | Super Admin | US-047-MNT |
+| POST | `/admin/sealing/requeue` | Volver a encolar fallas de sellado | Super Admin | US-047-MNT |
 | GET | `/admin/usage` | Resumen de uso por organización | Super Admin | US-053-RPT |
 
 ### Tenant — con sesión, en el subdominio de la organización
@@ -282,7 +282,7 @@ Son tareas programadas y trabajos de cola:
 - Cálculo diario de obras en riesgo (US-034).
 - Sellado y reintentos (US-020b, US-021).
 - Auditoría nocturna de reorganizaciones (US-020b).
-- Saldo del Relayer cada 15 minutos (US-022).
+- Saldo de la cuenta patrocinadora cada 15 minutos y vigencia del contrato de sellado cada día (US-022).
 - Alerta de cola estancada (US-021).
 - Archivado mensual (US-048-MNT).
 - Inactividad a 30 días (US-054-RPT).
@@ -310,7 +310,7 @@ Regla común: el diseño sin prefijo es el del teléfono y solo `md:` / `lg:` es
 
 ### Panel global del Super Administrador (escritorio aceptable, sin romper en móvil)
 - **Organizaciones**: alta, admin inicial, datos legales, suspender, reactivar y dar de baja (US-001, US-002, US-011, US-003a, US-003b).
-- **Salud SECOP** (US-014) · **Costos de gas** (US-004) · **Relayer** (US-022) · **Parámetros** (US-038-CFG) · **Uso** (US-053-RPT) · **Log** (US-043-MON) · **Re-encolar fallas** (US-047-MNT).
+- **Salud SECOP** (US-014) · **Costos** (US-004) · **Sellado**: cuenta patrocinadora y vigencia del contrato (US-022) · **Parámetros** (US-038-CFG) · **Uso** (US-053-RPT) · **Log** (US-043-MON) · **Re-encolar fallas** (US-047-MNT).
 
 ### Sitio público de cada organización (sin sesión)
 - **Mapa** (US-027, US-028):

@@ -2,7 +2,9 @@
 
 use App\Infrastructure\Scheduling\NightlySchedule;
 use App\Jobs\ArchiveOldContracts;
+use App\Jobs\CheckContractLifetime;
 use App\Jobs\CheckSealingQueue;
+use App\Jobs\CheckSponsorBalance;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -27,4 +29,22 @@ app(Schedule::class)->job(new ArchiveOldContracts)
 app(Schedule::class)->job(new CheckSealingQueue)
     ->everyFifteenMinutes()
     ->name('sealing-queue-check')
+    ->onOneServer();
+
+// US-022: el saldo de la cuenta patrocinadora, cada 15 minutos, y la
+// vigencia del contrato de sellado, cada día a las 12:00 UTC (07:00 en
+// Colombia). Sin contrato configurado (un entorno sin make contract-deploy)
+// no hay nada que vigilar.
+$sealingConfigured = fn () => filled(config('stellar.sealing_contract_id'));
+
+app(Schedule::class)->job(new CheckSponsorBalance)
+    ->everyFifteenMinutes()
+    ->when($sealingConfigured)
+    ->name('sponsor-balance-check')
+    ->onOneServer();
+
+app(Schedule::class)->job(new CheckContractLifetime)
+    ->dailyAt('12:00')
+    ->when($sealingConfigured)
+    ->name('contract-lifetime-check')
     ->onOneServer();

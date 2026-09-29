@@ -45,4 +45,10 @@ interface SealingNetwork
     public function sponsorCanPay(): bool;
 
     public function sponsorAddress(): string;
+
+    /** US-022: el saldo de la patrocinadora, en stroops (1 XLM = 10.000.000). */
+    public function sponsorBalance(): int;
+
+    /** US-022, D12: hasta qué ledger viven la instancia y el código del contrato. */
+    public function contractLifetime(): ContractLifetime;
 }

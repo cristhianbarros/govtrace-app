@@ -35,4 +35,18 @@ return [
         ],
     ],
 
+    // US-022: las alertas críticas del Super Administrador, además del
+    // correo, a un webhook entrante de Slack o de Discord. Vacío: solo correo.
+    'alerts' => [
+        'webhook_url' => env('ALERT_WEBHOOK_URL'),
+    ],
+
+    // US-004: el precio de XLM en pesos, para estimar el costo de las
+    // comisiones. El plan gratuito de CoinGecko no necesita llave; con una
+    // llave "demo" se envía en COINGECKO_API_KEY.
+    'xlm_price' => [
+        'url' => env('XLM_PRICE_API_URL', 'https://api.coingecko.com/api/v3/simple/price'),
+        'api_key' => env('COINGECKO_API_KEY'),
+    ],
+
 ];

@@ -1122,8 +1122,75 @@ Suite: 570 en verde. Vitest: 316 en verde. Cada regla nueva se comprobó rompié
 
 ### Iteración 32 — Operación de la cuenta patrocinadora y costos
 **Entregable:** saldo en XLM de la patrocinadora cada 15 minutos, con alerta bajo el umbral de D12 (50 XLM); aviso antes de que venza la vigencia de la instancia o del código del contrato, para que la tesorería corra la extensión (D12); reporte de comisiones (XLM y COP) por mes y organización, con respaldo del último precio conocido de XLM; re-encolado de fallas de sellado. US-004 y US-022 se ajustan a Stellar al abrir la iteración.
-**Done-when:** US-022 (4 casos), US-004 (4) y US-047-MNT (2) en verde.
-**Cubre:** US-004, US-022, US-047-MNT · R-VC-03.
+**Done-when:** US-022 (~~4~~ 5 casos: se sumó el aviso de vigencia del contrato), US-004 (4) y US-047-MNT (2) en verde.
+**Cubre:** US-004, US-022, US-047-MNT · R-VC-03, R-INT-03.
+
+**✅ Cumplido (2026-09-29, con Opus xhigh):** al abrir la iteración, **US-004 y US-022 se ajustaron a Stellar**: Gherkin, criterios, historias y SPEC. Ahora hablan de XLM, cuenta patrocinadora, tesorería y COP, en vez de POL, Relayer y USD. **US-022 suma un escenario**, el aviso antes de que venza la vigencia del contrato, que pedía el entregable (D12), y pasa de 4 a 5 casos.
+
+Todo en verde, y visto en rojo antes de implementar (clases, rutas y pantalla inexistentes):
+- Pest: `SponsorAccountTest`, **US-022, 5/5**, más 19 derivados:
+  - el umbral sale del parámetro y se compara al stroop, con decimales;
+  - una alerta por cruce;
+  - el saldo escrito como en Colombia;
+  - solo Email si no hay webhook;
+  - el RPC caído no cambia nada;
+  - el aviso de vigencia en el límite de 30 días, por la instancia, y de nuevo tras una extensión;
+  - el webhook y su caída;
+  - el panel, también sin red.
+- Pest: `SealingCostsTest`, **US-004, 4/4**, más 7 derivados:
+  - se guarda el último precio;
+  - sin precio nunca, solo XLM;
+  - sellos sin comisión conocida;
+  - solo cuentan los sellados;
+  - la comisión se anota al confirmar y también al encontrar el sello tras un reenvío.
+- Pest: `RequeueFailedSealsTest`, **US-047-MNT, 2/2**, más 8 derivados:
+  - 5 intentos nuevos hasta "Sellada";
+  - solo las que están en falla;
+  - auditoría `seal.requeued`;
+  - sin falsa alerta de cola estancada (US-021);
+  - validación;
+  - la lista de fallas de todas las organizaciones.
+- Pest, grupo `stellar` (`make test-stellar`, red local), 3 nuevos:
+  - **la comisión anotada es exactamente lo que bajó el saldo de la patrocinadora**, también cuando se encuentra el sello después;
+  - el saldo;
+  - la vigencia de la instancia y del código (176 días en la red local, tras `make contract-deploy`).
+- Vitest, 16 nuevos: la pantalla "Sellado" (10: cuenta, umbral, vigencia, red caída, fallas y re-encolado) y sus comisiones (6). El menú del panel global suma "Sellado".
+
+Suite: 615 en verde. Vitest: 332. `make test-stellar`: 11. Cada regla nueva se comprobó rompiéndola a propósito: 41 casos (33 del servidor y 8 de la pantalla). Uno sobrevivía, contar sellos que no están sellados: caían en una fila sin mes que el test no miraba. Ahora el test compara el reporte completo.
+
+- **Saldo de la patrocinadora** (`CheckSponsorBalance`, cada 15 min): lo lee por el RPC de Stellar y lo compara con `sponsor_balance_alert_threshold_xlm` (D12, 50 XLM), exacto en stroops.
+- **Vigencia del contrato** (`CheckContractLifetime`, cada día a las 12:00 UTC, 07:00 en Colombia):
+  - lee el TTL de la instancia y, con el hash del WASM que esa instancia ejecuta, el del código;
+  - con menos de 30 días en alguno, avisa para que la tesorería corra la extensión (`make testnet-extend` o su equivalente).
+- Los dos chequeos no corren si no hay contrato configurado: un entorno sin `make contract-deploy` no falla cada 15 minutos.
+- **Alertas críticas por Email y Webhook** (`SuperAdminAlerts`):
+  - un correo a cada Super Administrador;
+  - un solo POST al webhook (`ALERT_WEBHOOK_URL`) con `{"text", "content"}`, que leen tanto Slack como Discord;
+  - un webhook caído se registra y no reintenta: el correo ya salió.
+- **Comisión de cada sello** (`report_seals.fee_stroops`): el `feeCharged` del resultado del fee bump, ya con el reembolso de los recursos no usados. Se anota al confirmar el sello y también cuando un reenvío encuentra el sello ya en la red.
+- **Reporte de comisiones** (`GET /admin/costs/data`):
+  - agrupa por mes, en la hora de Colombia del ledger, y por organización;
+  - da la cantidad de sellos, las comisiones en XLM y el costo en COP con el precio de CoinGecko;
+  - cada precio obtenido se guarda en `xlm_price_quotes`, y si el API no responde se usa el último, con su fecha (R-INT-03).
+- **Re-encolar** (`POST /admin/sealing/requeue`, solo el Super Administrador del panel global):
+  - una o varias evidencias en "Falla de Sellado", de cualquier organización;
+  - vuelven "En Cola" con 5 intentos nuevos y un `SealReport`;
+  - queda un registro de auditoría por evidencia, con el error que tenía.
+- **Pantalla "Sellado"** (`/admin/sealing`): cuenta patrocinadora, vigencia del contrato, fallas para elegir y re-encolar, y comisiones del mes.
+- De paso: los tests que leían `schedule:list` suponían columnas de un ancho fijo; la tarea de las 12:00 las ensanchó. Ahora aceptan cualquier espacio.
+
+**Decisiones de la iteración, para confirmar:**
+1. **US-022 suma el escenario de la vigencia del contrato** (5 casos en vez de 4). El entregable lo pedía y así queda trazado en un `.feature`.
+2. **Una alerta por cruce, no una cada 15 minutos.**
+   - El saldo vuelve a alertar solo después de subir sobre el umbral y volver a caer.
+   - La vigencia avisa una vez por cada fecha de vencimiento; tras una extensión, la siguiente vuelve a avisar.
+   - Ese estado vive en la caché: si se borra, a lo sumo se repite una alerta.
+3. **Aviso de vigencia a los 30 días**, con los días estimados a ~5 s por ledger. Si la red cerrara ledgers más rápido, quedarían algunos días menos de los que dice el aviso.
+4. **El costo en pesos usa el precio de hoy** para todos los meses, no el de cada mes: es una estimación de lo que costaría recargar. CoinGecko gratuito, con una llave "demo" opcional (`COINGECKO_API_KEY`).
+5. **Las comisiones de transacciones rechazadas no se suman.** Son raras y no son un sello. Los sellos anteriores a esta iteración no tienen comisión anotada: el reporte los cuenta como "sin comisión conocida".
+6. **Re-encolar da 5 intentos nuevos y cuenta como "ya alertada"** para la alerta de cola estancada: se recibió hace horas, pero alguien la está mirando.
+7. **Una sola pantalla "Sellado"** reúne US-022, US-047-MNT y US-004, en vez de las pantallas "Costos de gas" y "Relayer" de la SPEC (ya ajustada). Así el menú del panel queda en 5.
+8. **Las alertas anteriores siguen solo por Email:** la de patrocinadora sin XLM (US-020b) y la de cola estancada (US-021). Propuesta: mandarlas también al webhook, con el mismo `SuperAdminAlerts`.
 
 ### Iteración 33 — Baja de organizaciones e invitaciones
 **Entregable:** baja con doble confirmación, mapa fuera de línea y evidencias verificables; retención de 5 años de los archivos; reenviar y revocar invitaciones.
@@ -1175,7 +1242,7 @@ Historias con Gherkin y criterios todavía redactados para Polygon; cada una se 
 | US-021 | red o RPC de Stellar caídos, o patrocinadora sin saldo, en vez de relayer caído | it. 22 |
 | US-023, US-025 | Recibo: TxID, número y hora del ledger, enlace a un explorador de Stellar | it. 23 |
 | US-024, US-046-INT | el validador y el script leen el sello del contrato por el RPC de Stellar; cómo leer un sello archivado | it. 23 y 27 |
-| US-004, US-022 | comisiones en XLM (no gas en POL), precio de XLM en COP, saldo de la patrocinadora | it. 32 |
+| US-004, US-022 | comisiones en XLM (no gas en POL), precio de XLM en COP, saldo de la patrocinadora | ✅ ya ajustadas (it. 32) |
 | US-003b, US-037 | solo el nombre de la red en los textos | al abrir su iteración |
 
 ## Carga real por fase (sin rebalancear, como se decidió)

@@ -17,3 +17,10 @@ const monthOfYear = new Intl.DateTimeFormat('es-CO', { month: 'long', year: 'num
 
 /** "2026-09" → "septiembre de 2026". */
 export const formatMonth = (yearMonth) => monthOfYear.format(new Date(`${yearMonth}-01T00:00:00Z`));
+
+/** "1234.5" → "1.234,5" (US-022, US-004): XLM exactos, sin pasar por un número. */
+export function formatXlm(amount) {
+    const [whole, fraction] = String(amount).split('.');
+    const grouped = whole.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    return fraction ? `${grouped},${fraction}` : grouped;
+}

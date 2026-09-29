@@ -69,7 +69,16 @@ class StellarRpc
     {
         $ledgerKey = XdrLedgerKey::forContractData(XdrSCAddress::forContractId($contractId), $key, XdrContractDataDurability::PERSISTENT());
 
-        return GetLedgerEntriesResponse::fromJson($this->call('getLedgerEntries', ['keys' => [$ledgerKey->toBase64Xdr()]]))->entries[0] ?? null;
+        return $this->ledgerEntry($ledgerKey)->entries[0] ?? null;
+    }
+
+    /**
+     * One ledger entry, with its TTL (liveUntilLedgerSeq) and the latest
+     * ledger the RPC knows: what's needed to tell how long it has left.
+     */
+    public function ledgerEntry(XdrLedgerKey $key): GetLedgerEntriesResponse
+    {
+        return GetLedgerEntriesResponse::fromJson($this->call('getLedgerEntries', ['keys' => [$key->toBase64Xdr()]]));
     }
 
     /**

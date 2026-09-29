@@ -18,7 +18,7 @@ class ReportSeal extends Model
     protected $fillable = [
         'report_id', 'status', 'merkle_root', 'worksite_reference', 'metadata_json',
         'tx_hash', 'contract_id', 'ledger', 'received_at', 'queued_at', 'transmitted_at', 'sealed_at',
-        'attempts', 'last_error', 'failed_at', 'stuck_alerted_at',
+        'attempts', 'last_error', 'failed_at', 'stuck_alerted_at', 'fee_stroops',
     ];
 
     protected $casts = [
@@ -31,6 +31,7 @@ class ReportSeal extends Model
         'attempts' => 'integer',
         'failed_at' => 'datetime',
         'stuck_alerted_at' => 'datetime',
+        'fee_stroops' => 'integer',
     ];
 
     /** Once written, the seal stays as it is (R-TA-02): the root, what it seals, the ledger that closed it and the contract that keeps it. */
@@ -85,9 +86,10 @@ class ReportSeal extends Model
      * La red incluyó la raíz en el ledger $ledger, que cerró a la hora
      * $sealedAt, y el contrato $contractId la guarda. Manda el hash que dice
      * la red: tras un reenvío (US-021), la transacción incluida puede no ser
-     * la última anotada. Si la red ya no lo recuerda, queda la anotada.
+     * la última anotada. Si la red ya no lo recuerda, queda la anotada. La
+     * comisión es la que la red le cobró a la patrocinadora (US-004).
      */
-    public function markSealed(int $ledger, CarbonInterface $sealedAt, ?string $txHash, string $contractId): void
+    public function markSealed(int $ledger, CarbonInterface $sealedAt, ?string $txHash, string $contractId, ?int $feeStroops = null): void
     {
         $this->update([
             'status' => SealStatus::Sealed,
@@ -95,6 +97,24 @@ class ReportSeal extends Model
             'sealed_at' => $sealedAt,
             'tx_hash' => $txHash ?? $this->tx_hash,
             'contract_id' => $contractId,
+            'fee_stroops' => $feeStroops,
+        ]);
+    }
+
+    /**
+     * US-047-MNT: the Super Administrador puts a "Falla de Sellado" back in
+     * the queue, with five fresh attempts. It counts as already alerted
+     * (US-021): it was received hours ago, but it's not stalled — someone is
+     * looking at it right now.
+     */
+    public function requeue(): void
+    {
+        $this->update([
+            'status' => SealStatus::Queued,
+            'attempts' => 0,
+            'failed_at' => null,
+            'queued_at' => now(),
+            'stuck_alerted_at' => $this->stuck_alerted_at ?? now(),
         ]);
     }
 }

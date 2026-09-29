@@ -93,6 +93,11 @@ export const fetchGlobalAuditLog = (page) => dataOf(http.get('/admin/audit/data'
 /** US-014: la última sincronización con SECOP II, o null. */
 export const fetchSecopHealth = async () => (await dataOf(http.get('/admin/secop-health/data'))).data;
 
+// Sellado: la cuenta patrocinadora y la vigencia del contrato (US-022), las fallas (US-047-MNT) y las comisiones (US-004).
+export const fetchSealing = () => dataOf(http.get('/admin/sealing/data'));
+export const requeueSeals = (seals) => dataOf(http.post('/admin/sealing/requeue', { seals }));
+export const fetchSealingCosts = () => dataOf(http.get('/admin/costs/data'));
+
 /** US-003a */
 export const suspendOrganization = (id) => dataOf(http.post(`/admin/organizations/${id}/suspend`));
 export const reactivateOrganization = (id) => dataOf(http.post(`/admin/organizations/${id}/reactivate`));

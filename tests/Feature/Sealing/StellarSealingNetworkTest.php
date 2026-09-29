@@ -128,8 +128,37 @@ it('reads a seal straight from the ledger entries: no account is needed, so the 
         config('stellar.sponsor_min_balance_xlm'),
     );
 
-    expect($reader->findSeal($root))->toEqual(new NetworkSeal($sealed->ledger, $sealed->sealedAt, $txHash))
+    expect($reader->findSeal($root))->toEqual(new NetworkSeal($sealed->ledger, $sealed->sealedAt, $txHash, $sealed->feeStroops))
         ->and($reader->findSeal(randomRoot()))->toBeNull();
+});
+
+it('tells the fee the network charged the sponsor account for a seal, also when it finds the seal later (US-004)', function () {
+    $rpc = app(StellarRpc::class);
+    $sponsor = $this->network->sponsorAddress();
+    $before = $rpc->accountBalance($sponsor);
+    $root = randomRoot();
+
+    $sealed = waitForSeal($this->network, $this->network->submitSeal(hash('sha256', 'obra-de-prueba'), $root));
+
+    expect($sealed->feeStroops)->toBeGreaterThan(0)
+        ->and($sealed->feeStroops)->toBe($before - $rpc->accountBalance($sponsor))
+        ->and($this->network->findSeal($root)->feeStroops)->toBe($sealed->feeStroops);
+});
+
+it('reads the balance of the sponsor account in stroops (US-022)', function () {
+    $balance = $this->network->sponsorBalance();
+
+    expect($balance)->toBeGreaterThan(0)
+        ->and($balance)->toBe(app(StellarRpc::class)->accountBalance($this->network->sponsorAddress()));
+});
+
+it('reads until which ledger the instance and the code of the contract live (US-022, D12)', function () {
+    $lifetime = $this->network->contractLifetime();
+
+    // make contract-deploy las extiende a la vigencia máxima de la red.
+    expect($lifetime->latestLedger)->toBeGreaterThan(0)
+        ->and($lifetime->instanceLiveUntil)->toBeGreaterThan($lifetime->latestLedger)
+        ->and($lifetime->codeLiveUntil)->toBeGreaterThan($lifetime->latestLedger);
 });
 
 it('reports the sponsor out of funds when its account has no XLM', function () {
