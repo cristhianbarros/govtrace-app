@@ -1,16 +1,17 @@
 #!/usr/bin/env bash
 # Iteración 1 — Infraestructura del MVP (specs/PLAN.md). Run from the host: bash tests/infra/verify-stack.sh
-# Done-when: `make ps` shows app, proxy, pgsql, scheduler, minio and worker healthy/running,
+# Done-when: `make ps` shows app, proxy, pgsql, scheduler, storage, worker and (it. 35) backup healthy/running,
 #            and http://<LOCAL_IP>:<HTTP_PORT>/up (Host govtrace.localhost) answers 200.
 set -uo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
 COMPOSE="docker compose --env-file .env.docker"
-LOCAL_IP=$(sed -n 's/^LOCAL_IP=//p' .env.docker | head -1); LOCAL_IP=${LOCAL_IP:-127.0.0.1}
-HTTP_PORT=$(sed -n 's/^HTTP_PORT=\([0-9]*\).*/\1/p' .env.docker | head -1); HTTP_PORT=${HTTP_PORT:-8080}
+# El entorno gana sobre .env.docker, como en docker compose (Jenkins usa sus propios puertos).
+LOCAL_IP=${LOCAL_IP:-$(sed -n 's/^LOCAL_IP=//p' .env.docker | head -1)}; LOCAL_IP=${LOCAL_IP:-127.0.0.1}
+HTTP_PORT=${HTTP_PORT:-$(sed -n 's/^HTTP_PORT=\([0-9]*\).*/\1/p' .env.docker | head -1)}; HTTP_PORT=${HTTP_PORT:-8080}
 fail=0
 
-for svc in app proxy pgsql scheduler storage worker; do
+for svc in app proxy pgsql scheduler storage worker backup; do
     state=$($COMPOSE ps --format '{{.Service}} {{.State}} {{.Health}}' 2>/dev/null | awk -v s="$svc" '$1==s {print $2, $3}')
     case "$state" in
         "running healthy"|"running ") echo "PASS  $svc ($state)";;

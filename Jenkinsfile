@@ -1,6 +1,7 @@
 // Declarative pipeline: Build (Docker) -> Format Check (Pint) -> Test Backend (Pest) -> Test Frontend (Vitest)
 // -> Test Contract (Soroban: rustfmt, clippy, cargo test and the exact WASM interface)
 // -> Test Stellar (sealing against a local standalone network with the contract deployed)
+// -> Backup & Restore (hourly backups and the restore drill, R-BCK)
 // -> Secrets Check (no Stellar secret key in the repo or its history)
 // -> Smoke Testnet (only when building a release tag; keys injected from Jenkins credentials, D11).
 // It drives the same Makefile targets developers use, so CI and local runs cannot drift.
@@ -81,6 +82,16 @@ pipeline {
                 // Then the independent verifier (it. 23, US-026) on an evidence
                 // GovTrace published, isolated with the Stellar node alone.
                 sh 'make stellar-up && make contract-deploy && make test-stellar && make verify-check'
+            }
+        }
+
+        stage('Backup & Restore') {
+            steps {
+                // R-BCK-01..05 (it. 35): a backup of every database and the evidence
+                // bucket; unchanged files are hard-linked, old copies expire at 30
+                // days, and the restore drill restores everything into an empty
+                // PostgreSQL and a test bucket, checking each evidence's SHA-256.
+                sh 'make backup-check'
             }
         }
 

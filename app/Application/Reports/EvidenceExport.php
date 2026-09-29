@@ -26,7 +26,7 @@ final class EvidenceExport
 
         foreach (Report::query()->with(['evidences' => fn ($query) => $query->orderBy('id'), 'user'])->orderBy('id')->lazyById(200) as $report) {
             $labels[$report->worksite_id] ??= WorksiteLabels::of([$report->worksite_id])[$report->worksite_id];
-            $pseudonyms[$report->user_id] ??= VeedorPseudonym::of($report->user);
+            $pseudonyms[$report->user_id] ??= VeedorPseudonym::compute($report->user);
 
             /** @var Evidence $evidence */
             foreach ($report->evidences as $evidence) {

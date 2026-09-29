@@ -30,7 +30,7 @@ final class OpenData
 
         return $reports->map(function (Report $report) use ($labels, &$pseudonyms) {
             $place = $report->location()->approximate();
-            $pseudonyms[$report->user_id] ??= VeedorPseudonym::of($report->user);
+            $pseudonyms[$report->user_id] ??= VeedorPseudonym::compute($report->user);
 
             return [
                 'reporte' => $report->id,
