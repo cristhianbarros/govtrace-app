@@ -5,6 +5,7 @@ use App\Http\Controllers\Central\AuditController;
 use App\Http\Controllers\Central\LoginController;
 use App\Http\Controllers\Central\OrganizationController;
 use App\Http\Controllers\Central\ParameterController;
+use App\Http\Controllers\Central\SecopHealthController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -42,6 +43,10 @@ foreach (config('tenancy.central_domains') as $domain) {
             Route::put('/admin/parameters/{key}', [ParameterController::class, 'update'])->name('admin.parameters.update');
             Route::get('/admin/audit', fn () => Inertia::render('SuperAdmin/Audit'))->name('admin.audit.show');
             Route::get('/admin/audit/data', [AuditController::class, 'index'])->name('admin.audit.index');
+
+            // US-014: salud de la sincronización con SECOP II.
+            Route::get('/admin/secop-health', fn () => Inertia::render('SuperAdmin/SecopHealth'))->name('admin.secop-health.show');
+            Route::get('/admin/secop-health/data', SecopHealthController::class)->name('admin.secop-health.data');
         });
     });
 }

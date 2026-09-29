@@ -33,4 +33,22 @@ describe('AdminLayout', () => {
         expect(wrapper.get('header img').attributes('src')).toBe('/organization/logo?v=logo-abc');
         page.props.organizationLogo = null;
     });
+
+    it.each([
+        [3, 'Alerta: 3 evidencias no pudieron ser selladas en blockchain. Se requiere intervención del soporte técnico.'],
+        [1, 'Alerta: 1 evidencia no pudo ser sellada en blockchain. Se requiere intervención del soporte técnico.'],
+    ])('Banner para el Administrador de Organización: %i in "Falla de Sellado" (US-021)', (failures, message) => {
+        page.props.sealingFailures = failures;
+        const wrapper = mount(AdminLayout, { props: { title: 'Bandeja de entrada' } });
+
+        expect(wrapper.get('[role="alert"]').text()).toBe(message);
+        page.props.sealingFailures = null;
+    });
+
+    it('shows no banner when nothing failed', () => {
+        page.props.sealingFailures = 0;
+
+        expect(mount(AdminLayout, { props: { title: 'Bandeja de entrada' } }).find('[role="alert"]').exists()).toBe(false);
+        page.props.sealingFailures = null;
+    });
 });

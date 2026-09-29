@@ -2,6 +2,9 @@
 
 namespace App\Http\Middleware;
 
+use App\Domain\Organization\Roles;
+use App\Domain\Sealing\ReportSeal;
+use App\Domain\Sealing\SealStatus;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -51,6 +54,20 @@ class HandleInertiaRequests extends Middleware
             'organizationNotice' => fn () => tenancy()->initialized ? tenant()->freshStatus()->publicNotice() : null,
             // Un mensaje de una sola vez tras una redirección (p. ej. "Su contraseña fue cambiada").
             'flash' => fn () => ['status' => $request->session()->get('status')],
+            // US-021: cuántas evidencias quedaron en "Falla de Sellado", para el banner
+            // del Administrador. Al veedor nunca: él no ve errores de sellado.
+            'sealingFailures' => fn () => $this->sealingFailures($request),
         ];
+    }
+
+    private function sealingFailures(Request $request): ?int
+    {
+        $user = tenancy()->initialized ? $request->user('tenant') : null;
+
+        if (! $user || ! $user->hasRole(Roles::Administrator->value)) {
+            return null;
+        }
+
+        return ReportSeal::query()->where('status', SealStatus::Failed)->count();
     }
 }

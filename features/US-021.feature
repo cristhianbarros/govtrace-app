@@ -7,9 +7,9 @@ Característica: Reintentos del sellado con retraso exponencial
 
   @complexity:medium
   Escenario: Reintentos con retraso creciente
-    Dado que el nodo RPC falla al sellar una evidencia
+    Dado que la red de Stellar (su nodo RPC) falla al sellar una evidencia
     Cuando el sistema reintenta
-    Entonces los reintentos se programan con retraso creciente, por ejemplo 1 min, 5 min, 15 min, 1 h y 6 h
+    Entonces los reintentos se programan con retraso creciente: 1 min, 5 min, 15 min y 1 h, hasta 5 intentos
 
   @complexity:medium @negative
   Escenario: Falla definitiva tras el quinto intento
@@ -26,10 +26,11 @@ Característica: Reintentos del sellado con retraso exponencial
     Entonces ve un banner rojo con "Alerta: 3 evidencias no pudieron ser selladas en blockchain. Se requiere intervención del soporte técnico."
 
   @complexity:medium @edge
-  Escenario: El relayer gestionado no responde
-    Dado que el servicio de relayer gestionado no responde
-    Cuando se intenta sellar una evidencia
-    Entonces el sellado espera y reintenta con la misma política de reintentos
+  Escenario: La red de Stellar no confirma la transacción
+    Dado que la red de Stellar recibió la transacción de un sello
+    Y pasan 5 minutos sin que un ledger cerrado la incluya
+    Cuando se revisa la transacción
+    Entonces el sellado vuelve a la cola y reintenta con la misma política de reintentos
 
   @complexity:medium @edge
   Escenario: Evidencia estancada más de 2 horas en cola

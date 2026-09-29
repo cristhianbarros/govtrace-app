@@ -1,0 +1,50 @@
+# US-044-MON: monitoreo externo de GovTrace, con Gatus (Apache-2.0).
+#
+# Corre FUERA del servidor de la aplicación: un monitor en el mismo servidor
+# se cae con él. Ver ops/monitoring/README.md.
+#
+# Regla: una alerta cuando GovTrace lleva MÁS de 5 minutos sin responder.
+# En producción, MONITOR_INTERVAL=1m y MONITOR_FAILURE_THRESHOLD=6: seis
+# chequeos seguidos fallidos, ~6 minutos. Una caída de 3 minutos son 3
+# fallas: no alerta. `make monitoring-check` prueba la misma regla con
+# chequeos de 1 segundo.
+endpoints:
+  - name: govtrace
+    group: produccion
+    url: "${GOVTRACE_HEALTH_URL}"
+    interval: ${MONITOR_INTERVAL}
+    conditions:
+      - "[STATUS] == 200"
+    alerts:
+      - type: email
+        failure-threshold: ${MONITOR_FAILURE_THRESHOLD}
+        send-on-resolved: true
+        description: "GovTrace no responde"
+      - type: custom
+        failure-threshold: ${MONITOR_FAILURE_THRESHOLD}
+        send-on-resolved: true
+        description: "GovTrace no responde"
+
+alerting:
+  # Al Super Administrador, por correo.
+  email:
+    from: "${MONITOR_EMAIL_FROM}"
+    username: "${MONITOR_SMTP_USERNAME}"
+    password: "${MONITOR_SMTP_PASSWORD}"
+    host: "${MONITOR_SMTP_HOST}"
+    port: ${MONITOR_SMTP_PORT}
+    to: "${MONITOR_EMAIL_TO}"
+    client:
+      insecure: ${MONITOR_SMTP_INSECURE}
+  # Y por webhook (p. ej. el canal del equipo en Slack, Teams o Discord).
+  custom:
+    url: "${MONITOR_WEBHOOK_URL}"
+    method: "POST"
+    headers:
+      Content-Type: application/json
+    body: |
+      {"text": "[ALERT_TRIGGERED_OR_RESOLVED] [ENDPOINT_NAME]: [ALERT_DESCRIPTION]"}
+    placeholders:
+      ALERT_TRIGGERED_OR_RESOLVED:
+        TRIGGERED: "🔴 CAÍDA —"
+        RESOLVED: "🟢 RECUPERADA —"

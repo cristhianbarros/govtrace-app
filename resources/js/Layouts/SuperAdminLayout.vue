@@ -14,6 +14,7 @@ const screens = [
     { href: '/admin/organizations', label: 'Organizaciones' },
     { href: '/admin/parameters', label: 'Parámetros' },
     { href: '/admin/audit', label: 'Auditoría' },
+    { href: '/admin/secop-health', label: 'SECOP' },
 ];
 
 const isCurrent = (href) => page.url === href || page.url.startsWith(`${href}?`) || page.url.startsWith(`${href}/`);

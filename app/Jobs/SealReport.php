@@ -28,9 +28,13 @@ use Illuminate\Support\Facades\Notification;
  * lo deja "Transmitiendo"; ConfirmSeal lo lleva a "Sellada".
  *
  * - Sin XLM en la patrocinadora: pausa el sellado, avisa una sola vez al
- *   Super Administrador y reintenta; se reanuda solo cuando hay saldo.
+ *   Super Administrador y reintenta; se reanuda solo cuando hay saldo. La
+ *   pausa no gasta intentos: no es una falla.
  * - "Hash ya registrado" (un reintento del mismo reporte): no reenvía;
  *   toma el sello que la red ya tiene (US-020a).
+ * - La red de Stellar falla (US-021): el intento se cuenta en el sello y se
+ *   reintenta a 1 min, 5 min, 15 min y 1 h; tras el quinto, "Falla de
+ *   Sellado", sin más intentos automáticos.
  */
 class SealReport implements ShouldQueue
 {
@@ -65,30 +69,24 @@ class SealReport implements ShouldQueue
         Tenant::query()->findOrFail($this->tenantId)->run(function () use ($network, $prepare) {
             $seal = ReportSeal::query()->where('report_id', $this->reportId)->firstOrFail();
 
-            if ($seal->isInFlight()) {
+            if ($seal->isInFlight() || $seal->status === SealStatus::Failed) {
                 return;
             }
 
-            if (SealingPause::isActive()) {
-                if (! $network->sponsorCanPay()) {
-                    $this->release(self::PAUSED_RETRY_SECONDS);
+            // Todo lo que habla con la red, junto: cualquier falla suya cuenta como un intento.
+            try {
+                if (SealingPause::isActive()) {
+                    if (! $network->sponsorCanPay()) {
+                        $this->release(self::PAUSED_RETRY_SECONDS);
 
-                    return;
+                        return;
+                    }
+
+                    SealingPause::end();
                 }
 
-                SealingPause::end();
-            }
-
-            $prepare->handle($seal);
-
-            try {
-                $txHash = $network->submitSeal($seal->worksite_reference, $seal->merkle_root);
-            } catch (RootAlreadySealed) {
-                $onChain = $network->findSeal($seal->merkle_root)
-                    ?? throw new SealingNetworkError("La red rechazó {$seal->merkle_root} como ya registrada, pero no la encuentra.");
-                $seal->markSealed($onChain->ledger, $onChain->sealedAt, $onChain->txHash);
-
-                return;
+                $prepare->handle($seal);
+                $txHash = $this->submit($network, $seal);
             } catch (SponsorOutOfFunds $e) {
                 if (SealingPause::start($e->getMessage())) {
                     Notification::send(SuperAdmin::all(), new SponsorOutOfFundsAlert($network->sponsorAddress()));
@@ -96,11 +94,39 @@ class SealReport implements ShouldQueue
                 $this->release(self::PAUSED_RETRY_SECONDS);
 
                 return;
+            } catch (SealingNetworkError $e) {
+                $delay = $seal->recordFailedAttempt($e->getMessage());
+                if ($delay !== null) {
+                    $this->release($delay);
+                }
+
+                return;
+            }
+
+            if ($txHash === null) {
+                return; // la red ya la tenía: quedó "Sellada"
             }
 
             $seal->update(['status' => SealStatus::Transmitting, 'tx_hash' => $txHash, 'transmitted_at' => now()]);
 
             ConfirmSeal::dispatch($this->tenantId, $this->reportId)->delay(now()->addSeconds(ConfirmSeal::RETRY_SECONDS));
         });
+    }
+
+    /**
+     * The hash of the transaction sent; or null when the network already had
+     * this root ("Hash ya registrado", US-020a) and its seal was taken.
+     */
+    private function submit(SealingNetwork $network, ReportSeal $seal): ?string
+    {
+        try {
+            return $network->submitSeal($seal->worksite_reference, $seal->merkle_root);
+        } catch (RootAlreadySealed) {
+            $onChain = $network->findSeal($seal->merkle_root)
+                ?? throw new SealingNetworkError("La red rechazó {$seal->merkle_root} como ya registrada, pero no la encuentra.");
+            $seal->markSealed($onChain->ledger, $onChain->sealedAt, $onChain->txHash);
+
+            return null;
+        }
     }
 }

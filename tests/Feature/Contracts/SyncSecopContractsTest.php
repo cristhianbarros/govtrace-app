@@ -209,7 +209,7 @@ it('records the failure and lets the queue retry with exponential backoff', func
 it('schedules the nightly sync at 02:00 by default', function () {
     Artisan::call('schedule:list');
 
-    expect(Artisan::output())->toMatch('/0 2 \* \* \*\s+secop-sync-nightly/');
+    expect(Artisan::output())->toMatch('/0\s+2 \* \* \*\s+secop-sync-nightly/');
 });
 
 // Esquema "Sincronización inmediata al activar una organización o cambiar

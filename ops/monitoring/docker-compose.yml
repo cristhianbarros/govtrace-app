@@ -1,0 +1,13 @@
+# US-044-MON: el monitor externo, para correr en OTRA máquina que la de
+# GovTrace (un VPS pequeño basta). Ver ops/monitoring/README.md.
+#   cp monitor.env.example monitor.env   # y completarlo
+#   docker compose up -d
+services:
+  gatus:
+    image: twinproduction/gatus:v5.20.0
+    restart: unless-stopped
+    env_file: monitor.env
+    volumes:
+      - ./gatus.yaml:/config/config.yaml:ro
+    ports:
+      - "8080:8080" # el tablero de estado de Gatus

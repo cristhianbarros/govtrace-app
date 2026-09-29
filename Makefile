@@ -19,7 +19,7 @@ HTTP_PORT ?= $(shell sed -n 's/^HTTP_PORT=\([0-9]*\).*/\1/p' .env.docker 2>/dev/
         shell composer artisan migrate psql test test-front test-all lint fmt \
         npm-install npm-build npm-watch xdebug-on xdebug-off hosts image-qa teardown \
         stellar-up contract-test contract-deploy contract-smoke doctor test-stellar \
-        contract-extend testnet-setup testnet-extend smoke-testnet secrets-check
+        contract-extend testnet-setup testnet-extend smoke-testnet secrets-check monitoring-check
 
 help: ## List available commands
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -112,6 +112,8 @@ smoke-testnet: ## Smoke test on the Stellar testnet: a report up to "Sellada", f
 	@$(EXEC) sh -c 'set -a; . ./.env.testnet; set +a; ./vendor/bin/pest --group=testnet'
 secrets-check: ## R-BLK-04: no Stellar secret key in the repository, its history or the env examples
 	@bash tests/infra/check-secrets.sh
+monitoring-check: ## US-044-MON: the external monitor (Gatus) alerts by email and webhook after >5 min down, not for short blips
+	@bash tests/infra/check-monitoring.sh
 
 npm-install: .env.docker ## Install frontend dependencies
 	@mkdir -p .cache/npm

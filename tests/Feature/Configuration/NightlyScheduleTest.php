@@ -26,7 +26,7 @@ afterEach(function () {
 it('still lists the nightly sync at the configured hour', function () {
     Artisan::call('schedule:list');
 
-    expect(Artisan::output())->toMatch('/0 2 \* \* \*\s+secop-sync-nightly/')
+    expect(Artisan::output())->toMatch('/0\s+2 \* \* \*\s+secop-sync-nightly/')
         ->and(Parameters::current('secop_sync_hour'))->toBe('02:00');
 });
 
