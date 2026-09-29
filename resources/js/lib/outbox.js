@@ -15,6 +15,8 @@ const WARNING_MS = VALIDITY_MS - DAY_MS;
 
 export const MESSAGES = {
     saved: '📵 Sin conexión. Reporte guardado en el dispositivo. Se enviará automáticamente cuando recupere la señal.',
+    // It. 41: pasado el límite de reportes por hora, tampoco se pierde.
+    rateLimited: '⏳ Llegó al límite de reportes por hora. Su reporte quedó guardado en el dispositivo y se enviará automáticamente más tarde.',
     full: '⚠️ Almacenamiento local lleno. Conéctese a internet para sincronizar los reportes pendientes antes de crear uno nuevo.',
     expiring: '⚠️ Tu reporte pendiente de sincronización expirará en 24 horas. Conéctate a una red para enviarlo antes de que se descarte.',
     syncFailed: '🔄 Error al sincronizar con el servidor. Se reintentará en unos minutos.',

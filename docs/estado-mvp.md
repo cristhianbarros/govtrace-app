@@ -12,13 +12,52 @@ Al 2026-09-29, sobre `main` en `77e6030` (iteración 39). Para ir abordándolo: 
 - 761 tests rápidos de backend, 351 de frontend y 17 contra la red Stellar local;
 - el sellado probado en testnet, también en ráfaga: 7 evidencias en 7 ledgers seguidos.
 
-**Lo que separa esto de un MVP maduro, de más a menos peso:**
-1. **Salir a internet con seguridad:** hoy solo hay HTTP, y faltan HSTS, CSP, proxies de confianza y límites de abuso fuera del inicio de sesión.
+**Lo que separa esto de un MVP listo para producción, de más a menos peso:**
+1. ~~**Salir a internet con seguridad**~~ — hecho en la it. 41: proxies de confianza, CSP y HSTS, límites de abuso, auditoría de dependencias, logs diarios y todo en español. Falta el certificado, que llega con staging.
 2. **Una prueba real en la nube** (staging en AWS, apuntando a testnet): celulares de verdad, HTTPS y correo real.
 3. **AWS KMS** para la llave de la selladora (37b): espera la cuenta de AWS.
 4. **La revisión visual y de accesibilidad** de todas las pantallas (it. 40).
 5. **La protección de datos personales** (Ley 1581 de 2012): no está en la SPEC.
 6. **La salida a la red principal** (37b): proveedor de RPC, tesorería y restauración con datos reales.
+
+## Listo para producción: la lista
+
+El MVP tiene que estar listo para producción, no solo funcionar. Esta es la vara, punto por punto; cada uno se da por cumplido con una prueba, no con una promesa.
+
+**Seguridad**
+- ✅ Lista para ir detrás de TLS: HSTS, cookies seguras, proxies de confianza (it. 41). ⬜ El certificado y el proxy con TLS (it. 42).
+- ✅ Cabeceras: CSP, `Permissions-Policy`, `nosniff`, `X-Frame-Options`, `Referrer-Policy` (it. 41).
+- ✅ Límites de abuso: reportes, API públicas, datos abiertos, inicio de sesión y recuperación de contraseña.
+- ✅ Una base de datos por organización, roles probados y log de auditoría inmutable.
+- ✅ Ninguna llave en el repositorio (`make secrets-check`). ⬜ Los secretos desde un gestor en el servidor (it. 42).
+- 🔒 La llave de la selladora en AWS KMS (37b).
+- ✅ Dependencias auditadas en cada PR (`make audit`).
+- ⬜ Un análisis dinámico (OWASP ZAP) contra staging, sin hallazgos altos (it. 42).
+- ❓ Doble factor para el Super Administrador.
+
+**Confiabilidad**
+- ✅ Respaldos cada hora, 30 días, con réplica fuera del sitio y restauración de prueba con límite de 4 h. 🔒 La restauración con datos reales (37b).
+- ✅ Sellado resistente a las fallas de la red (US-021) y a las ráfagas (it. 39).
+- ✅ Logs diarios con retención (it. 41).
+- ✅ Monitor externo configurado y probado. ⬜ Apuntando a staging y producción (it. 42).
+- ❓ Seguimiento de errores: un servicio tipo Sentry, o alertas por correo de los errores críticos del log.
+
+**Operación**
+- ✅ La plantilla de producción, vigilada por un test (it. 41).
+- ✅ La guía de restauración (`docs/restore.md`) y la lista de salida (`docs/go-live.md`).
+- ⬜ Un despliegue repetible, con su script y su guía (it. 42).
+
+**Calidad**
+- ✅ Suite completa en el pipeline, pruebas de extremo a extremo en un navegador, cada escenario con su test, y reglas probadas rompiéndolas a propósito.
+- ⬜ El recorrido visual de todas las pantallas (it. 40).
+- ❓ Una meta de accesibilidad.
+
+**Cumplimiento**
+- ❓ La política de tratamiento de datos (Ley 1581 de 2012) y la autorización de cada veedor.
+
+**Rendimiento**
+- ✅ La capacidad del sellado, medida: 10 a 12 sellos por minuto (it. 39).
+- ❓ Una prueba de carga con el volumen que esperas.
 
 ## 1. Interfaz (UX/UI)
 
@@ -26,7 +65,7 @@ Al 2026-09-29, sobre `main` en `77e6030` (iteración 39). Para ir abordándolo: 
 |---|---|---|
 | ✅ | Todas las pantallas de la SPEC | 28 páginas: la app del veedor (PWA, con modo sin conexión), el panel del Administrador, el panel global y el sitio público. Mobile-first por regla: botones de 44 px, y los estados carga / error / vacío / éxito probados en Vitest. |
 | ⬜ | **Nadie las revisó con los ojos** | Los tests prueban el comportamiento, no cómo se ven. **It. 40:** un recorrido con Playwright por cada rol, con capturas en celular y escritorio, y la revisión de cada pantalla. |
-| ⬜ | **Correos con frases en inglés** | "Regards", "If you're having trouble clicking…", "All rights reserved": es la plantilla de Laravel con `APP_LOCALE=en`, también en `.env.production.example` (visto en el log de correo). Los mensajes de validación por defecto, igual (deuda aceptada). Se arregla con `APP_LOCALE=es` y las traducciones en `lang/es`. |
+| ✅ | Correos y mensajes en español (it. 41) | `APP_LOCALE=es` y `lang/es`: los correos ya no traen las frases en inglés de la plantilla de Laravel ("Regards", "If you're having trouble clicking…"), y los mensajes de validación por defecto y las páginas de error salen en español. |
 | ⬜ | Accesibilidad | ❓ La SPEC no fija una meta. Propuesta: en la it. 40, un análisis automático (axe) de cada pantalla, y corregir lo grave: etiquetas, contraste, foco y teclado (WCAG 2.1 AA como referencia). |
 | ⚠️ | Cámara y GPS en un celular | El navegador los exige con HTTPS: en local, solo desde el mismo equipo. Se prueban de verdad en staging. |
 | ⬜ | Perfil del veedor | ❓ Su nombre es la parte local del correo (deuda aceptada). Ninguna historia pide editarlo. |
@@ -49,7 +88,7 @@ Al 2026-09-29, sobre `main` en `77e6030` (iteración 39). Para ir abordándolo: 
 |---|---|---|
 | ✅ | Respaldos | Cada hora, guardados 30 días, con réplica fuera del sitio y una restauración de prueba que falla si pasa de 4 h. 🔒 Falta la restauración de producción. |
 | ✅ | Sellado bajo carga | Por turnos (it. 39): 10 a 12 sellos por minuto con una selladora, y ninguna ráfaga gasta intentos. |
-| ⬜ | Rotación de logs | La plantilla de producción usa `LOG_STACK=single`: un solo archivo que crece sin límite (en desarrollo ya pesa 345 MB). Se arregla con `daily` y una retención. |
+| ✅ | Rotación de logs (it. 41) | La plantilla de producción usa `LOG_STACK=daily` con 14 días (en desarrollo, un solo archivo llegó a pesar 345 MB). Un test vigila la plantilla. |
 | ⬜ | Pruebas de carga | ❓ No hay, y la SPEC no fija tiempos de respuesta. ¿Cuántos veedores y visitantes esperas en la primera salida? |
 | ⚠️ | Monitoreo | El monitor externo (Gatus) está configurado y probado (US-044-MON), sin apuntar a un entorno real. No hay seguimiento de errores (tipo Sentry): quedan en el log. |
 | ⚠️ | Calendario en UTC | Deuda aceptada: la sincronización de las 02:00 corre a las 21:00 en Colombia. |
@@ -59,14 +98,14 @@ Al 2026-09-29, sobre `main` en `77e6030` (iteración 39). Para ir abordándolo: 
 
 | | Qué | Detalle |
 |---|---|---|
-| ⬜ | **HTTPS** | El proxy solo escucha HTTP (puerto 80). Hace falta TLS con un certificado **comodín**, porque cada organización es un subdominio. |
-| ⬜ | **Laravel detrás de un proxy** | No confía en ninguno (`trustProxies` sin configurar). Si el TLS termina afuera, Laravel cree que la visita llegó por `http`, y genera enlaces y redirecciones `http`. |
-| ⚠️ | Cabeceras de seguridad | Hay `nosniff`, `Referrer-Policy` y `X-Frame-Options`, y una CSP estricta solo para los logos. Faltan HSTS, una CSP para toda la aplicación (que admita el RPC público de Stellar y los mapas) y `Permissions-Policy` (cámara y ubicación solo para el propio sitio). |
+| ⚠️ | **HTTPS** | La aplicación está lista para ir detrás de TLS (it. 41: HSTS, `upgrade-insecure-requests`, cookies seguras). Falta el certificado comodín (cada organización es un subdominio) y el proxy que lo termina: es de la it. 42 (staging). |
+| ✅ | Laravel detrás de un proxy (it. 41) | Confía en el proxy de la red privada (`TRUSTED_PROXIES`), y solo en su `X-Forwarded-For` y `X-Forwarded-Proto`. Nunca en `X-Forwarded-Host` ni `-Port`, que además nginx borra: con ellos se envenenarían los enlaces. |
+| ✅ | Cabeceras de seguridad (it. 41) | CSP en toda respuesta, con los dos únicos orígenes externos (las imágenes del mapa y el RPC público de Stellar), `Permissions-Policy` (cámara y ubicación solo para el sitio) y, por HTTPS, HSTS. Probada en un Chromium de verdad: ninguna pantalla pública ni del veedor la viola. |
 | ✅ | Cookies de sesión | Cifradas y `Secure` en la plantilla de producción. |
-| ⚠️ | **Límites de abuso** | Hay en el inicio de sesión (5 intentos bloquean 15 minutos, R-SEC-03) y en la recuperación de contraseña (uno por minuto por correo). **No hay en el envío de reportes:** cada reporte se sella y cuesta XLM (~0,28 en testnet), así que una cuenta de veedor comprometida podría vaciar la patrocinadora y ocupar la cola. Tampoco en las API públicas (mapa, datos abiertos, pruebas). ❓ Cuántos reportes por veedor y por hora. |
+| ✅ | Límites de abuso (it. 41) | 30 reportes por veedor y por hora (la bandeja de salida de la PWA, que guarda 10, cabe entera); 120 consultas públicas por visitante y por minuto; 10 descargas de datos abiertos. Un visitante es su IP real detrás del proxy. Pasado el límite, 429 en español, y la PWA guarda el reporte y lo envía sola después. ❓ Los números. |
 | 🔒 | **AWS KMS** (D11 b, 37b) | Elegido. **El emulador local no sirve:** LocalStack 3.8, el gratuito, no soporta llaves Ed25519, y la versión actual exige licencia. La prueba de concepto se hace contra AWS. ❓ Sigue abierta la decisión de pasar también la patrocinadora a KMS (recomendado: es la que tiene los fondos). |
 | ✅ | Llaves fuera del repositorio | `make secrets-check`. En producción, desde un gestor de secretos (pendiente, `docs/go-live.md`). |
-| ⚠️ | Dependencias | Hoy sin vulnerabilidades conocidas: `composer audit` no encuentra ninguna y `npm audit --omit=dev`, 0. Pero ninguna auditoría corre en el pipeline. |
+| ✅ | Dependencias (it. 41) | `make audit` (composer audit y npm audit de producción, nivel alto o más) corre en el pipeline, en su propia etapa. Hoy, sin vulnerabilidades conocidas. |
 | ✅ | Lo que ya protege | Una base de datos por organización; los roles probados, incluido el caso negativo; log de auditoría inmutable; SVG saneados; fotos con EXIF rechazadas; hashes recalculados en el servidor; contrato sin `upgrade`; sin `v-html` en el frontend. |
 | ⬜ | Análisis de seguridad | Nadie ha atacado un entorno desplegado (por ejemplo, con OWASP ZAP). Se hace en staging. |
 

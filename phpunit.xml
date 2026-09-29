@@ -30,6 +30,9 @@
         <env name="APP_ENV" value="testing"/>
         <!-- Los enlaces de los correos llevan el esquema y el puerto de APP_URL (it. 38): los tests no dependen del .env de quien los corre. -->
         <env name="APP_URL" value="http://govtrace.localhost"/>
+        <!-- It. 41: español, también si el .env de quien corre los tests dice otra cosa. -->
+        <env name="APP_LOCALE" value="es"/>
+        <env name="APP_FALLBACK_LOCALE" value="es"/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="BROADCAST_CONNECTION" value="null"/>

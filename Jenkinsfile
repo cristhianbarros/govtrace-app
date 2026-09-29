@@ -1,4 +1,4 @@
-// Declarative pipeline: Build (Docker) -> Format Check (Pint) -> Test Backend (Pest) -> Test Frontend (Vitest)
+// Declarative pipeline: Build (Docker) -> Format Check (Pint) -> Dependency Audit -> Test Backend (Pest) -> Test Frontend (Vitest)
 // -> Test Contract (Soroban: rustfmt, clippy, cargo test and the exact WASM interface)
 // -> Test Stellar (sealing against a local standalone network with the contract deployed)
 // -> Backup & Restore (hourly backups and the restore drill, R-BCK)
@@ -44,6 +44,13 @@ pipeline {
                 sh 'make lint'
                 // Every Gherkin scenario has a test named after it (it. 36).
                 sh 'make trace-check'
+            }
+        }
+
+        stage('Dependency Audit') {
+            steps {
+                // It. 41: una dependencia con una vulnerabilidad conocida (alta o crítica) detiene el pipeline.
+                sh 'make audit'
             }
         }
 
