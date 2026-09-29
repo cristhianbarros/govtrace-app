@@ -131,6 +131,7 @@ Route::middleware([
             foreach ([
                 'inbox' => 'Admin/Inbox', 'observers' => 'Admin/Observers', 'territory' => 'Admin/Territory', 'contracts' => 'Admin/Contracts',
                 'worksites' => 'Admin/Worksites', 'organization' => 'Admin/Organization', 'audit' => 'Admin/Audit',
+                'summary' => 'Admin/Summary', 'authorization' => 'Admin/SuperAdminAuthorization',
             ] as $screen => $component) {
                 Route::get("/admin/{$screen}", fn () => Inertia::render($component))->name("admin.{$screen}");
             }

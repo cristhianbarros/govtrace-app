@@ -1025,6 +1025,23 @@ Suite: 542 en verde. Vitest: 276 en verde. Cada regla nueva se comprobó rompié
 **Done-when:** Vitest de cada pantalla con sus estados y mensajes exactos en verde.
 **Cubre:** UI de las historias de P2 listadas.
 
+**✅ Cumplido (2026-09-29, con Opus xhigh):** ocho de las once pantallas ya existían, con su Vitest, desde la iteración en que se hizo su backend:
+- US-003a (suspender y reactivar, `SuperAdmin/Organizations`) y US-006 y US-041-USR (desactivar y reactivar veedores, `Admin/Observers`), de la it. 20;
+- US-007 (`Admin/Organization`), US-038-CFG (`SuperAdmin/Parameters`) y US-043-MON (`Admin/Audit` y `SuperAdmin/Audit`), de la it. 21;
+- US-014 (`SuperAdmin/SecopHealth`) y los banners de US-021 (`AdminLayout`), de la it. 22;
+- US-039-USR (`Auth/ForgotPassword` y `Auth/ResetPassword`), de la it. 20.
+
+Esta iteración hizo las tres que faltaban, en verde y vistas en rojo antes de implementarlas:
+- `Admin/Summary` (US-049-RPT), en `/admin/summary`: obras por color, evidencias por clasificación, una tabla por mes ("septiembre de 2026") y veedores activos. Con carga, error, reintento y vacío. 3 tests;
+- `Admin/SuperAdminAuthorization` (US-042-SEC), en `/admin/authorization`: explica qué permite, la otorga por 30 días, muestra la vigente y quién la dio, la revoca, y muestra el motivo de un rechazo del servidor. 4 tests;
+- **agrupar contratos** (US-045-INT) en `Admin/Worksites`: nombre de la ficha, contratos uno por línea (limpios y sin repetir), "Agregar a la agrupación" en cada contrato, el mensaje de éxito y el de rechazo del servidor. La lista muestra el nombre de la ficha. 3 tests.
+- "Organización" enlaza al resumen, a la autorización y al registro de auditoría. 1 test.
+- Pest: `AdminPanelTest` sirve las dos pantallas nuevas solo al Administrador.
+
+Suite: 544 en verde. Vitest: 287 en verde (11 nuevos). Cada regla de pantalla nueva se comprobó rompiéndola a propósito: 3 casos, todos atrapados por su test.
+
+**Decisión de la iteración, para confirmar:** el resumen y la autorización son pantallas aparte, enlazadas desde "Organización", como ya lo estaba el registro de auditoría. La barra de abajo ya tiene seis pantallas y no cabe una séptima en un teléfono. Si prefieres el resumen como primera pantalla del panel, en lugar de la bandeja, es cambiar el destino de `/organization/dashboard`.
+
 ---
 
 ## Fase P3 — Semana 5 o posterior · Resiliencia de campo y reportes

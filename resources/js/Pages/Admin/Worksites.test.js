@@ -5,7 +5,7 @@ import { flushPromises, mount } from '@vue/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { defineComponent, h } from 'vue';
 import Worksites from './Worksites.vue';
-import { correctWorksiteLocation, fetchWorksites } from '@/services/api.js';
+import { correctWorksiteLocation, fetchWorksites, groupContracts } from '@/services/api.js';
 
 vi.mock('@inertiajs/vue3', async () => await import('@/testing/inertia.js'));
 vi.mock('@/services/api.js');
@@ -132,5 +132,44 @@ describe('Obras', () => {
         await wrapper.get('input#longitude').setValue('');
 
         expect(button(wrapper, 'Guardar ubicación').attributes('disabled')).toBeDefined();
+    });
+});
+
+describe('Agrupar contratos en una ficha (US-045-INT)', () => {
+    async function group(wrapper, name, ids) {
+        await wrapper.get('input#group-name').setValue(name);
+        await wrapper.get('textarea#group-contracts').setValue(ids.join('\n'));
+        await button(wrapper, 'Agrupar').trigger('click');
+        await flushPromises();
+    }
+
+    it('Agrupación de dos contratos: groups them under the name, and shows the worksite with it', async () => {
+        groupContracts.mockResolvedValue({ data: { id: 3, name: 'Acueducto Gaira', secop_contract_ids: ['CO1.PCCNTR.1111111', 'CO1.PCCNTR.3333333'] } });
+        const wrapper = await openWorksites();
+        fetchWorksites.mockResolvedValue([{ ...gaira, name: 'Acueducto Gaira' }]);
+
+        expect(button(wrapper, 'Agrupar').attributes('disabled')).toBeDefined();
+        await group(wrapper, 'Acueducto Gaira', ['CO1.PCCNTR.1111111', ' CO1.PCCNTR.3333333 ', '']);
+
+        expect(groupContracts).toHaveBeenCalledWith('Acueducto Gaira', ['CO1.PCCNTR.1111111', 'CO1.PCCNTR.3333333']);
+        expect(wrapper.get('[role="status"]').text()).toBe('Contratos agrupados en la ficha «Acueducto Gaira».');
+        expect(wrapper.text()).toContain('Acueducto Gaira');
+    });
+
+    it('Solo se agrupan contratos del territorio de la organización: shows why it was refused', async () => {
+        groupContracts.mockRejectedValue({ response: { status: 422, data: { errors: { secop_contract_ids: ['El contrato CO1.PCCNTR.5555555 no es del territorio de la organización.'] } } } });
+        const wrapper = await openWorksites();
+
+        await group(wrapper, 'Acueducto Gaira', ['CO1.PCCNTR.1111111', 'CO1.PCCNTR.5555555']);
+
+        expect(wrapper.get('[role="alert"]').text()).toBe('El contrato CO1.PCCNTR.5555555 no es del territorio de la organización.');
+    });
+
+    it('adds the contracts of a worksite to the grouping with a touch', async () => {
+        const wrapper = await openWorksites();
+
+        await wrapper.findAll('button').filter((candidate) => candidate.text() === 'Agregar a la agrupación')[1].trigger('click');
+
+        expect(wrapper.get('textarea#group-contracts').element.value).toBe('CO1.PCCNTR.3333333');
     });
 });

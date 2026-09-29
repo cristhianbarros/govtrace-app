@@ -7,7 +7,7 @@ import LoadState from '@/Components/LoadState.vue';
 import LocationMap from '@/Components/LocationMap.vue';
 import { useLoader } from '@/composables/useLoader.js';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
-import { correctWorksiteLocation, fetchWorksites } from '@/services/api.js';
+import { correctWorksiteLocation, fetchWorksites, groupContracts } from '@/services/api.js';
 import { errorMessage } from '@/services/errors.js';
 
 // Sin ubicación todavía, el mapa abre sobre Colombia.
@@ -57,6 +57,34 @@ async function save() {
     }
 }
 
+// US-045-INT: agrupar contratos en una ficha — un nombre y dos o más contratos, uno por línea.
+const groupName = ref('');
+const groupIds = ref('');
+const grouping = ref(false);
+const groupRefused = ref(null);
+const idsToGroup = computed(() => [...new Set(groupIds.value.split('\n').map((id) => id.trim()).filter(Boolean))]);
+
+function addToGroup(secopContractId) {
+    groupIds.value = [...idsToGroup.value, secopContractId].filter((id, index, all) => all.indexOf(id) === index).join('\n');
+}
+
+async function group() {
+    grouping.value = true;
+    groupRefused.value = null;
+    saved.value = null;
+    try {
+        const { data } = await groupContracts(groupName.value.trim(), idsToGroup.value);
+        saved.value = `Contratos agrupados en la ficha «${data.name}».`;
+        groupName.value = '';
+        groupIds.value = '';
+        await load();
+    } catch (failure) {
+        groupRefused.value = errorMessage(failure);
+    } finally {
+        grouping.value = false;
+    }
+}
+
 const where = (worksite) =>
     worksite.latitude === null ? 'Sin ubicación oficial' : `${worksite.latitude.toFixed(7)}, ${worksite.longitude.toFixed(7)}`;
 
@@ -77,8 +105,12 @@ onMounted(load);
         >
             <div class="flex flex-col gap-3">
                 <article v-for="worksite in worksites" :key="worksite.id" class="flex flex-col gap-2 rounded-lg bg-white p-3 text-sm">
-                    <ul>
-                        <li v-for="contract in worksite.contracts" :key="contract.secop_contract_id" class="font-semibold">{{ contract.object }}</li>
+                    <p v-if="worksite.name" class="text-base font-semibold">{{ worksite.name }}</p>
+                    <ul class="flex flex-col gap-1">
+                        <li v-for="contract in worksite.contracts" :key="contract.secop_contract_id" class="flex flex-wrap items-center justify-between gap-2">
+                            <span class="font-semibold">{{ contract.object }}</span>
+                            <button type="button" class="rounded border px-2 py-1 text-xs font-semibold" @click="addToGroup(contract.secop_contract_id)">Agregar a la agrupación</button>
+                        </li>
                     </ul>
                     <p class="text-slate-600">Ubicación oficial: {{ where(worksite) }}</p>
 
@@ -106,5 +138,16 @@ onMounted(load);
                 </article>
             </div>
         </LoadState>
+
+        <section aria-labelledby="group-title" class="flex flex-col gap-2 rounded-lg bg-white p-3 text-sm">
+            <h3 id="group-title" class="font-semibold">Agrupar contratos en una ficha</h3>
+            <p class="text-slate-600">Para que una obra con varias fases o reinicios se vea y se reporte como una sola. Un reporte nunca cambia de ficha: dos fichas que ya tienen reportes no se unen.</p>
+            <label for="group-name" class="text-xs font-semibold text-slate-700">Nombre de la ficha</label>
+            <input id="group-name" v-model="groupName" type="text" maxlength="150" class="rounded-lg border border-slate-300 px-3 py-2 text-base" />
+            <label for="group-contracts" class="text-xs font-semibold text-slate-700">Contratos de SECOP II (uno por línea)</label>
+            <textarea id="group-contracts" v-model="groupIds" rows="3" class="rounded-lg border border-slate-300 px-3 py-2 font-mono text-base"></textarea>
+            <p v-if="groupRefused" role="alert" class="rounded bg-red-50 p-2 text-red-800">{{ groupRefused }}</p>
+            <button type="button" :disabled="grouping || !groupName.trim() || idsToGroup.length < 2" class="min-h-11 self-start rounded-lg bg-slate-900 px-4 font-semibold text-white disabled:opacity-40" @click="group">Agrupar</button>
+        </section>
     </AdminLayout>
 </template>
