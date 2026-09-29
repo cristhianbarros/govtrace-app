@@ -65,6 +65,14 @@ return [
             'replace_placeholders' => true,
         ],
 
+        // El correo de MAIL_MAILER=log (desarrollo): un archivo propio, que make invites lee.
+        'mail' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/mail.log'),
+            'level' => 'debug',
+            'replace_placeholders' => true,
+        ],
+
         'daily' => [
             'driver' => 'daily',
             'path' => storage_path('logs/laravel.log'),

@@ -3,6 +3,7 @@
 namespace App\Domain\Organization;
 
 use App\Domain\Auth\Notifications\ResetPasswordLink;
+use App\Infrastructure\Tenancy\TenantUrl;
 use Illuminate\Auth\Authenticatable;
 use Illuminate\Auth\Passwords\CanResetPassword;
 use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
@@ -59,7 +60,7 @@ class User extends Model implements AuthenticatableContract, CanResetPasswordCon
         }
 
         $domain = tenant()->domains()->first()->domain;
-        $url = "http://{$domain}/reset-password/{$token}?email=".urlencode($this->email);
+        $url = TenantUrl::to($domain, "reset-password/{$token}?email=".urlencode($this->email));
 
         $this->notify(new ResetPasswordLink($url, $token));
     }

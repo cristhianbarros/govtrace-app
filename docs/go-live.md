@@ -39,6 +39,7 @@ La salida de GovTrace a la red principal de Stellar. Lo que se preparó sin dato
 
 - ✅ **`.env.production.example`**, la plantilla sin secretos. `make secrets-check` revisa que siga así.
 - ⬜ **El entorno de producción, desde esa plantilla.** Los secretos, desde el gestor: `APP_KEY`, `DB_PASSWORD`, `MAIL_PASSWORD`, `EVIDENCE_AWS_SECRET_ACCESS_KEY`, `SEALING_PSEUDONYM_KEY` (fija para siempre) y las llaves de Stellar. `APP_DEBUG=false`.
+- ⬜ **El primer Super Administrador:** el panel no lo crea. Desde la consola del servidor, `php artisan admin:create <correo> --name="…"` (la contraseña se pregunta sin eco, o se genera y se muestra una vez; nunca va en la línea de comandos). En Docker, `make admin EMAIL=<correo>`.
 - ⬜ **Migraciones y DIVIPOLA:** `php artisan migrate --force`, `php artisan tenants:migrate --force` y `php artisan db:seed --class=DivipolaSeeder`.
 - ⬜ **El worker de la cola y el calendario corriendo.** Las horas del calendario son UTC (deuda aceptada): la sincronización de las 02:00 son las 21:00 en Colombia.
 - ⬜ **Correo SMTP real** para las alertas, y `ALERT_WEBHOOK_URL`, si se usa Slack o Discord.

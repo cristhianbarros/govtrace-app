@@ -1501,6 +1501,34 @@ Suite: 702 en verde (8 nuevos). Vitest: 351. `make backup-check`: 13 comprobacio
 
 **Cubre:** R-CFG-01, R-BCK-05 · D11 (b), D13.
 
+#### Iteración 38 — Demostración local en un comando
+✅ **Cumplido (2026-09-29).** Pedida por el usuario: poder recorrer y mostrar en vivo toda la interfaz desde su equipo, con un solo comando. Cuatro tareas, que salieron de intentar recorrer el flujo a mano:
+- **`make admin EMAIL=…`:** el primer Super Administrador. En una base nueva no había ninguno y ninguna pantalla lo crea. Pregunta la contraseña sin eco, o genera una y la muestra una vez; nunca va en la línea de comandos. Usa la misma regla de contraseña que los demás, y en la auditoría queda quién se creó (`super_admin.created`, actor `system`), sin contraseña. También sirve para producción (`docs/go-live.md`).
+- **La DIVIPOLA dentro de `make setup`**, y `verify-stack.sh` comprueba que quedó sembrada. Cierra la deuda aceptada del mismo nombre.
+- **`make invites`:** los enlaces de los correos de desarrollo. El correo sale a `storage/logs/mail.log`, un archivo propio (antes, al log de la aplicación, que llegó a pesar 345 MB); el comando lee solo su final y muestra a quién le llegó cada uno, el asunto y el enlace.
+  - **Un error de fondo que salió al probarlo:** los tres enlaces de correo (bienvenida, invitación y recuperación de contraseña) eran siempre `http://<dominio>/…`, sin puerto ni `https`. En local el enlace no abría, y en producción habría sido `http`. Ahora salen de `APP_URL` (`TenantUrl`). `phpunit.xml` fija `APP_URL` para que los tests no dependan del `.env` de quien los corre.
+- **`make demo`:** un solo comando desde un equipo con solo Docker y `make`. Levanta la aplicación (`make setup` la primera vez), la red Stellar local y el contrato si no están, y deja la organización `veeduria-demo`:
+  - el Administrador y dos veedores con contraseña conocida, y un Super Administrador de demostración;
+  - 7 contratos de Magdalena y 6 obras (una sin ubicación, una que agrupa dos contratos);
+  - 9 reportes con foto que pasan por `CreateReport` como los de un veedor y se sellan de verdad en la red local; 6 publicados y 3 en la bandeja, para publicarlos en vivo.
+  - Las fotos son imágenes de demostración rotuladas como tales, cada una con un comentario JPEG propio para que cada reporte selle bytes distintos (no es EXIF: R-PRIV-06 sigue valiendo).
+  - Repetible: cada corrida deja la demostración como nueva, y solo borra la organización del subdominio `veeduria-demo`. **Nunca corre en producción.**
+- `docs/local-environment-setup.md`: la demostración, un guion, el paso a paso a mano y cómo mostrarlo fuera del equipo.
+
+**Hallazgo abierto: los sellos en ráfaga.** Al enviar los 9 reportes de golpe, la red aceptó uno y rechazó los demás con `txINSUFFICIENT_FEE` (`La red rechazó el sello (ERROR): AAAAAACDttH////3AAAAAA==`); con los reintentos a 1, 5 y 15 minutos, se sellaba uno por reintento. Por eso `make demo` envía cada reporte cuando el anterior ya está sellado. En un uso real (un veedor, un reporte) no se nota, pero dos veedores enviando a la vez sí esperarían minutos. No se investigó la causa (la comisión del *fee bump* frente al precio de la red con varias transacciones en el mismo ledger); ver la deuda.
+
+**Prueba:**
+- Suite: 741 en verde (39 nuevos: 12 de la demostración, 11 del Super Administrador, 7 de los enlaces de los correos y 6 de `SentLinks` y su comando; los enlaces también ajustaron 3 casos). Vitest sin cambios.
+- `make demo` de cero en un proyecto aislado de Docker: sin errores; los 9 sellados en la red local, 6 publicados y 3 ocultos; el mapa público con 5 obras, las estadísticas y `/verify` responden 200; con la app en marcha, 101 s.
+- `make invites` mostró el enlace de una invitación real y ese enlace abrió (200).
+- Cada regla nueva se comprobó rompiéndola a propósito: 11 casos (contraseña sin regla, contraseña en la auditoría, enlace sin puerto o siempre `http`, correos en el orden equivocado, leer todo el archivo, la demostración borrando otras organizaciones, sin esperar cada sello, corriendo en producción, fotos iguales, publicándolo todo). Uno sobrevivió —leer todo el archivo en vez de su final— y se reforzó su test con un correo anterior al ruido.
+
+**Cubre:** R-SA-01 (el primer Super Administrador), R-AUD-04 (su creación auditada), R-CFG-01 (la lista de salida) · sin historias nuevas: es herramienta de desarrollo.
+
+**Decisión pendiente del usuario: mostrarlo a otras personas.** `make demo` funciona en el equipo de quien lo corre. Para que otras personas entren hay dos caminos, ninguno probado:
+- **Un túnel** (ngrok, Cloudflare Tunnel): cada organización vive en su subdominio, así que tiene que aceptar subdominios comodín, y hay que cambiar `APP_URL`, `TENANCY_CENTRAL_DOMAINS` y `TENANCY_APEX_DOMAIN`. Con HTTPS, la cámara y el GPS del celular funcionan.
+- **Un entorno intermedio (*staging*) en AWS, apuntando a la testnet:** el recorrido completo con dominio, HTTPS y correo reales, por cuenta de cada quien (`docs/estado-37b.md`).
+
 ## Pivote a Stellar (2026-09-28)
 
 El proyecto participa en **Stellar Apex**, así que la blockchain pasa de EVM/Polygon a **Stellar**, con Smart Contracts en **Soroban (Rust)**:
@@ -1584,4 +1612,5 @@ No bloquean ningún criterio de aceptación. **Aceptada por el usuario el 2026-0
 | El calendario corre en UTC: la sincronización de las 02:00 son las 21:00 en Colombia | Cada tarea dice su hora en Colombia en `routes/console.php` | `->timezone('America/Bogota')` en cada tarea, o `schedule_timezone` |
 | Repetir `make setup` sobre un stack que ya corre puede fallar en `up --wait`: el proxy se marca enfermo mientras la app reinicia | Jenkins parte de cero; para un stack existente basta `make up` | Más paciencia en el healthcheck del proxy |
 | El nombre de un veedor invitado es la parte local de su correo | Ninguna historia pide el nombre; todo lo público usa el seudónimo | Una historia de perfil del veedor |
-| `make setup` no siembra la DIVIPOLA en desarrollo (la E2E la siembra sola) | Solo afecta a configurar territorios en una base de desarrollo nueva | `db:seed --class=DivipolaSeeder` en `make setup`; para producción entra en la it. 37 |
+| ✅ *Cerrada en la it. 38:* `make setup` no siembra la DIVIPOLA en desarrollo (la E2E la siembra sola) | Solo afecta a configurar territorios en una base de desarrollo nueva | `db:seed --class=DivipolaSeeder` en `make setup`; para producción entra en la it. 37 |
+| Varios sellos enviados a la vez: la red acepta uno y rechaza los demás con `txINSUFFICIENT_FEE`; se reintentan a 1, 5 y 15 min (hallazgo de la it. 38) | Un veedor envía un reporte a la vez; solo se nota con varios reportes en el mismo segundo, y todos terminan sellados | Averiguar por qué (la comisión del *fee bump* con varias transacciones en el mismo ledger) y, si hace falta, subirla o reintentar pronto; antes de una salida con muchos veedores |
