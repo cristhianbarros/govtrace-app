@@ -55,17 +55,15 @@ afterEach(function () {
     User::query()->where('email', 'like', '%@demo.govtrace.test')->delete();
 });
 
-/** The worker's job, in the test: the report goes on to "Sellada". */
+/** The worker's job, in the test: the reports go on to "Sellada". */
 function sealOnFakeNetwork(): Closure
 {
-    return function (Tenant $tenant, array $reportIds): bool {
+    return function (Tenant $tenant, array $reportIds): void {
         foreach ($reportIds as $reportId) {
             app()->call([new SealReport($tenant->id, $reportId), 'handle']);
             app()->call([new ConfirmSeal($tenant->id, $reportId), 'handle']);
         }
         tenancy()->end();
-
-        return true;
     };
 }
 
@@ -147,34 +145,30 @@ it('waits for the seals, then publishes six evidences and leaves three in the in
         ->and(AuditLog::query()->where('action', 'evidence.published')->where('organization_id', $environment->organization->id)->count())->toBe(6);
 });
 
-it('sends one report at a time: the next waits until the previous one is sealed', function () {
-    $sent = [];
+it('sends every report at once, as a burst, and waits for the network to seal them all before publishing', function () {
+    $asked = [];
     $seal = sealOnFakeNetwork();
 
-    demo(function (Tenant $tenant, array $reportIds) use (&$sent, $seal) {
-        // When the demo asks to wait for a report, it is the last one that exists.
-        $sent[] = [count($reportIds), $tenant->run(fn () => Report::query()->count()), $reportIds[0]];
-
-        return $seal($tenant, $reportIds);
+    demo(function (Tenant $tenant, array $reportIds) use (&$asked, $seal) {
+        // It. 39: la selladora los toma por turnos; la demostración ya no los espacia.
+        $asked[] = [$reportIds, $tenant->run(fn () => Report::query()->count())];
+        $seal($tenant, $reportIds);
     });
 
-    expect(array_column($sent, 0))->toBe(array_fill(0, 9, 1))
-        ->and(array_column($sent, 1))->toBe(range(1, 9));
+    expect($asked)->toHaveCount(1)
+        ->and($asked[0][0])->toHaveCount(9)
+        ->and($asked[0][1])->toBe(9);
 });
 
-it('stops waiting for the seals after the first one that does not arrive, and still sends every report', function () {
-    $calls = 0;
+it('publishes only what got sealed in time, and says how many are still waiting', function () {
+    $seal = sealOnFakeNetwork();
 
-    $environment = demo(function () use (&$calls): bool {
-        $calls++;
+    // Solo 4 alcanzan a sellarse mientras la demostración espera.
+    $environment = demo(fn (Tenant $tenant, array $reportIds) => $seal($tenant, array_slice($reportIds, 0, 4)));
 
-        return false;
-    });
-
-    $environment->organization->run(fn () => expect(Report::query()->count())->toBe(9));
-    expect($calls)->toBe(1)
-        ->and($environment->pendingSeals)->toBe(9)
-        ->and($environment->published)->toBe(0);
+    $environment->organization->run(fn () => expect(Report::query()->where('editorial_status', 'published')->count())->toBe(4));
+    expect($environment->published)->toBe(4)
+        ->and($environment->pendingSeals)->toBe(5);
 });
 
 it('publishes nothing when the seals do not arrive, and says how many are still waiting', function () {

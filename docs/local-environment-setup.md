@@ -30,7 +30,7 @@ Desde un equipo con solo Docker y `make`, en la primera corrida (construir las i
 3. **La organización de demostración** (`php artisan demo:prepare`):
    - `veeduria-demo`, con su Administrador y dos veedores, todos con contraseña conocida;
    - 7 contratos de Magdalena y 6 obras (una sin ubicación, una que agrupa dos contratos);
-   - 9 reportes con foto, que pasan por el mismo camino que los de un veedor y se sellan **de verdad** en la red local;
+   - 9 reportes con foto, enviados de golpe, que pasan por el mismo camino que los de un veedor y se sellan **de verdad** en la red local, uno por ledger;
    - 6 publicados (se ven en el mapa) y 3 esperando en la bandeja del Administrador, para publicarlos en vivo.
 
 Al final imprime las direcciones y las contraseñas:
@@ -56,7 +56,7 @@ Los datos son de mentira: los contratos `CO1.PCCNTR.91…` no existen en SECOP y
 
 ### Lo que hay que saber antes de una demostración
 
-- **Un reporte a la vez.** La red toma un sello por ledger: si se envían varios en el mismo segundo, uno se sella y los demás se rechazan y se reintentan a 1, 5 y 15 minutos. En la demostración, envía un reporte y espera a **Sellada** antes del siguiente. Por eso `make demo` también los envía uno tras otro. Es un hallazgo abierto: está en la tabla de deuda de `specs/PLAN.md`.
+- **Varios reportes a la vez se sellan por turnos.** Stellar admite una sola transacción pendiente de la cuenta selladora: cada sello espera a que el anterior entre en un ledger (en la red local, cerca de un segundo; en testnet y la red principal, unos 5). Ninguno gasta intentos por esperar su turno (it. 39). `make demo` envía sus 9 reportes de golpe, como los que un celular guarda sin señal.
 - **Cámara y ubicación.** El navegador solo las da en un contexto seguro. En el mismo equipo, `*.localhost` lo es; desde un celular en tu red (`http://<tu IP>:8080`), no. Sin cámara, puedes subir una imagen desde el equipo.
 - **Los correos no se envían:** salen al archivo `storage/logs/mail.log` (`MAIL_MAILER=log`). `make invites` muestra los enlaces de los últimos correos; `make invites LIMIT=10` muestra más.
 - **SECOP.** Al registrar una organización se lanza la sincronización con SECOP II en el worker. Con internet, llegan contratos reales de Magdalena, que se suman a los de demostración; sin internet, la sincronización falla y se reintenta sin afectar la demostración.

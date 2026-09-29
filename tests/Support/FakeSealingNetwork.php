@@ -5,16 +5,22 @@ namespace Tests\Support;
 use App\Application\Sealing\ContractLifetime;
 use App\Application\Sealing\Exceptions\NetworkUnavailable;
 use App\Application\Sealing\Exceptions\RootAlreadySealed;
+use App\Application\Sealing\Exceptions\SealingNetworkBusy;
 use App\Application\Sealing\Exceptions\SealingNetworkError;
 use App\Application\Sealing\Exceptions\SponsorOutOfFunds;
 use App\Application\Sealing\NetworkSeal;
 use App\Application\Sealing\SealingNetwork;
+use App\Domain\Sealing\SealingRetryPolicy;
 use Carbon\CarbonImmutable;
 
 /**
  * La red de Stellar en memoria, para los escenarios de US-020b que no
  * necesitan una red real (make test). La implementación real, contra la
  * red local standalone, la prueba StellarSealingNetworkTest (make test-stellar).
+ *
+ * Como Stellar (it. 39), admite una sola transacción pendiente de la
+ * selladora: hasta que la anterior entre en un ledger, falle o venza a los
+ * 4 minutos, otro sello recibe "ocupada" y vuelve en unos segundos.
  */
 final class FakeSealingNetwork implements SealingNetwork
 {
@@ -52,10 +58,16 @@ final class FakeSealingNetwork implements SealingNetwork
     /** Cuántos envíos la red recibe, pero su respuesta no llega (timeout): la transacción sí sigue su curso. */
     public int $timeoutsAfterSending = 0;
 
+    /** Cuántas veces un sello encontró la selladora con otra transacción pendiente (it. 39). */
+    public int $busyRefusals = 0;
+
+    /** What a busy network tells the seal: come back in this many seconds. */
+    public const BUSY_RETRY_SECONDS = 3;
+
     /** @var array<string, true> transacciones que la red procesó y rechazó */
     private array $failedTransactions = [];
 
-    /** @var array<string, array{root: string, closed: bool}> */
+    /** @var array<string, array{root: string, closed: bool, valid_until: CarbonImmutable}> */
     private array $transactions = [];
 
     private int $ledger = 1200;
@@ -74,13 +86,24 @@ final class FakeSealingNetwork implements SealingNetwork
             throw new SponsorOutOfFunds('La cuenta patrocinadora no tiene XLM para la comisión.');
         }
 
+        // Una sola pendiente de la selladora, como en Stellar: la otra espera su turno.
+        if ($pending = $this->pendingTransaction()) {
+            $this->busyRefusals++;
+
+            throw new SealingNetworkBusy(self::BUSY_RETRY_SECONDS, "La cuenta selladora tiene pendiente la transacción {$pending}.");
+        }
+
         if (isset($this->onChain[$merkleRoot])) {
             throw new RootAlreadySealed($merkleRoot);
         }
 
         $this->submissions[] = ['worksite' => $worksiteReference, 'root' => $merkleRoot];
         $txHash = hash('sha256', $merkleRoot.count($this->submissions));
-        $this->transactions[$txHash] = ['root' => $merkleRoot, 'closed' => false];
+        $this->transactions[$txHash] = [
+            'root' => $merkleRoot,
+            'closed' => false,
+            'valid_until' => CarbonImmutable::now()->addSeconds(SealingRetryPolicy::TRANSACTION_VALIDITY_SECONDS),
+        ];
 
         if ($this->closesLedgerRightAway) {
             $this->closeLedgerWith($txHash);
@@ -106,6 +129,18 @@ final class FakeSealingNetwork implements SealingNetwork
     public function failTransaction(string $txHash): void
     {
         $this->failedTransactions[$txHash] = true;
+    }
+
+    /** The transaction of the sealer still waiting for a ledger: not closed, not rejected, and within its time bounds. */
+    private function pendingTransaction(): ?string
+    {
+        foreach ($this->transactions as $txHash => $transaction) {
+            if (! $transaction['closed'] && ! isset($this->failedTransactions[$txHash]) && $transaction['valid_until']->isFuture()) {
+                return $txHash;
+            }
+        }
+
+        return null;
     }
 
     public function transactionStatus(string $txHash): ?NetworkSeal

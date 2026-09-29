@@ -25,10 +25,10 @@ use RuntimeException;
  * make demo: a whole organization to walk through every screen without the
  * internet or SECOP — its people with known passwords, contracts and
  * worksites of Magdalena, and reports that take the same road as a veedor's:
- * CreateReport, the photo's hash, the seal. Each one is sent only after the
- * previous one is sealed: the network takes one seal at a time, and a burst
- * is rejected and retried minutes later. Once sealed, six are published and
- * three wait in the inbox to be published live.
+ * CreateReport, the photo's hash, the seal. They are all sent at once, a
+ * burst like the reports a phone keeps offline and sends when the signal
+ * comes back: the sealer takes them by turns, one per ledger (it. 39). Once
+ * sealed, six are published and three wait in the inbox to be published live.
  *
  * Starting over is safe: it only ever removes the organization at the demo
  * subdomain, never one registered by hand.
@@ -85,10 +85,7 @@ class PrepareDemo
         ['via', 0, 'Avance', 0, 50, 'Señalización horizontal en el tramo terminado.'],
     ];
 
-    /**
-     * @param  (Closure(Tenant, list<int>): bool)|null  $awaitSeals  waits for the worker to seal those reports and says
-     *                                                               whether they got there; by default, it polls the seals
-     */
+    /** @param  (Closure(Tenant, list<int>): void)|null  $awaitSeals  waits while the worker seals those reports; by default, it polls their seals */
     public function __construct(private readonly ?Closure $awaitSeals = null) {}
 
     public function handle(): DemoEnvironment
@@ -112,6 +109,7 @@ class PrepareDemo
 
         $tenant->run(fn () => $this->createPeopleAndWorksites());
         $reportIds = $this->sendReports($tenant);
+        $this->waitForTheSeals($tenant, $reportIds);
         [$published, $pending] = $this->publishSealed($tenant, $reportIds);
 
         return new DemoEnvironment($tenant, $this->url($tenant), $this->credentials($tenant), $published, $pending);
@@ -164,16 +162,13 @@ class PrepareDemo
     }
 
     /**
-     * One report at a time, oldest capture first: each is sent, and the next waits until it is
-     * sealed. If one does not get there (the worker or the network is down), the rest are sent
-     * anyway, without waiting for each.
+     * Every report, one right after the other, oldest capture first.
      *
      * @return list<int> the reports
      */
     private function sendReports(Tenant $tenant): array
     {
         $reportIds = [];
-        $waiting = true;
 
         foreach (self::REPORTS as $number => [$worksite, $veedor, $classification, $daysAgo, $metersNorth, $comment]) {
             [$contracts, [$latitude, $longitude], $photo] = self::WORKSITES[$worksite];
@@ -189,11 +184,7 @@ class PrepareDemo
                 files: [],
             );
 
-            $reportIds[] = $reportId = $tenant->run(fn () => $this->send(User::query()->where('email', self::VEEDORES[$veedor])->firstOrFail(), $draft, $photo, $number + 1));
-
-            if ($waiting) {
-                $waiting = $this->awaitSeal($tenant, $reportId);
-            }
+            $reportIds[] = $tenant->run(fn () => $this->send(User::query()->where('email', self::VEEDORES[$veedor])->firstOrFail(), $draft, $photo, $number + 1));
         }
 
         return $reportIds;
@@ -239,28 +230,29 @@ class PrepareDemo
         return substr($jpeg, 0, $afterJfif)."\xFF\xFE".pack('n', strlen($label) + 2).$label.substr($jpeg, $afterJfif);
     }
 
-    /** @return bool whether the report reached "Sellada" in time */
-    private function awaitSeal(Tenant $tenant, int $reportId): bool
+    /** @param  list<int>  $reportIds */
+    private function waitForTheSeals(Tenant $tenant, array $reportIds): void
     {
         if ($this->awaitSeals !== null) {
-            return ($this->awaitSeals)($tenant, [$reportId]);
+            ($this->awaitSeals)($tenant, $reportIds);
+
+            return;
         }
 
-        // Por defecto, el worker de la cola hace el trabajo: se espera a que termine (o falle, o se acabe el plazo).
+        // Por defecto, el worker de la cola hace el trabajo: se espera a que termine con todos (o se acabe el plazo).
         $deadline = time() + (int) config('demo.seal_wait_seconds');
-        do {
-            $status = $tenant->run(fn () => ReportSeal::query()->where('report_id', $reportId)->value('status'));
-            $status = $status instanceof SealStatus ? $status : SealStatus::from((string) $status);
-
-            if ($status === SealStatus::Sealed) {
-                return true;
-            }
-            if ($status === SealStatus::Failed || time() >= $deadline) {
-                return false;
-            }
-
+        while ($this->inProgress($tenant, $reportIds) > 0 && time() < $deadline) {
             sleep(1);
-        } while (true);
+        }
+    }
+
+    /** @param  list<int>  $reportIds */
+    private function inProgress(Tenant $tenant, array $reportIds): int
+    {
+        return $tenant->run(fn () => ReportSeal::query()
+            ->whereIn('report_id', $reportIds)
+            ->whereIn('status', [SealStatus::Received, SealStatus::Queued, SealStatus::Transmitting])
+            ->count());
     }
 
     /**

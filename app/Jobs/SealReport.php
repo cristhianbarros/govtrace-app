@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Application\Sealing\Exceptions\RootAlreadySealed;
+use App\Application\Sealing\Exceptions\SealingNetworkBusy;
 use App\Application\Sealing\Exceptions\SealingNetworkError;
 use App\Application\Sealing\Exceptions\SponsorOutOfFunds;
 use App\Application\Sealing\PrepareReportSeal;
@@ -19,7 +20,6 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Notification;
 
@@ -38,6 +38,10 @@ use Illuminate\Support\Facades\Notification;
  *   Sellado", sin más intentos automáticos.
  * - Un reenvío (US-023): el recibo solo muestra la transacción que entró;
  *   la que no, queda en el log de auditoría, junto a la que la reemplazó.
+ * - La selladora tiene otra transacción pendiente (it. 39): Stellar no
+ *   admite dos, así que el sello espera su turno y vuelve en unos segundos,
+ *   sin gastar un intento. El turno lo lleva la red de sellado en la base
+ *   central, el mismo para todas las organizaciones y todos los workers.
  */
 class SealReport implements ShouldQueue
 {
@@ -50,17 +54,6 @@ class SealReport implements ShouldQueue
         public readonly string $tenantId,
         public readonly int $reportId,
     ) {}
-
-    /**
-     * La cuenta selladora firma con su número de secuencia: dos envíos a la
-     * vez chocarían en la red. Uno por vez, para todas las organizaciones.
-     *
-     * @return list<object>
-     */
-    public function middleware(): array
-    {
-        return [(new WithoutOverlapping('stellar-sealer'))->releaseAfter(10)->expireAfter(120)];
-    }
 
     public function retryUntil(): DateTimeInterface
     {
@@ -92,6 +85,11 @@ class SealReport implements ShouldQueue
 
                 $prepare->handle($seal);
                 $txHash = $this->submit($network, $seal);
+            } catch (SealingNetworkBusy $e) {
+                // Ocupada no es una falla: vuelve cuando la selladora esté libre, con sus intentos intactos.
+                $this->release($e->retryAfterSeconds);
+
+                return;
             } catch (SponsorOutOfFunds $e) {
                 if (SealingPause::start($e->getMessage())) {
                     Notification::send(SuperAdmin::all(), new SponsorOutOfFundsAlert($network->sponsorAddress()));

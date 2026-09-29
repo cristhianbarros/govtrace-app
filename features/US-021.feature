@@ -32,6 +32,14 @@ Característica: Reintentos del sellado con retraso exponencial
     Cuando se revisa la transacción
     Entonces el sellado vuelve a la cola y reintenta con la misma política de reintentos
 
+  @complexity:high @edge
+  Escenario: Varias evidencias a la vez esperan su turno sin gastar intentos
+    Dado que llegan 7 evidencias a la vez de "Veeduría Ciudadana Santa Marta" y de "Veeduría Ciénaga"
+    Y la red de Stellar admite una sola transacción pendiente de la cuenta selladora
+    Cuando el sistema las sella
+    Entonces cada una espera su turno y llega a "Sellada"
+    Y ninguna gasta un intento ni queda en "Falla de Sellado"
+
   @complexity:medium @edge
   Escenario: Evidencia estancada más de 2 horas en cola
     Dado que una evidencia de "Veeduría Ciudadana Santa Marta" lleva 2 horas y 5 minutos "En Cola"
