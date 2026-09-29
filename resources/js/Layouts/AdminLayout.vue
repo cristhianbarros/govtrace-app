@@ -3,6 +3,7 @@
 // organización arriba y sus pantallas en la barra de abajo, al alcance del
 // pulgar en el teléfono.
 import { Head, Link, usePage } from '@inertiajs/vue3';
+import { computed } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 
 defineProps({
@@ -21,12 +22,23 @@ const screens = [
 ];
 
 const isCurrent = (href) => page.url === href || page.url.startsWith(`${href}?`);
+
+// US-021: evidencias en "Falla de Sellado" (solo el Administrador recibe este número).
+const failuresBanner = computed(() => {
+    const count = page.props.sealingFailures ?? 0;
+    if (count === 0) {
+        return null;
+    }
+    const evidences = count === 1 ? '1 evidencia no pudo ser sellada' : `${count} evidencias no pudieron ser selladas`;
+    return `Alerta: ${evidences} en blockchain. Se requiere intervención del soporte técnico.`;
+});
 </script>
 
 <template>
     <Head :title="title" />
     <AppLayout :title="page.props.organization" :logo="page.props.organizationLogo">
         <div class="flex flex-col gap-4">
+            <p v-if="failuresBanner" role="alert" class="rounded-lg bg-red-600 p-3 text-sm font-semibold text-white">{{ failuresBanner }}</p>
             <h2 class="text-xl font-semibold">{{ title }}</h2>
             <slot />
         </div>

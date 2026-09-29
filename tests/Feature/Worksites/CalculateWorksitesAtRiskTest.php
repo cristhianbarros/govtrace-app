@@ -149,5 +149,5 @@ it('is scheduled to run once a day, after the SECOP sync it depends on', functio
     // 03:00, una hora después de la sincronización de las 02:00
     // (routes/console.php) — calcular el riesgo con contratos viejos no
     // tendría sentido.
-    expect(Artisan::output())->toMatch('/0 3 \* \* \*\s+calculate-worksites-at-risk/');
+    expect(Artisan::output())->toMatch('/0\s+3 \* \* \*\s+calculate-worksites-at-risk/');
 });

@@ -16,12 +16,14 @@ class SecopSyncRun extends Model
     protected $fillable = [
         'organization_id', 'started_at', 'finished_at', 'status',
         'contracts_inserted', 'contracts_updated', 'contracts_discarded',
-        'unmatched_locations', 'error_message',
+        'unmatched_locations', 'error_message', 'per_organization', 'next_retry_at',
     ];
 
     protected $casts = [
         'started_at' => 'datetime',
         'finished_at' => 'datetime',
         'unmatched_locations' => 'array',
+        'per_organization' => 'array',
+        'next_retry_at' => 'datetime',
     ];
 }

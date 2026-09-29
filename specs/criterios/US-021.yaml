@@ -3,10 +3,10 @@ titulo_historia: "Como Sistema quiero aplicar reintentos con retraso exponencial
 bloque: "B7 — Sellado"
 criterios_aceptacion:
   escenarios_exito:
-    - "Ante una falla, el sellado se reintenta con retraso creciente (ej. 1 min, 5 min, 15 min, 1 h, 6 h)"
+    - "Ante una falla de la red de Stellar (RPC caído, transacción rechazada o no incluida en 5 minutos), el sellado se reintenta con retraso creciente: 1 min, 5 min, 15 min y 1 h, hasta 5 intentos"
   validaciones_reglas:
     - "Máximo 5 intentos de sellado por evidencia"
-    - "Si el relayer gestionado no responde, el sellado espera y reintenta con esta misma política (R-INT-01)"
+    - "Si la red de Stellar no confirma una transacción en 5 minutos, el sellado vuelve a la cola y reintenta con esta misma política (R-INT-01). La patrocinadora sin saldo pausa el sellado sin gastar intentos (US-020b)"
   manejo_errores:
     - {caso: "Falla el quinto intento", resultado: "La evidencia queda en estado 'Falla de Sellado'. El veedor no ve ningún error"}
     - {caso: "Hay evidencias en 'Falla de Sellado' en la organización", mensaje: "Alerta: [N] evidencias no pudieron ser selladas en blockchain. Se requiere intervención del soporte técnico.", donde: "banner rojo en el panel del Administrador de Organización"}

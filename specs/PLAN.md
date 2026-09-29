@@ -759,6 +759,43 @@ Todos vistos en rojo antes de implementar (404 o clases inexistentes). Vitest: 1
 
 **Cubre:** US-014, US-021, US-044-MON · R-INT-01, R-MON-01.
 
+**✅ Cumplido (2026-09-29, con Opus xhigh):** backend en verde, visto en rojo antes de implementar (clases, columnas o rutas inexistentes):
+- `SealingRetriesTest`: US-021, 5/5 más 4 derivados;
+- `StellarRpcTest`: 2;
+- `SecopHealthTest`: US-014, 3/3 más 3 derivados;
+- **US-044-MON (2/2)**, verificado con la configuración real de la herramienta externa: `make monitoring-check`.
+
+Vitest: 187 en verde (7 nuevos). Suite: 427 en verde. `make test-stellar` contra la red local: 4/4.
+
+- **Al abrir la iteración, US-021 se ajustó a Stellar:**
+  - "el nodo RPC" pasa a "la red de Stellar (su nodo RPC)";
+  - "el relayer gestionado no responde" pasa a "la red de Stellar no confirma la transacción en 5 minutos". La historia ya hablaba de transacciones "pending/dropped";
+  - se corrigió una incoherencia de la propia historia: listaba 5 retrasos (1 min … 6 h), pero con la falla definitiva en el **quinto intento** solo caben 4 esperas: 1 min, 5 min, 15 min y 1 h.
+- **Reintentos** (US-021, R-INT-01): los intentos los cuenta **cada sello** (`report_seals.attempts`), no la cola de Laravel. Si los contara la cola, la pausa por falta de saldo los gastaría y mandaría evidencias a "Falla de Sellado" sin que nada fallara. `SealingRetryPolicy` fija 5 intentos y las esperas 60, 300, 900 y 3600 s.
+  - Tras el quinto: "Falla de Sellado" (nuevo estado `failed`), sin sexto intento automático. El error queda en `last_error`, para el soporte técnico.
+  - El veedor ve "En Cola" (`SealStatus::veedorLabel()`, US-010): nunca un error.
+- **Dos huecos del sellado que se cerraron:**
+  1. Si el RPC no respondía, `Http::…->throw()` lanzaba una excepción de HTTP que el trabajo no reconocía, y la cola lo reintentaba de inmediato, sin espera. Ahora `StellarRpc` la convierte en `NetworkUnavailable` y cuenta como un intento con su espera.
+  2. Una transacción que la red nunca incluía dejaba la evidencia "Transmitiendo" para siempre. Ahora `ConfirmSeal` la da por fallida a los 5 minutos, o si la red la rechazó, y la devuelve a la cola con la misma política. Si la primera entra después, el reenvío recibe "Hash ya registrado" y toma el sello que ya existe. Mientras el RPC no responde, espera sin gastar intentos.
+  - También cuentan como intento las fallas de red al verificar el saldo durante una pausa y al buscar un sello "ya registrado".
+- **El hash que manda la red:** `markSealed` se quedaba con el hash guardado. Tras un reenvío, la transacción incluida puede ser la primera, y el recibo (it. 23) habría apuntado a otra; ahora prima el hash que informa la red.
+- **Banner:** el panel del Administrador muestra en rojo "Alerta: N evidencias no pudieron ser selladas…", con el singular cuando es una. El número se comparte solo con el Administrador (`sealingFailures`); al veedor, nunca.
+- **Cola estancada:** `CheckSealingQueue`, cada 15 minutos. Busca evidencias con más de 2 horas sin sellar (recibidas, en cola o transmitiendo) y avisa por correo al Super Administrador, con las organizaciones afectadas, y a los Administradores de cada una. Hay una sola alerta por evidencia (`stuck_alerted_at`).
+- **Salud de SECOP II** (US-014), pantalla `/admin/secop-health` del Super Administrador:
+  - la última corrida, en hora de Colombia, con el estado "Success", tal como lo pide la historia;
+  - procesados, con el desglose de nuevos y actualizados **por organización según su propio territorio**. La sincronización ahora lo guarda (`per_organization`, con `WatchedTerritories::coversLocation()`);
+  - descartados por DIVIPOLA, con sus lugares;
+  - si falló: indicador rojo y "Falla de sincronización con SECOP II: … (Error HTTP 504 Gateway Timeout). Reintento programado en N minutos.". El error queda guardado en palabras, y el momento del reintento sale del `backoff()` del trabajo (`next_retry_at`).
+- **Monitoreo externo** (US-044-MON), con [Gatus](https://github.com/TwiN/gatus) (Apache-2.0), en `ops/monitoring/`. Su configuración es un YAML versionado y probado; Uptime Kuma la guarda en su propia base.
+  - Corre **en otra máquina** que la de GovTrace y pide `/up` cada minuto. Alerta por correo y por webhook tras 6 fallas seguidas, más de 5 minutos, y avisa al recuperarse.
+  - `make monitoring-check` levanta Gatus de verdad, con esa configuración, contra un nginx que se detiene, un receptor de webhooks en Python y Mailpit, con chequeos de 1 segundo: la misma regla en segundos. Una caída de 3 s no alerta; una de 9 s manda el webhook y el correo, y al volver, la recuperación. Estable en dos corridas.
+  - Jenkins lo corre al construir un tag de release.
+  - Hallazgo: Gatus (Go) no manda credenciales SMTP por una conexión sin cifrar, como debe ser; el Mailpit de la prueba usa STARTTLS con certificado propio.
+- **Hallazgos en los tests:**
+  - `Notification::fake` reconoce al destinatario por clase e id, y cada organización numera sus usuarios desde 1: para afirmar que "el Administrador de Ciénaga no recibió", su id no puede coincidir con el de Santa Marta;
+  - Eloquent guarda una fecha en la zona del Carbon, sin convertirla a UTC;
+  - `schedule:list` cambia su alineación con una expresión más larga, así que las expresiones regulares ahora aceptan espacios.
+
 ### Iteración 23 — Recibos, descarga con prueba y script independiente
 **Entregable:**
 - Recibo de Inmutabilidad privado y público;

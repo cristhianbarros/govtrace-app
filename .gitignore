@@ -30,3 +30,6 @@ Thumbs.db
 .env.docker
 compose.override.yml
 /docker/app/xdebug.ini
+
+# Monitoreo externo (US-044-MON): lleva la contraseña del correo.
+ops/monitoring/monitor.env

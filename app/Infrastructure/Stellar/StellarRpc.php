@@ -2,7 +2,10 @@
 
 namespace App\Infrastructure\Stellar;
 
+use App\Application\Sealing\Exceptions\NetworkUnavailable;
 use App\Application\Sealing\Exceptions\SealingNetworkError;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
 use Soneso\StellarSDK\AbstractTransaction;
 use Soneso\StellarSDK\Soroban\Responses\GetLedgerEntriesResponse;
@@ -62,10 +65,15 @@ class StellarRpc
     /** @param  array<string, mixed>  $params */
     private function call(string $method, array $params): array
     {
-        $response = Http::timeout(30)->acceptJson()
-            ->post($this->url, ['jsonrpc' => '2.0', 'id' => 1, 'method' => $method, 'params' => $params])
-            ->throw()
-            ->json();
+        try {
+            $response = Http::timeout(30)->acceptJson()
+                ->post($this->url, ['jsonrpc' => '2.0', 'id' => 1, 'method' => $method, 'params' => $params])
+                ->throw()
+                ->json();
+        } catch (ConnectionException|RequestException $e) {
+            // US-021: sin conexión, timeout o error del servidor: "la red no respondió", y el sellado reintenta.
+            throw new NetworkUnavailable("La red de Stellar no respondió ({$method}): ".strtok($e->getMessage(), "\n"), previous: $e);
+        }
 
         if (isset($response['error'])) {
             throw new SealingNetworkError("RPC {$method}: ".($response['error']['message'] ?? json_encode($response['error'])));

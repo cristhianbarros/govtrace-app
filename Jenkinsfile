@@ -81,6 +81,16 @@ pipeline {
             }
         }
 
+        stage('Monitoring Check') {
+            // US-044-MON: before each release, the external monitor's real
+            // configuration (Gatus) alerts by email and webhook after the
+            // threshold, and stays quiet for a short blip. ~40 s, no secrets.
+            when { buildingTag() }
+            steps {
+                sh 'make monitoring-check'
+            }
+        }
+
         stage('Smoke Testnet') {
             // R-TST-01: before each release. The keys are never in the repo:
             // Jenkins injects them from its credentials store (D11) into a

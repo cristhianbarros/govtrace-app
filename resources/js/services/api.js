@@ -70,6 +70,9 @@ export const updateParameter = (key, value) => dataOf(http.put(`/admin/parameter
 /** US-043-MON: todo el log, { data, meta }. */
 export const fetchGlobalAuditLog = (page) => dataOf(http.get('/admin/audit/data', { params: { page } }));
 
+/** US-014: la última sincronización con SECOP II, o null. */
+export const fetchSecopHealth = async () => (await dataOf(http.get('/admin/secop-health/data'))).data;
+
 /** US-003a */
 export const suspendOrganization = (id) => dataOf(http.post(`/admin/organizations/${id}/suspend`));
 export const reactivateOrganization = (id) => dataOf(http.post(`/admin/organizations/${id}/reactivate`));

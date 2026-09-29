@@ -57,6 +57,17 @@ final class WatchedTerritories
         return in_array($departmentCode, $this->departmentCodes, true);
     }
 
+    /**
+     * Whether a contract located there falls inside the territory: its
+     * municipality, or its whole department; a department-level contract
+     * (no municipality) only with the whole department (US-014, US-015).
+     */
+    public function coversLocation(string $departmentCode, ?string $municipalityCode): bool
+    {
+        return $this->coversDepartmentCode($departmentCode)
+            || ($municipalityCode !== null && in_array($municipalityCode, $this->municipalityCodes, true));
+    }
+
     /** @return list<string> departments watched whole (US-015/016: Gobernación + every municipality) */
     public function departmentCodes(): array
     {
