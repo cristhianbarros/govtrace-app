@@ -69,7 +69,7 @@ ensure_account() {
   else
     stellar tx new create-account --destination "$address" --starting-balance "$stroops" \
       --rpc-url "$STELLAR_RPC_URL" --network-passphrase "$STELLAR_NETWORK_PASSPHRASE" >/dev/null
-    echo "  $role $address creada con $((stroops / 10000000)) XLM"
+    echo "  $role $address creada con $(echo "$stroops" | awk '{ printf "%g", $1 / 10000000 }') XLM"
   fi
 }
 

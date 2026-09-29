@@ -32,7 +32,8 @@ La salida de GovTrace a la red principal de Stellar. Lo que se preparó sin dato
 
 ## 2. Firma remota (D11, opción b)
 
-- ⬜ **Elegir Vault Transit o un KMS en la nube.** La llave de la selladora no debe salir del servicio de firma; va detrás de la misma interfaz `SealingNetwork` (37b).
+- ✅ **Elegido: AWS KMS** (2026-09-29).
+- ⬜ **La integración con AWS KMS** (37b). La llave de la selladora no sale de KMS; va detrás de la misma interfaz `SealingNetwork`. Primero se verifica que la llave de KMS sea Ed25519 y firme el hash de la transacción tal cual.
 
 ## 3. La aplicación
 

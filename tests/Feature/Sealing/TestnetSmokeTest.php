@@ -86,8 +86,10 @@ it('seals a test report on the Stellar testnet, with the fee paid by the sponsor
         $measurement = [
             'network' => 'testnet',
             'measured_at' => now()->toIso8601String(),
-            'first_seal' => ['ledger' => $first->ledger, 'tx_hash' => $first->tx_hash, 'fee_stroops' => $firstFee],
-            'steady_seal' => ['ledger' => $second->ledger, 'tx_hash' => $second->tx_hash, 'fee_stroops' => $steadyFee],
+            // El contrato y las raíces, para auditar cada sello en un explorador o leerlo como el validador (it. 37a).
+            'contract_id' => $first->contract_id,
+            'first_seal' => ['ledger' => $first->ledger, 'tx_hash' => $first->tx_hash, 'merkle_root' => $first->merkle_root, 'fee_stroops' => $firstFee],
+            'steady_seal' => ['ledger' => $second->ledger, 'tx_hash' => $second->tx_hash, 'merkle_root' => $second->merkle_root, 'fee_stroops' => $steadyFee],
         ];
         file_put_contents(base_path('storage/logs/testnet-smoke.json'), json_encode($measurement, JSON_PRETTY_PRINT));
         fwrite(STDOUT, sprintf(
