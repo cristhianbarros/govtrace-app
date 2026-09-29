@@ -805,6 +805,56 @@ Vitest: 187 en verde (7 nuevos). Suite: 427 en verde. `make test-stellar` contra
 **Done-when:** US-023 (3 casos), US-025 (2), US-026 (3) y US-046-INT (4) en verde. El script se prueba contra la red local *standalone* con los vectores de la it. 13. US-023, US-025 y US-046-INT se ajustan a Stellar al abrir la iteración. El recibo lleva TxID, número y hora del ledger y el enlace a un explorador de Stellar (hay que elegir cuál). Hay que decidir cómo se lee un sello archivado por TTL.
 **Cubre:** US-023, US-025, US-026, US-046-INT · R-INT-04, R-MNT-01, R-MNT-02.
 
+**✅ Cumplido (2026-09-29, con Opus max):** en verde, visto en rojo antes de implementar (rutas, métodos o columnas inexistentes):
+- `SealReceiptTest`: US-023, 3/3; US-025, 2/2; más 9 derivados;
+- `EvidenceDownloadTest`: US-026, 3/3 (4 casos); más 6 derivados;
+- `StellarRpcTest`: 3 nuevos;
+- `tools/verify/test/verify.test.mjs` (Vitest): **US-046-INT, 5/5** (6 casos), más 25 de StrKey, XDR, casos negativos y la línea de comandos. La historia tenía 4 casos; al ajustarla a Stellar se sumó "Sello archivado por la red";
+- `tools/verify/test/merkle.test.mjs`: los vectores de la it. 13, ahora contra la implementación del script.
+
+Suite: 454 en verde. Vitest: 219 en verde (32 nuevos). `make test-stellar` contra la red local: 8/8. `make verify-check`: verde.
+
+Cada regla nueva se comprobó rompiéndola a propósito: 12 en el servidor, 15 en el verificador y 2 en la auditoría de reenvíos. Todas quedaron atrapadas por su test.
+
+- **Al abrir la iteración, US-023, US-025 y US-046-INT se ajustaron a Stellar:**
+  - "bloque" pasa a "ledger", y Polygonscan a Stellar Expert;
+  - "re-sellada tras una reorganización" pasa a "reenviada tras una transacción que no se incluyó": en Stellar no hay reorganizaciones (R-BLK-06).
+- **Recibo** (US-023 privado, US-025 público):
+  - `GET /reports/{id}/receipt` es solo para el veedor, y solo de sus reportes; de uno ajeno responde 404. `GET /public/reports/{id}/receipt` es sin sesión, para una evidencia publicada o retirada; oculta o rechazada, 404;
+  - lleva la raíz, la transacción, el ledger, la hora de cierre del ledger (la de la red, no la del servidor), el contrato y "Ver en Stellar Expert";
+  - mientras no está sellada, incluso en "Falla de Sellado", el veedor solo ve el mensaje "⏳ Su evidencia está en proceso de sellado…".
+- **Descarga con su prueba** (US-026):
+  - `GET /public/evidences/{id}/download` entrega el binario exacto que se selló, con nombre por hash (`evidencia-<sha12>.jpg`), nunca el del teléfono;
+  - `GET /public/evidences/{id}/proof` entrega la prueba de inclusión (`govtrace-proof/1`): las hojas, el camino de Merkle, la raíz, la obra y dónde está en Stellar;
+  - solo de evidencias publicadas. Una retirada conserva su recibo, pero no sus archivos;
+  - sin caché (`no-store`), para que un retiro valga desde ese instante;
+  - las tarjetas de la línea de tiempo enlazan las tres cosas.
+- **Script independiente** en `tools/verify/` (US-046-INT):
+  - Node 20 o más nuevo, sin dependencias, con README;
+  - comprueba el hash del archivo, las hojas y el camino de Merkle, y lee el sello directamente de la red;
+  - códigos de salida: 0 AUTÉNTICO, 1 NO COINCIDE, 2 no se pudo verificar;
+  - `make verify-check`: GovTrace sella, publica y deja descargar una evidencia en la red local. El script la comprueba en un contenedor que solo ve su carpeta y los dos archivos, en una red de Docker `--internal` donde solo está el nodo de Stellar. Una copia alterada da NO COINCIDE. Jenkins lo corre en "Test Stellar".
+  - El árbol de Merkle en JavaScript es uno solo: vive en `tools/verify/lib/merkle.mjs`, y `resources/js/lib/merkle.js` lo reexporta. Un test comprueba que es la misma función, no una copia.
+- **Hallazgos:**
+  - Con una organización activa, `storage_path()` es el de ella (el bootstrapper de archivos de Stancl).
+  - El sellado ahora escribe en el log de auditoría, en la base central, sin `RefreshDatabase`. Los tests de sellado que no lo limpiaban dejaban entradas a los siguientes; ahora cinco archivos más lo limpian.
+  - El RPC de Stellar revisa como máximo 10.000 ledgers por llamada a `getEvents`, y la red local ya va en el protocolo 27.
+  - El hook de pre-commit no tenía timeout, y la suite ya pasa de 10 minutos con la máquina cargada. Ahora tiene 30 (`.claude/settings.json`).
+
+**Decisiones de la iteración, para confirmar:**
+1. **Explorador: Stellar Expert.** La URL sale de la red (`https://stellar.expert/explorer/testnet` o `/public`), o de `STELLAR_EXPLORER_URL`. La red local no tiene explorador público, y el recibo va sin el botón.
+2. **Un sello archivado por su vigencia (TTL) se lee con `getLedgerEntries`, sin restaurarlo.** Sus datos siguen en la red: no hay que pagar comisión ni tener cuenta. El script avisa que está archivado, y la verificación vale igual.
+3. **Cada transacción vale 4 minutos** (time bounds), menos que los 5 que espera `ConfirmSeal`. Cuando una se da por perdida y se reenvía, la vieja ya no puede entrar a un ledger. Así, la transacción del recibo es siempre la que selló.
+4. **La transacción que selló la dice la red.** Si un envío se quedó sin respuesta pero entró, el reintento recibe "Hash ya registrado". Entonces `findSeal` busca el evento `sealed` del contrato en ese mismo ledger (`getEvents`), y así el recibo no muestra una anotada que no entró. El RPC guarda 7 días de eventos por omisión. Si ya no lo tiene, queda la anotada; y sin ninguna, el botón lleva al ledger.
+5. **El reenvío queda solo en el log de auditoría** (`seal.resent`, actor "Sistema"), con la transacción que no entró y la que la reemplazó. Así lo piden los criterios de US-023 y US-025. Un reintento que encuentra su misma transacción no es un reenvío y no se registra.
+6. **Una foto con EXIF o XMP se rechaza en el servidor**, con el mensaje "La foto conserva metadatos EXIF, como la ubicación del teléfono. Envíela desde la app GovTrace, que los quita.". No se limpia, porque eso cambiaría los bytes que se sellan. La PWA ya los quita (it. 16); esto cubre a cualquier otro cliente. También se detectan el XMP extendido y los bytes de relleno que podrían esconder un segmento.
+7. **La prueba no lleva el JSON de metadatos** (R-PRIV-02): trae el comentario y las coordenadas exactas. Su hash sí va, porque es una hoja, y no permite reconstruirlo: lleva el seudónimo del veedor, un HMAC con llave del servidor (D7).
+8. **El contrato se guarda en cada sello** (`report_seals.contract_id`, escrito una sola vez). Los sellos que ya existían toman el contrato configurado.
+9. **Confianza del script** (R-MNT-01):
+   - los contratos oficiales están en `tools/verify/contracts.json`, versionado. Hoy es el de la testnet; la red pública todavía no tiene;
+   - el script pregunta por la raíz en **todos** los de esa red, también los anteriores, en una sola consulta;
+   - el contrato que nombra la prueba es solo informativo: cualquiera puede desplegar uno parecido. Otra instalación de GovTrace pasa el suyo con `--contract`.
+
 ### Iteración 24 — Mapa y línea de tiempo (datos)
 **Entregable:**
 - pines livianos con reglas de color (evidencia publicada más reciente, peor estado de la ficha, Terminados en ventana);

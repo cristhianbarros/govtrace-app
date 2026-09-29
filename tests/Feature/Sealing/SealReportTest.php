@@ -59,6 +59,7 @@ afterEach(function () {
     Tenant::query()->get()->each->delete();
     DB::table('contracts')->delete();
     DB::table('sealing_pauses')->delete();
+    DB::table('audit_logs')->delete(); // los reenvíos del sellado (it. 23), en la base central
 });
 
 /** Una foto JPEG real con contenido propio, para que cada una tenga su hash. */

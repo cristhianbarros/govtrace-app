@@ -32,7 +32,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash .claude/hooks/pre-commit-check.sh"
+            "command": "bash .claude/hooks/pre-commit-check.sh",
+            "timeout": 1800
           }
         ]
       }

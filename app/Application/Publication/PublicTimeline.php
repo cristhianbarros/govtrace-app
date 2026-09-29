@@ -46,13 +46,22 @@ class PublicTimeline
             ? ['notice' => self::TOMBSTONE_NOTICE]
             : [
                 'comment' => $report->comment,
+                // US-026: cada archivo, con su descarga y su prueba de inclusión.
                 'files' => $report->evidences->map(fn (Evidence $evidence) => [
                     'id' => $evidence->id,
                     'kind' => $evidence->kind,
                     'sha256' => $evidence->sha256,
+                    'download_url' => "/public/evidences/{$evidence->id}/download",
+                    'proof_url' => "/public/evidences/{$evidence->id}/proof",
                 ])->all(),
             ];
 
-        return [...$card, ...$content, 'seal' => $report->seal->only(['merkle_root', 'tx_hash', 'ledger'])];
+        return [
+            ...$card,
+            ...$content,
+            'seal' => $report->seal->only(['merkle_root', 'tx_hash', 'ledger']),
+            // US-025: también el de una retirada, para auditoría.
+            'receipt_url' => "/public/reports/{$report->id}/receipt",
+        ];
     }
 }

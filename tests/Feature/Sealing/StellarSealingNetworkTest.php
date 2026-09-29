@@ -91,6 +91,47 @@ it('rejects a root that is already on the network as "Hash ya registrado", and f
         ->and($this->network->findSeal(randomRoot()))->toBeNull();
 });
 
+it('tells which transaction sealed a root, by its Sealed event: after a resend, the last one sent may not be it', function () {
+    $root = randomRoot();
+    $txHash = $this->network->submitSeal(hash('sha256', 'obra-de-prueba'), $root);
+    waitForSeal($this->network, $txHash);
+
+    expect($this->network->findSeal($root)->txHash)->toBe($txHash);
+});
+
+it('gives each transaction 4 minutes to enter a ledger, so an old transaction can never seal after a resend', function () {
+    $rpc = app(StellarRpc::class);
+
+    $txHash = $this->network->submitSeal(hash('sha256', 'obra-de-prueba'), randomRoot());
+    waitForSeal($this->network, $txHash);
+
+    $inner = AbstractTransaction::fromEnvelopeBase64XdrString($rpc->transaction($txHash)->envelopeXdr)->getInnerTx();
+    $timeBounds = $inner->getTimeBounds();
+
+    // US-021: ConfirmSeal da una transacción por perdida a los 5 minutos; vence antes, a los 4.
+    expect($timeBounds)->not->toBeNull()
+        ->and(abs($timeBounds->getMaxTime()->getTimestamp() - (time() + 240)))->toBeLessThan(30);
+});
+
+it('reads a seal straight from the ledger entries: no account is needed, so the same works for a verifier', function () {
+    $root = randomRoot();
+    $txHash = $this->network->submitSeal(hash('sha256', 'obra-de-prueba'), $root);
+    $sealed = waitForSeal($this->network, $txHash);
+
+    // Una red configurada con una selladora que nunca existió en la red: leer no la necesita.
+    $reader = new StellarSealingNetwork(
+        app(StellarRpc::class),
+        config('stellar.network_passphrase'),
+        config('stellar.sealing_contract_id'),
+        KeyPair::random()->getSecretSeed(),
+        KeyPair::random()->getSecretSeed(),
+        config('stellar.sponsor_min_balance_xlm'),
+    );
+
+    expect($reader->findSeal($root))->toEqual(new NetworkSeal($sealed->ledger, $sealed->sealedAt, $txHash))
+        ->and($reader->findSeal(randomRoot()))->toBeNull();
+});
+
 it('reports the sponsor out of funds when its account has no XLM', function () {
     $broke = new StellarSealingNetwork(
         app(StellarRpc::class),
@@ -139,5 +180,6 @@ it('seals a report end to end on the local network, up to "Sellada" with a real 
         }
         Tenant::query()->get()->each->delete();
         DB::table('contracts')->delete();
+        DB::table('audit_logs')->delete();
     }
 });

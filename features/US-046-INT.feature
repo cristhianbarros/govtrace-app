@@ -2,7 +2,7 @@
 @story_id:US-046-INT @origin:analisis_completitud @priority:2 @epic:EPIC-005
 Característica: Script de verificación independiente
   Como Verificador Público
-  quiero un script de verificación en el repositorio abierto que compruebe un archivo con su prueba solo contra Polygon
+  quiero un script de verificación en el repositorio abierto que compruebe un archivo con su prueba solo contra Stellar
   para verificar aunque GovTrace no esté disponible
 
   Antecedentes:
@@ -31,3 +31,10 @@ Característica: Script de verificación independiente
     Cuando ejecuto el script con el archivo y su prueba
     Entonces el script consulta todas las direcciones históricas del contrato
     Y informa que el archivo es auténtico
+
+  @complexity:medium @edge
+  Escenario: Sello archivado por la red
+    Dado que el sello de "obra-gaira.jpg" pasó su vigencia en la red y quedó archivado
+    Cuando ejecuto el script con el archivo y su prueba
+    Entonces el script lee el sello archivado sin restaurarlo ni pagar comisiones
+    Y informa que el archivo es auténtico y que su sello está archivado

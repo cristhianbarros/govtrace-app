@@ -14,6 +14,8 @@ use App\Http\Controllers\Tenant\LoginController;
 use App\Http\Controllers\Tenant\ObserverController;
 use App\Http\Controllers\Tenant\OrganizationLogoController;
 use App\Http\Controllers\Tenant\OrganizationProfileController;
+use App\Http\Controllers\Tenant\PublicEvidenceController;
+use App\Http\Controllers\Tenant\ReceiptController;
 use App\Http\Controllers\Tenant\ReportController;
 use App\Http\Controllers\Tenant\SetPasswordController;
 use App\Http\Controllers\Tenant\TerritoryController;
@@ -59,6 +61,12 @@ Route::middleware([
 
     // US-007: el logo, público (lo muestra el mapa de la organización).
     Route::get('/organization/logo', [OrganizationLogoController::class, 'show'])->name('organization.logo');
+
+    // US-025 / US-026: el recibo de lo publicado (y retirado), y cada
+    // archivo publicado con su prueba de inclusión (it. 23).
+    Route::get('/public/reports/{report}/receipt', [ReceiptController::class, 'public'])->whereNumber('report')->name('public.reports.receipt');
+    Route::get('/public/evidences/{evidence}/download', [PublicEvidenceController::class, 'download'])->whereNumber('evidence')->name('public.evidences.download');
+    Route::get('/public/evidences/{evidence}/proof', [PublicEvidenceController::class, 'proof'])->whereNumber('evidence')->name('public.evidences.proof');
     Route::post('/login', [LoginController::class, 'store'])->name('tenant.login');
 
     // US-030: el enlace de US-002 (Administrador inicial) o US-005
@@ -123,6 +131,9 @@ Route::middleware([
         Route::middleware('role:'.Roles::Observer->value.',tenant')->group(function () {
             Route::get('/reports/new', fn () => Inertia::render('Veedor/NewReport'))->name('reports.new');
             Route::post('/reports', [ReportController::class, 'store'])->name('reports.store');
+
+            // US-023: el recibo de uno de sus reportes (la pantalla, it. 28).
+            Route::get('/reports/{report}/receipt', [ReceiptController::class, 'mine'])->whereNumber('report')->name('reports.receipt');
 
             // US-016: "Buscar Obra".
             Route::get('/contracts/search', ContractSearchController::class)->name('contracts.search');

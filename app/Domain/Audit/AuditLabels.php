@@ -22,6 +22,7 @@ final class AuditLabels
         'observer.deactivated' => 'Desactivó a un veedor',
         'observer.reactivated' => 'Reactivó a un veedor',
         'parameter.changed' => 'Cambió un parámetro global',
+        'seal.resent' => 'Reenvió el sellado de una evidencia',
     ];
 
     private const ACTORS = [

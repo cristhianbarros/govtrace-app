@@ -1,4 +1,4 @@
-# US-046-INT — Usar un script de verificación independiente, publicado en el repositorio abierto, que compruebe un archivo con su prueba de inclusión solo contra Polygon
+# US-046-INT — Usar un script de verificación independiente, publicado en el repositorio abierto, que compruebe un archivo con su prueba de inclusión solo contra Stellar
 
 | Campo | Valor |
 |---|---|
@@ -11,7 +11,7 @@
 | Reglas relacionadas | R-INT-04, R-MNT-01 |
 
 ## Historia
-**Como** Verificador Público, **quiero** usar un script de verificación independiente, publicado en el repositorio abierto, que compruebe un archivo con su prueba de inclusión solo contra Polygon, **para** verificar aunque GovTrace no esté disponible.
+**Como** Verificador Público, **quiero** usar un script de verificación independiente, publicado en el repositorio abierto, que compruebe un archivo con su prueba de inclusión solo contra Stellar, **para** verificar aunque GovTrace no esté disponible.
 
 ## Criterios de aceptación
 `specs/criterios/US-046-INT.yaml`

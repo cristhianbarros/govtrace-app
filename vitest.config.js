@@ -11,6 +11,7 @@ export default defineConfig({
     },
     test: {
         environment: 'jsdom',
-        include: ['resources/js/**/*.test.js'],
+        // tools/verify: el verificador independiente de US-026 (Node, sin navegador).
+        include: ['resources/js/**/*.test.js', 'tools/**/*.test.mjs'],
     },
 });

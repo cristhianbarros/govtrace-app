@@ -31,8 +31,16 @@ interface SealingNetwork
      */
     public function transactionStatus(string $txHash): ?NetworkSeal;
 
-    /** El sello que la red ya tiene para la raíz, o null. */
+    /**
+     * El sello que la red ya tiene para la raíz, o null. Lo lee de las
+     * entradas del ledger: sirve igual si el sello está archivado por su
+     * vigencia (TTL), y no necesita ninguna cuenta (it. 23). Con la
+     * transacción que lo selló, si la red todavía la recuerda.
+     */
     public function findSeal(string $merkleRoot): ?NetworkSeal;
+
+    /** La dirección del contrato de sellado (C…): va en el recibo y en la prueba de inclusión. */
+    public function contractId(): string;
 
     public function sponsorCanPay(): bool;
 

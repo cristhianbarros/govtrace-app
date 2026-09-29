@@ -21,4 +21,13 @@ return [
     // Por debajo de esto el sellado se pausa: la reserva mínima de una cuenta
     // es 1 XLM y un sello cuesta ~0,07 XLM (medido en la red local, it. 13).
     'sponsor_min_balance_xlm' => (int) env('STELLAR_SPONSOR_MIN_BALANCE_XLM', 2),
+
+    // US-023 / US-025: el botón "Ver en Stellar Expert" del recibo (sus rutas
+    // /tx/{hash} y /ledger/{n}). Sale de la red; la local no tiene explorador
+    // público, y el recibo va sin el botón.
+    'explorer_url' => env('STELLAR_EXPLORER_URL') ?: match (env('STELLAR_NETWORK_PASSPHRASE')) {
+        'Test SDF Network ; September 2015' => 'https://stellar.expert/explorer/testnet',
+        'Public Global Stellar Network ; September 2015' => 'https://stellar.expert/explorer/public',
+        default => null,
+    },
 ];

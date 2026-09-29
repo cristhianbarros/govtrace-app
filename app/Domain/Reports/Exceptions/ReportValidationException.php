@@ -82,6 +82,11 @@ class ReportValidationException extends DomainException
         return new self("Un reporte admite máximo {$maxPhotos} fotos.", 'files');
     }
 
+    public static function photoWithMetadata(): self
+    {
+        return new self('La foto conserva metadatos EXIF, como la ubicación del teléfono. Envíela desde la app GovTrace, que los quita.', 'files');
+    }
+
     public static function evidenceHashMismatch(): self
     {
         return new self('Alerta de seguridad: El archivo fue alterado o corrompido durante la transmisión (el hash del servidor no coincide con el de su celular). Por favor, intente de nuevo.', 'files');

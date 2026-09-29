@@ -1,0 +1,11 @@
+{
+    "_comment": "Los contratos de sellado de GovTrace, por red (su frase). Una prueba es auténtica solo si su contrato está aquí, o si se indica con --contract (otra instalación de GovTrace). Un contrato que se reemplaza se queda en la lista: sus sellos siguen valiendo. La testnet se reinicia cada tanto y borra sus contratos.",
+    "Test SDF Network ; September 2015": {
+        "rpc": "https://soroban-testnet.stellar.org",
+        "contracts": ["CABXHM74HFSAZD4FDFDONSIDJOVJBU7ZJXYBCHY3JJDCQUDFTHBT2WUI"]
+    },
+    "Public Global Stellar Network ; September 2015": {
+        "rpc": null,
+        "contracts": []
+    }
+}

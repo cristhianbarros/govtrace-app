@@ -7,7 +7,8 @@ use App\Domain\Sealing\SealedMetadata;
  * Iteración 13 — D6 (specs/PLAN.md): el árbol de Merkle y el JSON de
  * metadatos contra los vectores compartidos de tests/fixtures/merkle,
  * generados con una implementación independiente (Python). El validador
- * del navegador prueba los mismos vectores (resources/js/lib/merkle.test.js).
+ * del navegador y el verificador independiente comparten implementación, que
+ * prueba los mismos vectores (tools/verify/test/merkle.test.mjs).
  */
 
 function merkleVectors(): array

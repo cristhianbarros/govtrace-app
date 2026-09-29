@@ -71,7 +71,7 @@ class ConfirmSeal implements ShouldQueue
                 return;
             }
 
-            $seal->markSealed($onChain->ledger, $onChain->sealedAt, $seal->tx_hash);
+            $seal->markSealed($onChain->ledger, $onChain->sealedAt, $seal->tx_hash, $network->contractId());
         });
     }
 

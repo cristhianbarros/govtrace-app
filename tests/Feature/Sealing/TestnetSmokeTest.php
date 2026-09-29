@@ -114,5 +114,6 @@ it('seals a test report on the Stellar testnet, with the fee paid by the sponsor
         }
         Tenant::query()->get()->each->delete();
         DB::table('contracts')->delete();
+        DB::table('audit_logs')->delete();
     }
 });

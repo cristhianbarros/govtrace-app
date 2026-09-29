@@ -7,7 +7,9 @@ use App\Application\Sealing\Exceptions\SealingNetworkError;
 use App\Application\Sealing\Exceptions\SponsorOutOfFunds;
 use App\Application\Sealing\NetworkSeal;
 use App\Application\Sealing\SealingNetwork;
+use App\Domain\Sealing\SealingRetryPolicy;
 use Carbon\CarbonImmutable;
+use DateTime;
 use Soneso\StellarSDK\Account;
 use Soneso\StellarSDK\Crypto\KeyPair;
 use Soneso\StellarSDK\FeeBumpTransactionBuilder;
@@ -17,6 +19,7 @@ use Soneso\StellarSDK\Network;
 use Soneso\StellarSDK\Soroban\Responses\GetTransactionResponse;
 use Soneso\StellarSDK\Soroban\Responses\SendTransactionResponse;
 use Soneso\StellarSDK\Soroban\Responses\SimulateTransactionResponse;
+use Soneso\StellarSDK\TimeBounds;
 use Soneso\StellarSDK\Transaction;
 use Soneso\StellarSDK\TransactionBuilder;
 use Soneso\StellarSDK\Xdr\XdrSCVal;
@@ -98,24 +101,33 @@ final class StellarSealingNetwork implements SealingNetwork
 
     public function findSeal(string $merkleRoot): ?NetworkSeal
     {
-        [, $simulation] = $this->simulate('get_seal', [XdrSCVal::forBytes(hex2bin($merkleRoot))]);
+        $root = XdrSCVal::forBytes(hex2bin($merkleRoot));
 
-        if ($simulation->resultError !== null) {
-            throw new SealingNetworkError('No se pudo leer el sello: '.strtok($simulation->resultError, "\n"));
-        }
+        // DataKey::Seal(raíz) del contrato, leída como entrada del ledger: vale viva o archivada.
+        $entry = $this->rpc->contractData($this->contractId, XdrSCVal::forVec([XdrSCVal::forSymbol('Seal'), $root]));
 
-        $value = $simulation->getResults()?->toArray()[0]?->getResultValue();
-
-        if ($value?->map === null) {
-            return null; // Option::None: la raíz no está sellada
+        if ($entry === null) {
+            return null; // la raíz no está sellada
         }
 
         $fields = [];
-        foreach ($value->map as $entry) {
-            $fields[$entry->key->sym] = $entry->val;
+        foreach ($entry->getLedgerEntryDataXdr()->contractData->val->map ?? [] as $field) {
+            $fields[$field->key->sym] = $field->val;
         }
+        $ledger = $fields['ledger']->u32;
 
-        return new NetworkSeal($fields['ledger']->u32, CarbonImmutable::createFromTimestamp((int) $fields['sealed_at']->u64));
+        return new NetworkSeal(
+            $ledger,
+            CarbonImmutable::createFromTimestamp((int) $fields['sealed_at']->u64),
+            // La que la selló, por su evento "sealed" en ese ledger: tras un envío sin
+            // respuesta, la última anotada puede no ser esa (US-021, US-023).
+            $this->rpc->eventTransactionHash($this->contractId, [XdrSCVal::forSymbol('sealed'), $root], $ledger),
+        );
+    }
+
+    public function contractId(): string
+    {
+        return $this->contractId;
     }
 
     public function sponsorCanPay(): bool
@@ -135,8 +147,14 @@ final class StellarSealingNetwork implements SealingNetwork
         $entry = $this->rpc->account($sealer)
             ?? throw new SealingNetworkError("La cuenta selladora {$sealer} no existe en la red.");
 
+        // Vale 4 minutos y no más: si se da por perdida y se reenvía, esta ya no puede entrar (US-021).
+        $validUntil = new DateTime('@'.(time() + SealingRetryPolicy::TRANSACTION_VALIDITY_SECONDS));
+
         $operation = (new InvokeHostFunctionOperationBuilder(new InvokeContractHostFunction($this->contractId, $function, $arguments)))->build();
-        $transaction = (new TransactionBuilder(new Account($sealer, $entry->seqNum->sequenceNumber)))->addOperation($operation)->build();
+        $transaction = (new TransactionBuilder(new Account($sealer, $entry->seqNum->sequenceNumber)))
+            ->addOperation($operation)
+            ->setTimeBounds(new TimeBounds(new DateTime('@0'), $validUntil))
+            ->build();
 
         return [$transaction, $this->rpc->simulate($transaction)];
     }
