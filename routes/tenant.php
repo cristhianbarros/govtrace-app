@@ -53,12 +53,10 @@ Route::middleware([
     // otro subdominio sería el usuario con ese id de la otra (403).
     ScopeSessions::class,
 ])->group(function () {
-    // Público, sin sesión (R-VER-02) — el mapa y el validador reales
-    // llegan en it. 24-27; este placeholder solo prueba que las rutas de
-    // tenant no exigen autenticación por defecto (US-031).
-    Route::get('/', function () {
-        return 'This is your multi-tenant application. The id of the current tenant is '.tenant('id');
-    });
+    // Público, sin sesión (R-VER-02): el mapa de la organización (US-027) y
+    // la vista de cada obra (US-029, US-017). Piden sus datos al API de abajo.
+    Route::get('/', fn () => Inertia::render('Public/Map'))->name('public.map');
+    Route::get('/worksite/{worksite}', fn (int $worksite) => Inertia::render('Public/Worksite', ['worksiteId' => $worksite]))->whereNumber('worksite')->name('public.worksite');
 
     // US-031: Administrador de Organización y Veedor (la pantalla, it. 17).
     Route::get('/login', fn () => Inertia::render('Auth/Login', ['context' => tenant()->displayName()]))->name('tenant.login.show');

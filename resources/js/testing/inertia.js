@@ -18,6 +18,9 @@ export const page = reactive({ props: { organization: 'Veeduría Ciudadana Santa
 
 export const usePage = () => page;
 
+/** router.visit queda registrado: el test mira a dónde navegó la pantalla. */
+export const router = { visit: vi.fn() };
+
 export const submissions = [];
 let serverAnswer = () => {};
 

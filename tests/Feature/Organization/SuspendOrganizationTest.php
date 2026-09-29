@@ -138,7 +138,7 @@ it('El mapa público de una organización suspendida sigue disponible con aviso'
         ->and(array_filter(array_column(array_column($timeline, 'seal'), 'merkle_root')))->toHaveCount(3);
 
     // El sitio público responde, y cada pantalla pública recibe el aviso (it. 26 lo muestra en el mapa).
-    $this->get('http://veeduria-smr.govtrace.localhost/')->assertOk();
+    $this->withoutVite()->get('http://veeduria-smr.govtrace.localhost/')->assertOk();
     $this->withoutVite()->get('http://veeduria-smr.govtrace.localhost/login')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page->where('organizationNotice', ORGANIZATION_SUSPENDED_NOTICE));

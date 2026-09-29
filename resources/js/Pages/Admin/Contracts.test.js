@@ -71,7 +71,8 @@ describe('Contratos', () => {
         for (const field of ['SMR-LP-012-2026', 'Pavimentación Calle 30', 'Constructora del Caribe S.A.S.', 'En ejecución', '15/01/2026']) {
             expect(row).toContain(field);
         }
-        expect(row).toContain(new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(1500000000));
+        // El mismo formato de pesos que pide US-017: "$1.250.000.000".
+        expect(row).toContain('$1.500.000.000');
         expect(wrapper.text()).toContain('Página 1 de 3 · 45 contratos');
     });
 

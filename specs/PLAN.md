@@ -941,6 +941,28 @@ Suite: 518 en verde. Cada regla nueva se comprobó rompiéndola a propósito: 15
 **Done-when:** Vitest de los estados de US-027, US-029 y US-017 en verde (sin obras, carga, lápida, badge de anulado).
 **Cubre:** US-017, US-027, US-029 (UI) · R-AUD-01 (UI).
 
+**✅ Cumplido (2026-09-29, con Opus xhigh):** en verde, visto en rojo antes de implementar (componentes y rutas inexistentes):
+- Vitest, 23 nuevos:
+  - `Public/Map.test.js`: 6 (US-027: carga, error y reintento, sin obras, pines por color con su leyenda, tocar un pin, aviso de suspendida);
+  - `Public/PinsMap.test.js`: 3 (teselas de OpenStreetMap, cada pin en su lugar con su color y su nombre accesible, qué pin se tocó);
+  - `Public/Worksite.test.js`: 14. US-017, 3/3 de pantalla (tarjeta, datos tal cual de SECOP, badge de anulado), más la ficha agrupada. US-029: línea de tiempo, visor, coordenadas aproximadas y lápida, más el PDF y el sello. Además: carga, error, sin evidencias y aviso de suspendida;
+- Pest: `PublicPagesTest`, 3 (las dos páginas sin sesión, y abiertas con aviso mientras la organización está suspendida, R-AUD-01).
+
+Suite: 521 en verde. Vitest: 242 en verde. Cada regla de pantalla se comprobó rompiéndola a propósito: 6 casos. El que sobrevivía (la lápida) llevó a endurecer el test: ahora la tarjeta oculta fotos y comentario aunque una respuesta los trajera por error.
+
+- **Rutas públicas:** el mapa está en `/`, que era un texto de prueba, y la vista de una obra en `/worksite/{id}`. Ninguna pide sesión.
+- **Mapa:** Leaflet con OpenStreetMap, cargado solo al aparecer, como en la it. 18. Cada pin es un punto de color, accesible con teclado y con nombre para lectores de pantalla ("Obra en riesgo"), y hay una leyenda: Normal, Alerta, En riesgo.
+- **Vista de obra:**
+  - la tarjeta de cada contrato, con el valor en pesos ("$1.250.000.000"), el plazo en meses y "Ver original en SECOP" en una pestaña nueva (`noopener`);
+  - la línea de tiempo, con miniaturas que cargan en diferido, visor a pantalla completa (se cierra con "Cerrar", tocando fuera o con Escape), el PDF para descargar, la ubicación aproximada y las lápidas.
+- **El aviso de organización suspendida** (R-AUD-01) va en las dos páginas, que siguen abiertas.
+
+**Decisiones de la iteración, para confirmar:**
+1. **Tocar un pin abre la página de la obra,** que se puede compartir por su enlace, en lugar de un panel lateral sobre el mapa.
+2. **"Verificar Sello Blockchain" despliega, en la tarjeta, el sello de la evidencia:** su recibo público (raíz, transacción, ledger, hora) con "Ver en Stellar Expert". La it. 27 le suma el validador, que comprueba el archivo en el navegador.
+3. **Un solo formato de pesos en toda la aplicación,** el de US-017: "$1.250.000.000", sin el espacio que pone `Intl`. También cambia en el listado de contratos del Administrador.
+4. **Sin filtros todavía** (US-028, it. 31). El mapa vacío usa el mensaje exacto de US-028.
+
 ### Iteración 27 — Validador público, recibo y descarga
 **Entregable:** validador con tres modos (contextual, libre y con prueba adjunta); hash y recomposición de Merkle en el navegador; recibo público; botón de descarga.
 **Done-when:**
