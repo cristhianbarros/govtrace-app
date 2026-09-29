@@ -33,7 +33,7 @@ const preparingFiles = ref(false);
 const sending = ref(false);
 const serverErrors = ref([]);
 const sent = ref(false);
-const savedOffline = ref(false); // US-018: quedó en la bandeja de salida
+const savedOffline = ref(false); // US-018 e it. 41: por qué quedó en la bandeja de salida (el mensaje), o false
 
 // US-019: las obras cercanas, desde donde está el veedor.
 const NO_NEARBY = '📍 No se encontraron obras a menos de 500m. Utilice el buscador para encontrarla por nombre o contrato.';
@@ -110,7 +110,10 @@ async function submit() {
         startOver();
         sent.value = true;
     } catch (error) {
-        if (error?.response) {
+        if (error?.response?.status === 429) {
+            // It. 41: pasado el límite por hora, a la bandeja de salida: se envía sola después.
+            await keepOffline(position, MESSAGES.rateLimited);
+        } else if (error?.response) {
             serverErrors.value = errorMessages(error);
         } else {
             await keepOffline(position);
@@ -121,7 +124,7 @@ async function submit() {
 }
 
 /** US-018: guardado en el teléfono tal como se capturó — el lugar y la hora quedan congelados. */
-async function keepOffline(position) {
+async function keepOffline(position, message = MESSAGES.saved) {
     try {
         await saveOffline({
             fields: {
@@ -137,7 +140,7 @@ async function keepOffline(position) {
             files: evidences.value.map((evidence) => evidence.file),
         });
         startOver();
-        savedOffline.value = true;
+        savedOffline.value = message;
     } catch (error) {
         serverErrors.value = [error instanceof OutboxFull ? error.message : MESSAGES.full];
     }
@@ -167,7 +170,7 @@ function startOver() {
             <h2 class="text-xl font-semibold">Nuevo Reporte</h2>
 
             <p v-if="sent" role="status" class="rounded-lg bg-emerald-50 p-3 text-sm font-semibold text-emerald-800">{{ SUCCESS_MESSAGE }}</p>
-            <p v-if="savedOffline" role="status" class="rounded-lg bg-amber-100 p-3 text-sm font-semibold text-amber-900">{{ MESSAGES.saved }}</p>
+            <p v-if="savedOffline" role="status" class="rounded-lg bg-amber-100 p-3 text-sm font-semibold text-amber-900">{{ savedOffline }}</p>
 
             <!-- 1. La obra: una cercana (US-019) o buscada (US-016) -->
             <section v-if="!contract" class="flex flex-col gap-2">

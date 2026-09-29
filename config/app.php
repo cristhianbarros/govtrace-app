@@ -78,11 +78,24 @@ return [
     |
     */
 
-    'locale' => env('APP_LOCALE', 'en'),
+    'locale' => env('APP_LOCALE', 'es'),
 
-    'fallback_locale' => env('APP_FALLBACK_LOCALE', 'en'),
+    'fallback_locale' => env('APP_FALLBACK_LOCALE', 'es'),
 
     'faker_locale' => env('APP_FAKER_LOCALE', 'en_US'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Trusted proxies (it. 41)
+    |--------------------------------------------------------------------------
+    |
+    | The reverse proxy in front of the app (nginx, and the one that ends TLS in
+    | staging and production) lives in a private network. Only its
+    | X-Forwarded-For and X-Forwarded-Proto are believed (AppServiceProvider).
+    |
+    */
+
+    'trusted_proxies' => array_values(array_filter(array_map('trim', explode(',', (string) env('TRUSTED_PROXIES', '127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16'))))),
 
     /*
     |--------------------------------------------------------------------------

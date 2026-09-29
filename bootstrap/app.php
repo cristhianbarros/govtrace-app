@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -25,6 +26,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             HandleInertiaRequests::class,
         ]);
+
+        // It. 41: CSP, Permissions-Policy y, por HTTPS, HSTS, en toda respuesta.
+        $middleware->append(SecurityHeaders::class);
 
         // Without a session, to the login of wherever the visitor is: the
         // organization's on its subdomain, or the global panel's.

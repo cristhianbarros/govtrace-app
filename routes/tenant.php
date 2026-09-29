@@ -70,7 +70,8 @@ Route::middleware([
         // US-051-RPT: las estadísticas del territorio.
         Route::get('/stats', fn () => Inertia::render('Public/Stats'))->name('public.stats');
     });
-    Route::middleware(EnsureMapIsOnline::class)->group(function () {
+    // It. 41: las API públicas, con un límite por visitante.
+    Route::middleware([EnsureMapIsOnline::class, 'throttle:public'])->group(function () {
         // US-027 / US-029: el mapa público — los pines, y lo que pide un clic en uno (it. 24).
         Route::get('/public/worksites', [PublicWorksiteController::class, 'index'])->name('public.worksites.index');
         Route::get('/public/worksites/filters', [PublicWorksiteController::class, 'filters'])->name('public.worksites.filters');
@@ -79,7 +80,7 @@ Route::middleware([
         Route::get('/public/stats', fn (PublicStats $stats) => response()->json($stats->handle()))->name('public.stats.data');
     });
     // US-052-RPT: los datos abiertos, en CSV o JSON.
-    Route::get('/open-data.{format}', OpenDataController::class)->whereIn('format', ['csv', 'json'])->name('public.open-data');
+    Route::get('/open-data.{format}', OpenDataController::class)->whereIn('format', ['csv', 'json'])->middleware('throttle:open-data')->name('public.open-data');
     // US-024: el validador público — el navegador lee el sello en la red por su cuenta.
     Route::get('/verify', fn () => Inertia::render('Public/Validator', ['stellar' => StellarForBrowser::props()]))->name('public.validator');
 
@@ -91,11 +92,12 @@ Route::middleware([
 
     // US-025 / US-026: el recibo de lo publicado (y retirado), y cada
     // archivo publicado con su prueba de inclusión (it. 23).
-    Route::get('/public/reports/{report}/receipt', [ReceiptController::class, 'public'])->whereNumber('report')->name('public.reports.receipt');
-    Route::get('/public/evidences/{evidence}/download', [PublicEvidenceController::class, 'download'])->whereNumber('evidence')->name('public.evidences.download');
-    Route::get('/public/evidences/{evidence}/proof', [PublicEvidenceController::class, 'proof'])->whereNumber('evidence')->name('public.evidences.proof');
-
-    Route::get('/public/proofs/{sha256}', [PublicProofController::class, 'show'])->name('public.proofs.show');
+    Route::middleware('throttle:public')->group(function () {
+        Route::get('/public/reports/{report}/receipt', [ReceiptController::class, 'public'])->whereNumber('report')->name('public.reports.receipt');
+        Route::get('/public/evidences/{evidence}/download', [PublicEvidenceController::class, 'download'])->whereNumber('evidence')->name('public.evidences.download');
+        Route::get('/public/evidences/{evidence}/proof', [PublicEvidenceController::class, 'proof'])->whereNumber('evidence')->name('public.evidences.proof');
+        Route::get('/public/proofs/{sha256}', [PublicProofController::class, 'show'])->name('public.proofs.show');
+    });
     Route::post('/login', [LoginController::class, 'store'])->name('tenant.login');
 
     // US-030: el enlace de US-002 (Administrador inicial) o US-005
@@ -178,7 +180,8 @@ Route::middleware([
         // US-008: solo el Veedor de Campo crea reportes, desde la PWA (it. 16).
         Route::middleware('role:'.Roles::Observer->value.',tenant')->group(function () {
             Route::get('/reports/new', fn () => Inertia::render('Veedor/NewReport'))->name('reports.new');
-            Route::post('/reports', [ReportController::class, 'store'])->name('reports.store');
+            // It. 41: cada reporte cuesta XLM y un turno de la selladora: un límite por veedor y por hora.
+            Route::post('/reports', [ReportController::class, 'store'])->middleware('throttle:reports')->name('reports.store');
 
             // US-010 / US-023: "Mis Reportes", y el recibo de cada uno.
             Route::get('/my-reports', fn () => Inertia::render('Veedor/MyReports'))->name('reports.mine.show');

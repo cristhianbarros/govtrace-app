@@ -245,6 +245,23 @@ describe('Nuevo Reporte sin conexión (US-018)', () => {
         delete window.navigator.onLine;
     });
 
+    it('keeps the report in the phone when the veedor went past the reports allowed per hour (it. 41), and sends it later', async () => {
+        const RATE_LIMITED = '⏳ Llegó al límite de reportes por hora. Su reporte quedó guardado en el dispositivo y se enviará automáticamente más tarde.';
+        const outbox = await outboxHolding(0);
+        sendReport.mockRejectedValue({ response: { status: 429, data: { message: 'Llegó al límite de 30 reportes por hora. Los siguientes se pueden enviar más tarde.' } } });
+        const wrapper = await onWorksite(reading(15));
+
+        await fillReport(wrapper);
+        await wrapper.get('form').trigger('submit');
+        await flushPromises();
+
+        expect(wrapper.get('[role="status"]').text()).toBe(RATE_LIMITED);
+        expect(wrapper.find('[role="alert"]').exists()).toBe(false);
+        const pending = await outbox.pending();
+        expect(pending).toHaveLength(1);
+        expect(pending[0].fields).toMatchObject({ secop_contract_id: 'CO1.PCCNTR.1234567', captured_at: '2026-09-28T15:00:00.000Z' });
+    });
+
     it('Mensaje de almacenamiento lleno: with 10 pending, the new one is not kept, and the report stays on screen', async () => {
         const outbox = await outboxHolding(10);
         sendReport.mockRejectedValue(noSignal);

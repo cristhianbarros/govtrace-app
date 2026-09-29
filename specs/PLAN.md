@@ -1582,6 +1582,55 @@ Suite: 702 en verde (8 nuevos). Vitest: 351. `make backup-check`: 13 comprobacio
 2. **La congestión tampoco gasta intentos.** `txINSUFFICIENT_FEE` también llega si los ledgers van llenos y piden una comisión mayor. Se trata igual que la otra pendiente: el sello espera, sin quedar en "Falla de Sellado". Si durara horas, avisa la alerta de cola estancada (2 h, US-021). La oferta de inclusión del fee bump ya es alta (casi la comisión de recursos), así que es raro quedar por debajo.
 3. **Una sola selladora alcanza para el MVP**: 10 a 12 sellos por minuto. Si el volumen lo pidiera, el camino son las cuentas de canal (varias transacciones por ledger). Es un cambio de la firma que conviene hacer junto con AWS KMS (37b), porque la selladora pasaría a firmar la autorización de Soroban y no la transacción.
 
+#### Iteración 41 — Salir a internet con seguridad
+✅ **Cumplido (2026-09-29).** Aprobada por el usuario ("continúa", sobre el orden de `docs/estado-mvp.md`), con la vara de que el MVP esté **listo para producción**. No necesita AWS: deja la aplicación lista para estar detrás de un proxy con TLS; el certificado y el servidor son de la it. 42 (staging).
+
+**Entregable:**
+1. **Laravel detrás del proxy:** confía en el proxy de la red privada (`TRUSTED_PROXIES`), y solo en `X-Forwarded-For` y `X-Forwarded-Proto`, que nginx sobrescribe. Nunca en `X-Forwarded-Host` ni `-Port`, que nginx deja pasar tal como los manda el visitante (con ellos se envenenarían los enlaces), y que ahora además borra. Detrás de TLS, la aplicación sabe que la visita llegó por HTTPS, y ve la IP real del visitante.
+2. **Cabeceras de seguridad** en toda respuesta: una CSP con los dos únicos orígenes externos (las imágenes del mapa y el RPC público de Stellar), `Permissions-Policy` (cámara y ubicación solo para el sitio) y, por HTTPS, HSTS y `upgrade-insecure-requests`. Una respuesta que ya trae su CSP (el logo) la conserva.
+3. **Límites de abuso:** el envío de reportes, por veedor y por hora; las API públicas, por visitante y por minuto; los datos abiertos, más estrecho. Pasado el límite, 429 con un mensaje en español. La PWA guarda el reporte en la bandeja de salida y lo envía sola más tarde.
+4. **Auditoría de dependencias** (`make audit`) y su etapa en el pipeline.
+5. **Logs diarios con retención** en la plantilla de producción.
+6. **La aplicación en español:** `APP_LOCALE=es` y `lang/es`, para los correos de Laravel y los mensajes de validación por defecto. Cierra esa deuda aceptada.
+7. **La plantilla de producción vigilada por un test.**
+
+**Done-when:**
+- Pest: detrás del proxy, con `X-Forwarded-Proto: https`, la petición es segura, las redirecciones salen en https y va HSTS; desde otra IP, esas cabeceras se ignoran; `X-Forwarded-Host` y `-Port`, siempre.
+- CSP y `Permissions-Policy` en páginas y JSON; el logo conserva la suya.
+- Un veedor pasado el límite recibe 429 y otro veedor no se ve afectado; la API pública limita por visitante detrás del proxy.
+- Un correo de GovTrace sin frases en inglés.
+- Vitest: un 429 guarda el reporte en la bandeja de salida.
+- Playwright: las pantallas públicas y del veedor, con la CSP puesta, sin ninguna violación en un Chromium de verdad.
+- `make audit` en verde, y en el pipeline.
+
+**Hallazgo al diseñarla:** nginx sobrescribe `X-Forwarded-For` y `X-Forwarded-Proto`, pero deja pasar `X-Forwarded-Host` y `X-Forwarded-Port` tal como los manda el visitante. Si Laravel hubiera confiado en todas las cabeceras del proxy, un atacante habría podido envenenar los enlaces que se arman con el host de la petición, como el de la recuperación de contraseña del panel global. Por eso se confía solo en las dos primeras, y nginx ahora borra las otras.
+
+**Prueba:**
+- Suite: 785 en verde (24 nuevos). Vitest: el caso del 429, que ahora deja el reporte en la bandeja de salida (antes quedaba en el formulario, y se perdía si el veedor salía de la pantalla).
+- **Playwright, en un Chromium de verdad, con la CSP puesta:** el mapa público (que pide sus imágenes a OpenStreetMap), la vista de una obra, las estadísticas, el validador, el inicio de sesión, el Service Worker, la búsqueda, el GPS, la vista previa de una foto y "Mis Reportes", **sin una sola violación**. La E2E sin conexión sigue pasando.
+- `make audit`: sin vulnerabilidades conocidas (composer audit y npm audit de producción), en 3 s.
+- **Cada regla, rota a propósito: 16 casos, todos atrapados.** Los cubiertos:
+  - confiar también en el host y el puerto reenviados;
+  - confiar en cualquiera, o en nadie;
+  - HSTS por HTTP;
+  - pisar la CSP del logo;
+  - la CSP sin el RPC, o con su URL y su token;
+  - el servidor de Vite en producción;
+  - el límite de reportes sin la organización en la llave;
+  - un solo límite público para todos;
+  - los datos abiertos con el límite general;
+  - el envío sin límite;
+  - el límite por la IP del proxy;
+  - el correo sin una traducción;
+  - la pantalla sin guardar el reporte ante el 429;
+  - la CSP sin las imágenes del mapa.
+- **Que el detector del navegador funcione, probado aparte.** La última mutación la atrapaba la comprobación de la cabecera, no el navegador. Así que se probó una CSP sin `'unsafe-inline'` en los estilos: el navegador reportó los estilos en línea que inyecta la aplicación, y el test los listó y falló. Eso prueba el detector, y además prueba que ese permiso hace falta. Los estilos no ejecutan código; los scripts siguen solo desde el propio sitio.
+
+**Decisiones de la iteración — a confirmar por el usuario:**
+1. **Los números de los límites:** 30 reportes por veedor y por hora (la bandeja de salida de la PWA guarda 10: cabe entera), 120 consultas públicas y 10 descargas de datos abiertos por visitante y por minuto. Se cambian por el entorno, sin tocar código.
+2. **HSTS con los subdominios** (`includeSubDomains`, un año): cada organización es un subdominio, y todos quedan obligados a HTTPS. No se pidió la precarga en los navegadores (`preload`), que es difícil de deshacer.
+3. **El español por defecto**, también en la plantilla de producción.
+
 ## Pivote a Stellar (2026-09-28)
 
 El proyecto participa en **Stellar Apex**, así que la blockchain pasa de EVM/Polygon a **Stellar**, con Smart Contracts en **Soroban (Rust)**:
@@ -1661,7 +1710,7 @@ No bloquean ningún criterio de aceptación. **Aceptada por el usuario el 2026-0
 
 | Deuda | Por qué se acepta | Qué haría falta |
 |---|---|---|
-| `APP_LOCALE=en`: los mensajes por defecto de Laravel (`required`, `email`) salen en inglés si alguien se salta la pantalla | Las pantallas validan antes, en español (aceptada el 2026-09-28) | Traducir `lang/es` |
+| ✅ *Cerrada en la it. 41:* `APP_LOCALE=en`: los mensajes por defecto de Laravel (`required`, `email`) salen en inglés si alguien se salta la pantalla | Las pantallas validan antes, en español (aceptada el 2026-09-28) | Traducir `lang/es` |
 | El calendario corre en UTC: la sincronización de las 02:00 son las 21:00 en Colombia | Cada tarea dice su hora en Colombia en `routes/console.php` | `->timezone('America/Bogota')` en cada tarea, o `schedule_timezone` |
 | Repetir `make setup` sobre un stack que ya corre puede fallar en `up --wait`: el proxy se marca enfermo mientras la app reinicia | Jenkins parte de cero; para un stack existente basta `make up` | Más paciencia en el healthcheck del proxy |
 | El nombre de un veedor invitado es la parte local de su correo | Ninguna historia pide el nombre; todo lo público usa el seudónimo | Una historia de perfil del veedor |
