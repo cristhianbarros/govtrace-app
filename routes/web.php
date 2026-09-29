@@ -9,6 +9,7 @@ use App\Http\Controllers\Central\ParameterController;
 use App\Http\Controllers\Central\SealingController;
 use App\Http\Controllers\Central\SealingCostsController;
 use App\Http\Controllers\Central\SecopHealthController;
+use App\Http\Controllers\Central\UsageController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -62,6 +63,10 @@ foreach (config('tenancy.central_domains') as $domain) {
             Route::get('/admin/sealing/data', [SealingController::class, 'data'])->name('admin.sealing.data');
             Route::post('/admin/sealing/requeue', [SealingController::class, 'requeue'])->name('admin.sealing.requeue');
             Route::get('/admin/costs/data', SealingCostsController::class)->name('admin.costs.data');
+
+            // US-053-RPT: el resumen de uso por organización.
+            Route::get('/admin/usage', fn () => Inertia::render('SuperAdmin/Usage'))->name('admin.usage.show');
+            Route::get('/admin/usage/data', UsageController::class)->name('admin.usage.data');
         });
     });
 }

@@ -58,7 +58,10 @@ onMounted(async () => {
     <Head title="Mapa de obras" />
     <AppLayout :title="page.props.organization ?? 'GovTrace'" :logo="page.props.organizationLogo">
         <OrganizationNotice />
-        <Link href="/verify" class="mb-3 inline-flex min-h-11 items-center rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold">Validar un archivo</Link>
+        <div class="mb-3 flex flex-wrap gap-2">
+            <Link href="/verify" class="inline-flex min-h-11 items-center rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold">Validar un archivo</Link>
+            <Link href="/stats" class="inline-flex min-h-11 items-center rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold">Estadísticas del territorio</Link>
+        </div>
 
         <details class="mb-3 rounded-lg border border-slate-200 bg-white p-3 text-sm">
             <summary class="min-h-11 cursor-pointer py-2 font-semibold">Filtrar obras</summary>

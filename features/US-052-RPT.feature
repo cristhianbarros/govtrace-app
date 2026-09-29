@@ -13,7 +13,7 @@ Característica: Datos abiertos de evidencias publicadas
   Esquema del escenario: Descarga de datos abiertos
     Cuando descargo los datos abiertos en formato "<formato>"
     Entonces obtengo 10 registros
-    Y cada registro tiene obra, contrato, municipio, fecha, clasificación, coordenadas aproximadas, raíz de Merkle, TxID, bloque, comentario y seudónimo del veedor
+    Y cada registro tiene obra, contrato, municipio, fecha, clasificación, coordenadas aproximadas, raíz de Merkle, TxID, ledger, comentario y seudónimo del veedor
 
     Ejemplos:
       | formato |

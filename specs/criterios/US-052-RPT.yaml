@@ -7,7 +7,7 @@ criterios_aceptacion:
     - "El Verificador descarga en CSV o JSON las evidencias publicadas y sus sellos"
   validaciones_reglas:
     - "Solo evidencias publicadas"
-    - "Campos: obra, contrato, municipio, fecha, clasificación, coordenadas aproximadas, raíz de Merkle, TxID, bloque, comentario y seudónimo del veedor"
+    - "Campos: obra, contrato, municipio, fecha, clasificación, coordenadas aproximadas, raíz de Merkle, TxID, ledger, comentario y seudónimo del veedor"
     - "Coordenadas aproximadas (R-PRIV-02) y seudónimo del veedor (R-PRIV-03)"
     - "Sin inicio de sesión (R-VER-02)"
   manejo_errores: []

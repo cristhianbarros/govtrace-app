@@ -3,6 +3,7 @@
 use App\Infrastructure\Scheduling\NightlySchedule;
 use App\Jobs\ArchiveOldContracts;
 use App\Jobs\CheckContractLifetime;
+use App\Jobs\CheckOrganizationActivity;
 use App\Jobs\CheckSealingQueue;
 use App\Jobs\CheckSponsorBalance;
 use App\Jobs\PurgeDecommissionedEvidence;
@@ -55,4 +56,11 @@ app(Schedule::class)->job(new CheckContractLifetime)
 app(Schedule::class)->job(new PurgeDecommissionedEvidence)
     ->dailyAt('06:00')
     ->name('decommissioned-evidence-purge')
+    ->onOneServer();
+
+// US-054-RPT: organizaciones con 30 días sin actividad, cada día a las
+// 13:00 UTC (08:00 en Colombia).
+app(Schedule::class)->job(new CheckOrganizationActivity)
+    ->dailyAt('13:00')
+    ->name('organization-activity-check')
     ->onOneServer();
