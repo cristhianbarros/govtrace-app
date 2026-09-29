@@ -2,20 +2,20 @@
 @story_id:US-024 @origin:discovery_inicial @priority:2 @epic:EPIC-005
 Característica: Validador público de integridad
   Como Verificador Público
-  quiero que mi navegador calcule el hash de un archivo y lo compare con Polygon
+  quiero que mi navegador calcule el hash de un archivo y lo compare con Stellar
   para obtener un veredicto que no dependa de la base de datos de GovTrace
 
   Antecedentes:
     Dado que soy un visitante sin sesión en el validador de "veeduria-smr"
-    Y la foto "obra-gaira.jpg" está sellada en el bloque 61234567 el "2026-09-27"
+    Y la foto "obra-gaira.jpg" está sellada en el ledger 61234567 el "2026-09-27"
 
   @complexity:high
   Escenario: Modo libre con un archivo auténtico
     Cuando arrastro "obra-gaira.jpg" al validador libre
     Entonces el hash se calcula en mi navegador sin enviar el archivo al servidor
     Y el navegador recompone la raíz con la prueba de inclusión y la compara con el Smart Contract
-    Y veo el banner verde "✅ Archivo Auténtico e Inmutable. Sellado el 2026-09-27 en el bloque #61234567."
-    Y veo un enlace a la transacción en Polygonscan
+    Y veo el banner verde "✅ Archivo Auténtico e Inmutable. Sellado el 2026-09-27 en el ledger #61234567."
+    Y veo un enlace a la transacción en Stellar Expert
 
   @complexity:high
   Escenario: Modo contextual con un archivo alterado
@@ -33,7 +33,7 @@ Característica: Validador público de integridad
   Escenario: Modo con prueba adjunta, sin consultar a GovTrace
     Dado que descargué "obra-gaira.jpg" junto con su prueba de inclusión
     Cuando aporto al validador el archivo y su prueba de inclusión
-    Entonces la verificación se hace solo contra Polygon sin consultar el API de GovTrace
+    Entonces la verificación se hace solo contra Stellar sin consultar el API de GovTrace
     Y veo el banner verde de archivo auténtico
 
   @complexity:low @negative
@@ -55,10 +55,10 @@ Característica: Validador público de integridad
     Y veo el mensaje "El archivo supera el tamaño máximo de 10MB."
 
   @complexity:medium @negative
-  Escenario: Falla de conexión con Polygon
-    Dado que el nodo RPC de Polygon no responde
+  Escenario: Falla de conexión con Stellar
+    Dado que el RPC de Stellar no responde
     Cuando arrastro "obra-gaira.jpg" al validador libre
-    Entonces veo el mensaje "⏳ Error de conexión con la red Polygon. No se pudo verificar la inmutabilidad en este momento. Intente más tarde."
+    Entonces veo el mensaje "⏳ Error de conexión con la red Stellar. No se pudo verificar la inmutabilidad en este momento. Intente más tarde."
 
   @complexity:low
   Escenario: El validador no exige registro

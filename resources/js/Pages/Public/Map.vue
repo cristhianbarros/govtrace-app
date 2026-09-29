@@ -2,7 +2,7 @@
 // US-027: el mapa público de la organización (R-MAP-01), sin sesión. Carga
 // solo los pines (R-MAP-02); tocar uno abre la vista de su obra, que pide
 // sus datos en ese momento.
-import { Head, router, usePage } from '@inertiajs/vue3';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { onMounted } from 'vue';
 import LoadState from '@/Components/LoadState.vue';
 import OrganizationNotice from '@/Components/Public/OrganizationNotice.vue';
@@ -27,6 +27,7 @@ onMounted(load);
     <Head title="Mapa de obras" />
     <AppLayout :title="page.props.organization ?? 'GovTrace'" :logo="page.props.organizationLogo">
         <OrganizationNotice />
+        <Link href="/verify" class="mb-3 inline-flex min-h-11 items-center rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold">Validar un archivo</Link>
         <LoadState
             :loading="loading"
             :error="error"

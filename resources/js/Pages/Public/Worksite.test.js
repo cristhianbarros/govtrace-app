@@ -6,13 +6,16 @@ import { flushPromises, mount } from '@vue/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import Worksite from './Worksite.vue';
 import { formatDateTime } from '@/lib/format.js';
-import { fetchReceipt, fetchWorksite } from '@/services/api.js';
+import { validate } from '@/lib/validator.js';
+import { fetchReceipt, fetchWorksite, findProof } from '@/services/api.js';
 import { page } from '@/testing/inertia.js';
 
 vi.mock('@inertiajs/vue3', async () => await import('@/testing/inertia.js'));
 vi.mock('@/services/api.js');
+vi.mock('@/lib/validator.js', async (original) => ({ ...(await original()), validate: vi.fn() }));
 
 const TOMBSTONE = '🚫 Evidencia retirada por la organización por incumplimiento de políticas.';
+const STELLAR = { rpc_url: 'https://soroban-testnet.stellar.org', network_passphrase: 'Test SDF Network ; September 2015', contracts: ['CABXHM74HFSAZD4FDFDONSIDJOVJBU7ZJXYBCHY3JJDCQUDFTHBT2WUI'], explorer_url: 'https://stellar.expert/explorer/testnet' };
 const SEAL = { merkle_root: 'ab'.repeat(32), tx_hash: 'cd'.repeat(32), ledger: 61234567 };
 
 const contract = {
@@ -62,7 +65,7 @@ const button = (wrapper, text) => wrapper.findAll('button').find((candidate) => 
 
 beforeEach(() => {
     vi.resetAllMocks();
-    page.props = { organization: 'Veeduría Ciudadana Santa Marta', organizationLogo: null, organizationNotice: null };
+    page.props = { organization: 'Veeduría Ciudadana Santa Marta', organizationLogo: null, organizationNotice: null, stellar: STELLAR };
 });
 
 describe('Vista de obra — el contrato (US-017)', () => {
@@ -190,6 +193,28 @@ describe('Vista de obra — la línea de tiempo (US-029)', () => {
         expect(seal.text()).toContain(formatDateTime('2026-09-27T15:16:02+00:00'));
         expect(seal.get('a').attributes()).toMatchObject({ href: `https://stellar.expert/explorer/testnet/tx/${SEAL.tx_hash}`, target: '_blank', rel: 'noopener noreferrer' });
         expect(seal.get('a').text()).toBe('Ver en Stellar Expert');
+        wrapper.unmount();
+    });
+});
+
+describe('Vista de obra — el modo contextual del validador (US-024)', () => {
+    it('Modo contextual con un archivo alterado: compares a copy against THIS evidence, and shows the red banner', async () => {
+        fetchReceipt.mockResolvedValue({ sealed: false, message: 'pendiente' });
+        validate.mockResolvedValue({ verdict: 'altered', message: '❌ Archivo Alterado o Falso. Las huellas criptográficas no coinciden con la blockchain.' });
+        const wrapper = await openWorksite();
+        await cards(wrapper)[0].findAll('button').find((candidate) => candidate.text() === 'Verificar Sello Blockchain').trigger('click');
+        await flushPromises();
+
+        const copy = new File(['copia'], 'obra-gaira.jpg', { type: 'image/jpeg' });
+        const input = cards(wrapper)[0].get('input[data-test="file"]');
+        Object.defineProperty(input.element, 'files', { value: [copy], configurable: true });
+        await input.trigger('change');
+        await flushPromises();
+
+        expect(validate).toHaveBeenCalledWith(expect.objectContaining({ file: copy, mode: 'contextual', reportId: 12, stellar: STELLAR, findProof }));
+        const banner = cards(wrapper)[0].get('[data-test="verdict"]');
+        expect(banner.attributes('role')).toBe('alert');
+        expect(banner.text()).toContain('❌ Archivo Alterado o Falso.');
         wrapper.unmount();
     });
 });

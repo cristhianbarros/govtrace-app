@@ -971,6 +971,31 @@ Suite: 521 en verde. Vitest: 242 en verde. Cada regla de pantalla se comprobó r
 
 **Cubre:** US-024, US-025, US-026 (UI) · R-VER-01, R-VER-02, R-MNT-01.
 
+**✅ Cumplido (2026-09-29, con Opus xhigh):** en verde, visto en rojo antes de implementar (módulos y rutas inexistentes):
+- Vitest, 25 nuevos:
+  - `lib/validator.test.js`: **US-024, 13 de sus 14 casos**. El que falta, "no exige registro", se prueba en Pest. Usa el sellado real de la red local de la it. 23 (`tests/fixtures/verify/sealed.json`) y los vectores de Merkle, a través del verificador independiente. Más 5 derivados;
+  - `Public/Validator.test.js`: 5;
+  - `Public/Worksite.test.js`: el modo contextual en la tarjeta;
+  - `Public/Map.test.js`: el enlace al validador;
+- Pest: `ValidatorDataTest`, 8, entre ellos "El validador no exige registro".
+
+Suite: 529 en verde. Vitest: 267 en verde. Cada regla nueva se comprobó rompiéndola a propósito: 11 casos, todos atrapados por su test.
+
+- **Al abrir la iteración, US-024 se ajustó a Stellar:** "bloque" pasa a "ledger", Polygonscan a Stellar Expert, y "el nodo RPC de Polygon" a "el RPC de Stellar".
+- **Un solo código para el veredicto:** el navegador usa la implementación del verificador independiente (`tools/verify/lib`), que es JavaScript puro (WebCrypto, `fetch`, `atob`). El script y la página dan el mismo veredicto con el mismo código. `lib/validator.js` solo agrega los tres modos, los formatos, el tamaño y los mensajes.
+- **Página `/verify`,** sin sesión, con dos modos: un archivo solo (libre) o el archivo con su prueba de inclusión. El modo contextual está en el panel de sello de cada tarjeta. El mapa enlaza al validador.
+- **`GET /public/proofs/{sha256}`:** la prueba de un archivo, buscada por su hash; el archivo nunca sale del navegador (R-VER-01). Dice si la evidencia está publicada, retirada o sin publicar. Con `?report=` busca solo en ese reporte, para el modo contextual.
+- **Las páginas públicas llevan lo que el navegador necesita para leer la red** (`StellarForBrowser`): el RPC público, la red, los contratos (los de `tools/verify/contracts.json` más el configurado) y el explorador. Comprobé que el RPC de la testnet y el local responden con CORS abierto.
+
+**Decisiones de la iteración, para confirmar:**
+1. **El RPC que consulta el navegador es `STELLAR_PUBLIC_RPC_URL`.** Sale de la red: `https://soroban-testnet.stellar.org` en la testnet y `http://127.0.0.1:8100/rpc` en la local. En la red pública hay que configurar uno: sin él, el validador muestra el error de conexión.
+2. **GovTrace da la prueba, pero la red decide.** Si la red no confirma una prueba de GovTrace, el modo libre responde "No encontrado" y el contextual "Alterado o Falso". Así lo que diga la base de GovTrace nunca basta para dar un "Auténtico".
+3. **La prueba de una evidencia oculta o rechazada se entrega a quien tenga el archivo,** con la nota de US-024. Revela que esa evidencia existe, como pide la historia, pero solo a quien ya tiene sus bytes.
+4. **El modo contextual compara contra los archivos de ESA evidencia.** Funciona también en una lápida, cuyo sello sigue disponible.
+5. **Formato y tamaño se revisan antes de calcular el hash.** El mensaje para un formato no admitido (un .mp4) es propio, porque la historia no lo fija: "Formato no admitido: el validador acepta fotos JPG o PNG y documentos PDF."
+6. **Si GovTrace no responde en el modo libre, el mensaje sugiere la prueba descargada:** con ella basta la red Stellar.
+7. **El validador comprueba los archivos, no la hoja de metadatos,** porque el JSON de metadatos no se publica (decisión 7 de la it. 23). Sigue pendiente que resuelvas la inconsistencia entre R-PRIV-03 y R-PRIV-02 (it. 24, decisión 9).
+
 ### Iteración 28 — Veedor: Mis Reportes y recibo
 **Entregable:** lista con estado técnico y editorial por separado, rechazo con motivo y recibo en la app.
 **Done-when:** US-010 (10 casos) en verde (backend y Vitest), más la UI de US-023.

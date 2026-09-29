@@ -87,3 +87,19 @@ export const fetchWorksite = async (id) => (await dataOf(http.get(`/public/works
 
 /** US-025: el Recibo de Inmutabilidad público de una evidencia (su receipt_url). */
 export const fetchReceipt = async (url) => (await dataOf(http.get(url))).data;
+
+/**
+ * US-024: la prueba de inclusión de un archivo, buscada solo por su hash (el
+ * archivo nunca se envía); null si GovTrace no tiene sellado ese archivo.
+ * reportId: solo en esa evidencia (el modo contextual).
+ */
+export async function findProof(sha256, reportId) {
+    try {
+        return (await dataOf(http.get(`/public/proofs/${sha256}`, { params: reportId ? { report: reportId } : {} }))).data;
+    } catch (error) {
+        if (error.response?.status === 404) {
+            return null;
+        }
+        throw error;
+    }
+}
