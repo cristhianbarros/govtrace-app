@@ -39,6 +39,9 @@ foreach (config('tenancy.central_domains') as $domain) {
             Route::put('/admin/organizations/{tenant}/nit', [OrganizationController::class, 'updateNit'])->name('admin.organizations.update-nit');
             Route::post('/admin/organizations/{tenant}/suspend', [OrganizationController::class, 'suspend'])->name('admin.organizations.suspend');
             Route::post('/admin/organizations/{tenant}/reactivate', [OrganizationController::class, 'reactivate'])->name('admin.organizations.reactivate');
+            // US-003b: la baja definitiva, con doble confirmación.
+            Route::post('/admin/organizations/{tenant}/decommission/start', [OrganizationController::class, 'startDecommission'])->name('admin.organizations.decommission.start');
+            Route::post('/admin/organizations/{tenant}/decommission', [OrganizationController::class, 'decommission'])->name('admin.organizations.decommission');
             // US-042-SEC: un reporte en nombre de una organización que lo autorizó (R-SA-02).
             Route::post('/admin/organizations/{tenant}/reports', [OrganizationReportController::class, 'store'])->name('admin.organizations.reports.store');
 

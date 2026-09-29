@@ -17,9 +17,8 @@ use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 /**
  * US-030: the link every WelcomeNotification sends (US-002, US-005) ends
- * up here. {user} route-model-binds against App\Domain\Organization\User
- * — safe because this route only exists inside routes/tenant.php, so
- * tenancy is already the right one by the time Laravel resolves it.
+ * up here. {user} is looked up in this organization's users — this route
+ * only exists inside routes/tenant.php, so tenancy is already the right one.
  */
 class SetPasswordController extends Controller
 {
@@ -48,23 +47,26 @@ class SetPasswordController extends Controller
         ]);
     }
 
-    public function store(Request $request, User $user): SymfonyResponse
+    /** An account that no longer exists — a revoked invitation (US-040-USR) — reads like an expired link too. */
+    public function store(Request $request, string $user): SymfonyResponse
     {
         $data = $request->validate([
             'token' => ['required', 'string'],
             'password' => ['required', 'confirmed', new StrongPassword],
         ]);
 
+        $account = User::query()->find($user);
+
         try {
-            (new AcceptInvitation)->handle($user, $data['token'], $data['password']);
+            (new AcceptInvitation)->handle($account ?? throw InvitationRejected::expiredOrInvalid(), $data['token'], $data['password']);
         } catch (InvitationRejected $e) {
             throw ValidationException::withMessages(['token' => $e->getMessage()]);
         }
 
-        Auth::guard('tenant')->login($user);
+        Auth::guard('tenant')->login($account);
         $request->session()->regenerate();
 
         // Una visita completa: la sesión y su token CSRF acaban de cambiar.
-        return Inertia::location(redirect()->intended(RoleBasedDashboard::routeFor($user)));
+        return Inertia::location(redirect()->intended(RoleBasedDashboard::routeFor($account)));
     }
 }

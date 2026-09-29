@@ -3,6 +3,7 @@
 namespace App\Infrastructure\Tenancy;
 
 use App\Domain\Organization\OrganizationStatus;
+use Illuminate\Support\Str;
 use Stancl\Tenancy\Contracts\TenantWithDatabase;
 use Stancl\Tenancy\Database\Concerns\HasDatabase;
 use Stancl\Tenancy\Database\Concerns\HasDomains;
@@ -18,7 +19,15 @@ class Tenant extends BaseTenant implements TenantWithDatabase
 {
     use HasDatabase, HasDomains;
 
-    protected $fillable = ['id', 'nit', 'name', 'display_name', 'logo_path', 'status'];
+    protected $fillable = ['id', 'nit', 'name', 'display_name', 'logo_path', 'status', 'decommissioned_at', 'evidence_files_purged_at'];
+
+    protected $casts = [
+        'decommissioned_at' => 'datetime',
+        'evidence_files_purged_at' => 'datetime',
+    ];
+
+    /** US-003b: the files are kept this long after the decommission; the seals and proofs, forever. */
+    public const EVIDENCE_RETENTION_YEARS = 5;
 
     /**
      * Without this, stancl's VirtualColumn trait shoves every attribute
@@ -28,7 +37,7 @@ class Tenant extends BaseTenant implements TenantWithDatabase
      */
     public static function getCustomColumns(): array
     {
-        return ['id', 'nit', 'name', 'display_name', 'logo_path', 'status'];
+        return ['id', 'nit', 'name', 'display_name', 'logo_path', 'status', 'decommissioned_at', 'evidence_files_purged_at'];
     }
 
     /** What veedores and the public see: the display name (US-007), or the legal name until there is one. */
@@ -55,6 +64,18 @@ class Tenant extends BaseTenant implements TenantWithDatabase
         $fresh = self::query()->findOrFail($this->getTenantKey());
 
         return ['name' => $fresh->displayName(), 'logo' => $fresh->logoUrl()];
+    }
+
+    /** The subdomain as the Super Administrador types it: "veeduria-smr". */
+    public function subdomain(): string
+    {
+        return Str::before($this->domains()->value('domain'), '.');
+    }
+
+    /** US-003b: whether the retention policy already deleted its evidence files. */
+    public function evidenceFilesPurged(): bool
+    {
+        return self::query()->whereKey($this->getTenantKey())->whereNotNull('evidence_files_purged_at')->exists();
     }
 
     public function statusLabel(): string

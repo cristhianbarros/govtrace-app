@@ -23,9 +23,16 @@ class PublicEvidenceController extends Controller
 {
     private const NO_CACHE = ['Cache-Control' => 'no-store'];
 
-    public function download(int $evidence): StreamedResponse
+    /** US-003b: the file itself, until the retention after a decommission deletes it; its proof stays. */
+    public const PURGED = 'Este archivo se borró al cumplirse 5 años de la baja de la organización. Su sello en Stellar y su prueba de inclusión se conservan.';
+
+    public function download(int $evidence): StreamedResponse|JsonResponse
     {
         $file = $this->published($evidence);
+
+        if (tenant()->evidenceFilesPurged()) {
+            return response()->json(['message' => self::PURGED], 410);
+        }
 
         return Storage::disk('evidencias')->download($file->storage_path, $file->downloadName(), [
             'Content-Type' => $file->mime_type,

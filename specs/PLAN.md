@@ -1197,6 +1197,68 @@ Suite: 615 en verde. Vitest: 332. `make test-stellar`: 11. Cada regla nueva se c
 **Done-when:** US-003b (6 casos) y US-040-USR (2) en verde.
 **Cubre:** US-003b, US-040-USR · R-AUD-02, R-AUD-03.
 
+**✅ Cumplido (2026-09-29, con Opus xhigh):** US-003b se ajustó a Stellar al abrir la iteración: solo el nombre de la red. De paso se corrigió "Polygon" en un criterio de US-026, que ya se había construido contra Stellar.
+
+Todo en verde, y visto en rojo antes de implementar (rutas y pantallas inexistentes):
+- Pest: `DecommissionOrganizationTest`, **US-003b, 6/6**, más 12 derivados:
+  - el subdominio mal escrito;
+  - la primera confirmación vence a los 10 minutos;
+  - el token de otra organización no sirve;
+  - es definitivo: ni otra baja, ni suspender, ni reactivar;
+  - también se da de baja una suspendida;
+  - se revoca la autorización al Super Administrador (US-042-SEC);
+  - solo el Super Administrador del panel global;
+  - el listado dice "Dada de baja";
+  - la descarga funciona hasta la purga y después dice por qué no;
+  - se purga una sola vez, con auditoría;
+  - nunca se purga una organización activa o suspendida;
+  - la purga corre cada día.
+- Pest: `ManageInvitationsTest`, **US-040-USR, 2/2**, más 7 derivados:
+  - reenviar una invitación ya vencida;
+  - revocar libera el correo para invitarlo de nuevo;
+  - solo una invitación pendiente se reenvía o revoca;
+  - solo el Administrador;
+  - un Administrador no está entre los veedores.
+- Vitest, 9 nuevos:
+  - la baja con sus dos confirmaciones, cancelar la segunda, el rechazo del servidor y nada más que hacer en una dada de baja;
+  - reenviar y revocar invitaciones, también vencidas;
+  - la página del mapa fuera de línea.
+
+Suite: 642 en verde. Vitest: 341. Cada regla nueva se comprobó rompiéndola a propósito: 34 casos (26 del servidor y 8 de la pantalla). Todos quedaron atrapados menos uno equivalente: quitar el filtro por estado "dada de baja" de la purga no cambia nada, porque solo una organización dada de baja tiene fecha de baja. El filtro se queda porque se lee mejor.
+
+- **Baja con doble confirmación** (panel global):
+  - `POST /admin/organizations/{id}/decommission/start`, la primera, dice lo que implica: evidencias selladas y hasta cuándo se conservan los archivos. Da un token que vale 10 minutos.
+  - `POST /admin/organizations/{id}/decommission`, la segunda, pide ese token y el subdominio escrito.
+  - La baja es lógica. Nada se borra y nada cambia en Stellar. Se desactivan sus usuarios, se anulan las invitaciones pendientes y la autorización al Super Administrador, y nadie vuelve a entrar: el inicio de sesión y cada petición lo rechazan con "La organización veedora fue dada de baja. Sus usuarios ya no tienen acceso.". Queda en el log de auditoría.
+- **El mapa sale de línea, las evidencias siguen verificables:**
+  - el mapa, la vista de cada obra y sus datos responden "fuera de línea": la pantalla `Public/Offline`, que lleva al validador, y 410 en los datos;
+  - el validador, las pruebas de inclusión, los recibos y las descargas siguen.
+- **Retención** (`PurgeDecommissionedEvidence`, cada día a las 06:00 UTC):
+  - 5 años después de la baja borra los archivos de evidencia, una sola vez y con auditoría;
+  - los hashes, las pruebas de inclusión y los sellos se conservan, así que una copia guardada sigue saliendo "Auténtico";
+  - una descarga ya purgada responde 410 y dice por qué.
+- **Reenviar o revocar una invitación** (`POST /observers/{id}/invitation/resend` y `/revoke`, del Administrador):
+  - reenviar da un enlace nuevo con la vigencia configurada, y el anterior deja de valer;
+  - revocar hace que el enlace se comporte como uno vencido;
+  - las dos quedan en el log de auditoría.
+  - `InvitationLink` es ahora el único lugar que emite un enlace: lo usan invitar y reenviar.
+- **La pantalla de fijar contraseña** responde igual a una cuenta que ya no existe (una invitación revocada): "El enlace de invitación ha expirado o no es válido…", también al enviar el formulario. Antes daba 404.
+- **Etiquetas del log de auditoría** para las acciones nuevas y para `seal.requeued` de la it. 32, que había quedado sin etiqueta.
+
+**Decisiones de la iteración, para confirmar:**
+1. **La doble confirmación la hace cumplir el servidor,** no solo la pantalla.
+   - La primera da un token de 10 minutos.
+   - La segunda exige ese token y el subdominio escrito.
+   - Cancelar la segunda no llega al servidor: el token vence solo.
+2. **La baja desactiva a todos sus usuarios y anula sus invitaciones,** además de bloquear el acceso por el estado de la organización. Es definitiva: no hay "reactivar una dada de baja".
+3. **Qué sale de línea y qué no.**
+   - Sale el mapa, la vista de cada obra, sus datos y las fotos del mapa.
+   - Siguen el validador (`/verify`), las pruebas de inclusión, los recibos y las descargas de archivos mientras existan.
+   - El subdominio sigue respondiendo, para que las evidencias sigan verificables.
+4. **La retención cuenta 5 años exactos desde la baja,** y la revisión es diaria. Solo se borran los archivos de evidencia: el logo y la base de la organización se conservan.
+5. **Revocar una invitación borra la cuenta invitada:** nunca tuvo contraseña ni reportes. Así el correo se puede invitar de nuevo. El log de auditoría conserva quién, cuándo y a qué correo.
+6. **Se puede reenviar una invitación ya vencida,** no solo una pendiente: es el caso de "no atendida".
+
 ### Iteración 34 — Reportes y datos abiertos
 **Entregable:** exportación CSV de la organización; estadísticas públicas; datos abiertos en CSV y JSON; resumen de uso; alerta de inactividad.
 **Done-when:** US-050-RPT (3 casos), US-051-RPT (2), US-052-RPT (4), US-053-RPT (2) y US-054-RPT (4) en verde.
@@ -1243,7 +1305,7 @@ Historias con Gherkin y criterios todavía redactados para Polygon; cada una se 
 | US-023, US-025 | Recibo: TxID, número y hora del ledger, enlace a un explorador de Stellar | it. 23 |
 | US-024, US-046-INT | el validador y el script leen el sello del contrato por el RPC de Stellar; cómo leer un sello archivado | it. 23 y 27 |
 | US-004, US-022 | comisiones en XLM (no gas en POL), precio de XLM en COP, saldo de la patrocinadora | ✅ ya ajustadas (it. 32) |
-| US-003b, US-037 | solo el nombre de la red en los textos | al abrir su iteración |
+| US-003b, US-037 | solo el nombre de la red en los textos | ✅ ya ajustadas (US-037 no nombra la red; US-003b, en la it. 33) |
 
 ## Carga real por fase (sin rebalancear, como se decidió)
 

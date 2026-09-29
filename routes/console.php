@@ -5,6 +5,7 @@ use App\Jobs\ArchiveOldContracts;
 use App\Jobs\CheckContractLifetime;
 use App\Jobs\CheckSealingQueue;
 use App\Jobs\CheckSponsorBalance;
+use App\Jobs\PurgeDecommissionedEvidence;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -47,4 +48,11 @@ app(Schedule::class)->job(new CheckContractLifetime)
     ->dailyAt('12:00')
     ->when($sealingConfigured)
     ->name('contract-lifetime-check')
+    ->onOneServer();
+
+// US-003b: la retención de los archivos de una organización dada de baja,
+// cada día a las 06:00 UTC (01:00 en Colombia).
+app(Schedule::class)->job(new PurgeDecommissionedEvidence)
+    ->dailyAt('06:00')
+    ->name('decommissioned-evidence-purge')
     ->onOneServer();

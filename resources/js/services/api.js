@@ -42,6 +42,10 @@ export const inviteObserver = (email) => dataOf(http.post('/observers/invite', {
 export const deactivateObserver = (id) => dataOf(http.post(`/observers/${id}/deactivate`));
 export const reactivateObserver = (id) => dataOf(http.post(`/observers/${id}/reactivate`));
 
+// US-040-USR: reenviar o revocar una invitación pendiente.
+export const resendInvitation = (id) => dataOf(http.post(`/observers/${id}/invitation/resend`));
+export const revokeInvitation = (id) => dataOf(http.post(`/observers/${id}/invitation/revoke`));
+
 /** US-012 */
 export const fetchTerritory = async () => (await dataOf(http.get('/territory'))).data;
 export const searchTerritories = async (keyword) => (await dataOf(http.get('/territory/search', { params: { q: keyword } }))).data;
@@ -101,6 +105,10 @@ export const fetchSealingCosts = () => dataOf(http.get('/admin/costs/data'));
 /** US-003a */
 export const suspendOrganization = (id) => dataOf(http.post(`/admin/organizations/${id}/suspend`));
 export const reactivateOrganization = (id) => dataOf(http.post(`/admin/organizations/${id}/reactivate`));
+
+// US-003b: la baja definitiva — la primera confirmación da el token de la segunda.
+export const startDecommission = (id) => dataOf(http.post(`/admin/organizations/${id}/decommission/start`));
+export const confirmDecommission = (id, token, subdomain) => dataOf(http.post(`/admin/organizations/${id}/decommission`, { token, subdomain }));
 
 // El sitio público (sin sesión) -----------------------------------------------
 

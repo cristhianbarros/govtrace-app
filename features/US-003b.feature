@@ -7,7 +7,7 @@ Característica: Baja definitiva de una organización
 
   Antecedentes:
     Dado que estoy autenticado como Super Administrador en el panel global
-    Y existe la organización "Veeduría Ciudadana Santa Marta" con 5 evidencias selladas en Polygon
+    Y existe la organización "Veeduría Ciudadana Santa Marta" con 5 evidencias selladas en Stellar
 
   @complexity:medium
   Escenario: Baja lógica tras doble confirmación
@@ -34,14 +34,14 @@ Característica: Baja definitiva de una organización
   @complexity:medium @edge
   Escenario: La baja no altera los registros en la blockchain
     Cuando doy de baja la organización "Veeduría Ciudadana Santa Marta" con doble confirmación
-    Entonces las 5 raíces selladas en Polygon permanecen sin cambios
+    Entonces las 5 raíces selladas en Stellar permanecen sin cambios
 
   @complexity:medium @edge
   Esquema del escenario: Retención de 5 años de los archivos tras la baja
     Dado que la organización "Veeduría Ciudadana Santa Marta" fue dada de baja hace <tiempo>
     Cuando se aplica la política de retención
     Entonces sus archivos de evidencia están "<archivos>"
-    Y sus sellos en Polygon y sus pruebas de inclusión se conservan
+    Y sus sellos en Stellar y sus pruebas de inclusión se conservan
 
     Ejemplos:
       | tiempo            | archivos   |
