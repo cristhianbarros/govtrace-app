@@ -31,7 +31,7 @@ it('registers an organization and its subdomain responds', function () {
     expect($tenant->status)->toBe('active')
         ->and(Domain::query()->where('domain', 'veeduria-smr.govtrace.localhost')->exists())->toBeTrue();
 
-    $this->get('http://veeduria-smr.govtrace.localhost/')->assertOk();
+    $this->withoutVite()->get('http://veeduria-smr.govtrace.localhost/')->assertOk();
 });
 
 it('rejects a NIT that is already registered', function () {

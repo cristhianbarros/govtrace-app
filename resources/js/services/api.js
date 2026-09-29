@@ -76,3 +76,14 @@ export const fetchSecopHealth = async () => (await dataOf(http.get('/admin/secop
 /** US-003a */
 export const suspendOrganization = (id) => dataOf(http.post(`/admin/organizations/${id}/suspend`));
 export const reactivateOrganization = (id) => dataOf(http.post(`/admin/organizations/${id}/reactivate`));
+
+// El sitio público (sin sesión) -----------------------------------------------
+
+/** US-027: los pines del mapa, livianos: [{id, lat, lng, color_pin}] (R-MAP-02). */
+export const fetchPins = async () => (await dataOf(http.get('/public/worksites'))).data;
+
+/** US-029 / US-017: la obra, sus contratos y su línea de tiempo, al tocar su pin. */
+export const fetchWorksite = async (id) => (await dataOf(http.get(`/public/worksites/${id}`))).data;
+
+/** US-025: el Recibo de Inmutabilidad público de una evidencia (su receipt_url). */
+export const fetchReceipt = async (url) => (await dataOf(http.get(url))).data;
