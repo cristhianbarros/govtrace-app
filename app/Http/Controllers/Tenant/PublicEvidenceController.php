@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Tenant;
 
 use App\Application\Publication\InclusionProof;
 use App\Domain\Reports\Evidence;
+use App\Domain\Reports\EvidenceKind;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
@@ -11,7 +12,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * US-026: descargar un archivo publicado — el mismo binario que se selló —
- * y su prueba de inclusión, sin sesión. Solo de evidencias publicadas: una
+ * y su prueba de inclusión, sin sesión; y ver una foto (US-029). Solo de evidencias publicadas: una
  * retirada conserva su recibo, no sus archivos; una oculta o rechazada
  * nunca fue pública. En todos esos casos, 404, también por la dirección.
  *
@@ -27,6 +28,18 @@ class PublicEvidenceController extends Controller
         $file = $this->published($evidence);
 
         return Storage::disk('evidencias')->download($file->storage_path, $file->downloadName(), [
+            'Content-Type' => $file->mime_type,
+            ...self::NO_CACHE,
+        ]);
+    }
+
+    /** US-029: the photo itself, for the thumbnails and the viewer of the timeline — inline, the bytes that were sealed. */
+    public function photo(int $evidence): StreamedResponse
+    {
+        $file = $this->published($evidence);
+        abort_unless($file->kind === EvidenceKind::Photo->value, 404);
+
+        return Storage::disk('evidencias')->response($file->storage_path, $file->downloadName(), [
             'Content-Type' => $file->mime_type,
             ...self::NO_CACHE,
         ]);

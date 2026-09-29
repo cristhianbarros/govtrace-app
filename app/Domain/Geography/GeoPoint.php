@@ -13,6 +13,9 @@ final class GeoPoint
     /** Mean Earth radius for the haversine distance, in meters. */
     private const EARTH_RADIUS_METERS = 6_371_000;
 
+    /** A thousandth of a degree: about 111 m of latitude, and of longitude near the equator. */
+    private const PUBLIC_DECIMALS = 3;
+
     public function __construct(
         public readonly float $latitude,
         public readonly float $longitude,
@@ -20,6 +23,16 @@ final class GeoPoint
         if (abs($latitude) > 90 || abs($longitude) > 180) {
             throw new InvalidArgumentException("Coordenadas fuera de rango: {$latitude}, {$longitude}.");
         }
+    }
+
+    /**
+     * R-PRIV-02: what the public sees of a place — to about 100 m, never
+     * the exact point. Rounded to a fixed grid, not moved at random: many
+     * reports from the same spot can't be averaged back to it.
+     */
+    public function approximate(): self
+    {
+        return new self(round($this->latitude, self::PUBLIC_DECIMALS), round($this->longitude, self::PUBLIC_DECIMALS));
     }
 
     /** Great-circle (haversine) distance. */

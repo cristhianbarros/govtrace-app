@@ -113,6 +113,23 @@ class Contract extends Model
     }
 
     /**
+     * US-034 (R-SEC-07): its end date passed and SECOP still shows it
+     * running. The worksite that groups it is "en riesgo", and its pin red
+     * (US-027). The same rule as {@see self::isOverdueInExecution()}, for a query.
+     */
+    public function scopeOverdueInExecution(Builder $query, CarbonInterface $today): void
+    {
+        $query->statusIn(SecopContractStatus::IN_EXECUTION)->whereDate('end_date', '<', $today);
+    }
+
+    public function isOverdueInExecution(CarbonInterface $today): bool
+    {
+        return in_array(mb_strtolower((string) $this->status), SecopContractStatus::IN_EXECUTION, true)
+            && $this->end_date !== null
+            && $this->end_date->lt($today->copy()->startOfDay());
+    }
+
+    /**
      * SECOP's status compared case-insensitively ("terminado" and
      * "Terminado" are the same) against lowercase SecopContractStatus lists.
      *

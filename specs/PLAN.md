@@ -864,6 +864,44 @@ Cada regla nueva se comprobó rompiéndola a propósito: 12 en el servidor, 15 e
 **Done-when:** US-027 (12 casos), US-029 (5) y US-045-INT (3) en verde.
 **Cubre:** US-027, US-029, US-045-INT · R-MAP-01, R-MAP-02, R-PRIV-02, R-INT-05.
 
+**✅ Cumplido (2026-09-29, con Opus max):** backend en verde, visto en rojo antes de implementar (rutas inexistentes):
+- `PublicMapTest`: US-027, 12/12, más 7 derivados;
+- `WorksiteViewTest`: US-029, 5/5, más 3 derivados;
+- `GroupContractsTest`: US-045-INT, 3/3, más 10 derivados (6 casos de reglas y validación, más dos carreras con un veedor que reporta en el mismo instante).
+
+Suite: 494 en verde. Cada regla nueva se comprobó rompiéndola a propósito: 20 casos, todos atrapados por su test. Las pantallas son de la it. 26 (mapa y vista de obra) y de la it. 29 (agrupación).
+
+- **Pines** (US-027): `GET /public/worksites` trae solo `[{id, lat, lng, color_pin}]` (R-MAP-02), con `color_pin` en `green`, `yellow` o `red`. Son tres consultas, sin importar cuántos pines haya.
+  - El color es el peor entre dos: el de la evidencia **publicada** más reciente ("Retraso" amarillo, "Abandono" rojo, "Avance" verde) y el de los contratos de la ficha (rojo si uno venció y SECOP lo sigue mostrando en ejecución).
+  - Las ocultas no cuentan, y las retiradas tampoco.
+  - Cada organización ve solo sus fichas (R-MAP-01): viven en su propia base.
+- **Vista de obra** (US-029): `GET /public/worksites/{id}` trae el nombre de la ficha (o el objeto de su contrato), sus contratos con la tarjeta de US-017, y la línea de tiempo, bajo demanda.
+  - Cada tarjeta lleva fecha y hora, clasificación, comentario, `approximate_location` (a unos 100 m), sus archivos y el sello con su recibo, para el botón "Verificar Sello Blockchain".
+  - Cada foto lleva `photo_url`: `GET /public/evidences/{id}/photo` la entrega *inline*, con los mismos bytes que se sellaron, para la miniatura y el visor.
+  - La lápida no lleva archivos, comentario ni lugar.
+  - Se cerró el caso de US-017 que la it. 8 dejó sin probar: un contrato anulado cuya obra ya tenía evidencias sigue mostrándolas, con su aviso.
+- **Agrupación** (US-045-INT): `POST /worksites/group` es del Administrador. Pide un nombre (hasta 150 caracteres) y dos o más contratos distintos, que existan y sean del territorio de la organización. Queda en el log de auditoría (`worksite.contracts_grouped`), y el panel muestra el nombre de la ficha.
+- **La regla de "vencido y en ejecución" es una sola:** `Contract::overdueInExecution()`, que usan el cálculo nocturno (US-034) y el mapa.
+- **Carreras con un veedor que reporta en el mismo instante,** reproducidas con una segunda conexión a la base, como otro proceso:
+  - si el veedor vincula primero el contrato, la agrupación falla limpia y pide reintentar;
+  - si la agrupación funde la ficha que el reporte acababa de leer, el reporte fallaba con 404. Ahora `CreateReport` la vuelve a buscar y el reporte llega a la ficha agrupada.
+- **Hallazgo en los tests:** el cliente de pruebas lleva una sola sesión para todos los subdominios, y `ScopeSessions` rechaza con 403 la de otra organización. En un navegador no pasa: cada subdominio tiene su cookie (`SESSION_DOMAIN=null`). El helper `publicGet()` entra como visitante sin sesión.
+
+**Decisiones de la iteración, para confirmar:**
+1. **Cuál es la "más reciente":** la evidencia por **fecha de captura**, no por fecha de publicación. Una evidencia vieja que se publica tarde no le gana a una más nueva.
+2. **El vencimiento se calcula al pedir el mapa,** con los datos de SECOP, y no se lee la marca nocturna `at_risk`. Así, una agrupación cambia el pin en el acto.
+3. **Toda ficha anclada tiene pin,** sea cual sea el estado de sus contratos: cerrados hace más de 12 meses, o anulados. Su evidencia publicada sigue siendo pública, y los elefantes blancos son justo lo que el mapa debe mostrar. Leí "Terminadas/Liquidadas dentro de la ventana de 12 meses siguen las mismas reglas" como una regla de color, no como un corte de visibilidad. Si prefieres quitarlas del mapa, es un filtro.
+4. **Los pines también van a unos 100 m** (3 decimales, sobre una grilla fija, no con ruido aleatorio). La ubicación de una ficha es la del primer veedor, exacta (First-Touch), y R-PRIV-02 la protege igual que la de su evidencia.
+5. **Un contrato "Suspendido" en plazo es verde.** El título de US-027 dice "amarillo suspendidas", pero sus criterios y su Gherkin no lo recogen. Seguí los criterios; si quieres el amarillo, es una regla más.
+6. **No hay miniaturas generadas en el servidor.** `photo_url` sirve la foto sellada, que ya viene optimizada (lado mayor de 1920 px, unos 200 a 400 KB), y la pantalla la carga en diferido. La imagen de Docker no trae GD; si pesa en datos móviles, se agrega GD y un tamaño de 320 px.
+7. **Agrupar no mueve reportes.** La obra de un reporte es parte de lo que envió el veedor (R-TA-02), y su referencia está sellada en la red. Por eso:
+   - la ficha con reportes recibe a los demás contratos y conserva su ubicación;
+   - la ficha que se queda vacía, sin reportes, se borra;
+   - dos fichas que ya tienen reportes no se funden: la agrupación se rechaza y lo explica;
+   - desagrupar no está en el alcance.
+8. **La vista de obra existe también sin ubicación,** para una agrupación nueva, sin pin: sus contratos son públicos de todos modos.
+9. **Inconsistencia en la spec, para resolver antes de la it. 27:** R-PRIV-03 dice que el JSON de metadatos "se publica", pero ese JSON trae las coordenadas exactas y el comentario, y R-PRIV-02 lo prohíbe. Hoy no se publica (it. 23, decisión 7): se publica su hash, como hoja del árbol. Propongo corregir R-PRIV-03 en ese sentido. Afecta al validador (it. 27) y a los datos abiertos (it. 34).
+
 ### Iteración 25 — Autorización al Super Admin, archivado y resumen
 **Entregable:** autorización de 30 días, revocable; archivado mensual con retorno si llega evidencia; resumen del territorio.
 **Done-when:** US-042-SEC (5 casos), US-048-MNT (4) y US-049-RPT (2) en verde.

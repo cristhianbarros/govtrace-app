@@ -184,6 +184,8 @@ class CreateReport
             }
         }
 
-        return Worksite::query()->lockForUpdate()->findOrFail($link->worksite_id);
+        // Si mientras tanto el Administrador la fundió en otra ficha (US-045-INT), la de ahora.
+        return Worksite::query()->lockForUpdate()->find($link->worksite_id)
+            ?? $this->lockedWorksiteOf($contract);
     }
 }

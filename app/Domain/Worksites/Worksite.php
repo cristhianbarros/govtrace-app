@@ -20,7 +20,7 @@ use LogicException;
  */
 class Worksite extends Model
 {
-    protected $fillable = ['latitude', 'longitude', 'located_at', 'at_risk'];
+    protected $fillable = ['name', 'latitude', 'longitude', 'located_at', 'at_risk'];
 
     protected $casts = [
         'at_risk' => 'boolean',

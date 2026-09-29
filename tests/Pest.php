@@ -214,6 +214,37 @@ function editorialDecision(OrganizationUser $member, string $decision, int $repo
     return test()->actingAs($member, 'tenant')->postJson("http://{$host}/reports/{$reportId}/{$decision}", $data);
 }
 
+/**
+ * A report by $veedor, sealed and then published by $administrator
+ * (US-036): what the public map and timeline show.
+ *
+ * @param  array<string, mixed>  $overrides
+ */
+function publishedReport(Tenant $tenant, OrganizationUser $veedor, OrganizationUser $administrator, array $overrides = []): int
+{
+    $reportId = sealedReport($tenant, $veedor, $overrides);
+    editorialDecision($administrator, 'publish', $reportId, [], $tenant->domains()->value('domain'))->assertOk();
+    tenancy()->end();
+
+    return $reportId;
+}
+
+/**
+ * GET a public page of an organization as a visitor without a session
+ * (R-VER-02). The test client keeps one session for every host; a browser
+ * keeps one per subdomain (SESSION_DOMAIN=null), so a visitor never
+ * carries another organization's.
+ */
+function publicGet(string $path, string $host = 'veeduria-smr.govtrace.localhost'): TestResponse
+{
+    if (auth('tenant')->check()) {
+        auth('tenant')->logout();
+    }
+    test()->flushSession();
+
+    return test()->get("http://{$host}{$path}", ['Accept' => 'application/json']);
+}
+
 /** "Oculto", "Publicado", "Rechazado" or "Retirado". */
 function editorialStatusOf(Tenant $tenant, int $reportId): string
 {
