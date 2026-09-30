@@ -1,28 +1,44 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
 import AppLayout from './AppLayout.vue';
+import { page } from '@/testing/inertia.js';
+
+vi.mock('@inertiajs/vue3', async () => await import('@/testing/inertia.js'));
+vi.mock('@/services/api.js');
 
 describe('AppLayout', () => {
-    it('renders the title and the default slot content', () => {
+    it('shows the name in the header as a brand, and leaves the heading of the page to the page (it. 40b)', () => {
+        page.props = { organization: null, account: null };
         const wrapper = mount(AppLayout, {
             props: { title: 'GovTrace' },
             slots: { default: '<p>content</p>' },
         });
 
-        expect(wrapper.find('h1').text()).toBe('GovTrace');
+        expect(wrapper.get('header').text()).toContain('GovTrace');
+        expect(wrapper.find('h1').exists()).toBe(false);
         expect(wrapper.find('main').html()).toContain('<p>content</p>');
     });
 
     it('renders the bottom navigation only when the nav slot is provided', () => {
+        page.props = { organization: null, account: null };
         expect(mount(AppLayout).find('nav').exists()).toBe(false);
         expect(mount(AppLayout, { slots: { nav: '<a>Inicio</a>' } }).find('nav').exists()).toBe(true);
     });
 
     it('shows the organization logo next to the title, when it has one (US-007)', () => {
+        page.props = { organization: null, account: null };
         expect(mount(AppLayout, { props: { title: 'Ojo Ciudadano SMR' } }).find('header img').exists()).toBe(false);
 
         const img = mount(AppLayout, { props: { title: 'Ojo Ciudadano SMR', logo: '/organization/logo?v=logo-abc' } }).get('header img');
         expect(img.attributes('src')).toBe('/organization/logo?v=logo-abc');
         expect(img.attributes('alt')).toBe('Logo de Ojo Ciudadano SMR');
+    });
+
+    it('puts the account menu in the header when someone is logged in, and nothing on a public screen (it. 40b)', () => {
+        page.props = { organization: 'Veeduría Ciudadana Santa Marta', account: { name: 'Marta Ospina', email: 'marta@veeduria.org', role: 'Administrador de Organización' } };
+        expect(mount(AppLayout).get('header button[aria-haspopup="menu"]').text()).toContain('Marta Ospina');
+
+        page.props = { organization: 'Veeduría Ciudadana Santa Marta', account: null };
+        expect(mount(AppLayout).find('header button[aria-haspopup="menu"]').exists()).toBe(false);
     });
 });

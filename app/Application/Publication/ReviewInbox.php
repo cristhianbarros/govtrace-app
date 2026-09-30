@@ -2,10 +2,15 @@
 
 namespace App\Application\Publication;
 
+use App\Domain\Contracts\Contract;
+use App\Domain\Geography\Municipality;
+use App\Domain\Geography\PlaceName;
 use App\Domain\Reports\EditorialStatus;
 use App\Domain\Reports\Evidence;
 use App\Domain\Reports\Report;
 use App\Domain\Sealing\SealStatus;
+use App\Domain\Worksites\Worksite;
+use Illuminate\Support\Collection;
 
 /**
  * US-036: the Administrador's inbox — the organization's hidden evidences,
@@ -15,21 +20,29 @@ use App\Domain\Sealing\SealStatus;
  * acted upon (R-SEC-05, R-MON-02): the Administrador decides.
  *
  * With Published, the ones that can be withdrawn (US-037).
+ *
+ * Each one says which worksite it is about (its name and municipality) and
+ * which veedor sent it (it. 40b): a responsible review needs that context.
  */
 class ReviewInbox
 {
     /** @return list<array<string, mixed>> */
     public function handle(EditorialStatus $status = EditorialStatus::Hidden): array
     {
-        return Report::query()
+        $reports = Report::query()
             ->where('editorial_status', $status)
             ->whereHas('seal', fn ($seal) => $seal->where('status', SealStatus::Sealed))
-            ->with(['seal', 'evidences' => fn ($evidences) => $evidences->orderBy('id')])
+            ->with(['seal', 'user', 'worksite.contracts', 'evidences' => fn ($evidences) => $evidences->orderBy('id')])
             ->orderBy('id')
-            ->get()
+            ->get();
+        $worksites = $this->describe($reports->pluck('worksite')->filter()->unique('id'));
+
+        return $reports
             ->map(fn (Report $report) => [
                 'id' => $report->id,
                 'worksite_id' => $report->worksite_id,
+                'worksite' => $worksites[$report->worksite_id] ?? null,
+                'observer' => $report->user?->name,
                 'classification' => $report->classification->value,
                 'comment' => $report->comment,
                 'captured_at' => $report->captured_at->toIso8601String(),
@@ -44,5 +57,32 @@ class ReviewInbox
                 'actions' => $report->editorialActions(),
             ])
             ->all();
+    }
+
+    /**
+     * Each worksite's name (its own, or its first contract's object) and the
+     * municipality of that contract, with two queries for the whole inbox.
+     *
+     * @param  Collection<int, Worksite>  $worksites
+     * @return array<int, array{id: int, name: ?string, municipality: ?string}>
+     */
+    private function describe(Collection $worksites): array
+    {
+        $contracts = Contract::query()
+            ->whereIn('secop_contract_id', $worksites->flatMap->contracts->pluck('secop_contract_id'))
+            ->get(['secop_contract_id', 'object', 'municipality_code'])
+            ->keyBy('secop_contract_id');
+        $municipalities = Municipality::query()->whereIn('code', $contracts->pluck('municipality_code')->filter())->pluck('name', 'code');
+
+        return $worksites->mapWithKeys(function (Worksite $worksite) use ($contracts, $municipalities) {
+            $first = $contracts->get($worksite->contracts->sortBy('id')->first()?->secop_contract_id);
+            $municipality = $municipalities->get($first?->municipality_code);
+
+            return [$worksite->id => [
+                'id' => $worksite->id,
+                'name' => $worksite->name ?? $first?->object,
+                'municipality' => $municipality !== null ? PlaceName::forDisplay($municipality) : null,
+            ]];
+        })->all();
     }
 }

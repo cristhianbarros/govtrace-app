@@ -14,6 +14,6 @@ describe('Registro de auditoría de la organización', () => {
         await flushPromises();
 
         expect(fetchAuditLog).toHaveBeenCalledWith(1);
-        expect(wrapper.find('h2').text()).toBe('Registro de auditoría');
+        expect(wrapper.get('h1').text()).toBe('Registro de auditoría');
     });
 });

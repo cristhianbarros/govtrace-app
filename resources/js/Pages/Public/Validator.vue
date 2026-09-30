@@ -51,7 +51,7 @@ function chooseFile(chosen) {
     <AppLayout :title="page.props.organization ?? 'GovTrace'" :logo="page.props.organizationLogo">
         <Link href="/" class="mb-3 inline-flex min-h-11 items-center text-sm font-semibold text-slate-700">← Volver al mapa</Link>
         <OrganizationNotice />
-        <h2 class="text-xl font-semibold">Validador de evidencias</h2>
+        <h1 class="text-xl font-semibold">Validador de evidencias</h1>
         <p class="mt-1 text-sm text-slate-600">
             Compruebe que una foto o un documento es exactamente el que se selló en la red Stellar. El archivo no sale de su equipo: su navegador calcula su huella y la compara con la red.
         </p>

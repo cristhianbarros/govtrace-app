@@ -14,7 +14,8 @@ criterios_aceptacion:
     - {caso: "Credenciales incorrectas", mensaje: "Credenciales incorrectas. Verifique su correo electrónico y contraseña."}
     - {caso: "5 intentos fallidos consecutivos", mensaje: "Demasiados intentos fallidos. Tu cuenta ha sido bloqueada temporalmente durante 15 minutos."}
     - {caso: "Cuenta desactivada", mensaje: "Su cuenta se encuentra desactivada. Comuníquese con el administrador de su organización."}
-  requisitos_ux: []
+  requisitos_ux:
+    - "(It. 40b, 2026-09-29) Cerrar sesión desde cualquier panel: la cabecera de cada panel nombra a quien tiene la sesión abierta y ofrece 'Salir', que siempre pide confirmar; el dominio central también tiene su salida"
   casos_edge: []
 validacion_smart:
   specific: true

@@ -50,6 +50,15 @@ async function decide(decision) {
 
 <template>
     <article class="flex flex-col gap-3 rounded-lg bg-white p-3 shadow-sm">
+        <!-- It. 40b (V4): de qué obra es y quién la envió, para decidir con contexto. -->
+        <div v-if="evidence.worksite">
+            <p data-test="worksite" class="text-lg font-semibold">{{ evidence.worksite.name }}</p>
+            <p class="text-base text-slate-700">
+                <span v-if="evidence.worksite.municipality">{{ evidence.worksite.municipality }}</span>
+                <span v-if="evidence.worksite.municipality && evidence.observer"> · </span>
+                <span v-if="evidence.observer">Enviada por {{ evidence.observer }}</span>
+            </p>
+        </div>
         <div class="flex flex-wrap items-center gap-2 text-sm">
             <span class="rounded bg-slate-900 px-2 py-0.5 font-semibold text-white">{{ evidence.classification }}</span>
             <span class="text-slate-600">{{ formatDateTime(evidence.captured_at) }}</span>
@@ -58,7 +67,7 @@ async function decide(decision) {
             </span>
         </div>
 
-        <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
+        <div class="grid grid-cols-2 gap-2 md:grid-cols-3">
             <template v-for="file in evidence.files" :key="file.id">
                 <img
                     v-if="file.kind === 'photo'"

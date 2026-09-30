@@ -64,7 +64,7 @@ onBeforeUnmount(() => window.removeEventListener('online', onOnline));
 <template>
     <Head title="Mis Reportes" />
     <AppLayout :title="page.props.organization ?? 'GovTrace'" :logo="page.props.organizationLogo">
-        <h2 class="mb-3 text-xl font-semibold">Mis Reportes</h2>
+        <h1 class="mb-3 text-xl font-semibold">Mis Reportes</h1>
         <section v-if="outboxState.count > 0 || outboxState.notice || outboxState.rejected.length" aria-label="Bandeja de salida" class="mb-3 flex flex-col gap-2">
             <p v-if="outboxState.count > 0" data-test="outbox" class="rounded-lg bg-amber-100 p-3 text-sm font-semibold text-amber-900">{{ waitingLabel(outboxState.count) }}</p>
             <p v-if="outboxState.expiring > 0" role="alert" class="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">{{ MESSAGES.expiring }}</p>

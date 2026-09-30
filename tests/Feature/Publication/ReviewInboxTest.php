@@ -235,3 +235,15 @@ it('records every editorial decision in the audit log: who, when, before and aft
         ->and($published->after)->toBe(['report_id' => $this->hidden[0], 'editorial_status' => 'published'])
         ->and($rejected->after)->toBe(['report_id' => $this->hidden[1], 'editorial_status' => 'rejected', 'reason' => 'La foto no corresponde a la obra']);
 });
+
+/*
+ * It. 40b — V4 de docs/mapa-funcional.md: el Administrador decide sabiendo
+ * de qué obra es cada evidencia y qué veedor la envió (decidido por el
+ * usuario el 2026-09-29: "sí, que vea el veedor").
+ */
+it('Cada evidencia de la bandeja dice de qué obra es y quién la envió: the worksite, its municipality and the veedor', function () {
+    $evidence = inbox($this->administrator)->assertOk()->json('data.0');
+
+    expect($evidence['worksite'])->toBe(['id' => $this->worksite->id, 'name' => 'Pavimentación Calle 30', 'municipality' => 'Santa Marta'])
+        ->and($evidence['observer'])->toBe('Miembro de prueba');
+});

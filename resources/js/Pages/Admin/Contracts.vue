@@ -34,6 +34,10 @@ const preview = (object) => (object && object.length > OBJECT_PREVIEW ? `${objec
 const arrow = (field) => (sort.value !== field ? '' : direction.value === 'desc' ? ' ↓' : ' ↑');
 
 onMounted(reload);
+
+// It. 40b: "cancelled" es el estado interno de GovTrace para un contrato anulado
+// o retirado en SECOP; se nombra como en la tarjeta pública (US-017).
+const statusOf = (contract) => (contract.status === 'cancelled' ? 'Anulado/Retirado en SECOP' : contract.status);
 </script>
 
 <template>
@@ -63,7 +67,7 @@ onMounted(reload);
                         <div><dt class="text-xs text-slate-500">Número de proceso</dt><dd>{{ contract.process_number ?? '—' }}</dd></div>
                         <div><dt class="text-xs text-slate-500">Contratista</dt><dd>{{ contract.contractor_name ?? '—' }}</dd></div>
                         <div><dt class="text-xs text-slate-500">Valor total</dt><dd>{{ formatCop(contract.value) }}</dd></div>
-                        <div><dt class="text-xs text-slate-500">Estado</dt><dd>{{ contract.status }}</dd></div>
+                        <div><dt class="text-xs text-slate-500">Estado</dt><dd>{{ statusOf(contract) }}</dd></div>
                         <div><dt class="text-xs text-slate-500">Fecha de firma</dt><dd>{{ formatDate(contract.signed_at) }}</dd></div>
                     </dl>
                 </li>

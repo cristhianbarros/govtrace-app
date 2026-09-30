@@ -188,9 +188,9 @@ describe('Nuevo Reporte', () => {
         page.props.organizationLogo = '/organization/logo?v=logo-abc';
         const wrapper = mount(NewReport);
 
-        expect(wrapper.get('h1').text()).toBe('Ojo Ciudadano SMR');
+        expect(wrapper.get('header').text()).toContain('Ojo Ciudadano SMR');
         expect(wrapper.get('header img').attributes('src')).toBe('/organization/logo?v=logo-abc');
-        expect(wrapper.get('h2').text()).toBe('Nuevo Reporte');
+        expect(wrapper.get('h1').text()).toBe('Nuevo Reporte');
 
         page.props.organization = 'Veeduría Ciudadana Santa Marta';
         page.props.organizationLogo = null;
@@ -323,3 +323,36 @@ describe('Obras cercanas (US-019)', () => {
         expect(wrapper.text()).toContain(GPS_DENIED);
     });
 });
+
+describe('El botón de enviar dice qué falta (it. 40b)', () => {
+    const missing = (wrapper) => wrapper.find('[data-test="missing"]');
+
+    it('El botón de enviar dice qué falta: next to the button, in words, until nothing is missing', async () => {
+        const wrapper = await onWorksite(reading(15));
+
+        expect(submitButton(wrapper).attributes('disabled')).toBeDefined();
+        expect(missing(wrapper).text()).toContain('Para enviar falta:');
+        expect(missing(wrapper).text()).toContain('decir qué vio en la obra');
+        expect(missing(wrapper).text()).toContain('adjuntar al menos una foto o un PDF');
+        expect(submitButton(wrapper).attributes('aria-describedby')).toBe('send-missing');
+
+        await fillReport(wrapper, { evidences: [] });
+        expect(missing(wrapper).text()).not.toContain('decir qué vio en la obra');
+        expect(missing(wrapper).text()).toContain('adjuntar al menos una foto o un PDF');
+
+        wrapper.findComponent(EvidencePicker).vm.$emit('update:modelValue', [evidence(1)]);
+        await flushPromises();
+        expect(missing(wrapper).exists()).toBe(false);
+        expect(submitButton(wrapper).attributes('disabled')).toBeUndefined();
+    });
+
+    it('says it is waiting for the GPS while there is no position yet', async () => {
+        Object.defineProperty(window.navigator, 'geolocation', { value: { getCurrentPosition: vi.fn() }, configurable: true });
+        const wrapper = mount(NewReport);
+        wrapper.findComponent(ContractSearch).vm.$emit('select', contract);
+        await flushPromises();
+
+        expect(missing(wrapper).text()).toContain('la ubicación del GPS');
+    });
+});
+

@@ -1632,6 +1632,47 @@ Esta iteración estaba reservada para ese recorrido. El recorrido se hizo para e
 - axe: cero violaciones de WCAG 2.2 AA en las 52 vistas.
 - Ningún `sm:` en `resources/js`.
 
+✅ **40b cumplida (2026-09-30).** Se hizo sin revisión del usuario, como pidió ("como si mañana fuera el día de la demo"). Las decisiones de abajo quedan para confirmar.
+- **Salir (V1):** un menú de cuenta en la cabecera de todos los paneles (`AccountMenu.vue`) con el nombre, el rol, el correo, "Ver el sitio público" y "Salir".
+  - "Salir" siempre pregunta antes. Al veedor además le avisa si quedan reportes sin enviar (US-018; el aviso pasó de la barra de abajo al menú).
+  - El dominio central ya tiene su `POST /logout`.
+  - Quién tiene la sesión abierta viaja en la prop compartida `account`.
+- **La Bandeja (V4):** cada evidencia dice su obra, su municipio y qué veedor la envió (`ReviewInbox`, dos consultas para toda la bandeja).
+- **El mapa:**
+  - `h1` "Obras vigiladas" y una línea de qué hacer;
+  - arriba del mapa, los tres estados con su signo (✓ ! ✕) y cuántas obras tiene cada uno; tocarlos filtra. La leyenda de abajo se quitó;
+  - pines de 36 px con el mismo signo;
+  - el resto de filtros, en "Más filtros";
+  - el Resumen del Administrador usa los mismos nombres (Normal, Alerta, En riesgo).
+- **La obra:** su estado y por qué, en palabras (`WorksiteCondition`, con las mismas reglas que el pin: `PinColor` y el contrato vencido en ejecución). Nombra cada razón que cuenta.
+- **Nuevo reporte:** mientras no se puede enviar, junto al botón se lee "Para enviar falta:" y la lista: GPS, qué vio, al menos un archivo, el comentario largo.
+- **Código:**
+  - cada pantalla tiene su título en `h1`, y el nombre de la organización pasó a ser la marca de la cabecera;
+  - las 11 clases `sm:`, a `md:` (y una más en Uso), con un test que vigila que no vuelvan;
+  - la lista de Organización ya no incumple axe;
+  - el inicio de sesión de una organización muestra su nombre y su logo, y "← Volver al mapa de obras";
+  - varios enlaces pasaron a 44 px.
+- **Spec:** un escenario nuevo en US-031, US-036, US-027, US-029 y US-008, primero en su YAML (requisitos de UX) y después en Gherkin. `make trace-check`: 255 de 255.
+
+**Prueba:**
+- Pest:
+  - salir en los dos dominios;
+  - quién tiene la sesión, incluida la pantalla pública sin nadie;
+  - la obra y el veedor de la Bandeja;
+  - el estado de la obra en 6 casos, incluido que coincide con su pin.
+- Vitest: 369 de 369.
+- `make e2e`: 30 pasan y 17 siguen pendientes. Se cerraron V1 en los dos paneles y V4, y los estados del mapa se ven sin desplazarse en 412×915 y en 1366×768.
+- `make ux-check`:
+  - ninguna pantalla empeoró, y la línea base se reescribió con las mejoras;
+  - axe quedó en cero violaciones;
+  - en la pantalla de inicio de sesión, el texto de menos de 16 px bajó del 72 al 36 %; en Nuevo reporte, del 57 al 32 %; en el mapa, del 87 al 53 %.
+
+**Decisiones de la iteración (❓, por confirmar):**
+1. **"Salir" siempre pide confirmación**, para todos los roles. Antes, el veedor salía de un toque si no tenía reportes pendientes.
+2. **En Salud de SECOP se deja "Success".** El escenario de US-014 fija ese texto (`estado "Success"`); cambiarlo a "Correcta" es una enmienda que decide el usuario.
+3. **El estado interno `cancelled`** se muestra en Contratos como "Anulado/Retirado en SECOP", como ya lo decía la tarjeta pública (US-017).
+4. **Los cinco escenarios nuevos del spec** (lista de arriba).
+
 **40c — Navegación y legibilidad.**
 - Una cabecera común con el menú de cuenta.
 - En celular, la barra de abajo con ícono y texto (máximo 5 destinos); en escritorio, una barra lateral.

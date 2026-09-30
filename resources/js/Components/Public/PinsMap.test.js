@@ -49,3 +49,13 @@ describe('PinsMap', () => {
         wrapper.unmount();
     });
 });
+
+describe('PinsMap, ícono además del color (it. 40b)', () => {
+    it('draws each state with its own sign, not only its color, and a pin big enough to touch', async () => {
+        const wrapper = await mountMap();
+
+        expect(wrapper.findAll('.leaflet-marker-icon span').map((dot) => dot.text())).toEqual(['✓', '!', '✕']);
+        expect(wrapper.vm.markers[0].options.icon.options.iconSize).toEqual([36, 36]);
+        wrapper.unmount();
+    });
+});

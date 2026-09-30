@@ -57,7 +57,24 @@ class HandleInertiaRequests extends Middleware
             // US-021: cuántas evidencias quedaron en "Falla de Sellado", para el banner
             // del Administrador. Al veedor nunca: él no ve errores de sellado.
             'sealingFailures' => fn () => $this->sealingFailures($request),
+            // It. 40b: quién tiene la sesión abierta, para nombrarlo en la cabecera
+            // junto a "Salir". null en las pantallas públicas.
+            'account' => fn () => $this->account($request),
         ];
+    }
+
+    /** @return array{name: string, email: string, role: string}|null */
+    private function account(Request $request): ?array
+    {
+        if (tenancy()->initialized) {
+            $user = $request->user('tenant');
+
+            return $user ? ['name' => $user->name, 'email' => $user->email, 'role' => (string) $user->getRoleNames()->first()] : null;
+        }
+
+        $user = $request->user('web');
+
+        return $user ? ['name' => $user->name, 'email' => $user->email, 'role' => 'Super Administrador'] : null;
     }
 
     private function sealingFailures(Request $request): ?int

@@ -33,6 +33,8 @@ class PublicWorksiteView
                 ...$card->handle($contract),
             ])->all(),
             'timeline' => (new PublicTimeline)->handle($worksite->id),
+            // It. 40b: el color de su pin y por qué, en palabras.
+            'condition' => (new WorksiteCondition)->of($worksite, $contracts),
         ];
     }
 }

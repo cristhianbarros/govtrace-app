@@ -11,10 +11,12 @@ const props = defineProps({
 const emit = defineEmits(['select']);
 
 // El color, y lo que dice un lector de pantalla de cada pin.
+// It. 40b: además del color, un signo (WCAG 1.4.1: el color solo no basta),
+// y un pin de 36 px, fácil de tocar.
 const LOOK = {
-    green: { css: 'bg-green-600', title: 'Obra en estado normal' },
-    yellow: { css: 'bg-yellow-400', title: 'Obra con alerta' },
-    red: { css: 'bg-red-600', title: 'Obra en riesgo' },
+    green: { css: 'bg-green-700 text-white', sign: '✓', title: 'Obra en estado normal' },
+    yellow: { css: 'bg-yellow-400 text-slate-900', sign: '!', title: 'Obra con alerta' },
+    red: { css: 'bg-red-700 text-white', sign: '✕', title: 'Obra en riesgo' },
 };
 
 const container = ref(null);
@@ -36,8 +38,8 @@ onMounted(async () => {
         // Un punto dibujado con CSS: sin las imágenes del ícono por defecto de Leaflet.
         const icon = L.divIcon({
             className: '',
-            html: `<span data-color="${pin.color_pin}" class="block size-7 rounded-full border-4 border-white shadow ${look.css}"></span>`,
-            iconSize: [28, 28],
+            html: `<span data-color="${pin.color_pin}" class="grid size-9 place-items-center rounded-full border-4 border-white text-base font-bold shadow ${look.css}">${look.sign}</span>`,
+            iconSize: [36, 36],
         });
         const marker = L.marker([pin.lat, pin.lng], { icon, keyboard: true, title: look.title, alt: look.title }).addTo(map.value);
         marker.on('click', () => emit('select', pin.id));

@@ -69,6 +69,27 @@ async function locate() {
 
 const commentTooLong = computed(() => comment.value.length > MAX_COMMENT_LENGTH);
 
+// It. 40b: lo que le falta al reporte, en palabras, junto al botón. Un botón gris
+// sin explicación deja a la persona sin saber qué hacer.
+const missing = computed(() => {
+    const items = [];
+    if (gps.value.status !== 'ready') {
+        items.push('esperar la ubicación del GPS');
+    }
+    if (classification.value === '') {
+        items.push('decir qué vio en la obra');
+    }
+    if (preparingFiles.value) {
+        items.push('esperar a que las fotos terminen de prepararse');
+    } else if (cannotUpload(evidences.value) !== null) {
+        items.push('adjuntar al menos una foto o un PDF');
+    }
+    if (commentTooLong.value) {
+        items.push(`acortar el comentario a ${MAX_COMMENT_LENGTH} caracteres`);
+    }
+    return items;
+});
+
 const canSend = computed(
     () =>
         gps.value.status === 'ready' &&
@@ -167,7 +188,7 @@ function startOver() {
     <!-- El nombre y el logo que la organización eligió (US-007). -->
     <AppLayout :title="page.props.organization ?? 'GovTrace'" :logo="page.props.organizationLogo">
         <div class="flex flex-col gap-5">
-            <h2 class="text-xl font-semibold">Nuevo Reporte</h2>
+            <h1 class="text-xl font-semibold">Nuevo Reporte</h1>
 
             <p v-if="sent" role="status" class="rounded-lg bg-emerald-50 p-3 text-sm font-semibold text-emerald-800">{{ SUCCESS_MESSAGE }}</p>
             <p v-if="savedOffline" role="status" class="rounded-lg bg-amber-100 p-3 text-sm font-semibold text-amber-900">{{ savedOffline }}</p>
@@ -258,9 +279,16 @@ function startOver() {
                         <li v-for="message in serverErrors" :key="message">{{ message }}</li>
                     </ul>
 
+                    <div v-if="missing.length && !sending" id="send-missing" data-test="missing" class="rounded-lg bg-slate-100 p-3 text-base text-slate-800">
+                        <p class="font-semibold">Para enviar falta:</p>
+                        <ul class="mt-1 list-disc pl-5">
+                            <li v-for="item in missing" :key="item">{{ item }}</li>
+                        </ul>
+                    </div>
                     <button
                         type="submit"
                         :disabled="!canSend"
+                        :aria-describedby="missing.length ? 'send-missing' : undefined"
                         class="rounded-lg bg-slate-900 px-3 py-4 text-base font-semibold text-white disabled:opacity-40"
                     >
                         {{ sending ? 'Enviando…' : 'Enviar Reporte' }}

@@ -50,3 +50,12 @@ export function latestLinkTo(email) {
     }
     throw new Error(`No hay un correo con enlace para ${email} en storage/logs/mail.log`);
 }
+
+/** It. 40b: "Salir" vive en el menú de cuenta de la cabecera, y siempre pregunta antes. */
+export async function logOut(page) {
+    await page.locator('header button[aria-haspopup="menu"]').click();
+    await page.getByRole('menuitem', { name: 'Salir' }).click();
+    await page.getByRole('button', { name: 'Sí, cerrar sesión' }).click();
+    await page.waitForURL('**/login');
+}
+

@@ -61,7 +61,7 @@ const pdfs = () => (props.evidence.files ?? []).filter((file) => file.kind === '
 
         <button
             type="button"
-            class="mt-3 inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-slate-900 px-3 text-sm font-semibold text-white sm:w-auto"
+            class="mt-3 inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-slate-900 px-3 text-sm font-semibold text-white md:w-auto"
             :aria-expanded="showingSeal"
             @click="showingSeal = !showingSeal"
         >Verificar Sello Blockchain</button>

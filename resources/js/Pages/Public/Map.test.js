@@ -158,3 +158,40 @@ describe('Filtros del mapa (US-028)', () => {
         expect(wrapper.get('select#filter-status').element.value).toBe('');
     });
 });
+
+describe('Los estados, junto al mapa (it. 40b)', () => {
+    const states = (wrapper) => wrapper.findAll('[data-test="state"]');
+
+    it('Los estados del mapa se explican junto al mapa, con ícono y palabra: one button per state, with how many worksites, above the map', async () => {
+        const wrapper = await openMap([...pins, { id: 11, lat: 11.2, lng: -74.2, color_pin: 'green' }]);
+
+        expect(states(wrapper).map((state) => state.text())).toEqual(['✓ Normal 2', '! Alerta 1', '✕ En riesgo 1']);
+        const html = wrapper.html();
+        expect(html.indexOf('data-test="state"')).toBeLessThan(html.indexOf('data-test="pin"'));
+    });
+
+    it('shows only the worksites of a state when it is touched, and all of them again when touched twice', async () => {
+        const wrapper = await openMap();
+        fetchPins.mockResolvedValue([pins[2]]);
+
+        await states(wrapper)[2].trigger('click');
+        await flushPromises();
+
+        expect(fetchPins).toHaveBeenLastCalledWith({ status: 'red' });
+        expect(states(wrapper)[2].attributes('aria-pressed')).toBe('true');
+        expect(states(wrapper).map((state) => state.text())).toEqual(['✓ Normal 1', '! Alerta 1', '✕ En riesgo 1']);
+
+        fetchPins.mockResolvedValue(pins);
+        await states(wrapper)[2].trigger('click');
+        await flushPromises();
+        expect(fetchPins).toHaveBeenLastCalledWith({});
+        expect(states(wrapper)[2].attributes('aria-pressed')).toBe('false');
+    });
+
+    it('names the map and says what to do with it', async () => {
+        const wrapper = await openMap();
+
+        expect(wrapper.get('h1').text()).toBe('Obras vigiladas');
+        expect(wrapper.text()).toContain('Toque un punto para ver la obra y sus fotos.');
+    });
+});

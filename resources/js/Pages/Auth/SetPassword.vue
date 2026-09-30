@@ -38,7 +38,7 @@ function submit() {
     <Head title="Crear contraseña" />
     <AppLayout title="GovTrace">
         <div class="mx-auto flex w-full max-w-sm flex-col gap-5 pt-4">
-            <h2 class="text-xl font-semibold">Crear contraseña</h2>
+            <h1 class="text-xl font-semibold">Crear contraseña</h1>
 
             <p v-if="!valid" role="alert" class="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">{{ message }}</p>
 

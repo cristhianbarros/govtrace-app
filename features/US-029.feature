@@ -40,3 +40,10 @@ Característica: Línea de tiempo de evidencias publicadas de una obra
     Entonces sigo viendo 3 tarjetas
     Y la retirada oculta sus fotos y su comentario y muestra "🚫 Evidencia retirada por la organización por incumplimiento de políticas."
     Y su sello criptográfico sigue disponible
+
+  @complexity:low
+  Escenario: La obra muestra su estado y por qué
+    Dado que la evidencia publicada más reciente de la obra es de "Abandono"
+    Cuando abro la vista de la obra
+    Entonces veo su estado "En riesgo" con su signo
+    Y la razón en palabras: "El reporte publicado más reciente, del <fecha>, es de abandono."

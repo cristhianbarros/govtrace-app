@@ -29,6 +29,9 @@ foreach (config('tenancy.central_domains') as $domain) {
         Route::post('/reset-password', [PasswordResetController::class, 'reset'])->name('password.update');
 
         Route::middleware('auth:web')->group(function () {
+            // It. 40b (V1): cerrar sesión, como en cada organización.
+            Route::post('/logout', [LoginController::class, 'destroy'])->name('logout');
+
             // El panel del Super Administrador abre en el listado de organizaciones (it. 19).
             Route::get('/dashboard', fn () => redirect('/admin/organizations'))->name('super-admin.dashboard');
 

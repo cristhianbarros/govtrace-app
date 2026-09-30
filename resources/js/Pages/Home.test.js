@@ -11,8 +11,8 @@ describe('Inicio del dominio central', () => {
     it('says what GovTrace is, without a global map, and leads to the global panel', () => {
         const wrapper = mount(Home);
 
-        expect(wrapper.get('h1').text()).toBe('GovTrace');
-        expect(wrapper.text()).toContain('Veeduría ciudadana de obras públicas, con evidencia sellada en la red Stellar.');
+        expect(wrapper.get('header').text()).toContain('GovTrace');
+        expect(wrapper.get('h1').text()).toBe('Veeduría ciudadana de obras públicas, con evidencia sellada en la red Stellar.');
         expect(wrapper.text()).toContain('Cada organización veedora publica su mapa de obras en su propio subdominio.');
         expect(wrapper.get('a[href="/login"]').text()).toBe('Entrar al panel global');
         expect(wrapper.text()).not.toContain('listo para construirse');

@@ -17,8 +17,16 @@ test('Ve el mapa de obras de la veeduría y sus filtros', async ({ page }) => {
     await page.goto(ORG);
 
     await expect(page.locator('.leaflet-marker-icon').first()).toBeVisible();
-    await page.getByText('Filtrar obras').click();
-    await expect(page.getByLabel('Estado')).toBeVisible();
+    // It. 40b: los estados, junto al mapa y sin desplazarse.
+    const states = page.locator('[data-test="state"]');
+    await expect(states).toHaveCount(3);
+    for (const size of [{ width: 412, height: 915 }, { width: 1366, height: 768 }]) {
+        await page.setViewportSize(size);
+        const box = await states.last().boundingBox();
+        expect(box.y + box.height, `los estados, visibles en ${size.width}×${size.height}`).toBeLessThanOrEqual(size.height);
+    }
+    await page.getByText('Más filtros').click();
+    await expect(page.locator('#filter-status')).toBeVisible();
 });
 
 test.fixme('V12: busca una obra por su nombre', async () => {});
@@ -26,8 +34,10 @@ test.fixme('V12: busca una obra por su nombre', async () => {});
 test('Abre una obra: el contrato de SECOP y sus evidencias publicadas', async ({ page }) => {
     await openTheWorksite(page);
 
-    await expect(page.getByRole('heading', { name: WORKSITE, level: 2 })).toBeVisible();
+    await expect(page.getByRole('heading', { name: WORKSITE, level: 1 })).toBeVisible();
     await expect(page.getByText('Constructora de Pruebas S.A.S.')).toBeVisible();
+    // It. 40b: su estado y por qué, en palabras.
+    await expect(page.locator('[data-test="condition"]')).toContainText('El reporte publicado más reciente');
     await expect(page.getByRole('button', { name: 'Verificar Sello Blockchain' }).first()).toBeVisible();
 });
 

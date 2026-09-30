@@ -38,7 +38,7 @@ onMounted(load);
                         <p class="font-semibold">{{ row.organization }}</p>
                         <span class="shrink-0 rounded bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">{{ row.status }}</span>
                     </div>
-                    <dl class="grid grid-cols-3 gap-2 text-center sm:grid-cols-5">
+                    <dl class="grid grid-cols-3 gap-2 text-center md:grid-cols-5">
                         <div v-for="figure in FIGURES" :key="figure.key" class="rounded bg-slate-50 p-2">
                             <dd :data-test="figure.key" class="text-lg font-semibold">{{ row[figure.key] }}</dd>
                             <dt class="text-xs text-slate-600">{{ figure.label }}</dt>

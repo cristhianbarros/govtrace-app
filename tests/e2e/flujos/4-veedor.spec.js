@@ -2,7 +2,7 @@
 // Enviar un reporte, con y sin señal, lo prueba offline.spec.js.
 import { fileURLToPath } from 'node:url';
 import { expect, test } from '@playwright/test';
-import { ORG, PEOPLE, WORKSITE, logIn } from './support.js';
+import { ORG, PEOPLE, WORKSITE, logIn, logOut } from './support.js';
 
 const PHOTO = fileURLToPath(new URL('../../fixtures/evidence/foto.jpg', import.meta.url));
 
@@ -49,7 +49,5 @@ test.fixme('V11: cambia su contraseña con la sesión abierta', async () => {});
 test('Cierra la sesión', async ({ page }) => {
     await enter(page);
 
-    await page.getByRole('button', { name: 'Salir' }).click();
-
-    await page.waitForURL('**/login');
+    await logOut(page);
 });

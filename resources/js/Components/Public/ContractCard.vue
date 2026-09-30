@@ -17,7 +17,7 @@ const term = (months) => (months === 1 ? '1 mes' : `${months} meses`);
         </p>
         <p class="text-xs text-slate-500">{{ contract.secop_contract_id }}</p>
         <h3 class="font-semibold">{{ contract.object }}</h3>
-        <dl class="mt-2 grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
+        <dl class="mt-2 grid grid-cols-1 gap-2 text-sm md:grid-cols-2">
             <div><dt class="text-xs text-slate-500">Entidad</dt><dd>{{ contract.entity_name }}</dd></div>
             <div><dt class="text-xs text-slate-500">Contratista</dt><dd>{{ contract.contractor_name ?? '—' }}</dd></div>
             <div><dt class="text-xs text-slate-500">Valor</dt><dd>{{ formatCop(contract.value) }}</dd></div>

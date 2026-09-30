@@ -39,7 +39,7 @@ const failuresBanner = computed(() => {
     <AppLayout :title="page.props.organization" :logo="page.props.organizationLogo">
         <div class="flex flex-col gap-4">
             <p v-if="failuresBanner" role="alert" class="rounded-lg bg-red-600 p-3 text-sm font-semibold text-white">{{ failuresBanner }}</p>
-            <h2 class="text-xl font-semibold">{{ title }}</h2>
+            <h1 class="text-xl font-semibold">{{ title }}</h1>
             <slot />
         </div>
 

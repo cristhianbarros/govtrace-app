@@ -22,6 +22,7 @@ criterios_aceptacion:
     - {caso: "Fuera de la geocerca de 500 m", mensaje: "Se encuentra a [X] km de la ubicación oficial de la obra. Para prevenir fraudes, debe acercarse a un radio de 500 metros del proyecto."}
   requisitos_ux:
     - "Si la precisión del GPS es mayor a 50 m, la app pide reintentar hasta obtener buena señal"
+    - "(It. 40b, 2026-09-29) Mientras 'Enviar Reporte' no se puede usar, junto al botón se lee qué falta: la ubicación del GPS, qué vio en la obra, al menos un archivo"
   casos_edge:
     - {caso: "La ubicación oficial fijada por First-Touch es errónea y los veedores en la obra real quedan fuera de la geocerca", resultado: "El Administrador de Organización puede corregir la ubicación de la obra, dejando registro del cambio (nueva historia US-035)"}
     - {caso: "Dos veedores envían al mismo tiempo el primer reporte de una obra sin ubicación", resultado: "Bloqueo atómico en base de datos sobre la ficha de obra: la primera transacción fija la ubicación oficial (First-Touch); la segunda lee esa ubicación y se valida contra la geocerca de 500 m; si ambos están cerca, entran los dos reportes"}

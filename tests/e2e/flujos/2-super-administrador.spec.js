@@ -1,7 +1,7 @@
 // It. 40a — el flujo del Super Administrador (docs/mapa-funcional.md, sección 2).
 // Gobierna la organización que dio de alta el flujo 1-alta, que corre antes.
 import { expect, test } from '@playwright/test';
-import { CENTRAL, PEOPLE, logIn } from './support.js';
+import { CENTRAL, PEOPLE, logIn, logOut } from './support.js';
 
 const ALTA = 'Veeduría de Alta E2E';
 const PANEL = [
@@ -71,4 +71,12 @@ test.fixme('V7: crea un reporte en nombre de una organización que lo autorizó'
 
 test.fixme('V15: sincroniza SECOP a mano', async () => {});
 
-test.fixme('V1: cierra la sesión', async () => {});
+test('Cierra la sesión desde el menú de su cuenta (V1)', async ({ page }) => {
+    await enterThePanel(page);
+    await expect(page.locator('header')).toContainText('Super Administrador E2E');
+
+    await logOut(page);
+
+    await page.goto(`${CENTRAL}/admin/organizations`);
+    await page.waitForURL('**/login');
+});

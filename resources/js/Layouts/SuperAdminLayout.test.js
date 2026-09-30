@@ -11,8 +11,8 @@ describe('SuperAdminLayout', () => {
         page.url = '/admin/parameters';
         const wrapper = mount(SuperAdminLayout, { props: { title: 'Parámetros' }, slots: { default: '<p>contenido</p>' } });
 
-        expect(wrapper.get('h1').text()).toBe('Panel global');
-        expect(wrapper.get('h2').text()).toBe('Parámetros');
+        expect(wrapper.get('header').text()).toContain('Panel global');
+        expect(wrapper.get('h1').text()).toBe('Parámetros');
         expect(wrapper.findAll('nav a').map((link) => [link.text(), link.attributes('href')])).toEqual([
             ['Organizaciones', '/admin/organizations'],
             ['Parámetros', '/admin/parameters'],

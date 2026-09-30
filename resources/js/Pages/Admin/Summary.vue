@@ -12,9 +12,9 @@ import { fetchSummary } from '@/services/api.js';
 const { data: summary, loading, error, load } = useLoader(fetchSummary);
 
 const COLORS = [
-    { key: 'green', label: 'Verdes', css: 'bg-green-600' },
-    { key: 'yellow', label: 'Amarillas', css: 'bg-yellow-400' },
-    { key: 'red', label: 'Rojas', css: 'bg-red-600' },
+    { key: 'green', label: 'Normal', css: 'bg-green-600' },
+    { key: 'yellow', label: 'Alerta', css: 'bg-yellow-400' },
+    { key: 'red', label: 'En riesgo', css: 'bg-red-600' },
 ];
 const CLASSIFICATIONS = ['Avance', 'Retraso', 'Abandono'];
 

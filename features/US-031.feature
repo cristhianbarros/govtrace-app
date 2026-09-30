@@ -55,3 +55,10 @@ Característica: Inicio de sesión por rol
     Dado que soy un visitante sin sesión
     Cuando abro el mapa público de "veeduria-smr" y el validador
     Entonces accedo a ambos sin que se me pida iniciar sesión
+
+  @complexity:low
+  Escenario: Cerrar sesión desde cualquier panel
+    Dado que inicié sesión como Super Administrador, Administrador de Organización o Veedor de Campo
+    Cuando abro el menú de mi cuenta en la cabecera y elijo "Salir"
+    Entonces la app me pregunta "¿Cerrar la sesión?"
+    Y al confirmar, mi sesión termina y vuelvo a la pantalla de inicio de sesión

@@ -90,17 +90,19 @@ onMounted(load);
                 </button>
             </form>
 
-            <dl class="grid grid-cols-1 gap-2 rounded-lg bg-white p-3 text-sm sm:grid-cols-2">
-                <div><dt class="text-xs text-slate-500">Nombre legal</dt><dd>{{ profile.legal_name }}</dd></div>
-                <div><dt class="text-xs text-slate-500">NIT</dt><dd>{{ profile.nit }}</dd></div>
-                <div><dt class="text-xs text-slate-500">Subdominio</dt><dd>{{ profile.subdomain }}</dd></div>
-                <p class="text-xs text-slate-500 sm:col-span-2">Solo el Super Administrador lo cambia, a solicitud formal.</p>
-            </dl>
+            <section class="rounded-lg bg-white p-3 text-sm">
+                <dl class="grid grid-cols-1 gap-2 md:grid-cols-2">
+                    <div><dt class="text-xs text-slate-500">Nombre legal</dt><dd>{{ profile.legal_name }}</dd></div>
+                    <div><dt class="text-xs text-slate-500">NIT</dt><dd>{{ profile.nit }}</dd></div>
+                    <div><dt class="text-xs text-slate-500">Subdominio</dt><dd>{{ profile.subdomain }}</dd></div>
+                </dl>
+                <p class="mt-2 text-xs text-slate-500">Solo el Super Administrador lo cambia, a solicitud formal.</p>
+            </section>
 
             <nav aria-label="Más de la organización" class="flex flex-col gap-2 text-sm font-semibold text-slate-700">
-                <Link href="/admin/summary" class="underline">Resumen del territorio</Link>
-                <Link href="/admin/authorization" class="underline">Autorización al Super Administrador</Link>
-                <Link href="/admin/audit" class="underline">Ver el registro de auditoría</Link>
+                <Link href="/admin/summary" class="inline-flex min-h-11 items-center underline">Resumen del territorio</Link>
+                <Link href="/admin/authorization" class="inline-flex min-h-11 items-center underline">Autorización al Super Administrador</Link>
+                <Link href="/admin/audit" class="inline-flex min-h-11 items-center underline">Ver el registro de auditoría</Link>
             </nav>
         </LoadState>
     </AdminLayout>
