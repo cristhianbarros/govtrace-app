@@ -99,6 +99,7 @@ Plataforma Open Source y Mobile-First de veeduría ciudadana, multi-tenant (B2B2
 | US-053-RPT | Como **Super Administrador** quiero **ver un resumen de uso por organización: veedores activos y evidencias recibidas, publicadas, rechazadas y retiradas** para **seguir la adopción de la plataforma** | EPIC-009 | analisis_completitud (💡 Mejora) | P3 |
 | US-054-RPT | Como **Super Administrador** quiero **recibir una alerta cuando una organización lleve 30 días sin actividad** para **detectar a tiempo organizaciones que abandonan la plataforma** | EPIC-009 | analisis_completitud (💡 Mejora) | P3 |
 | US-055-LEG | Como **Verificador Público** quiero **saber que el estado de una obra es una alerta de GovTrace y tener a mano los canales oficiales de la Contraloría** para **no confundir "En riesgo" con una obra inconclusa y poder denunciar por mi cuenta** | EPIC-008 | proceso_actual | MVP v1 |
+| US-057-LEG | Como **Veedor de Campo** quiero **declarar, al activar mi cuenta, que no estoy en ninguno de los impedimentos que la ley fija para ser veedor** para **que mis reportes no queden viciados por un conflicto de interés** | EPIC-006 | proceso_actual | MVP v1 |
 | US-056-LEG | Como **Administrador de Organización** quiero **descargar desde una obra un expediente con sus evidencias publicadas, sus sellos y las plantillas pre-llenadas del derecho de petición y de la denuncia** para **llevar la evidencia de GovTrace al proceso formal del control social** | EPIC-008 | proceso_actual | MVP v1 |
 
 **Totales:** P1 = 21 · P2 = 22 · P3 = 13 (US-016 adelantada de P2 a P1 en `/plan` por dependencia funcional con US-008) · Total = 56.
@@ -217,6 +218,7 @@ Suma los impedimentos del veedor (it. 44c) y los datos de inscripción de una ve
 - **R-LEG-02** — Los canales para denunciar son los oficiales de la Contraloría; GovTrace no recibe ni reenvía la denuncia — US-055-LEG
 - **R-LEG-03** — El expediente de una obra solo lleva sus evidencias publicadas, cada archivo byte a byte con su prueba de inclusión; las plantillas no se radican desde GovTrace: las completa, las firma y las presenta la veeduría — US-056-LEG
 - **R-LEG-04** — Cada descarga del expediente queda en el log de auditoría (`dossier.downloaded`): es la medida de si se usa — US-056-LEG
+- **R-LEG-05** — Un veedor reporta solo después de declarar que no está en los impedimentos del artículo 19 de la Ley 850 de 2003: al activar su cuenta o, si ya la tenía, antes de su próximo reporte. La declaración queda con su fecha y en el log de auditoría. Sin ella, el servidor responde 403 (nunca 422: un reporte guardado sin conexión no se descarta) — US-057-LEG
 
 ### Backup y recuperación
 

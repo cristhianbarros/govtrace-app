@@ -9,6 +9,7 @@ import RowAction from '@/Components/RowAction.vue';
 import { useLoader } from '@/composables/useLoader.js';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { isEmail } from '@/lib/credentials.js';
+import { formatDay } from '@/lib/format.js';
 import { deactivateObserver, fetchObservers, inviteObserver, reactivateObserver, resendInvitation, revokeInvitation } from '@/services/api.js';
 import { errorMessage } from '@/services/errors.js';
 
@@ -83,6 +84,10 @@ onMounted(load);
                         <span class="truncate">{{ member.email }}</span>
                         <span class="shrink-0 rounded px-2 py-0.5 text-xs font-semibold" :class="statusStyle[member.status] ?? 'bg-slate-100 text-slate-700'">{{ member.status }}</span>
                     </div>
+                    <!-- US-057-LEG (it. 44c): quien aún no activa su cuenta la declara al activarla. -->
+                    <p v-if="!INVITATIONS.includes(member.status)" class="text-sm" :class="member.impediments_declared_at ? 'text-slate-600' : 'font-semibold text-amber-800'">
+                        {{ member.impediments_declared_at ? `Declaró no tener impedimentos el ${formatDay(member.impediments_declared_at)}` : 'Aún no declara sus impedimentos' }}
+                    </p>
                     <RowAction
                         v-if="member.status === 'Inactivo'"
                         label="Reactivar"

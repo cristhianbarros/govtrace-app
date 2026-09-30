@@ -89,6 +89,11 @@ test('El veedor activa su cuenta y encuentra la obra para reportar', async ({ pa
     await page.goto(latestLinkTo(ALTA.veedor));
     await page.getByLabel('Contraseña', { exact: true }).fill(ALTA.password);
     await page.getByLabel('Confirmar contraseña').fill(ALTA.password);
+
+    // It. 44c: sin declarar que no tiene impedimentos para ser veedor, no activa su cuenta.
+    await page.getByRole('button', { name: 'Activar mi cuenta' }).click();
+    await expect(page.getByText('Para ser veedor, declare que no está en ninguno de estos casos.')).toBeVisible();
+    await page.getByLabel('Declaro que no estoy en ninguno de estos casos.').check();
     await page.getByRole('button', { name: 'Activar mi cuenta' }).click();
     await page.waitForURL('**/reports/new');
 

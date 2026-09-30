@@ -73,6 +73,10 @@ function reportingMember(Tenant $tenant, string $email, Roles $role = Roles::Obs
     return $tenant->run(function () use ($email, $role) {
         $member = OrganizationUser::create(['name' => 'Miembro de prueba', 'email' => $email, 'password' => 'Veeduria#2026']);
         $member->assignRole($role->value);
+        if ($role === Roles::Observer) {
+            // US-057-LEG: un veedor que ya declaró no tener impedimentos; sin eso no reporta.
+            $member->forceFill(['impediments_declared_at' => now()])->save();
+        }
 
         return $member;
     });

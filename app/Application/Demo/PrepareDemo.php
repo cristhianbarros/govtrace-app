@@ -224,6 +224,10 @@ class PrepareDemo
     {
         $member = User::query()->create(['name' => $name, 'email' => $email, 'password' => $password]);
         $member->assignRole($role->value);
+        if ($role === Roles::Observer) {
+            // US-057-LEG: los veedores de la demostración ya declararon no tener impedimentos; el que se invita en vivo lo hace al activar su cuenta.
+            $member->forceFill(['impediments_declared_at' => now()])->save();
+        }
 
         return $member;
     }

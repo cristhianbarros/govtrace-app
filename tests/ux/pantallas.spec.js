@@ -127,6 +127,13 @@ for (const [viewport, options] of Object.entries(VIEWPORTS)) {
             await visit(page, viewport, 'veedor-mis-reportes', `${ORG}/my-reports`);
         });
 
+        // It. 44c: quien ya tenía cuenta declara sus impedimentos antes de reportar.
+        test(`veedora sin declarar, ${viewport}`, async ({ page }) => {
+            await logIn(page, ORG, PEOPLE.undeclared);
+            await page.waitForURL('**/declaration');
+            await visit(page, viewport, 'veedor-declaracion');
+        });
+
         test(`administrador, ${viewport}`, async ({ page }) => {
             await logIn(page, ORG, PEOPLE.admin);
             await page.waitForURL('**/admin/inbox');

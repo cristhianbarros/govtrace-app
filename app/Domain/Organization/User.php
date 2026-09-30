@@ -78,6 +78,7 @@ class User extends Model implements AuthenticatableContract, CanResetPasswordCon
     protected $casts = [
         'email_verified_at' => 'datetime',
         'invitation_expires_at' => 'datetime',
+        'impediments_declared_at' => 'datetime', // US-057-LEG
         'is_active' => 'boolean',
         'password' => 'hashed',
     ];

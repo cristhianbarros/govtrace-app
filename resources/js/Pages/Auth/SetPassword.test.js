@@ -75,3 +75,53 @@ describe('Crear la contraseña', () => {
         expect(wrapper.get('[role="alert"]').text()).toBe(EXPIRED);
     });
 });
+
+// It. 44c — US-057-LEG: el veedor declara, al activar su cuenta, que no tiene impedimentos para serlo.
+describe('La declaración de impedimentos del veedor (it. 44c)', () => {
+    const REQUIRED = 'Para ser veedor, declare que no está en ninguno de estos casos.';
+    const veedorLink = { ...validLink, declaration: true };
+
+    it('El veedor declara sus impedimentos al activar su cuenta: the cases of the law, a checkbox, and the declaration goes with the password', async () => {
+        const wrapper = mount(SetPassword, { props: veedorLink });
+        const declaration = wrapper.get('[data-test="impediments"]');
+
+        expect(declaration.text()).toContain('Ley 850 de 2003, artículo 19');
+        expect(declaration.findAll('li')).toHaveLength(5);
+        expect(declaration.text()).toContain('Soy contratista, interventor, proveedor o trabajador de una obra que voy a vigilar');
+        await wrapper.get('input#declaration').setValue(true);
+        await definePassword(wrapper, 'Veeduria#2026');
+
+        expect(submissions).toEqual([
+            { url: '/set-password/7', data: { token: 'token-del-correo', password: 'Veeduria#2026', password_confirmation: 'Veeduria#2026', declaration: true } },
+        ]);
+    });
+
+    it('Sin la declaración no se activa la cuenta de un veedor: nothing is sent, and the screen says what is missing', async () => {
+        const wrapper = mount(SetPassword, { props: veedorLink });
+
+        await definePassword(wrapper, 'Veeduria#2026');
+
+        expect(submissions).toEqual([]);
+        expect(wrapper.text()).toContain(REQUIRED);
+    });
+
+    it('shows what the server says when it refuses the declaration', async () => {
+        respondWith({ declaration: REQUIRED });
+        const wrapper = mount(SetPassword, { props: veedorLink });
+
+        await wrapper.get('input#declaration').setValue(true);
+        await definePassword(wrapper, 'Veeduria#2026');
+
+        expect(wrapper.get('[role="alert"]').text()).toBe(REQUIRED);
+    });
+
+    it('El Administrador activa su cuenta sin declarar impedimentos de veedor: no list, no checkbox', async () => {
+        const wrapper = mount(SetPassword, { props: validLink });
+
+        expect(wrapper.find('[data-test="impediments"]').exists()).toBe(false);
+        await definePassword(wrapper, 'Veeduria#2026');
+
+        expect(submissions[0].data).not.toHaveProperty('declaration');
+    });
+});
+

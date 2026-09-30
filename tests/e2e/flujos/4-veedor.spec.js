@@ -19,6 +19,22 @@ test('Entra y llega a Nuevo reporte', async ({ page }) => {
     await expect(page.getByRole('heading', { name: 'Nuevo Reporte', exact: true })).toBeVisible();
 });
 
+test('Una veedora que ya tenía cuenta declara sus impedimentos antes de reportar (it. 44c)', async ({ page }) => {
+    await logIn(page, ORG, PEOPLE.undeclared);
+    await page.waitForURL('**/declaration');
+    await expect(page.getByRole('heading', { name: 'Antes de reportar' })).toBeVisible();
+    await expect(page.getByText('Ley 850 de 2003, artículo 19')).toBeVisible();
+
+    // Sin la casilla no sigue.
+    await page.getByRole('button', { name: 'Declarar y continuar' }).click();
+    await expect(page.getByRole('alert')).toHaveText('Para ser veedor, declare que no está en ninguno de estos casos.');
+
+    await page.getByLabel('Declaro que no estoy en ninguno de estos casos.').check();
+    await page.getByRole('button', { name: 'Declarar y continuar' }).click();
+    await page.waitForURL('**/reports/new');
+    await expect(page.getByRole('heading', { name: 'Nuevo Reporte', exact: true })).toBeVisible();
+});
+
 test('Puede instalar la app en su celular, con el nombre de su veeduría (V6)', async ({ page }) => {
     await enter(page);
 

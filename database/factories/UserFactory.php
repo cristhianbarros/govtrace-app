@@ -26,7 +26,9 @@ class UserFactory extends Factory
     {
         return [
             'name' => fake()->name(),
-            'email' => fake()->unique()->safeEmail(),
+            // Único también entre corridas: la base de pruebas conserva los usuarios centrales de las
+            // anteriores, y unique() de Faker solo evita repetidos dentro de un mismo proceso.
+            'email' => fake()->unique()->userName().'.'.Str::lower(Str::random(8)).'@example.com',
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),

@@ -77,6 +77,7 @@ function setPasswordWith(string $url): TestResponse
         'token' => $query['token'],
         'password' => 'Veeduria#2026',
         'password_confirmation' => 'Veeduria#2026',
+        'declaration' => true, // US-057-LEG: un veedor declara que no tiene impedimentos para serlo
     ]);
 }
 

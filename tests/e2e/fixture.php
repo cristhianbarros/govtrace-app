@@ -99,10 +99,14 @@ Contract::fromSecop(fn () => Contract::query()->updateOrCreate(['secop_contract_
 
 $tenant->run(function () {
     foreach ([
-        ['Administradora E2E', 'e2e.admin@correo.co', Roles::Administrator],
-        ['Veedor E2E', 'e2e.veedor@correo.co', Roles::Observer],
-    ] as [$name, $email, $role]) {
-        User::query()->create(['name' => $name, 'email' => $email, 'password' => E2E_PASSWORD])->assignRole($role->value);
+        ['Administradora E2E', 'e2e.admin@correo.co', Roles::Administrator, null],
+        // US-057-LEG: el veedor ya declaró no tener impedimentos; la veedora nueva lo hace en su flujo (it. 44c).
+        ['Veedor E2E', 'e2e.veedor@correo.co', Roles::Observer, now()],
+        ['Veedora sin declarar E2E', 'e2e.sin-declarar@correo.co', Roles::Observer, null],
+    ] as [$name, $email, $role, $declaredAt]) {
+        $member = User::query()->create(['name' => $name, 'email' => $email, 'password' => E2E_PASSWORD]);
+        $member->assignRole($role->value);
+        $member->forceFill(['impediments_declared_at' => $declaredAt])->save();
     }
 
     $worksite = Worksite::query()->create(['latitude' => E2E_WORKSITE[0], 'longitude' => E2E_WORKSITE[1], 'located_at' => now()]);
