@@ -4,6 +4,7 @@
 // y, si entra, lleva a cada rol a su panel.
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import { ref } from 'vue';
+import PasswordField from '@/Components/PasswordField.vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { isEmail } from '@/lib/credentials.js';
 
@@ -63,17 +64,8 @@ function submit() {
                 <p v-if="hints.email" class="text-sm text-red-700">{{ hints.email }}</p>
             </div>
 
-            <div class="flex flex-col gap-1">
-                <label for="password" class="text-sm font-semibold text-slate-700">Contraseña</label>
-                <input
-                    id="password"
-                    v-model="form.password"
-                    type="password"
-                    autocomplete="current-password"
-                    class="w-full rounded-lg border border-slate-300 bg-white px-3 py-3 text-base"
-                />
-                <p v-if="hints.password" class="text-sm text-red-700">{{ hints.password }}</p>
-            </div>
+            <!-- It. 40c: con "Mostrar", para no escribir a ciegas. -->
+            <PasswordField id="password" v-model="form.password" label="Contraseña" :hint="hints.password" />
 
             <button
                 type="submit"

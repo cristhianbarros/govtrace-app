@@ -16,7 +16,7 @@ defineEmits(['retry']);
     <p v-if="loading" class="py-6 text-center text-sm text-slate-500">{{ loadingText }}</p>
     <div v-else-if="error" role="alert" class="flex flex-col gap-3 rounded-lg bg-red-50 p-3 text-sm text-red-800">
         <p>{{ error }}</p>
-        <button type="button" class="self-start rounded-lg border border-red-300 bg-white px-3 py-2 font-semibold" @click="$emit('retry')">
+        <button type="button" class="min-h-11 self-start rounded-lg border border-red-300 bg-white px-3 py-2 font-semibold" @click="$emit('retry')">
             Reintentar
         </button>
     </div>

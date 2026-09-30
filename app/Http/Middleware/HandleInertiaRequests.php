@@ -3,6 +3,8 @@
 namespace App\Http\Middleware;
 
 use App\Domain\Organization\Roles;
+use App\Domain\Reports\EditorialStatus;
+use App\Domain\Reports\Report;
 use App\Domain\Sealing\ReportSeal;
 use App\Domain\Sealing\SealStatus;
 use Illuminate\Http\Request;
@@ -60,7 +62,24 @@ class HandleInertiaRequests extends Middleware
             // It. 40b: quién tiene la sesión abierta, para nombrarlo en la cabecera
             // junto a "Salir". null en las pantallas públicas.
             'account' => fn () => $this->account($request),
+            // It. 40c: cuántas evidencias esperan en la Bandeja, para su pestaña.
+            // Solo al Administrador: al veedor no le toca revisar.
+            'inboxPending' => fn () => $this->inboxPending($request),
         ];
+    }
+
+    private function inboxPending(Request $request): ?int
+    {
+        $user = tenancy()->initialized ? $request->user('tenant') : null;
+
+        if (! $user || ! $user->hasRole(Roles::Administrator->value)) {
+            return null;
+        }
+
+        return Report::query()
+            ->where('editorial_status', EditorialStatus::Hidden)
+            ->whereHas('seal', fn ($seal) => $seal->where('status', SealStatus::Sealed))
+            ->count();
     }
 
     /** @return array{name: string, email: string, role: string}|null */

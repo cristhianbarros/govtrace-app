@@ -4,6 +4,7 @@ bloque: "B8 — Mapa y publicación"
 criterios_aceptacion:
   escenarios_exito:
     - "El Verificador filtra los pines por: estado de la obra (Normal, Alerta, En Riesgo), rango de fechas de las evidencias, rango de presupuesto y municipio"
+    - "(It. 40c, 2026-09-30) El mapa también se ve como lista, pedida al abrirla (R-MAP-02 no cambia), y en la lista se busca una obra por su nombre, sin distinguir tildes ni mayúsculas"
   validaciones_reglas:
     - "El botón 'Aplicar' se deshabilita si no se selecciona ningún valor"
   manejo_errores:

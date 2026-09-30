@@ -74,7 +74,7 @@ describe('Bandeja de entrada', () => {
         expect(wrapper.get('img').attributes('src')).toBe('/evidences/70/file');
         expect(wrapper.text()).toContain('Retraso');
         expect(wrapper.text()).toContain('Obra detenida hace 2 meses');
-        expect(wrapper.text()).toContain('Sellada en el ledger 1201');
+        expect(wrapper.text()).toContain('Con sello digital · bloque 1201');
         expect(wrapper.text()).not.toContain('Hora de captura sospechosa');
     });
 

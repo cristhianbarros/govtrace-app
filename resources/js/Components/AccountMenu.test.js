@@ -86,6 +86,14 @@ describe('Menú de cuenta', () => {
         global.unmount();
     });
 
+    it('leads everyone to change their password, with the session open (it. 40c)', async () => {
+        const { wrapper } = await menuOf(VEEDOR);
+        await openTheMenu(wrapper);
+
+        expect(wrapper.get('[role="menu"] a[href="/account/password"]').text()).toBe('Cambiar contraseña');
+        wrapper.unmount();
+    });
+
     it('Cerrar sesión con reportes pendientes: warns, and does not log out until confirmed', async () => {
         const { wrapper, outbox } = await menuOf(VEEDOR, { pending: 2 });
 

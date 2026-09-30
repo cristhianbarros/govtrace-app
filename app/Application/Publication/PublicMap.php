@@ -36,11 +36,39 @@ class PublicMap
      */
     public function pins(array $filters = []): array
     {
+        return array_map(fn (array $candidate) => $candidate['pin'], $this->candidates($filters));
+    }
+
+    /**
+     * It. 40c: the map as a list — the same worksites and filters as pins(),
+     * each with its name (its own, or its first contract's object) and the
+     * municipality of that contract. Asked for when the list is opened, not
+     * with the map (R-MAP-02).
+     *
+     * @param  array{status?: string, from?: string, to?: string, min_value?: int|float|string, municipality?: string}  $filters
+     * @return list<array{id: int, name: ?string, municipality: ?string, color_pin: string}>
+     */
+    public function listing(array $filters = []): array
+    {
+        $candidates = $this->candidates($filters);
+        $names = Municipality::query()->whereIn('code', array_filter(array_column($candidates, 'municipality')))->pluck('name', 'code');
+
+        return array_map(fn (array $candidate) => [
+            'id' => $candidate['pin']['id'],
+            'name' => $candidate['name'],
+            'municipality' => isset($names[$candidate['municipality']]) ? PlaceName::forDisplay($names[$candidate['municipality']]) : null,
+            'color_pin' => $candidate['pin']['color_pin'],
+        ], $candidates);
+    }
+
+    /** @return list<array{pin: array{id: int, lat: float, lng: float, color_pin: string}, name: ?string, municipality: ?string}> */
+    private function candidates(array $filters): array
+    {
         $worksites = Worksite::query()->whereNotNull('latitude')->with('contracts')->orderBy('id')->get();
 
         $contracts = Contract::query()
             ->whereIn('secop_contract_id', $worksites->flatMap->contracts->pluck('secop_contract_id'))
-            ->get(['secop_contract_id', 'status', 'end_date', 'value', 'municipality_code'])
+            ->get(['secop_contract_id', 'status', 'end_date', 'value', 'municipality_code', 'object'])
             ->keyBy('secop_contract_id');
 
         // La evidencia publicada más reciente de cada ficha (DISTINCT ON): la última verdad conocida.
@@ -64,17 +92,21 @@ class PublicMap
                 $color = PinColor::ofEvidence($latestEvidence->get($worksite->id))->worst($overdue ? PinColor::Red : PinColor::Green);
                 $place = $worksite->location()->approximate(); // R-PRIV-02: la ancló el primer veedor, donde estaba
 
+                $first = $contracts->get($worksite->contracts->sortBy('id')->first()?->secop_contract_id);
+
                 return [
                     'pin' => ['id' => $worksite->id, 'lat' => $place->latitude, 'lng' => $place->longitude, 'color_pin' => $color->value],
                     'budget' => $own->sum(fn (Contract $contract) => (float) $contract->value),
                     'municipalities' => $own->pluck('municipality_code')->filter()->all(),
+                    'name' => $worksite->name ?? $first?->object,
+                    'municipality' => $first?->municipality_code,
                 ];
             })
             ->filter(fn (array $candidate) => ! isset($filters['status']) || $candidate['pin']['color_pin'] === $filters['status'])
             ->filter(fn (array $candidate) => $withEvidenceInRange === null || isset($withEvidenceInRange[$candidate['pin']['id']]))
             ->filter(fn (array $candidate) => ! isset($filters['min_value']) || $candidate['budget'] > (float) $filters['min_value'])
             ->filter(fn (array $candidate) => ! isset($filters['municipality']) || in_array($filters['municipality'], $candidate['municipalities'], true))
-            ->map(fn (array $candidate) => $candidate['pin'])
+            ->map(fn (array $candidate) => ['pin' => $candidate['pin'], 'name' => $candidate['name'], 'municipality' => $candidate['municipality']])
             ->values()
             ->all();
     }

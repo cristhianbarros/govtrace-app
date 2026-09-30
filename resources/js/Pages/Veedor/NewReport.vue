@@ -21,6 +21,13 @@ import { errorMessages } from '@/services/errors.js';
 const page = usePage();
 
 const CLASSIFICATIONS = ['Avance', 'Retraso', 'Abandono'];
+// It. 40c: qué significa cada una, en una línea. Provisional: la valida una veeduría,
+// porque cambia el color del mapa (US-027) — docs/ux-analisis.md, decisión 4.
+const MEANING = {
+    Avance: 'La obra avanza: hay trabajo o cambios desde la última vez.',
+    Retraso: 'Va más lenta de lo previsto, o está detenida por ahora.',
+    Abandono: 'No hay nadie trabajando y la obra parece dejada.',
+};
 const MAX_COMMENT_LENGTH = 500;
 const SUCCESS_MESSAGE = 'Reporte recibido con éxito. Su evidencia ha sido encolada para sellado inmutable en la red Stellar.';
 
@@ -245,14 +252,17 @@ function startOver() {
                 <!-- 3 y 4. Clasificación, comentario y adjuntos -->
                 <form v-if="gps.status !== 'failed'" class="flex flex-col gap-5" novalidate @submit.prevent="submit">
                     <fieldset class="flex flex-col gap-2">
-                        <legend class="mb-2 text-sm font-semibold text-slate-700">Clasificación</legend>
+                        <legend class="mb-2 text-base font-semibold">¿Qué vio en la obra?</legend>
                         <label
                             v-for="option in CLASSIFICATIONS"
                             :key="option"
                             class="flex items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-3 text-base"
                         >
                             <input v-model="classification" type="radio" name="classification" :value="option" class="size-5" />
-                            {{ option }}
+                            <span>
+                                <span class="block font-semibold">{{ option }}</span>
+                                <span class="block text-sm text-slate-700">{{ MEANING[option] }}</span>
+                            </span>
                         </label>
                     </fieldset>
 

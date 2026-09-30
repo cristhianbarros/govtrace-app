@@ -122,7 +122,7 @@ describe('Vista de obra — la línea de tiempo (US-029)', () => {
         expect(first.text()).toContain('Abandono');
         expect(first.text()).toContain('Obra detenida hace 2 meses');
         expect(first.get('img').attributes()).toMatchObject({ src: '/public/evidences/40/photo', loading: 'lazy' });
-        expect(first.findAll('button').some((candidate) => candidate.text() === 'Verificar Sello Blockchain')).toBe(true);
+        expect(first.findAll('button').some((candidate) => candidate.text() === 'Comprobar que es original')).toBe(true);
         wrapper.unmount();
     });
 
@@ -160,7 +160,7 @@ describe('Vista de obra — la línea de tiempo (US-029)', () => {
         expect(tombstone.find('img').exists()).toBe(false);
         expect(tombstone.text()).not.toContain('Comentario que ya no debe verse');
         expect(tombstone.text()).not.toContain('Ubicación aproximada');
-        expect(tombstone.findAll('button').some((candidate) => candidate.text() === 'Verificar Sello Blockchain')).toBe(true);
+        expect(tombstone.findAll('button').some((candidate) => candidate.text() === 'Comprobar que es original')).toBe(true);
         wrapper.unmount();
     });
 
@@ -173,7 +173,7 @@ describe('Vista de obra — la línea de tiempo (US-029)', () => {
         wrapper.unmount();
     });
 
-    it('shows the seal of an evidence when "Verificar Sello Blockchain" is pressed, with the way to Stellar Expert', async () => {
+    it('shows the seal of an evidence when "Comprobar que es original" is pressed, with the way to Stellar Expert', async () => {
         fetchReceipt.mockResolvedValue({
             sealed: true,
             ...SEAL,
@@ -183,7 +183,7 @@ describe('Vista de obra — la línea de tiempo (US-029)', () => {
         });
         const wrapper = await openWorksite();
 
-        await cards(wrapper)[0].findAll('button').find((candidate) => candidate.text() === 'Verificar Sello Blockchain').trigger('click');
+        await cards(wrapper)[0].findAll('button').find((candidate) => candidate.text() === 'Comprobar que es original').trigger('click');
         await flushPromises();
 
         const seal = cards(wrapper)[0].get('[data-test="seal"]');
@@ -203,7 +203,7 @@ describe('Vista de obra — el modo contextual del validador (US-024)', () => {
         fetchReceipt.mockResolvedValue({ sealed: false, message: 'pendiente' });
         validate.mockResolvedValue({ verdict: 'altered', message: '❌ Archivo Alterado o Falso. Las huellas criptográficas no coinciden con la blockchain.' });
         const wrapper = await openWorksite();
-        await cards(wrapper)[0].findAll('button').find((candidate) => candidate.text() === 'Verificar Sello Blockchain').trigger('click');
+        await cards(wrapper)[0].findAll('button').find((candidate) => candidate.text() === 'Comprobar que es original').trigger('click');
         await flushPromises();
 
         const copy = new File(['copia'], 'obra-gaira.jpg', { type: 'image/jpeg' });

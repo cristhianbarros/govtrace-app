@@ -2,7 +2,7 @@
 // Enviar un reporte, con y sin señal, lo prueba offline.spec.js.
 import { fileURLToPath } from 'node:url';
 import { expect, test } from '@playwright/test';
-import { ORG, PEOPLE, WORKSITE, logIn, logOut } from './support.js';
+import { ORG, PASSWORD, PEOPLE, WORKSITE, logIn, logOut } from './support.js';
 
 const PHOTO = fileURLToPath(new URL('../../fixtures/evidence/foto.jpg', import.meta.url));
 
@@ -44,7 +44,24 @@ test('Sigue sus reportes: su estado, el motivo de un rechazo y el recibo', async
     await expect(page.getByText('Ledger').first()).toBeVisible();
 });
 
-test.fixme('V11: cambia su contraseña con la sesión abierta', async () => {});
+test('Cambia su contraseña con la sesión abierta, desde el menú de su cuenta (V11)', async ({ page }) => {
+    await enter(page);
+    await page.locator('header button[aria-haspopup="menu"]').click();
+    await page.getByRole('menuitem', { name: 'Cambiar contraseña' }).click();
+    await page.waitForURL('**/account/password');
+    await expect(page.getByRole('heading', { name: 'Cambiar contraseña', exact: true })).toBeVisible();
+
+    // La cambia, y la deja como estaba para lo que sigue.
+    for (const [current, next] of [[PASSWORD, 'Nueva#Clave2027'], ['Nueva#Clave2027', PASSWORD]]) {
+        await page.getByLabel('Contraseña actual').fill(current);
+        await page.getByLabel('Nueva contraseña', { exact: true }).fill(next);
+        await page.getByLabel('Escriba otra vez la nueva contraseña').fill(next);
+        const changed = page.waitForResponse((response) => response.url().endsWith('/account/password') && response.request().method() === 'PUT');
+        await page.getByRole('button', { name: 'Cambiar contraseña' }).click();
+        expect((await changed).status()).toBe(200);
+        await expect(page.getByRole('status')).toHaveText('Su contraseña fue cambiada. La próxima vez entre con la nueva.');
+    }
+});
 
 test('Cierra la sesión', async ({ page }) => {
     await enter(page);

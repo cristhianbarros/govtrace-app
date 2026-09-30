@@ -104,3 +104,13 @@ describe('Validador público', () => {
         expect(wrapper.text()).toContain('JPG, PNG o PDF, hasta 10 MB');
     });
 });
+
+describe('En palabras de todos los días (it. 40c)', () => {
+    it('says what the validator does without technical words, and offers a big button to choose the file', async () => {
+        const wrapper = mount(Validator, { props: { stellar: STELLAR } });
+
+        expect(wrapper.text()).toContain('Compruebe si una foto o un documento es el original');
+        expect(wrapper.text()).toContain('El archivo no sale de su equipo');
+        expect(wrapper.text()).not.toContain('huella');
+    });
+});

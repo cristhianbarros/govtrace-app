@@ -1,9 +1,23 @@
 <script setup>
 // El panel del Administrador de Organización (it. 18): el nombre de la
-// organización arriba y sus pantallas en la barra de abajo, al alcance del
-// pulgar en el teléfono.
-import { Head, Link, usePage } from '@inertiajs/vue3';
+// organización arriba y sus pantallas. It. 40c: en el celular, tres pestañas
+// con ícono y "Más"; en el computador, una barra lateral por grupos. La
+// Bandeja cuenta cuántas evidencias esperan revisión.
+import {
+    BuildingOffice2Icon,
+    ChartBarIcon,
+    ClipboardDocumentListIcon,
+    Cog6ToothIcon,
+    DocumentTextIcon,
+    InboxIcon,
+    MapPinIcon,
+    ShieldCheckIcon,
+    UsersIcon,
+} from '@heroicons/vue/24/outline';
+import { Head, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
+import PanelSidebar from '@/Components/PanelSidebar.vue';
+import PanelTabs from '@/Components/PanelTabs.vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 
 defineProps({
@@ -12,16 +26,20 @@ defineProps({
 
 const page = usePage();
 
+// El orden es el de la barra lateral; `primary`, las pestañas del celular.
 const screens = [
-    { href: '/admin/inbox', label: 'Bandeja' },
-    { href: '/admin/observers', label: 'Veedores' },
-    { href: '/admin/territory', label: 'Territorio' },
-    { href: '/admin/contracts', label: 'Contratos' },
-    { href: '/admin/worksites', label: 'Obras' },
-    { href: '/admin/organization', label: 'Organización' },
+    { href: '/admin/inbox', label: 'Bandeja', icon: InboxIcon, group: 'Revisar', primary: true },
+    { href: '/admin/summary', label: 'Resumen', icon: ChartBarIcon, group: 'Revisar' },
+    { href: '/admin/territory', label: 'Territorio', icon: MapPinIcon, group: 'Territorio y obras' },
+    { href: '/admin/contracts', label: 'Contratos', icon: DocumentTextIcon, group: 'Territorio y obras' },
+    { href: '/admin/worksites', label: 'Obras', icon: BuildingOffice2Icon, group: 'Territorio y obras', primary: true },
+    { href: '/admin/observers', label: 'Veedores', icon: UsersIcon, group: 'Equipo', primary: true },
+    { href: '/admin/organization', label: 'Organización', icon: Cog6ToothIcon, group: 'Organización' },
+    { href: '/admin/audit', label: 'Auditoría', icon: ClipboardDocumentListIcon, group: 'Organización' },
+    { href: '/admin/authorization', label: 'Autorización', icon: ShieldCheckIcon, group: 'Organización' },
 ];
 
-const isCurrent = (href) => page.url === href || page.url.startsWith(`${href}?`);
+const badges = computed(() => (page.props.inboxPending ? { '/admin/inbox': page.props.inboxPending } : {}));
 
 // US-021: evidencias en "Falla de Sellado" (solo el Administrador recibe este número).
 const failuresBanner = computed(() => {
@@ -43,17 +61,11 @@ const failuresBanner = computed(() => {
             <slot />
         </div>
 
+        <template #sidebar>
+            <PanelSidebar :screens="screens" :badges="badges" badge-label="por revisar" />
+        </template>
         <template #nav>
-            <Link
-                v-for="screen in screens"
-                :key="screen.href"
-                :href="screen.href"
-                :aria-current="isCurrent(screen.href) ? 'page' : undefined"
-                class="flex-1 px-1 py-3 text-center text-[11px] font-semibold"
-                :class="isCurrent(screen.href) ? 'text-slate-900' : 'text-slate-500'"
-            >
-                {{ screen.label }}
-            </Link>
+            <PanelTabs :screens="screens" :badges="badges" />
         </template>
     </AppLayout>
 </template>

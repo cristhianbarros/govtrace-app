@@ -70,7 +70,7 @@ describe('Organizaciones', () => {
     it('links to the alta screen', async () => {
         const wrapper = await openOrganizations([]);
 
-        expect(wrapper.get('a').attributes('href')).toBe('/admin/organizations/new');
+        expect(wrapper.get('main').get('a').attributes('href')).toBe('/admin/organizations/new');
     });
 
     it('Actualización exitosa del NIT: edits the NIT of an organization, with audit', async () => {

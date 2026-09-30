@@ -168,7 +168,7 @@ describe('Agrupar contratos en una ficha (US-045-INT)', () => {
     it('adds the contracts of a worksite to the grouping with a touch', async () => {
         const wrapper = await openWorksites();
 
-        await wrapper.findAll('button').filter((candidate) => candidate.text() === 'Agregar a la agrupación')[1].trigger('click');
+        await wrapper.findAll('button').filter((candidate) => candidate.text() === 'Unir con otra obra')[1].trigger('click');
 
         expect(wrapper.get('textarea#group-contracts').element.value).toBe('CO1.PCCNTR.3333333');
     });

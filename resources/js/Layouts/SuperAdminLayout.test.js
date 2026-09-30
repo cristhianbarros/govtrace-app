@@ -13,15 +13,28 @@ describe('SuperAdminLayout', () => {
 
         expect(wrapper.get('header').text()).toContain('Panel global');
         expect(wrapper.get('h1').text()).toBe('Parámetros');
-        expect(wrapper.findAll('nav a').map((link) => [link.text(), link.attributes('href')])).toEqual([
+        expect(wrapper.findAll('[data-test="sidebar"] a').map((link) => [link.text(), link.attributes('href')])).toEqual([
             ['Organizaciones', '/admin/organizations'],
+            ['Sellado', '/admin/sealing'],
+            ['SECOP', '/admin/secop-health'],
+            ['Uso', '/admin/usage'],
             ['Parámetros', '/admin/parameters'],
             ['Auditoría', '/admin/audit'],
-            ['SECOP', '/admin/secop-health'],
-            ['Sellado', '/admin/sealing'],
-            ['Uso', '/admin/usage'],
         ]);
-        expect(wrapper.get('nav a[aria-current="page"]').text()).toBe('Parámetros');
+        expect(wrapper.get('[data-test="sidebar"] a[aria-current="page"]').text()).toBe('Parámetros');
+        page.url = '/admin/inbox';
+    });
+
+    it('on the phone, three tabs with an icon and their name, and "Más" for the rest', async () => {
+        page.url = '/admin/organizations/new';
+        const wrapper = mount(SuperAdminLayout, { props: { title: 'Nueva organización' }, attachTo: document.body });
+        const tabs = wrapper.get('[data-test="tabs"]');
+
+        expect(tabs.findAll('a').map((tab) => tab.text())).toEqual(['Organizaciones', 'Sellado', 'SECOP']);
+        expect(tabs.get('a[aria-current="page"]').text()).toBe('Organizaciones');
+        await tabs.get('button[aria-haspopup="menu"]').trigger('click');
+        expect(wrapper.get('[data-test="more"]').findAll('a').map((link) => link.text())).toEqual(['Uso', 'Parámetros', 'Auditoría']);
+        wrapper.unmount();
         page.url = '/admin/inbox';
     });
 });

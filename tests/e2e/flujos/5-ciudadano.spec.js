@@ -29,7 +29,17 @@ test('Ve el mapa de obras de la veeduría y sus filtros', async ({ page }) => {
     await expect(page.locator('#filter-status')).toBeVisible();
 });
 
-test.fixme('V12: busca una obra por su nombre', async () => {});
+test('Busca una obra por su nombre, en la lista (V12)', async ({ page }) => {
+    await page.goto(ORG);
+    await page.getByRole('button', { name: 'Lista' }).click();
+
+    await page.getByLabel('Buscar una obra por su nombre').fill('parque de PRUEBAS');
+    const found = page.locator('[data-test="listed"]');
+    await expect(found).toHaveCount(1);
+    await expect(found).toContainText(WORKSITE);
+    await found.getByRole('link').click();
+    await page.waitForURL('**/worksite/*');
+});
 
 test('Abre una obra: el contrato de SECOP y sus evidencias publicadas', async ({ page }) => {
     await openTheWorksite(page);
@@ -38,13 +48,13 @@ test('Abre una obra: el contrato de SECOP y sus evidencias publicadas', async ({
     await expect(page.getByText('Constructora de Pruebas S.A.S.')).toBeVisible();
     // It. 40b: su estado y por qué, en palabras.
     await expect(page.locator('[data-test="condition"]')).toContainText('El reporte publicado más reciente');
-    await expect(page.getByRole('button', { name: 'Verificar Sello Blockchain' }).first()).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Comprobar que es original' }).first()).toBeVisible();
 });
 
 test('Comprueba una evidencia: su recibo, su descarga y su prueba', async ({ page }) => {
     await openTheWorksite(page);
 
-    await page.getByRole('button', { name: 'Verificar Sello Blockchain' }).first().click();
+    await page.getByRole('button', { name: 'Comprobar que es original' }).first().click();
     await expect(page.locator('[data-test="seal"]')).toContainText('Ledger');
 
     const worksiteId = new URL(page.url()).pathname.split('/').pop();

@@ -61,10 +61,10 @@ const pdfs = () => (props.evidence.files ?? []).filter((file) => file.kind === '
 
         <button
             type="button"
-            class="mt-3 inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-slate-900 px-3 text-sm font-semibold text-white md:w-auto"
+            class="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border-2 border-slate-900 bg-white px-3 text-sm font-semibold text-slate-900 md:w-auto"
             :aria-expanded="showingSeal"
             @click="showingSeal = !showingSeal"
-        >Verificar Sello Blockchain</button>
+        >Comprobar que es original</button>
         <SealPanel v-if="showingSeal" :receipt-url="evidence.receipt_url" :report-id="evidence.report_id" />
 
         <PhotoViewer v-if="viewing" :src="viewing.photo_url" :alt="`Foto de la evidencia del ${formatDateTime(evidence.captured_at)}`" @close="viewing = null" />

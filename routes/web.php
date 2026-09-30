@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Auth\ChangePasswordController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Central\AuditController;
 use App\Http\Controllers\Central\LoginController;
@@ -31,6 +32,9 @@ foreach (config('tenancy.central_domains') as $domain) {
         Route::middleware('auth:web')->group(function () {
             // It. 40b (V1): cerrar sesión, como en cada organización.
             Route::post('/logout', [LoginController::class, 'destroy'])->name('logout');
+            // It. 40c (V11): cambiar la contraseña con la sesión abierta.
+            Route::get('/account/password', [ChangePasswordController::class, 'show'])->name('account.password.show');
+            Route::put('/account/password', [ChangePasswordController::class, 'update'])->middleware('throttle:6,1')->name('account.password.update');
 
             // El panel del Super Administrador abre en el listado de organizaciones (it. 19).
             Route::get('/dashboard', fn () => redirect('/admin/organizations'))->name('super-admin.dashboard');

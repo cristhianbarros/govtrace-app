@@ -57,7 +57,7 @@ onMounted(load);
                     <label :for="parameter.key" class="font-semibold">{{ parameter.label }} <span class="font-normal text-slate-500">({{ parameter.unit }})</span></label>
                     <div class="flex gap-2">
                         <input :id="parameter.key" v-model="values[parameter.key]" type="text" class="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2 text-base" />
-                        <button type="submit" :disabled="saving === parameter.key" class="rounded-lg bg-slate-900 px-3 py-2 font-semibold text-white disabled:opacity-40">Guardar</button>
+                        <button type="submit" :disabled="saving === parameter.key" class="min-h-11 rounded-lg bg-slate-900 px-3 py-2 font-semibold text-white disabled:opacity-40">Guardar</button>
                     </div>
                     <p v-if="refused[parameter.key]" role="alert" class="text-xs text-red-700">{{ refused[parameter.key] }}</p>
                 </form>

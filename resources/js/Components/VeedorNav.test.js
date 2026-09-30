@@ -16,6 +16,8 @@ describe('VeedorNav', () => {
             ['Mis Reportes', '/my-reports'],
         ]);
         expect(wrapper.get('a[aria-current="page"]').text()).toBe('Mis Reportes');
+        // It. 40c: cada pestaña con su ícono, además del nombre.
+        expect(wrapper.findAll('a svg')).toHaveLength(2);
     });
 
     it('no longer has "Salir", which lives in the account menu of the header', () => {

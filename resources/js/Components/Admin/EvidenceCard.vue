@@ -83,7 +83,7 @@ async function decide(decision) {
         </div>
 
         <p class="text-sm">{{ evidence.comment || 'Sin comentario.' }}</p>
-        <p class="text-xs text-slate-500">Sellada en el ledger {{ evidence.seal.ledger }}</p>
+        <p class="text-xs text-slate-600"><span aria-hidden="true">✓</span> Con sello digital · bloque {{ evidence.seal.ledger }}</p>
 
         <p v-if="error" role="alert" class="rounded bg-red-50 p-2 text-sm text-red-800">{{ error }}</p>
 

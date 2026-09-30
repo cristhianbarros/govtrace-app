@@ -57,8 +57,8 @@ onMounted(load);
                     Las evidencias publicadas y sus sellos en la red Stellar, para auditarlas por su cuenta. Las ubicaciones van aproximadas y cada veedor, con un seudónimo.
                 </p>
                 <div class="flex flex-wrap gap-2">
-                    <a href="/open-data.csv" class="inline-flex min-h-11 items-center rounded-lg border border-slate-300 px-3 font-semibold">Descargar CSV</a>
-                    <a href="/open-data.json" class="inline-flex min-h-11 items-center rounded-lg border border-slate-300 px-3 font-semibold">Descargar JSON</a>
+                    <a href="/open-data.csv" class="inline-flex min-h-11 items-center rounded-lg border border-slate-300 px-3 font-semibold">Descargar para Excel (CSV)</a>
+                    <a href="/open-data.json" class="inline-flex min-h-11 items-center rounded-lg border border-slate-300 px-3 font-semibold">Datos para programadores (JSON)</a>
                 </div>
             </section>
         </div>

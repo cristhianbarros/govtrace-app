@@ -216,6 +216,20 @@ it('pages the contracts of the territory, 20 at a time, sorted by signing date o
         ->and(asAdministrator('GET', '/contracts?sort=contractor_name&direction=sideways')->json('data.0.process_number'))->toBe('SMR-1');
 });
 
+it('Buscar un contrato del territorio: by words of its object, its contractor, its process number or its SECOP id', function () {
+    reportableContract('CO1.PCCNTR.1111111', ['object' => 'Construcción del parque Los Trupillos', 'contractor_name' => 'Consorcio Parques', 'process_number' => 'SMR-LP-001']);
+    reportableContract('CO1.PCCNTR.2222222', ['object' => 'Pavimentación Calle 30', 'contractor_name' => 'Vías del Caribe', 'process_number' => 'SMR-LP-002']);
+
+    $found = fn (string $words) => collect(asAdministrator('GET', '/contracts?q='.urlencode($words))->assertOk()->json('data'))->pluck('secop_contract_id')->all();
+
+    expect($found('trupillos'))->toBe(['CO1.PCCNTR.1111111'])
+        ->and($found('Vías del'))->toBe(['CO1.PCCNTR.2222222'])
+        ->and($found('LP-002'))->toBe(['CO1.PCCNTR.2222222'])
+        ->and($found('2222222'))->toBe(['CO1.PCCNTR.2222222'])
+        ->and($found('no existe'))->toBe([])
+        ->and(asAdministrator('GET', '/contracts?q=trupillos')->json('meta.total'))->toBe(1);
+});
+
 // Obras (US-035) ----------------------------------------------------------
 
 it('lists the worksites of the organization with their official location and their contracts', function () {

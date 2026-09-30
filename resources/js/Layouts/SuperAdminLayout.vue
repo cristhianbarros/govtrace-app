@@ -1,25 +1,31 @@
 <script setup>
-// El panel global del Super Administrador: sus pantallas en la barra de
-// abajo, como el panel de cada organización.
-import { Head, Link, usePage } from '@inertiajs/vue3';
+// El panel global del Super Administrador. It. 40c: en el celular, tres
+// pestañas con ícono y "Más"; en el computador, una barra lateral.
+import {
+    AdjustmentsHorizontalIcon,
+    ArrowPathIcon,
+    BuildingLibraryIcon,
+    CheckBadgeIcon,
+    ClipboardDocumentListIcon,
+    PresentationChartLineIcon,
+} from '@heroicons/vue/24/outline';
+import { Head } from '@inertiajs/vue3';
+import PanelSidebar from '@/Components/PanelSidebar.vue';
+import PanelTabs from '@/Components/PanelTabs.vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 
 defineProps({
     title: { type: String, required: true },
 });
 
-const page = usePage();
-
 const screens = [
-    { href: '/admin/organizations', label: 'Organizaciones' },
-    { href: '/admin/parameters', label: 'Parámetros' },
-    { href: '/admin/audit', label: 'Auditoría' },
-    { href: '/admin/secop-health', label: 'SECOP' },
-    { href: '/admin/sealing', label: 'Sellado' },
-    { href: '/admin/usage', label: 'Uso' },
+    { href: '/admin/organizations', label: 'Organizaciones', icon: BuildingLibraryIcon, group: 'Organizaciones', primary: true },
+    { href: '/admin/sealing', label: 'Sellado', icon: CheckBadgeIcon, group: 'Operación', primary: true },
+    { href: '/admin/secop-health', label: 'SECOP', icon: ArrowPathIcon, group: 'Operación', primary: true },
+    { href: '/admin/usage', label: 'Uso', icon: PresentationChartLineIcon, group: 'Operación' },
+    { href: '/admin/parameters', label: 'Parámetros', icon: AdjustmentsHorizontalIcon, group: 'Configuración' },
+    { href: '/admin/audit', label: 'Auditoría', icon: ClipboardDocumentListIcon, group: 'Configuración' },
 ];
-
-const isCurrent = (href) => page.url === href || page.url.startsWith(`${href}?`) || page.url.startsWith(`${href}/`);
 </script>
 
 <template>
@@ -30,17 +36,11 @@ const isCurrent = (href) => page.url === href || page.url.startsWith(`${href}?`)
             <slot />
         </div>
 
+        <template #sidebar>
+            <PanelSidebar :screens="screens" />
+        </template>
         <template #nav>
-            <Link
-                v-for="screen in screens"
-                :key="screen.href"
-                :href="screen.href"
-                :aria-current="isCurrent(screen.href) ? 'page' : undefined"
-                class="flex-1 py-3 text-center text-xs font-semibold"
-                :class="isCurrent(screen.href) ? 'text-slate-900' : 'text-slate-500'"
-            >
-                {{ screen.label }}
-            </Link>
+            <PanelTabs :screens="screens" />
         </template>
     </AppLayout>
 </template>

@@ -109,7 +109,7 @@ onMounted(load);
                     <ul class="flex flex-col gap-1">
                         <li v-for="contract in worksite.contracts" :key="contract.secop_contract_id" class="flex flex-wrap items-center justify-between gap-2">
                             <span class="font-semibold">{{ contract.object }}</span>
-                            <button type="button" class="rounded border px-2 py-1 text-xs font-semibold" @click="addToGroup(contract.secop_contract_id)">Agregar a la agrupación</button>
+                            <button type="button" class="min-h-11 rounded-lg border px-3 text-sm font-semibold" @click="addToGroup(contract.secop_contract_id)">Unir con otra obra</button>
                         </li>
                     </ul>
                     <p class="text-slate-600">Ubicación oficial: {{ where(worksite) }}</p>
@@ -134,13 +134,13 @@ onMounted(load);
                             <button type="button" class="rounded-lg border px-3 py-3 font-semibold" @click="editing = null">Cancelar</button>
                         </div>
                     </div>
-                    <button v-else type="button" class="self-start rounded-lg border px-3 py-2 font-semibold" @click="correct(worksite)">Corregir ubicación</button>
+                    <button v-else type="button" class="min-h-11 self-start rounded-lg border px-3 py-2 font-semibold" @click="correct(worksite)">Corregir ubicación</button>
                 </article>
             </div>
         </LoadState>
 
         <section aria-labelledby="group-title" class="flex flex-col gap-2 rounded-lg bg-white p-3 text-sm">
-            <h3 id="group-title" class="font-semibold">Agrupar contratos en una ficha</h3>
+            <h2 id="group-title" class="font-semibold">Unir contratos de una misma obra</h2>
             <p class="text-slate-600">Para que una obra con varias fases o reinicios se vea y se reporte como una sola. Un reporte nunca cambia de ficha: dos fichas que ya tienen reportes no se unen.</p>
             <label for="group-name" class="text-xs font-semibold text-slate-700">Nombre de la ficha</label>
             <input id="group-name" v-model="groupName" type="text" maxlength="150" class="rounded-lg border border-slate-300 px-3 py-2 text-base" />

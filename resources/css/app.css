@@ -15,4 +15,27 @@
 
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
+
+    /*
+     * It. 40c (R-UX-01, docs/ux-analisis.md): letra legible para cualquiera,
+     * adultos mayores incluidos. Lo secundario (`text-xs`) mide 14 px y el
+     * texto (`text-sm`, `text-base`) 16 px: nada de 12 px. En rem, así que si
+     * la persona agranda la letra de su navegador, todo crece con ella.
+     */
+    --text-xs: 0.875rem;
+    --text-xs--line-height: 1.375rem;
+    --text-sm: 1rem;
+    --text-sm--line-height: 1.5rem;
+}
+
+/*
+ * It. 40c: los botones de zoom del mapa (Leaflet) miden 30 px; a 44 px se
+ * tocan sin atinar (R-UX-02).
+ */
+.leaflet-bar a,
+.leaflet-touch .leaflet-bar a {
+    width: 44px;
+    height: 44px;
+    line-height: 44px;
+    font-size: 22px;
 }

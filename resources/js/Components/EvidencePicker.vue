@@ -80,7 +80,7 @@ const kilobytes = (bytes) => `${Math.max(1, Math.round(bytes / 1024))} KB`;
                 class="flex items-center justify-between gap-2 rounded-lg bg-white px-3 py-2 text-sm"
             >
                 <span class="truncate">{{ evidence.kind === 'pdf' ? '📄' : '📷' }} {{ evidence.file.name }} · {{ kilobytes(evidence.file.size) }}</span>
-                <button type="button" data-test="remove-evidence" class="shrink-0 px-2 py-1 font-semibold text-red-700" @click="remove(index)">
+                <button type="button" data-test="remove-evidence" class="min-h-11 shrink-0 px-3 font-semibold text-red-700" @click="remove(index)">
                     Quitar
                 </button>
             </li>

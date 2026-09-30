@@ -356,3 +356,14 @@ describe('El botón de enviar dice qué falta (it. 40b)', () => {
     });
 });
 
+describe('Qué vio en la obra (it. 40c)', () => {
+    it('asks what the veedor saw, and explains each answer in a line', async () => {
+        const wrapper = await onWorksite(reading(15));
+        const question = wrapper.get('fieldset');
+
+        expect(question.get('legend').text()).toBe('¿Qué vio en la obra?');
+        expect(question.text()).toContain('La obra avanza: hay trabajo o cambios desde la última vez.');
+        expect(question.text()).toContain('Va más lenta de lo previsto, o está detenida por ahora.');
+        expect(question.text()).toContain('No hay nadie trabajando y la obra parece dejada.');
+    });
+});

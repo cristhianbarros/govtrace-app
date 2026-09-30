@@ -49,11 +49,11 @@ function chooseFile(chosen) {
 <template>
     <Head title="Validador" />
     <AppLayout :title="page.props.organization ?? 'GovTrace'" :logo="page.props.organizationLogo">
-        <Link href="/" class="mb-3 inline-flex min-h-11 items-center text-sm font-semibold text-slate-700">← Volver al mapa</Link>
+        <Link href="/" class="mb-3 inline-flex min-h-11 items-center text-base font-semibold text-slate-700">← Volver al mapa</Link>
         <OrganizationNotice />
         <h1 class="text-xl font-semibold">Validador de evidencias</h1>
-        <p class="mt-1 text-sm text-slate-600">
-            Compruebe que una foto o un documento es exactamente el que se selló en la red Stellar. El archivo no sale de su equipo: su navegador calcula su huella y la compara con la red.
+        <p class="mt-1 text-sm text-slate-700">
+            Compruebe si una foto o un documento es el original: el mismo que la veeduría guardó con sello digital, sin un solo cambio. El archivo no sale de su equipo: se compara aquí mismo.
         </p>
 
         <div class="mt-4 grid grid-cols-2 gap-2" role="group" aria-label="Modo de verificación">
@@ -62,7 +62,7 @@ function chooseFile(chosen) {
         </div>
 
         <div class="mt-4 flex flex-col gap-3">
-            <FileDrop label="Arrastre aquí la foto o el PDF, o toque para elegirlo" :accept="ACCEPT" :chosen="file" @choose="chooseFile" />
+            <FileDrop label="Elegir la foto o el PDF (también puede arrastrarlo aquí)" :accept="ACCEPT" :chosen="file" @choose="chooseFile" />
             <p class="text-xs text-slate-500">JPG, PNG o PDF, hasta 10 MB.</p>
             <template v-if="mode === 'attached'">
                 <FileDrop label="Y su prueba de inclusión (.prueba.json)" accept=".json,application/json" test="proof" :chosen="proofFile" @choose="(chosen) => (proofFile = chosen)" />

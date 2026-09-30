@@ -58,7 +58,7 @@ describe('Veedores', () => {
             { email: 'laura@correo.co', status: 'Invitación pendiente' },
         ]);
 
-        const rows = wrapper.findAll('li').map((row) => row.text());
+        const rows = wrapper.get('main').findAll('li').map((row) => row.text());
         expect(rows).toHaveLength(2);
         expect(rows[0]).toContain('carlos@correo.co');
         expect(rows[0]).toContain('Activo');
@@ -116,7 +116,7 @@ describe('Desactivar y reactivar veedores', () => {
 
         expect(deactivateObserver).toHaveBeenCalledWith(7);
         expect(wrapper.get('[role="status"]').text()).toBe('Veedor desactivado. Su sesión quedó cerrada y ya no puede enviar reportes.');
-        expect(wrapper.get('li').text()).toContain('Inactivo');
+        expect(wrapper.get('main').get('li').text()).toContain('Inactivo');
         expect(button(wrapper, 'Reactivar')).toBeDefined();
     });
 
@@ -141,7 +141,7 @@ describe('Desactivar y reactivar veedores', () => {
         await button(wrapper, 'Confirmar desactivación').trigger('click');
         await flushPromises();
 
-        expect(wrapper.get('li [role="alert"]').text()).toBe('El veedor ya está inactivo.');
+        expect(wrapper.get('main').get('li [role="alert"]').text()).toBe('El veedor ya está inactivo.');
     });
 });
 
@@ -189,7 +189,7 @@ describe('Reenviar o revocar una invitación', () => {
     it('offers neither to a veedor who already has an account, nor deactivating a pending invitation', async () => {
         const wrapper = await openObservers([carlos('Activo'), { id: 8, email: 'lucia@correo.co', status: 'Invitación pendiente' }]);
 
-        const [active, pending] = wrapper.findAll('li');
+        const [active, pending] = wrapper.get('main').findAll('li');
         expect(active.findAll('button').map((candidate) => candidate.text())).toEqual(['Desactivar']);
         expect(pending.findAll('button').map((candidate) => candidate.text())).toEqual(['Reenviar invitación', 'Revocar invitación']);
     });

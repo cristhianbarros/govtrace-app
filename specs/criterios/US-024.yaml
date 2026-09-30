@@ -5,7 +5,7 @@ criterios_aceptacion:
   escenarios_exito:
     - "El Verificador arrastra un archivo; su navegador calcula el SHA-256 localmente (R-VER-01), pide al API la prueba de inclusión, recompone la raíz de Merkle y la compara con el Smart Contract (R-BLK-05)"
     - "Si coincide: banner verde \"✅ Archivo Auténtico e Inmutable. Sellado el [Fecha] en el ledger #[Ledger].\" con enlace a la transacción en Stellar Expert"
-    - "Modo contextual (botón 'Verificar Sello Blockchain' de una evidencia en la línea de tiempo): el archivo se compara contra ESA evidencia; si coincide → banner verde; si no coincide → banner rojo \"❌ Archivo Alterado o Falso. Las huellas criptográficas no coinciden con la blockchain.\""
+    - "Modo contextual (botón 'Comprobar que es original' (antes 'Verificar Sello Blockchain'; lenguaje claro, it. 40c) de una evidencia en la línea de tiempo): el archivo se compara contra ESA evidencia; si coincide → banner verde; si no coincide → banner rojo \"❌ Archivo Alterado o Falso. Las huellas criptográficas no coinciden con la blockchain.\""
     - "Modo libre (arrastrar cualquier archivo, sin evidencia de referencia): el resultado es 'Auténtico' (banner verde) o 'No encontrado'; nunca 'Alterado'"
     - "Modo con prueba adjunta: el Verificador aporta el archivo más su prueba de inclusión descargada (US-026) y la verificación se hace solo contra Stellar, sin consultar el API de GovTrace (R-INT-04)"
   validaciones_reglas:
