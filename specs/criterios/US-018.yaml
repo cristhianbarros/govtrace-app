@@ -6,6 +6,7 @@ criterios_aceptacion:
     - "Si no hay red o la subida falla por timeout, el reporte se guarda en el teléfono y se muestra: \"📵 Sin conexión. Reporte guardado en el dispositivo. Se enviará automáticamente cuando recupere la señal.\""
     - "En 'Mis Reportes' aparece una 'Bandeja de salida' con el número de pendientes (ej. '⏳ 2 reportes esperando conexión')"
     - "Al recuperar señal, los pendientes se suben en segundo plano; cada reporte pasa a la lista normal como 'En Cola' y sale de la bandeja de salida"
+    - "(It. 43b, 2026-09-30) La app del veedor se instala en el celular: cada veeduría tiene su manifiesto, con su nombre, que abre en 'Nuevo Reporte'; si el navegador lo permite, el menú de cuenta ofrece 'Instalar la app en este celular'"
   validaciones_reglas:
     - "Máximo 10 reportes pendientes o ~50 MB en total en el teléfono"
     - "Un reporte pendiente vive como máximo 7 días en el teléfono; después pierde validez probatoria y se descarta"

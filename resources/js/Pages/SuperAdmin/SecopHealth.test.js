@@ -2,7 +2,7 @@
 import { flushPromises, mount } from '@vue/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import SecopHealth from './SecopHealth.vue';
-import { fetchSecopHealth } from '@/services/api.js';
+import { fetchSecopHealth, syncSecopNow } from '@/services/api.js';
 
 vi.mock('@inertiajs/vue3', async () => await import('@/testing/inertia.js'));
 vi.mock('@/services/api.js');
@@ -67,5 +67,23 @@ describe('Salud de SECOP II', () => {
         const wrapper = await openHealth(null);
 
         expect(wrapper.text()).toContain('Aún no ha corrido ninguna sincronización con SECOP II.');
+    });
+});
+
+describe('Sincronizar ahora (it. 43b, V15)', () => {
+    it('Sincronizar SECOP a mano: asks for the sync and says it is on its way, or why not', async () => {
+        const wrapper = await openHealth(success);
+        syncSecopNow.mockResolvedValueOnce({ message: 'Sincronización con SECOP II en marcha. En unos minutos verá el resultado aquí.' });
+
+        await wrapper.findAll('button').find((button) => button.text() === 'Sincronizar ahora').trigger('click');
+        await flushPromises();
+
+        expect(syncSecopNow).toHaveBeenCalledOnce();
+        expect(wrapper.get('[role="status"]').text()).toBe('Sincronización con SECOP II en marcha. En unos minutos verá el resultado aquí.');
+
+        syncSecopNow.mockRejectedValueOnce({ response: { status: 429, data: { message: 'Ya se pidió una sincronización hace menos de 5 minutos. Espere su resultado.' } } });
+        await wrapper.findAll('button').find((button) => button.text() === 'Sincronizar ahora').trigger('click');
+        await flushPromises();
+        expect(wrapper.get('[role="status"]').text()).toBe('Ya se pidió una sincronización hace menos de 5 minutos. Espere su resultado.');
     });
 });

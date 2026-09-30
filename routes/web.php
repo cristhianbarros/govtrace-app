@@ -12,6 +12,7 @@ use App\Http\Controllers\Central\ParameterController;
 use App\Http\Controllers\Central\SealingController;
 use App\Http\Controllers\Central\SealingCostsController;
 use App\Http\Controllers\Central\SecopHealthController;
+use App\Http\Controllers\Central\SecopSyncNowController;
 use App\Http\Controllers\Central\UsageController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -70,6 +71,8 @@ foreach (config('tenancy.central_domains') as $domain) {
             // US-014: salud de la sincronización con SECOP II.
             Route::get('/admin/secop-health', fn () => Inertia::render('SuperAdmin/SecopHealth'))->name('admin.secop-health.show');
             Route::get('/admin/secop-health/data', SecopHealthController::class)->name('admin.secop-health.data');
+            // It. 43b (V15): sincronizar ahora, sin esperar a la madrugada.
+            Route::post('/admin/secop-health/sync', SecopSyncNowController::class)->name('admin.secop-health.sync');
 
             // US-022 y US-047-MNT: la cuenta patrocinadora, la vigencia del contrato y las
             // fallas de sellado; US-004: las comisiones. Una sola pantalla, "Sellado".

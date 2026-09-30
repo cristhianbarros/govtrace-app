@@ -71,7 +71,14 @@ test('Opera la plataforma: parámetros, auditoría, SECOP, sellado y uso', async
 
 test.fixme('V7: crea un reporte en nombre de una organización que lo autorizó', async () => {});
 
-test.fixme('V15: sincroniza SECOP a mano', async () => {});
+test('Sincroniza SECOP a mano, sin esperar a la madrugada (V15)', async ({ page }) => {
+    await enterThePanel(page);
+    await page.goto(`${CENTRAL}/admin/secop-health`);
+
+    await page.getByRole('button', { name: 'Sincronizar ahora' }).click();
+    // Si otra corrida de estas pruebas la pidió hace menos de 5 minutos, la respuesta es la de espera.
+    await expect(page.getByRole('status')).toHaveText(/Sincronización con SECOP II en marcha|Ya se pidió una sincronización hace menos de 5 minutos/);
+});
 
 test('Cierra la sesión desde el menú de su cuenta (V1)', async ({ page }) => {
     await enterThePanel(page);

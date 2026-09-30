@@ -78,6 +78,12 @@ return [
     |
     */
 
+    /*
+    | It. 43b (V14): dónde está el verificador independiente (US-046-INT), el
+    | programa del repositorio abierto que comprueba una evidencia sin GovTrace.
+    */
+    'verifier_url' => env('APP_VERIFIER_URL', 'https://github.com/cristhianbarros/govtrace-app/tree/main/tools/verify'),
+
     'locale' => env('APP_LOCALE', 'es'),
 
     'fallback_locale' => env('APP_FALLBACK_LOCALE', 'es'),

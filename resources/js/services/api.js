@@ -125,6 +125,8 @@ export const confirmDecommission = (id, token, subdomain) => dataOf(http.post(`/
 export const fetchPins = async (filters = {}) => (await dataOf(http.get('/public/worksites', { params: filters }))).data;
 
 /** US-028: lo que los filtros pueden elegir (los municipios del mapa). */
+// It. 43b (V15): sincronizar con SECOP II ahora, sin esperar a la madrugada.
+export const syncSecopNow = () => dataOf(http.post('/admin/secop-health/sync'));
 export const fetchMapFilters = async () => (await dataOf(http.get('/public/worksites/filters'))).data;
 // It. 40c: el mapa como lista, con los mismos filtros; se pide al abrir la lista.
 export const fetchWorksiteList = async (filters = {}) => (await dataOf(http.get('/public/worksites/list', { params: filters }))).data;

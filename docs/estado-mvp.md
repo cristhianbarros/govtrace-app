@@ -17,7 +17,7 @@ Es el punto de partida para mejorar todo lo que falta. El tag `checkpoint-base` 
 | Texto de menos de 16 px (celular) | 80 % en la pantalla típica | `docs/ux-analisis.md`, anexo A |
 | Botones de menos de 44 px | 84 % en el panel del Administrador, 91 % en el del Super Administrador, 23 % en el sitio público y el veedor | `docs/ux-analisis.md`, anexo A |
 | Tests | Más de 1.100, cada uno de una historia sola; hasta la it. 40a, solo 2 en un navegador y **ninguno recorre el flujo de un rol** | `docs/mapa-funcional.md`, sección 6 |
-| Flujos de punta a punta, como tests (it. 40a, `make e2e`) | **27 pasos pasan y 20 son `fixme`**, uno por vacío. Tras la it. 40b: 30 y 17 (cerrados V1 y V4). Tras la 40c: 32 y 15 (cerrados V11 y V12). Tras la 40d: 34 y 13 (cerrado V5). Tras la 43a: 35 y 12 (cerrados V2 y V16). | `tests/e2e/flujos/` |
+| Flujos de punta a punta, como tests (it. 40a, `make e2e`) | **27 pasos pasan y 20 son `fixme`**, uno por vacío. Tras la it. 40b: 30 y 17 (cerrados V1 y V4). Tras la 40c: 32 y 15 (cerrados V11 y V12). Tras la 40d: 34 y 13 (cerrado V5). Tras la 43a: 35 y 12 (cerrados V2 y V16). Tras la 43b: 38 y 9 (cerrados V6, V14 y V15). | `tests/e2e/flujos/` |
 | Pantallas medidas (it. 40a, `make ux-check`) | 52 (26 por tamaño), comparadas con `tests/ux/baseline.json` | `tests/ux/` |
 
 **Por dónde empezar:** por la **it. 40a**, que convierte los dos análisis en tests: el recorrido con axe (`make ux-check`) y los flujos de cada rol como tests de extremo a extremo. Los vacíos quedan como tests pendientes, y cada iteración los pasa a verde. El orden completo está en la sección 6.

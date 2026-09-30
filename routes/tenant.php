@@ -30,6 +30,7 @@ use App\Http\Controllers\Tenant\SetPasswordController;
 use App\Http\Controllers\Tenant\SummaryController;
 use App\Http\Controllers\Tenant\SuperAdminAuthorizationController;
 use App\Http\Controllers\Tenant\TerritoryController;
+use App\Http\Controllers\Tenant\WebManifestController;
 use App\Http\Controllers\Tenant\WorksiteController;
 use App\Http\Controllers\Tenant\WorksiteGroupController;
 use App\Http\Controllers\Tenant\WorksiteLocationController;
@@ -85,10 +86,14 @@ Route::middleware([
     // US-052-RPT: los datos abiertos, en CSV o JSON.
     Route::get('/open-data.{format}', OpenDataController::class)->whereIn('format', ['csv', 'json'])->middleware('throttle:open-data')->name('public.open-data');
     // US-024: el validador público — el navegador lee el sello en la red por su cuenta.
-    Route::get('/verify', fn () => Inertia::render('Public/Validator', ['stellar' => StellarForBrowser::props()]))->name('public.validator');
+    // It. 43b (V14): con el enlace al verificador independiente (US-046-INT).
+    Route::get('/verify', fn () => Inertia::render('Public/Validator', ['stellar' => StellarForBrowser::props(), 'verifierUrl' => config('app.verifier_url')]))->name('public.validator');
 
     // US-031: Administrador de Organización y Veedor (la pantalla, it. 17).
     Route::get('/login', fn () => Inertia::render('Auth/Login', ['context' => tenant()->displayName()]))->name('tenant.login.show');
+
+    // It. 43b (V6): el manifiesto de la app del veedor, con el nombre de su veeduría, para instalarla.
+    Route::get('/manifest.webmanifest', WebManifestController::class)->name('tenant.manifest');
 
     // US-007: el logo, público (lo muestra el mapa de la organización).
     Route::get('/organization/logo', [OrganizationLogoController::class, 'show'])->name('organization.logo');

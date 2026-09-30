@@ -366,7 +366,7 @@ También está completo:
 | V3 | Un solo administrador, sin reemplazo posible. El Super Administrador solo puede suspender la organización entera. | Admin, Super Admin | 🔴 | Omisión | El Super Administrador asigna y desactiva administradores. ❓ ¿El administrador también puede invitar a otro? |
 | V4 | ✅ **Cerrado en la it. 40b.** La Bandeja no dice de qué obra es la evidencia ni quién la envió: el JSON trae `worksite_id`, pero no el nombre ni el autor. | Admin | 🔴 | US-036 pide "revisión responsable" sin nombrar los datos. | La obra (nombre y municipio) y el veedor en cada tarjeta. La obra ya está en la it. 40b; el veedor, ❓. |
 | V5 | ✅ **Cerrado en la it. 40d.** El dominio central no lleva a ninguna veeduría. El ciudadano no tiene cómo llegar, y el veedor que olvidó su enlace tampoco. | Ciudadano, veedor | 🟠 | Omisión (R-MAP-01 aísla los mapas; no prohíbe un directorio). | Un directorio de veedurías activas en el Inicio ❓, ya en la it. 40d. |
-| V6 | La app del veedor no se puede instalar: hay service worker (`public/sw.js`), pero no hay manifiesto ni íconos. | Veedor | 🟠 | Omisión técnica | Un manifiesto por veeduría, con su nombre y su logo, los íconos y un "Instalar en el celular". |
+| V6 | ✅ **Cerrado en la it. 43b.** La app del veedor no se puede instalar: hay service worker (`public/sw.js`), pero no hay manifiesto ni íconos. | Veedor | 🟠 | Omisión técnica | Un manifiesto por veeduría, con su nombre y su logo, los íconos y un "Instalar en el celular". |
 | V7 | Reportar en nombre de una organización (US-042-SEC): la regla está en el backend y probada, pero no hay pantalla. | Super Admin | 🟠 | Se hizo la API, no la pantalla. | Desde la organización autorizada, en el panel global, un formulario de reporte. |
 | V8 | La razón social no se puede cambiar: solo el NIT (`UpdateOrganizationLegalData`). | Super Admin | 🟠 | US-011 a medias. | Editar también el nombre legal, con la misma auditoría. |
 | V9 | Ningún aviso al administrador cuando hay evidencias por revisar: quedan ocultas hasta que alguien entra. | Admin | 🟠 | No estaba en la SPEC. | ❓ Un correo diario con cuántas hay por revisar. |
@@ -374,8 +374,8 @@ También está completo:
 | V11 | ✅ **Cerrado en la it. 40c.** No se puede cambiar la contraseña con la sesión abierta: solo con "¿Olvidó su contraseña?". | Todos | 🟡 | No estaba en la SPEC. | "Cambiar contraseña" en "Mi cuenta" (el menú de la it. 40c). |
 | V12 | ✅ **Cerrado en la it. 40c.** En el mapa público no se puede buscar una obra por su nombre. | Ciudadano | 🟡 | US-028 pide estado, presupuesto y municipio. | Un buscador junto a la lista de obras (it. 40c). |
 | V13 | La página de la veeduría no tiene datos de contacto. | Ciudadano | 🟡 | US-007 solo pide nombre y logo. | ❓ Correo, teléfono o web en el perfil de la organización. |
-| V14 | El validador no enlaza el script de verificación independiente. | Ciudadano experto | 🟡 | Omisión | Un enlace "Verificarlo por su cuenta" hacia `tools/verify`. |
-| V15 | No se puede sincronizar SECOP a mano desde el panel global: corre cada noche y al cambiar un territorio. | Super Admin | 🟡 | US-014 solo pide ver la salud. | Un botón "Sincronizar ahora". |
+| V14 | ✅ **Cerrado en la it. 43b.** El validador no enlaza el script de verificación independiente. | Ciudadano experto | 🟡 | Omisión | Un enlace "Verificarlo por su cuenta" hacia `tools/verify`. |
+| V15 | ✅ **Cerrado en la it. 43b.** No se puede sincronizar SECOP a mano desde el panel global: corre cada noche y al cambiar un territorio. | Super Admin | 🟡 | US-014 solo pide ver la salud. | Un botón "Sincronizar ahora". |
 | V16 | ✅ **Cerrado en la it. 43a.** El Super Administrador no ve quién administra cada organización. | Super Admin | 🟡 | Omisión | Va con V2. |
 | V17 | Al veedor no le llega correo cuando su reporte se publica o se rechaza: lo ve al entrar. | Veedor | 🟡 | No estaba en la SPEC. | ❓ Opcional. |
 

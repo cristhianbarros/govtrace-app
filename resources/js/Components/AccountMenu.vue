@@ -8,6 +8,7 @@ import { Link, router, usePage } from '@inertiajs/vue3';
 import { computed, onBeforeUnmount, ref } from 'vue';
 import { clearOutbox, outboxState, refreshOutbox } from '@/composables/useOutbox.js';
 import { MESSAGES } from '@/lib/outbox.js';
+import { installation, install } from '@/lib/install.js';
 import { forgetOfflineCopies } from '@/lib/pwa.js';
 import { logout } from '@/services/api.js';
 
@@ -81,6 +82,7 @@ async function leave() {
             </p>
             <Link v-if="inOrganization" href="/" role="menuitem" class="flex min-h-11 items-center rounded-lg px-3 text-base hover:bg-slate-100">Ver el sitio público</Link>
             <Link href="/account/password" role="menuitem" class="flex min-h-11 items-center rounded-lg px-3 text-base hover:bg-slate-100">Cambiar contraseña</Link>
+            <button v-if="installation.available" type="button" role="menuitem" class="flex min-h-11 w-full items-center rounded-lg px-3 text-left text-base hover:bg-slate-100" @click="open = false; install()">Instalar la app en este celular</button>
             <button type="button" role="menuitem" class="flex min-h-11 w-full items-center rounded-lg px-3 text-left text-base font-semibold text-red-700 hover:bg-red-50" @click="askToLeave">Salir</button>
         </div>
 

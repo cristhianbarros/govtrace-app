@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import AccountMenu from './AccountMenu.vue';
 import { configureOutbox } from '@/composables/useOutbox.js';
 import { createOutbox, memoryStore } from '@/lib/outbox.js';
+import { installation } from '@/lib/install.js';
 import { logout } from '@/services/api.js';
 import { page, router } from '@/testing/inertia.js';
 
@@ -141,5 +142,24 @@ describe('Menú de cuenta', () => {
         expect(central.find('a[href="/login"]').exists()).toBe(false);
         central.unmount();
         page.url = '/admin/inbox';
+    });
+});
+
+describe('Instalar la app (it. 43b, V6)', () => {
+    it('La app del veedor se instala en el celular: offers to install it when the phone allows it, and asks the phone', async () => {
+        const { wrapper } = await menuOf(VEEDOR);
+        await openTheMenu(wrapper);
+        expect(wrapper.text()).not.toContain('Instalar la app en este celular');
+
+        const prompt = vi.fn().mockResolvedValue(undefined);
+        window.dispatchEvent(Object.assign(new Event('beforeinstallprompt'), { prompt, userChoice: Promise.resolve({ outcome: 'accepted' }) }));
+        await flushPromises();
+
+        const install = wrapper.findAll('[role="menuitem"]').find((item) => item.text() === 'Instalar la app en este celular');
+        await install.trigger('click');
+        await flushPromises();
+        expect(prompt).toHaveBeenCalledOnce();
+        expect(installation.available).toBe(false);
+        wrapper.unmount();
     });
 });

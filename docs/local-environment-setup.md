@@ -48,16 +48,42 @@ Los datos son de mentira: los contratos `CO1.PCCNTR.91…` no existen en SECOP y
 
 ### Un guion para la demostración
 
-1. **Sin sesión:** el mapa público, la obra de la Calle 30 con su línea de tiempo, las estadísticas, y `/verify`: pegar el hash de una evidencia y ver el sello en la red.
-2. **Administrador** (`admin@veeduria-demo.org`): la bandeja `/admin/inbox`, con 3 evidencias selladas y ocultas. Publicar una y verla aparecer en el mapa.
-3. **Invitar a un veedor** desde `/admin/observers`. Luego, en la terminal, `make invites` muestra el enlace del correo; abrirlo y definir la contraseña.
-4. **Veedor** (`ana.torres@correo.co`): enviar un reporte nuevo y ver cómo pasa a **Sellada**.
-5. **Super Administrador:** las organizaciones, el estado del sellado (`/admin/sealing`), los parámetros y el log de auditoría.
+Recorre los cuatro perfiles con la interfaz de las it. 40 y 43. Todo se hace con clics, sin escribir direcciones, salvo la primera.
+
+1. **El Inicio** (`http://govtrace.localhost:8080`):
+   - "¿Cómo funciona?" en tres pasos;
+   - el directorio de veedurías;
+   - en *Veeduría Ciudadana Santa Marta (demo)*, **Ver su mapa de obras**.
+2. **El ciudadano, sin cuenta:**
+   - **El mapa:** arriba, los tres estados con su signo y cuántas obras tiene cada uno (✓ Normal, ! Alerta, ✕ En riesgo); tocar **✕ En riesgo** deja solo esas.
+   - **La lista:** **Lista** muestra las obras como lista; escribir `colegio` en *Buscar una obra por su nombre*.
+   - **Una obra:** su estado y **por qué**, en palabras. En una foto, **Comprobar que es original** abre su recibo en la red.
+   - **Al pie del mapa:** **Estadísticas del territorio** y **Validar un archivo**; el validador enlaza también al programa independiente.
+3. **El Administrador:**
+   - **Entrar** (arriba a la derecha): `admin@veeduria-demo.org`.
+   - **La Bandeja:** la pestaña cuenta **3** por revisar, y cada evidencia dice su obra, su municipio y quién la envió.
+   - **Publicar una:** después, en el menú de la cuenta, **Ver el sitio público** para verla en el mapa.
+   - **Rechazar otra** con un motivo, que después verá el veedor.
+   - **En el computador:** la barra lateral agrupa todas las pantallas. **En el celular:** tres pestañas y **Más**.
+   - **Veedores:** invitar un correo; su enlace, con `make invites`.
+4. **El veedor** (`ana.torres@correo.co`):
+   - **Nuevo Reporte:** **📍 Obras cercanas**, o buscar `Calle 30`.
+   - **¿Qué vio en la obra?:** cada opción con su explicación.
+   - **La foto:** **Tomar foto**, o **Elegir de la galería o un PDF**.
+   - **Enviar:** mientras falte algo, junto al botón se lee **Para enviar falta:**.
+   - **Mis Reportes:** *Sello digital* y *Publicación*, por separado; **Ver recibo**.
+   - **El menú de la cuenta:** **Cambiar contraseña** y **Salir**, que siempre pregunta antes.
+5. **El Super Administrador** (`admin@demo.govtrace.test`, en `http://govtrace.localhost:8080/login` o en *Acceso para administradores* al pie del Inicio):
+   - **Organizaciones:** cada una con su Administrador y el estado de su invitación. Crear una en **+ Nueva organización**, con su Administrador: aparece **Invitación pendiente**, con **Reenviar invitación** y **Revocar invitación**.
+   - **SECOP:** **Sincronizar ahora**.
+   - **Sellado, Uso, Parámetros y Auditoría.**
+
+Las capturas de todas las pantallas, en celular y en computador: `make ux-check` las deja en `storage/framework/testing/ux/shots/`.
 
 ### Lo que hay que saber antes de una demostración
 
 - **Varios reportes a la vez se sellan por turnos.** Stellar admite una sola transacción pendiente de la cuenta selladora: cada sello espera a que el anterior entre en un ledger (en la red local, cerca de un segundo; en testnet y la red principal, unos 5). Ninguno gasta intentos por esperar su turno (it. 39). `make demo` envía sus 9 reportes de golpe, como los que un celular guarda sin señal.
-- **Cámara y ubicación.** El navegador solo las da en un contexto seguro. En el mismo equipo, `*.localhost` lo es; desde un celular en tu red (`http://<tu IP>:8080`), no. Sin cámara, puedes subir una imagen desde el equipo.
+- **Cámara, ubicación e instalar la app.** El navegador solo las da en un contexto seguro. En el mismo equipo, `*.localhost` lo es; desde un celular en tu red (`http://<tu IP>:8080`), no. Sin cámara, puedes subir una imagen desde el equipo. Por la misma razón, "Instalar la app en este celular" solo aparece por HTTPS (staging) o en el mismo equipo.
 - **Los correos no se envían:** salen al archivo `storage/logs/mail.log` (`MAIL_MAILER=log`). `make invites` muestra los enlaces de los últimos correos; `make invites LIMIT=10` muestra más.
 - **SECOP.** Al registrar una organización se lanza la sincronización con SECOP II en el worker. Con internet, llegan contratos reales de Magdalena, que se suman a los de demostración; sin internet, la sincronización falla y se reintenta sin afectar la demostración.
 - **Si algo no sella,** `make demo` lo dice al terminar: casi siempre es el worker (`make ps`) o la red Stellar (`make stellar-up`).
@@ -138,9 +164,9 @@ Los contratos vienen de SECOP II, una fuente externa que consulta el worker:
 
 Como veedor, en `/reports/new`:
 
-1. **Buscar Obra** (`/contracts/search`) o las obras cercanas (`/worksites/nearby`).
-2. Toma la foto y deja la ubicación.
-3. Envía. El reporte pasa a la cola de sellado.
+1. **📍 Obras cercanas** (`/worksites/nearby`) o **Buscar Obra** (`/contracts/search`).
+2. **¿Qué vio en la obra?** y la foto: **Tomar foto** (cámara trasera) o **Elegir de la galería o un PDF**. La ubicación la toma la app.
+3. **Enviar Reporte.** Mientras falte algo, junto al botón se lee qué. El reporte pasa a la cola de sellado.
 
 Cámara y ubicación: ver [arriba](#lo-que-hay-que-saber-antes-de-una-demostración).
 

@@ -28,3 +28,9 @@ Característica: Panel de salud de la sincronización SECOP II
     Dado que estoy autenticado como Administrador de la organización "Veeduría Ciudadana Santa Marta"
     Cuando intento abrir el panel de salud de la sincronización
     Entonces la acción es rechazada
+
+  @complexity:low
+  Escenario: Sincronizar SECOP a mano
+    Cuando en la salud de SECOP II pulso "Sincronizar ahora"
+    Entonces veo "Sincronización con SECOP II en marcha. En unos minutos verá el resultado aquí."
+    Y si la pido otra vez antes de 5 minutos, veo "Ya se pidió una sincronización hace menos de 5 minutos. Espere su resultado."
