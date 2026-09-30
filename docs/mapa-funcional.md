@@ -24,6 +24,116 @@ Al 2026-09-29, sobre `main` en `7369d10`. Todas las pantallas de GovTrace y el r
 | Veedor de Campo | Sí | Volver a entrar: la app no se puede instalar, y el dominio central no lleva a su veeduría. No puede cambiar su contraseña con la sesión abierta. |
 | Ciudadano | Sí, si ya tiene el enlace | El dominio central no lleva a ninguna veeduría. |
 
+## 0. Quién es quién
+
+**La organización no es una persona.** Es la entidad: una veeduría ciudadana (Ley 850 de 2003), una ONG o una cámara de comercio, con su NIT. En GovTrace es un espacio propio, un *tenant*, con su subdominio, su base de datos, su territorio y su mapa público. Dentro de ella trabajan personas con roles distintos.
+
+La confusión es natural, porque en Colombia la organización se llama "veeduría" y sus miembros, "veedores". Pero son tres cosas distintas:
+- **Organización:** la entidad, con NIT, subdominio y mapa.
+- **Veedor:** una persona que pertenece a una organización y reporta desde las obras. Tiene cuenta, y entra porque el administrador de su organización lo invita.
+- **Ciudadano:** cualquier persona, sin cuenta. Mira y comprueba. Para reportar, tiene que unirse a una veeduría como veedor.
+
+```
+GovTrace (la plataforma) ─────────── Super Administrador
+ ├── Organización A (veeduría u ONG) ── a.govtrace…
+ │    ├── Administrador
+ │    ├── Veedores de campo (varios)
+ │    └── Mapa público ────────────── Ciudadanos (sin cuenta)
+ └── Organización B …
+```
+
+**Una analogía.** GovTrace funciona como una plataforma de periódicos:
+- el Super Administrador es la empresa dueña de la plataforma: da de alta cada periódico, pero no escribe ni edita noticias;
+- cada organización es un periódico;
+- el Administrador es su editor: arma el equipo y decide qué se publica;
+- el veedor es el reportero en la calle: trae la foto con la prueba de dónde y cuándo se tomó;
+- el ciudadano es el lector, que además puede comprobar que la foto es auténtica.
+
+### Super Administrador: opera la plataforma
+
+Trabaja en el dominio central, en el "Panel global".
+- **Da de alta cada organización** (US-001, US-002):
+  - su NIT, validado con el dígito de verificación de la DIAN;
+  - su nombre y su subdominio;
+  - su Administrador inicial, que recibe la invitación por correo.
+- **Gobierna las organizaciones:**
+  - corrige el NIT a solicitud formal (US-011);
+  - las suspende o reactiva: mientras están suspendidas, sus usuarios no entran y el mapa sigue visible con un aviso (US-003a);
+  - las da de baja con doble confirmación: el mapa sale de línea y la evidencia se conserva 5 años (US-003b).
+- **Opera el sistema:**
+  - los parámetros globales: geocerca, vigencia de las invitaciones, hora de SECOP;
+  - la salud de la sincronización con SECOP;
+  - el sellado: el saldo de la cuenta que paga las comisiones, las fallas por reencolar y los costos por organización;
+  - el uso de cada organización, la auditoría global y las alertas por correo.
+- **No puede:**
+  - tocar una evidencia sellada (R-SA-01);
+  - crear reportes en una organización sin la autorización de su Administrador, que dura 30 días y queda registrada (R-SA-02).
+
+### Administrador de Organización: dirige una veeduría
+
+Trabaja en el subdominio de su organización, en el "Panel del Administrador".
+- **Su equipo:** invita veedores por correo, reenvía o revoca invitaciones, y desactiva o reactiva cuentas (US-005, US-006, US-040-USR, US-041-USR).
+- **Su territorio:** elige los municipios o departamentos que vigila, y GovTrace trae de SECOP II sus contratos de obra (US-012).
+- **Sus obras:** los contratos, la ubicación de cada obra y los contratos agrupados en una misma obra (US-015, US-035, US-045-INT).
+- **El control editorial, que es su tarea central** (US-036, US-037). Toda evidencia sellada llega oculta, y él decide:
+  - publicarla: aparece en el mapa;
+  - rechazarla con un motivo, que ve el veedor;
+  - retirar una ya publicada: en el mapa queda una lápida.
+
+  La organización responde por lo que muestra su mapa (R-MAP-01).
+- **Además:** el nombre y el logo, el resumen del territorio, el CSV, la auditoría de su organización y la autorización al Super Administrador.
+- **No puede:** crear otras organizaciones, cambiar el NIT ni alterar evidencias selladas (R-TA-01 a R-TA-03).
+
+### Veedor de campo: el que va a la obra
+
+Usa la app en el celular.
+- **Entra por invitación:** crea su contraseña con el enlace del correo (US-030).
+- **Reporta** (US-008, US-009, US-016, US-019):
+  1. Elige la obra, buscándola o con "Obras cercanas", que usa el GPS.
+  2. Dice qué vio: Avance, Retraso o Abandono.
+  3. Si quiere, escribe un comentario.
+  4. Adjunta de 1 a 5 fotos, o un PDF.
+- **Mientras tanto, la app:**
+  - toma la ubicación;
+  - borra los metadatos de las fotos;
+  - calcula la huella de cada archivo en el mismo teléfono;
+  - si no hay señal, guarda el reporte y lo envía después, hasta 7 días (US-018).
+- **Cada reporte se sella en Stellar.** GovTrace paga la comisión: el veedor nunca ve billeteras ni criptomonedas (R-BLK-01).
+- **"Mis reportes":** si ya se selló, si lo publicaron o rechazaron (con el motivo) y su recibo (US-010, US-023).
+- **No puede:** publicar, ver los reportes de otros veedores, gestionar usuarios ni ver costos (R-VC-01 a R-VC-03).
+- Un mismo correo puede ser veedor en varias organizaciones, con una cuenta en cada una (R-USR-01).
+
+### Ciudadano (Verificador Público): el que mira y comprueba
+
+Es cualquier persona: un vecino, un periodista, un funcionario. No necesita cuenta (R-VER-02).
+- **El mapa de obras de una veeduría**, con sus colores (verde normal, amarillo alerta, rojo en riesgo) y sus filtros (US-027, US-028).
+- **La ficha de cada obra** (US-017, US-029):
+  - los datos del contrato en SECOP: entidad, contratista, valor, plazo y enlace;
+  - la línea de tiempo con las evidencias publicadas.
+- **Comprobar una evidencia:**
+  - el validador calcula la huella de una foto en su navegador, sin subirla, y la busca en Stellar (US-024, R-VER-01);
+  - también están el recibo, la descarga con su prueba y el script independiente (US-025, US-026, US-046-INT).
+- **Estadísticas y datos abiertos**, en CSV o JSON (US-051-RPT, US-052-RPT).
+- **No puede reportar:** para eso tiene que ser veedor de una organización.
+
+### El Sistema, que trabaja solo
+
+- Trae los contratos de SECOP cada noche, y también cuando un administrador cambia su territorio.
+- Marca en riesgo las obras vencidas.
+- Sella con reintentos.
+- Manda las alertas, archiva y hace los respaldos.
+
+(US-013, US-020a, US-020b, US-021, US-032 a US-034, US-048-MNT.)
+
+### Cómo encadenan los roles
+
+1. El Super Administrador crea la organización.
+2. Su Administrador arma el equipo y el territorio.
+3. El veedor reporta desde la obra.
+4. El sistema sella el reporte.
+5. El Administrador lo revisa y lo publica.
+6. El ciudadano lo ve en el mapa y lo comprueba.
+
 ## 1. El mapa de las interfaces
 
 Las 28 pantallas, agrupadas por dominio y por rol. En rojo y punteado, lo que falta; en azul, los correos.
