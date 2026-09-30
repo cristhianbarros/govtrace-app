@@ -6,6 +6,7 @@
 import {
     BuildingOffice2Icon,
     ChartBarIcon,
+    ChatBubbleLeftRightIcon,
     ClipboardDocumentListIcon,
     Cog6ToothIcon,
     DocumentTextIcon,
@@ -29,6 +30,8 @@ const page = usePage();
 // El orden es el de la barra lateral; `primary`, las pestañas del celular.
 const screens = [
     { href: '/admin/inbox', label: 'Bandeja', icon: InboxIcon, group: 'Revisar', primary: true },
+    // It. 44f (US-059-LEG): lo que informan los ciudadanos desde el mapa.
+    { href: '/admin/citizen-reports', label: 'Informes ciudadanos', icon: ChatBubbleLeftRightIcon, group: 'Revisar' },
     { href: '/admin/summary', label: 'Resumen', icon: ChartBarIcon, group: 'Revisar' },
     { href: '/admin/territory', label: 'Territorio', icon: MapPinIcon, group: 'Territorio y obras' },
     { href: '/admin/contracts', label: 'Contratos', icon: DocumentTextIcon, group: 'Territorio y obras' },

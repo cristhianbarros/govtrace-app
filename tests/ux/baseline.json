@@ -1,12 +1,19 @@
 {
   "escritorio/admin-audit": {
     "axe": {},
-    "textUnder16": 70,
+    "textUnder16": 69,
+    "textUnder14": 0,
+    "smallTargets": 0,
+    "targets": 13
+  },
+  "escritorio/admin-authorization": {
+    "axe": {},
+    "textUnder16": 0,
     "textUnder14": 0,
     "smallTargets": 0,
     "targets": 12
   },
-  "escritorio/admin-authorization": {
+  "escritorio/admin-citizen-reports": {
     "axe": {},
     "textUnder16": 0,
     "textUnder14": 0,
@@ -15,52 +22,52 @@
   },
   "escritorio/admin-contracts": {
     "axe": {},
-    "textUnder16": 32,
+    "textUnder16": 31,
     "textUnder14": 0,
     "smallTargets": 0,
-    "targets": 16
+    "targets": 17
   },
   "escritorio/admin-inbox": {
     "axe": {},
     "textUnder16": 11,
     "textUnder14": 0,
     "smallTargets": 0,
-    "targets": 16
+    "targets": 17
   },
   "escritorio/admin-observers": {
     "axe": {},
     "textUnder16": 3,
     "textUnder14": 0,
     "smallTargets": 0,
-    "targets": 14
+    "targets": 15
   },
   "escritorio/admin-organization": {
     "axe": {},
-    "textUnder16": 27,
+    "textUnder16": 26,
     "textUnder14": 0,
     "smallTargets": 6,
-    "targets": 16
+    "targets": 17
   },
   "escritorio/admin-summary": {
     "axe": {},
-    "textUnder16": 18,
+    "textUnder16": 17,
     "textUnder14": 0,
     "smallTargets": 0,
-    "targets": 11
+    "targets": 12
   },
   "escritorio/admin-territory": {
     "axe": {},
     "textUnder16": 0,
     "textUnder14": 0,
     "smallTargets": 0,
-    "targets": 13
+    "targets": 14
   },
   "escritorio/admin-worksites": {
     "axe": {},
     "textUnder16": 8,
     "textUnder14": 0,
     "smallTargets": 6,
-    "targets": 16
+    "targets": 17
   },
   "escritorio/publico-entrar-central": {
     "axe": {},
@@ -99,10 +106,10 @@
   },
   "escritorio/publico-obra": {
     "axe": {},
-    "textUnder16": 12,
+    "textUnder16": 9,
     "textUnder14": 0,
     "smallTargets": 0,
-    "targets": 14
+    "targets": 18
   },
   "escritorio/publico-privacidad": {
     "axe": {},
@@ -209,6 +216,13 @@
     "smallTargets": 0,
     "targets": 6
   },
+  "movil/admin-citizen-reports": {
+    "axe": {},
+    "textUnder16": 0,
+    "textUnder14": 0,
+    "smallTargets": 0,
+    "targets": 5
+  },
   "movil/admin-contracts": {
     "axe": {},
     "textUnder16": 32,
@@ -295,10 +309,10 @@
   },
   "movil/publico-obra": {
     "axe": {},
-    "textUnder16": 12,
+    "textUnder16": 9,
     "textUnder14": 0,
     "smallTargets": 0,
-    "targets": 14
+    "targets": 18
   },
   "movil/publico-privacidad": {
     "axe": {},
@@ -358,7 +372,7 @@
   },
   "movil/superadmin-uso": {
     "axe": {},
-    "textUnder16": 59,
+    "textUnder16": 60,
     "textUnder14": 0,
     "smallTargets": 0,
     "targets": 5

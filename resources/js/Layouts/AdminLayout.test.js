@@ -17,6 +17,7 @@ describe('AdminLayout', () => {
         // It. 40c: en el computador, la barra lateral con todas, por grupos.
         expect(wrapper.findAll('[data-test="sidebar"] a').map((link) => [link.text(), link.attributes('href')])).toEqual([
             ['Bandeja', '/admin/inbox'],
+            ['Informes ciudadanos', '/admin/citizen-reports'], // it. 44f
             ['Resumen', '/admin/summary'],
             ['Territorio', '/admin/territory'],
             ['Contratos', '/admin/contracts'],
@@ -42,7 +43,7 @@ describe('AdminLayout', () => {
         expect(more.attributes('data-current')).toBe('true'); // Territorio vive en "Más"
 
         await more.trigger('click');
-        expect(wrapper.get('[data-test="more"]').findAll('a').map((link) => link.text())).toEqual(['Resumen', 'Territorio', 'Contratos', 'Organización', 'Auditoría', 'Autorización']);
+        expect(wrapper.get('[data-test="more"]').findAll('a').map((link) => link.text())).toEqual(['Informes ciudadanos', 'Resumen', 'Territorio', 'Contratos', 'Organización', 'Auditoría', 'Autorización']);
         wrapper.unmount();
     });
 

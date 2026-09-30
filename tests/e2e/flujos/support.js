@@ -53,6 +53,24 @@ export function latestLinkTo(email) {
     throw new Error(`No hay un correo con enlace para ${email} en storage/logs/mail.log`);
 }
 
+/** It. 44f: the newest mail to $email, read the same way — its body, to find what the citizen got. */
+export function latestMailTo(email) {
+    const file = openSync(MAIL_LOG, 'r');
+    const size = fstatSync(file).size;
+    const buffer = Buffer.alloc(Math.min(size, TAIL_BYTES));
+    readSync(file, buffer, 0, buffer.length, size - buffer.length);
+    closeSync(file);
+
+    const entry = buffer.toString('utf8').split(/^(?=\[\d{4}-\d\d-\d\d \d\d:\d\d:\d\d\] )/m).reverse().find((candidate) => candidate.includes(email));
+    if (!entry) {
+        throw new Error(`No hay un correo para ${email} en storage/logs/mail.log`);
+    }
+    return entry;
+}
+
+/** It. 44f: the 6-digit code a citizen got to inform a veeduría. */
+export const latestCodeTo = (email) => latestMailTo(email).match(/es: (\d{6})/)[1];
+
 /** A link of this environment, on this run's port (the one of APP_URL can differ in CI). */
 export function onThisPort(link) {
     const url = new URL(link);

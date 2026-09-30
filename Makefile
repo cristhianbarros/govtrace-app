@@ -103,7 +103,7 @@ ux-baseline: .env.docker ## Rewrite tests/ux/baseline.json after a UX improvemen
 admin: .env.docker ## The first Super Administrador of a new environment. Usage: make admin EMAIL=ana@x.co [NAME="Ana"] (asks for the password, or generates one)
 	@test -n "$(EMAIL)" || { echo "Uso: make admin EMAIL=ana@correo.co [NAME=\"Ana Directora\"]"; exit 1; }
 	@$(EXEC) php artisan admin:create "$(EMAIL)" $(if $(NAME),--name="$(NAME)")
-invites: .env.docker ## The links of the latest mails (mail goes to a log in development): invitations, password recovery
+invites: .env.docker ## The links of the latest mails (mail goes to a log in development): invitations, password recovery, and the codes of citizens (it. 44f)
 	@$(EXEC) php artisan invitations:latest $(if $(LIMIT),--limit=$(LIMIT))
 demo: .env.docker .env docker/app/xdebug.ini ## ONE command for a live demo: the app, the Stellar network and a demo organization with sealed reports (LUGAR="lat,lng": an example worksite where the presentation is; TERRITORIO=medellin: the Comuna 13)
 	@LUGAR="$(LUGAR)" TERRITORIO="$(TERRITORIO)" bash docker/demo/demo.sh

@@ -56,4 +56,13 @@ describe('La política de tratamiento de datos', () => {
     it('says where the servers are, when production says so', () => {
         expect(open({ hosting: 'Amazon Web Services, en Estados Unidos' }).text()).toContain('Los datos se guardan en servidores de Amazon Web Services, en Estados Unidos.');
     });
+
+    it('says who is responsible, and what happens to the email of a citizen who informs a veeduría (it. 44f)', () => {
+        const text = open().text();
+
+        expect(text).toContain('Es el operador central de GovTrace. Las veedurías usan la plataforma como usuarios autorizados.');
+        expect(text).toContain('De quien informa a una veeduría');
+        expect(text).toContain('se guarda cifrado y la veeduría no lo ve');
+    });
 });
+

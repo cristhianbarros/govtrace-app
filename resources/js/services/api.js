@@ -17,6 +17,14 @@ export const searchContracts = async (keyword) => (await dataOf(http.get('/contr
 /** US-019: hasta 5 obras a menos de la geocerca, de la más cercana a la más lejana. */
 export const fetchNearbyWorksites = async (latitude, longitude) => (await dataOf(http.get('/worksites/nearby', { params: { latitude, longitude } }))).data;
 
+/** It. 44f (US-059-LEG): el ciudadano informa a la veeduría — primero el código a su correo, después el informe (multipart). */
+export const requestCitizenCode = (data) => dataOf(http.post('/citizen-reports/code', data));
+export const sendCitizenReport = (form) => dataOf(http.post('/citizen-reports', form));
+/** Y el Administrador los lee, los responde o los descarta. */
+export const fetchCitizenReports = async () => (await dataOf(http.get('/citizen-reports'))).data;
+export const answerCitizenReport = (id, answer) => dataOf(http.post(`/citizen-reports/${id}/answer`, { answer }));
+export const discardCitizenReport = (id) => dataOf(http.post(`/citizen-reports/${id}/discard`));
+
 /** US-008: el reporte con sus archivos y sus SHA-256, como multipart. */
 export const sendReport = (form) => dataOf(http.post('/reports', form));
 

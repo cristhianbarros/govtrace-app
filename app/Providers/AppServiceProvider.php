@@ -76,5 +76,10 @@ class AppServiceProvider extends ServiceProvider
         );
         RateLimiter::for('public', fn (Request $request) => Limit::perMinute((int) config('limits.public_requests_per_minute'))->by($request->ip())->response($tooMany));
         RateLimiter::for('open-data', fn (Request $request) => Limit::perMinute((int) config('limits.open_data_per_minute'))->by($request->ip())->response($tooMany));
+
+        // It. 44f: el canal del ciudadano. Cada código es un correo que sale; cada informe, trabajo para la veeduría.
+        $tooManyToday = fn (Request $request, array $headers) => response()->json(['message' => 'Demasiados intentos desde esta conexión. Intente de nuevo en una hora.'], 429, $headers);
+        RateLimiter::for('citizen-codes', fn (Request $request) => Limit::perHour((int) config('limits.citizen_codes_per_hour'))->by(tenant()?->getTenantKey().':'.$request->ip())->response($tooManyToday));
+        RateLimiter::for('citizen-reports', fn (Request $request) => Limit::perHour((int) config('limits.citizen_reports_per_hour'))->by(tenant()?->getTenantKey().':'.$request->ip())->response($tooManyToday));
     }
 }

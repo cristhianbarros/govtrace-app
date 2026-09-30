@@ -138,7 +138,7 @@ for (const [viewport, options] of Object.entries(VIEWPORTS)) {
         test(`administrador, ${viewport}`, async ({ page }) => {
             await logIn(page, ORG, PEOPLE.admin);
             await page.waitForURL('**/admin/inbox');
-            for (const screen of ['inbox', 'observers', 'territory', 'contracts', 'worksites', 'organization', 'summary', 'audit', 'authorization']) {
+            for (const screen of ['inbox', 'citizen-reports', 'observers', 'territory', 'contracts', 'worksites', 'organization', 'summary', 'audit', 'authorization']) {
                 await visit(page, viewport, `admin-${screen}`, `${ORG}/admin/${screen}`);
             }
         });

@@ -59,6 +59,10 @@ Recorre los cuatro perfiles con la interfaz de las it. 40 y 43. Todo se hace con
    - **La lista:** **Lista** muestra las obras como lista; escribir `colegio` en *Buscar una obra por su nombre*.
    - **Una obra:** su estado y **por qué**, en palabras. En una foto, **Comprobar que es original** abre su recibo en la red.
    - **Al pie del mapa:** **Estadísticas del territorio** y **Validar un archivo**; el validador enlaza también al programa independiente.
+   - **Informar a esta veeduría** (it. 44f), en cualquier obra:
+     - el ciudadano escribe su correo y autoriza el tratamiento de sus datos;
+     - el código de 6 dígitos sale al correo de desarrollo, y `make invites` lo muestra;
+     - con el código, su mensaje y una foto, el informe le llega a la veeduría, en "Informes ciudadanos", sin el correo. La veeduría le responde desde allí.
    - **El validador, el momento más vistoso:**
      - en una foto de la obra, **Descargar archivo original** y **Descargar su prueba**;
      - en **Validar un archivo**, soltar la foto: ✅ *Archivo Auténtico e Inmutable*, con su fecha y su ledger;

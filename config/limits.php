@@ -14,4 +14,8 @@ return [
 
     // Los datos abiertos arman un archivo con todo lo publicado: más estrecho.
     'open_data_per_minute' => (int) env('OPEN_DATA_PER_MINUTE', 10),
+    // It. 44f (US-059-LEG): los códigos por correo y los informes ciudadanos, por visitante y por hora.
+    // Los límites por correo (3 códigos por hora, 3 informes por día) van aparte, en CitizenReportDesk.
+    'citizen_codes_per_hour' => (int) env('CITIZEN_CODES_PER_HOUR', 10),
+    'citizen_reports_per_hour' => (int) env('CITIZEN_REPORTS_PER_HOUR', 20),
 ];

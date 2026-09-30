@@ -31,6 +31,8 @@ final class AuditLabels
         'observer.reactivated' => 'Reactivó a un veedor',
         'observer.impediments_declared' => 'Declaró no tener impedimentos para ser veedor',
         'privacy.data_authorized' => 'Autorizó el tratamiento de sus datos personales',
+        'citizen_report.answered' => 'Respondió un informe ciudadano',
+        'citizen_report.discarded' => 'Descartó un informe ciudadano',
         'invitation.resent' => 'Reenvió una invitación',
         'invitation.revoked' => 'Revocó una invitación',
         'parameter.changed' => 'Cambió un parámetro global',

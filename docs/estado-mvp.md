@@ -27,8 +27,12 @@ El usuario pidió avanzar sin su revisión hasta el día siguiente, con la inter
 | 44b (A3) | El expediente de una obra: un ZIP con el expediente y las plantillas del derecho de petición y de la denuncia en PDF, pre-llenadas y con la "Prueba Pericial Criptográfica", más los originales con su prueba. Cada descarga queda en el log (telemetría) | #62 |
 | 44c (A4) | El veedor declara que no tiene impedimentos para serlo (Ley 850 de 2003, art. 19); sin la declaración no reporta | #63 |
 | 44d (A5) | Una veeduría sin NIT se identifica con su inscripción en la personería o la cámara de comercio | #64 |
+| 44e | La política de tratamiento de datos (Ley 1581 de 2012) en `/privacidad`, y la autorización al activar una cuenta | #66 |
+| 43e | `make demo TERRITORIO=medellin`: la Comuna 13, con contratos reales solo con "Avance" y obras de ejemplo ficticias | #67 |
+| 44f (A2) | "Informar a esta veeduría": el ciudadano, con su correo verificado por un código, informa a la veeduría; la veeduría le responde sin ver su correo | #68 |
 
-- **Queda A2, "Informar a esta veeduría".** Es el canal del ciudadano con correo verificado. El usuario lo ordenó después de A4, pero su última instrucción cubrió A1, A3, A4 y A5.
+- **A1 a A5 quedaron hechas**, con la política de datos (44e), la demostración en la Comuna 13 (43e) y el canal del ciudadano (44f).
+- **Falta de parte del usuario:** los datos del operador central (`PRIVACY_CONTROLLER_*`), que es el responsable del tratamiento. Sin ellos, `/privacidad` sigue como borrador.
 - **Decisiones por defecto que conviene revisar con un abogado:**
   - la etiqueta "Prueba Pericial Criptográfica";
   - los cinco impedimentos en lenguaje claro;

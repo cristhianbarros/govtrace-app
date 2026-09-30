@@ -4,7 +4,7 @@
 
 > **En espera (2026-09-30).** Antes de seguir, se revisó el proceso actual del control social: `docs/proceso-actual.md`.
 > - Sus "puertas" ya tienen base legal: el ciudadano informa a la veeduría (Ley 850, art. 18 a)) y denuncia (Ley 1757, art. 69).
-> - La primera, "informar a esta veeduría" y sin sellar, se propone adelantar al MVP v1 (A2).
+> - La primera, "informar a esta veeduría" y sin sellar, ya está en el MVP v1 (A2, it. 44f).
 > - Este documento se retoma para lo que quede en la V2: la evidencia ciudadana sellada, constituir una veeduría y postularse como veedor.
 
 "V2" es aquí la **versión 2 del producto**. No es el vacío V2 de `docs/mapa-funcional.md` (el Administrador de una organización, cerrado en la it. 43a).

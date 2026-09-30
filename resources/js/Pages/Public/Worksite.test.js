@@ -351,3 +351,16 @@ describe('Qué significa el estado, y cómo avisar a la Contraloría (it. 44a)',
         wrapper.unmount();
     });
 });
+
+// It. 44f — US-059-LEG.
+describe('Informar a esta veeduría (it. 44f)', () => {
+    it('offers the citizen to inform the veeduría, before the channels of the Contraloría', async () => {
+        const wrapper = await openWorksite();
+        const sections = wrapper.findAll('section[id]').map((section) => section.attributes('id'));
+
+        expect(wrapper.get('section#informar h2').text()).toBe('Informar a esta veeduría');
+        expect(sections.indexOf('informar')).toBeLessThan(sections.indexOf('contraloria'));
+        wrapper.unmount();
+    });
+});
+
