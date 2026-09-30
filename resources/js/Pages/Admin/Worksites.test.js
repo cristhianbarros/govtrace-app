@@ -173,3 +173,16 @@ describe('Agrupar contratos en una ficha (US-045-INT)', () => {
         expect(wrapper.get('textarea#group-contracts').element.value).toBe('CO1.PCCNTR.3333333');
     });
 });
+
+// It. 44b — US-056-LEG: el expediente de una obra, para el derecho de petición y la denuncia.
+describe('El expediente de una obra (it. 44b)', () => {
+    it('Descargar el expediente de una obra: each worksite has its own download, and says what it brings', async () => {
+        const wrapper = await openWorksites([gaira, { ...gaira, id: 8 }]);
+        const downloads = wrapper.findAll('a[data-test="dossier"]');
+
+        expect(downloads.map((link) => link.attributes('href'))).toEqual([`/worksites/${gaira.id}/dossier.zip`, '/worksites/8/dossier.zip']);
+        expect(downloads[0].text()).toBe('Descargar expediente');
+        expect(wrapper.text()).toContain('Un ZIP con las evidencias publicadas, sus pruebas y las plantillas del derecho de petición y de la denuncia ante la Contraloría.');
+    });
+});
+

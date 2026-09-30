@@ -103,6 +103,7 @@ onMounted(load);
             empty-text="Aún no hay obras. Una obra aparece aquí con el primer reporte de uno de sus contratos."
             @retry="load"
         >
+            <p class="text-sm text-slate-700"><strong>Descargar expediente:</strong> Un ZIP con las evidencias publicadas, sus pruebas y las plantillas del derecho de petición y de la denuncia ante la Contraloría.</p>
             <div class="flex flex-col gap-3">
                 <article v-for="worksite in worksites" :key="worksite.id" class="flex flex-col gap-2 rounded-lg bg-white p-3 text-sm">
                     <p v-if="worksite.name" class="text-base font-semibold">{{ worksite.name }}</p>
@@ -135,6 +136,8 @@ onMounted(load);
                         </div>
                     </div>
                     <button v-else type="button" class="min-h-11 self-start rounded-lg border px-3 py-2 font-semibold" @click="correct(worksite)">Corregir ubicación</button>
+                    <!-- US-056-LEG (it. 44b): lo que la veeduría lleva a la entidad y a la Contraloría. -->
+                    <a data-test="dossier" :href="`/worksites/${worksite.id}/dossier.zip`" class="inline-flex min-h-11 items-center self-start rounded-lg border-2 border-slate-900 bg-white px-3 font-semibold text-slate-900">Descargar expediente</a>
                 </article>
             </div>
         </LoadState>
