@@ -25,7 +25,8 @@ Al 2026-09-29, sobre `main` en `77e6030` (iteración 39). Para ir abordándolo: 
 El MVP tiene que estar listo para producción, no solo funcionar. Esta es la vara, punto por punto; cada uno se da por cumplido con una prueba, no con una promesa.
 
 **Seguridad**
-- ✅ Lista para ir detrás de TLS: HSTS, cookies seguras, proxies de confianza (it. 41). ⬜ El certificado y el proxy con TLS (it. 42).
+- ✅ Lista para ir detrás de TLS: HSTS, cookies seguras, proxies de confianza (it. 41).
+- ✅ El proxy con TLS 1.2 y 1.3 y el certificado comodín, probados en local con una CA de prueba: por HTTPS la aplicación sabe que es HTTPS, sin contenido mixto (it. 42a). ⬜ El certificado de Let's Encrypt en AWS (it. 42b).
 - ✅ Cabeceras: CSP, `Permissions-Policy`, `nosniff`, `X-Frame-Options`, `Referrer-Policy` (it. 41).
 - ✅ Límites de abuso: reportes, API públicas, datos abiertos, inicio de sesión y recuperación de contraseña.
 - ✅ Una base de datos por organización, roles probados y log de auditoría inmutable.
@@ -45,10 +46,11 @@ El MVP tiene que estar listo para producción, no solo funcionar. Esta es la var
 **Operación**
 - ✅ La plantilla de producción, vigilada por un test (it. 41).
 - ✅ La guía de restauración (`docs/restore.md`) y la lista de salida (`docs/go-live.md`).
-- ⬜ Un despliegue repetible, con su script y su guía (it. 42).
+- ✅ Un despliegue repetible: `deploy/deploy.sh` (imágenes, migraciones, DIVIPOLA, caché, `/up` por HTTPS), probado dos veces seguidas (it. 42a). ⬜ Su guía en AWS (it. 42b).
 
 **Calidad**
 - ✅ Suite completa en el pipeline, pruebas de extremo a extremo en un navegador, cada escenario con su test, y reglas probadas rompiéndolas a propósito.
+- ✅ La imagen de producción se construye y se prueba entera, detrás de TLS, en cada PR (`make staging-check`, it. 42a). Antes no se construía en el pipeline, y estuvo rota desde la it. 27 sin que nadie lo notara.
 - ⬜ El recorrido visual de todas las pantallas (it. 40).
 - ❓ Una meta de accesibilidad.
 
@@ -98,7 +100,7 @@ El MVP tiene que estar listo para producción, no solo funcionar. Esta es la var
 
 | | Qué | Detalle |
 |---|---|---|
-| ⚠️ | **HTTPS** | La aplicación está lista para ir detrás de TLS (it. 41: HSTS, `upgrade-insecure-requests`, cookies seguras). Falta el certificado comodín (cada organización es un subdominio) y el proxy que lo termina: es de la it. 42 (staging). |
+| ⚠️ | **HTTPS** | Listo y probado en local (it. 42a): nginx termina TLS 1.2 y 1.3 con un certificado comodín, y por HTTPS la aplicación sabe que es HTTPS (hizo falta un arreglo en Apache: `mod_remoteip` le ocultaba al proxy). Falta el certificado de Let's Encrypt en AWS (it. 42b). |
 | ✅ | Laravel detrás de un proxy (it. 41) | Confía en el proxy de la red privada (`TRUSTED_PROXIES`), y solo en su `X-Forwarded-For` y `X-Forwarded-Proto`. Nunca en `X-Forwarded-Host` ni `-Port`, que además nginx borra: con ellos se envenenarían los enlaces. |
 | ✅ | Cabeceras de seguridad (it. 41) | CSP en toda respuesta, con los dos únicos orígenes externos (las imágenes del mapa y el RPC público de Stellar), `Permissions-Policy` (cámara y ubicación solo para el sitio) y, por HTTPS, HSTS. Probada en un Chromium de verdad: ninguna pantalla pública ni del veedor la viola. |
 | ✅ | Cookies de sesión | Cifradas y `Secure` en la plantilla de producción. |

@@ -1,0 +1,23 @@
+# make staging-check (it. 42a): lo que solo existe en la prueba local del
+# stack de producción. LocalStack hace de S3, para las evidencias y para los
+# respaldos; en AWS, el S3 de verdad con el rol de la instancia.
+services:
+  storage:
+    image: localstack/localstack:3.8
+    environment:
+      SERVICES: s3
+      EVIDENCE_BUCKET: "${EVIDENCE_AWS_BUCKET}"
+    volumes:
+      - ./docker/storage/init-bucket.sh:/etc/localstack/init/ready.d/init-bucket.sh:ro
+    networks: [govtrace]
+    healthcheck:
+      # Sano cuando corrió el script que crea el bucket, no solo cuando arrancó.
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:4566/_localstack/init/ready | grep -q '\"completed\": true'"]
+      interval: 3s
+      timeout: 5s
+      retries: 60
+
+  backup:
+    depends_on:
+      storage:
+        condition: service_healthy

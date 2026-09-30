@@ -133,6 +133,9 @@ COPY package.json package-lock.json ./
 RUN npm ci --no-audit --no-fund
 COPY vite.config.js ./
 COPY resources ./resources
+# El validador del navegador usa la misma biblioteca que el verificador
+# independiente (it. 27): sin ella, la imagen inmutable no compilaba (it. 42a).
+COPY tools/verify/lib ./tools/verify/lib
 COPY --from=vendor /var/www/html/vendor/laravel/framework/src/Illuminate/Pagination/resources/views \
      ./vendor/laravel/framework/src/Illuminate/Pagination/resources/views
 RUN npm run build
@@ -145,3 +148,6 @@ FROM base AS qa
 COPY docker/app/php-prod.ini /usr/local/etc/php/conf.d/zz-custom.ini
 COPY --from=vendor --chown=workspace:workspace /var/www/html /var/www/html
 COPY --from=assets --chown=workspace:workspace /app/public/build /var/www/html/public/build
+# It. 42a: storage/logs vive en un volumen (docker-compose.prod.yml), y un volumen
+# nuevo copia el dueño de lo que la imagen tiene en ese lugar: el de la aplicación.
+RUN install -d -o workspace -g workspace -m 775 /var/www/html/storage/logs

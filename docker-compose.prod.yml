@@ -1,0 +1,247 @@
+name: govtrace
+
+# Producción y staging (it. 42a). La imagen inmutable (etapa qa del Dockerfile:
+# el código, las dependencias sin las de desarrollo y el frontend, adentro),
+# nginx con el TLS, y S3, SES y Stellar de verdad. Sin montar el código, sin
+# LocalStack, sin la red Stellar local; la aplicación y PostgreSQL, sin puertos.
+#
+# Lo levanta deploy/deploy.sh. Los secretos llegan por el entorno de ese
+# proceso (en AWS, desde SSM Parameter Store): cada variable se nombra aquí sin
+# valor, y Docker Compose la toma de ahí. Ninguna va en un archivo.
+
+x-laravel-env: &laravel-env
+  - APP_NAME
+  - APP_ENV
+  - APP_KEY
+  - APP_DEBUG
+  - APP_URL
+  - TENANCY_CENTRAL_DOMAINS
+  - TENANCY_APEX_DOMAIN
+  - APP_LOCALE
+  - APP_FALLBACK_LOCALE
+  - APP_MAINTENANCE_DRIVER
+  - BCRYPT_ROUNDS
+  - LOG_CHANNEL
+  - LOG_STACK
+  - LOG_DAILY_DAYS
+  - LOG_LEVEL
+  - DB_CONNECTION
+  - DB_HOST
+  - DB_PORT
+  - DB_DATABASE
+  - DB_USERNAME
+  - DB_PASSWORD
+  - SESSION_DRIVER
+  - SESSION_LIFETIME
+  - SESSION_ENCRYPT
+  - SESSION_SECURE_COOKIE
+  - SESSION_DOMAIN
+  - QUEUE_CONNECTION
+  - CACHE_STORE
+  - TRUSTED_PROXIES
+  - REPORTS_PER_VEEDOR_PER_HOUR
+  - PUBLIC_REQUESTS_PER_MINUTE
+  - OPEN_DATA_PER_MINUTE
+  - MAIL_MAILER
+  - MAIL_HOST
+  - MAIL_PORT
+  - MAIL_USERNAME
+  - MAIL_PASSWORD
+  - MAIL_FROM_ADDRESS
+  - MAIL_FROM_NAME
+  - EVIDENCE_AWS_ACCESS_KEY_ID
+  - EVIDENCE_AWS_SECRET_ACCESS_KEY
+  - EVIDENCE_AWS_DEFAULT_REGION
+  - EVIDENCE_AWS_BUCKET
+  - EVIDENCE_AWS_ENDPOINT
+  - EVIDENCE_AWS_USE_PATH_STYLE_ENDPOINT
+  - STELLAR_RPC_URL
+  - STELLAR_PUBLIC_RPC_URL
+  - STELLAR_NETWORK_PASSPHRASE
+  - STELLAR_SEALING_CONTRACT_ID
+  - STELLAR_SEALER_ADDRESS
+  - STELLAR_SPONSOR_ADDRESS
+  - STELLAR_SEALER_SECRET
+  - STELLAR_SPONSOR_SECRET
+  - STELLAR_SPONSOR_MIN_BALANCE_XLM
+  - STELLAR_EXPLORER_URL
+  - SEALING_PSEUDONYM_KEY
+  - ALERT_WEBHOOK_URL
+  - XLM_PRICE_API_URL
+  - COINGECKO_API_KEY
+  # Apache cree el X-Forwarded-For solo del proxy de esta subred (vhost.conf).
+  - DOCKER_SUBNET
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "20m"
+    max-file: "5"
+
+x-app: &app
+  image: "${APP_IMAGE:-govtrace-app:qa}"
+  environment: *laravel-env
+  volumes:
+    # Los logs diarios de Laravel (14 días) sobreviven a cada despliegue.
+    - app_logs:/var/www/html/storage/logs
+  depends_on:
+    pgsql:
+      condition: service_healthy
+  networks: [govtrace]
+  security_opt: [no-new-privileges:true]
+  restart: unless-stopped
+  logging: *logging
+
+services:
+
+  # ---------------------------------------------------------------- app ----
+  app:
+    <<: *app
+    # expose, no ports: solo el proxy llega. Por eso Apache puede creer su
+    # X-Forwarded-Proto (vhost.conf).
+    expose: ["80"]
+
+  # -------------------------------------------------------------- proxy ----
+  # El borde: el TLS termina aquí, con el certificado comodín de DOMAIN y
+  # *.DOMAIN (cada organización es un subdominio). Let's Encrypt lo deja en el
+  # volumen letsencrypt (deploy/issue-certificate.sh, perfil tls).
+  proxy:
+    image: nginx:1.27-alpine
+    environment:
+      - DOMAIN
+      - PUBLIC_PORT_SUFFIX
+    volumes:
+      - ./docker/proxy/templates/prod.conf.template:/etc/nginx/templates/default.conf.template:ro
+      - ${LETSENCRYPT_DIR:-letsencrypt}:/etc/letsencrypt:ro
+    ports:
+      - "${PUBLISH_IP:-0.0.0.0}:${HTTP_PORT:-80}:80"
+      - "${PUBLISH_IP:-0.0.0.0}:${HTTPS_PORT:-443}:443"
+    depends_on:
+      app:
+        condition: service_healthy
+    networks: [govtrace]
+    read_only: true
+    tmpfs:
+      - /var/cache/nginx
+      - /var/run
+      # La plantilla se completa al arrancar y se escribe aquí.
+      - /etc/nginx/conf.d
+    security_opt: [no-new-privileges:true]
+    restart: unless-stopped
+    logging: *logging
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/healthz"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # ------------------------------------------------------------- worker ----
+  worker:
+    <<: *app
+    command: php artisan queue:work --tries=3 --max-time=3600
+    user: workspace
+    stop_grace_period: 60s
+    healthcheck:
+      test: ["CMD-SHELL", "grep -q queue:work /proc/1/cmdline"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # ---------------------------------------------------------- scheduler ----
+  scheduler:
+    <<: *app
+    command: php artisan schedule:work
+    user: workspace
+    stop_grace_period: 60s
+    healthcheck:
+      test: ["CMD-SHELL", "grep -q schedule:work /proc/1/cmdline"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # -------------------------------------------------------------- pgsql ----
+  # Sin puerto publicado: solo la aplicación y los respaldos llegan. Su volumen,
+  # en el disco del servidor; las copias, fuera (backup).
+  pgsql:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: "${DB_DATABASE:-govtrace}"
+      POSTGRES_USER: "${DB_USERNAME:-govtrace}"
+      POSTGRES_PASSWORD: "${DB_PASSWORD:?Falta DB_PASSWORD}"
+    volumes:
+      - pgsql_data:/var/lib/postgresql/data
+      - ./docker/pgsql/init:/docker-entrypoint-initdb.d:ro
+    networks: [govtrace]
+    security_opt: [no-new-privileges:true]
+    restart: unless-stopped
+    logging: *logging
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -q -h 127.0.0.1 -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+  # ------------------------------------------------------------- backup ----
+  # R-BCK-01..05: cada hora, 30 días, y la réplica en otra región. Sin llaves:
+  # en AWS, el rol de la instancia (endpoint y llaves vacíos).
+  backup:
+    image: "${BACKUP_IMAGE:-govtrace-backup:qa}"
+    environment:
+      PGHOST: pgsql
+      PGUSER: "${DB_USERNAME:-govtrace}"
+      PGPASSWORD: "${DB_PASSWORD:?Falta DB_PASSWORD}"
+      PGDATABASE: "${DB_DATABASE:-govtrace}"
+      BACKUP_S3_ENDPOINT: "${BACKUP_S3_ENDPOINT:-}"
+      BACKUP_S3_BUCKET: "${BACKUP_S3_BUCKET:?Falta BACKUP_S3_BUCKET}"
+      AWS_ACCESS_KEY_ID: "${BACKUP_AWS_ACCESS_KEY_ID:-}"
+      AWS_SECRET_ACCESS_KEY: "${BACKUP_AWS_SECRET_ACCESS_KEY:-}"
+      AWS_DEFAULT_REGION: "${EVIDENCE_AWS_DEFAULT_REGION:-us-east-1}"
+      BACKUP_RETENTION_DAYS: "${BACKUP_RETENTION_DAYS:-30}"
+      BACKUP_INTERVAL_SECONDS: "${BACKUP_INTERVAL_SECONDS:-3600}"
+      BACKUP_OFFSITE_S3_URL: "${BACKUP_OFFSITE_S3_URL:-}"
+      BACKUP_OFFSITE_S3_ENDPOINT: "${BACKUP_OFFSITE_S3_ENDPOINT:-}"
+      BACKUP_OFFSITE_AWS_ACCESS_KEY_ID: "${BACKUP_OFFSITE_AWS_ACCESS_KEY_ID:-}"
+      BACKUP_OFFSITE_AWS_SECRET_ACCESS_KEY: "${BACKUP_OFFSITE_AWS_SECRET_ACCESS_KEY:-}"
+    volumes:
+      - backup_data:/backups
+    depends_on:
+      pgsql:
+        condition: service_healthy
+    networks: [govtrace]
+    security_opt: [no-new-privileges:true]
+    restart: unless-stopped
+    logging: *logging
+    healthcheck:
+      test: ["CMD-SHELL", "find /backups -mindepth 1 -maxdepth 1 -type d -name '2*Z' -mmin -130 | grep -q . && { [ -z \"$$BACKUP_OFFSITE_S3_URL\" ] || find /backups/.offsite -mmin -130 | grep -q .; }"]
+      interval: 15s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+
+  # ------------------------------------------------------------ certbot ----
+  # Perfil tls: emite y renueva el certificado comodín validando por DNS en
+  # Route 53 (deploy/issue-certificate.sh). Con el rol de la instancia.
+  certbot:
+    image: certbot/dns-route53:v3.3.0
+    volumes:
+      - letsencrypt:/etc/letsencrypt
+    networks: [govtrace]
+    profiles: [tls]
+    security_opt: [no-new-privileges:true]
+
+networks:
+  govtrace:
+    name: "${DOCKER_NETWORK:-govtrace_net}"
+    driver: bridge
+    ipam:
+      config:
+        - subnet: "${DOCKER_SUBNET:-172.29.0.0/24}"
+
+volumes:
+  pgsql_data:
+  backup_data:
+  app_logs:
+  letsencrypt:

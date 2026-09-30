@@ -1631,6 +1631,48 @@ Suite: 702 en verde (8 nuevos). Vitest: 351. `make backup-check`: 13 comprobacio
 2. **HSTS con los subdominios** (`includeSubDomains`, un año): cada organización es un subdominio, y todos quedan obligados a HTTPS. No se pidió la precarga en los navegadores (`preload`), que es difícil de deshacer.
 3. **El español por defecto**, también en la plantilla de producción.
 
+#### Iteración 42a — El stack de producción, probado en local con TLS
+✅ **Cumplido (2026-09-29).** Aprobada por el usuario ("continúa"), con la vara de "listo para producción". La mitad de staging que no necesita AWS; la 42b lo apunta a una cuenta de AWS.
+
+**Por qué, además:** al diseñarla apareció un defecto que la it. 41 no podía ver, porque sus tests no pasan por Apache. En el contenedor de la aplicación, `mod_remoteip` cambia la IP del proxy por la del visitante antes de que PHP la vea. En producción, Laravel vería la IP pública del visitante, no la del proxy, y no le creería el `X-Forwarded-Proto: https`: no sabría que la visita llegó por HTTPS. Los enlaces al CSS y al JavaScript saldrían con `http://` dentro de una página `https://`, el navegador los bloquearía y la aplicación se rompería. Solo se ve con el stack entero: nginx con TLS, Apache y PHP.
+
+**Entregable:**
+1. `docker-compose.prod.yml`: la imagen inmutable (etapa `qa`, el código adentro), nginx con TLS, PostgreSQL sin puerto publicado, el worker, el calendario y los respaldos con S3 de verdad. Sin montar el código, sin LocalStack, sin la red Stellar local. Los secretos, por el entorno del proceso que lo levanta; ninguno en un archivo.
+2. nginx de producción: TLS 1.2 y 1.3 con un certificado comodín (`DOMAIN` y `*.DOMAIN`: cada organización es un subdominio), HTTP a HTTPS, las cabeceras del proxy como en la it. 41.
+3. Apache: la visita que llegó por HTTPS al proxy lo es también para PHP.
+4. `deploy/deploy.sh`: construye la imagen, migra (central y organizaciones), siembra la DIVIPOLA, levanta todo, optimiza y comprueba `/up` por HTTPS. Se puede repetir.
+5. `.env.staging.example`: la plantilla de staging (testnet, S3 y SES), sin secretos.
+6. `make staging-check`: todo lo anterior en un proyecto aislado de Docker, con un certificado de prueba de una CA propia y LocalStack haciendo de S3.
+
+**Done-when (`make staging-check`):**
+- HTTPS responde con el certificado de la CA de prueba; TLS 1.1 no.
+- HTTP redirige a HTTPS.
+- Por HTTPS, la aplicación sabe que es HTTPS: HSTS, redirecciones y enlaces a los recursos en `https://`.
+- Una organización responde en su subdominio por HTTPS.
+- Cookies `Secure`; sin depuración a la vista en una página de error; `X-Forwarded-Host` del visitante, ignorado.
+- El worker, el calendario y los respaldos, sanos. Desplegar dos veces no rompe nada.
+
+**Lo que encontró, además del defecto de Apache (los tres, arreglados):**
+1. **Apache y el HTTPS** (el motivo de la iteración). Reproducido con las condiciones de producción: con un visitante que no es de confianza, sin HSTS, las redirecciones a `http://` y el CSS enlazado por `http://` (`href="http://…/build/assets/app-….css"`), que el navegador bloquea como contenido mixto. Arreglado en `vhost.conf`: `SetEnvIf X-Forwarded-Proto "^https$" HTTPS=on`. Se cree sin mirar quién lo manda porque solo el proxy llega al contenedor, y nginx siempre sobrescribe esa cabecera.
+2. **La imagen inmutable no compilaba desde la it. 27.** El validador del navegador importa `tools/verify/lib`, y la etapa de assets no la copiaba. Nadie lo notó porque el pipeline usa la imagen de desarrollo. Ahora `make staging-check` la construye en cada PR (etapa "Production Stack").
+3. **Un error de la propia prueba:** la plantilla de staging pisaba sus puertos, y la primera versión corrió publicada en todas las interfaces (`0.0.0.0:80` y `:443`). Se bajó al verlo. Ahora la prueba usa nombres propios y publica solo en `127.0.0.1` (`PUBLISH_IP`).
+
+**Qué quedó:**
+- `docker-compose.prod.yml`: cada variable de la aplicación se nombra sin valor y llega del entorno de `deploy/deploy.sh`; una comprobación vigila que no falte ninguna de la plantilla. Los logs diarios, en un volumen que el usuario de la aplicación puede escribir (la imagen deja `storage/logs` con ese dueño). Los logs de los contenedores rotan (20 MB, 5 archivos).
+- nginx: TLS 1.2 y 1.3 con los cifrados "intermediate" de Mozilla, HTTP/2, HTTP a HTTPS con el mismo host, y el `Host` validado contra `server_name` con el puerto público si no es el 443.
+- `deploy/deploy.sh`: construye, migra antes de cambiar los contenedores (los que corren siguen atendiendo), levanta todo, guarda la configuración y las rutas en caché y comprueba `/up` por HTTPS. Vuelve a la versión anterior con `APP_IMAGE=<la anterior> SKIP_BUILD=1`.
+- `.env.staging.example`, sin secretos (`make secrets-check` ahora la revisa).
+- **Una organización nueva responde por HTTPS en su subdominio, con el certificado comodín.**
+
+**Prueba:**
+- `make staging-check`: **20 de 20**. Las 18 del criterio, más dos: los tres contenedores de la aplicación escriben en el volumen de logs, y los logs sobreviven al despliegue siguiente. Unos 4 minutos, con la imagen en caché.
+- **El stack, roto a propósito: 4 casos, todos atrapados**, cada uno con sus fallas exactas:
+  - Apache sin reconocer el HTTPS del proxy: 5 fallas, las de producción (sin HSTS, redirección a `http://`, el CSS por `http://`);
+  - nginx sin decir que la visita llegó por HTTPS: las mismas 5;
+  - la imagen sin `storage/logs`: ni la app, ni el worker, ni el calendario podían escribir sus logs;
+  - el despliegue sin la configuración en caché.
+- **`make demo` sobre un stack ya levantado se caía:** si Docker recreaba la app, el proxy de desarrollo se marcaba enfermo (su chequeo pasaba por la app) y `up --wait` abortaba. Ahora el proxy responde su propio `/healthz`, como el de producción. Cierra la deuda aceptada del "proxy impaciente".
+
 ## Pivote a Stellar (2026-09-28)
 
 El proyecto participa en **Stellar Apex**, así que la blockchain pasa de EVM/Polygon a **Stellar**, con Smart Contracts en **Soroban (Rust)**:
@@ -1712,7 +1754,7 @@ No bloquean ningún criterio de aceptación. **Aceptada por el usuario el 2026-0
 |---|---|---|
 | ✅ *Cerrada en la it. 41:* `APP_LOCALE=en`: los mensajes por defecto de Laravel (`required`, `email`) salen en inglés si alguien se salta la pantalla | Las pantallas validan antes, en español (aceptada el 2026-09-28) | Traducir `lang/es` |
 | El calendario corre en UTC: la sincronización de las 02:00 son las 21:00 en Colombia | Cada tarea dice su hora en Colombia en `routes/console.php` | `->timezone('America/Bogota')` en cada tarea, o `schedule_timezone` |
-| Repetir `make setup` sobre un stack que ya corre puede fallar en `up --wait`: el proxy se marca enfermo mientras la app reinicia | Jenkins parte de cero; para un stack existente basta `make up` | Más paciencia en el healthcheck del proxy |
+| ✅ *Cerrada en la it. 42a:* repetir `make setup` sobre un stack que ya corre puede fallar en `up --wait`: el proxy se marca enfermo mientras la app reinicia | Jenkins parte de cero; para un stack existente basta `make up` | Más paciencia en el healthcheck del proxy |
 | El nombre de un veedor invitado es la parte local de su correo | Ninguna historia pide el nombre; todo lo público usa el seudónimo | Una historia de perfil del veedor |
 | ✅ *Cerrada en la it. 38:* `make setup` no siembra la DIVIPOLA en desarrollo (la E2E la siembra sola) | Solo afecta a configurar territorios en una base de desarrollo nueva | `db:seed --class=DivipolaSeeder` en `make setup`; para producción entra en la it. 37 |
 | ✅ *Cerrada en la it. 39:* varios sellos enviados a la vez: la red acepta uno y rechaza los demás con `txINSUFFICIENT_FEE`; se reintentan a 1, 5 y 15 min (hallazgo de la it. 38) | Un veedor envía un reporte a la vez; solo se nota con varios reportes en el mismo segundo, y todos terminan sellados | Averiguar por qué (la comisión del *fee bump* con varias transacciones en el mismo ledger) y, si hace falta, subirla o reintentar pronto; antes de una salida con muchos veedores |

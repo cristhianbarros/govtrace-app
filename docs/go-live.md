@@ -40,7 +40,8 @@ La salida de GovTrace a la red principal de Stellar. Lo que se preparó sin dato
 
 - ✅ **`.env.production.example`**, la plantilla sin secretos. `make secrets-check` revisa que siga así, y un test que no pierda lo que la hace segura (it. 41): HTTPS, sin depuración, sesiones seguras, logs diarios, español.
 - ✅ **Lista para ir detrás de TLS** (it. 41): confía solo en el proxy de la red privada (`TRUSTED_PROXIES`), CSP y `Permissions-Policy` en toda respuesta, HSTS por HTTPS, y límites de abuso (`REPORTS_PER_VEEDOR_PER_HOUR`, `PUBLIC_REQUESTS_PER_MINUTE`, `OPEN_DATA_PER_MINUTE`).
-- ⬜ **El proxy con TLS y el certificado comodín** (cada organización es un subdominio), en staging (it. 42).
+- ✅ **El stack de producción** (it. 42a): `docker-compose.prod.yml` con la imagen inmutable, nginx con TLS y el certificado comodín, S3 de verdad, sin montar el código; lo levanta `deploy/deploy.sh` con los secretos por el entorno. Probado entero en local con `make staging-check`, que corre en el pipeline.
+- ⬜ **En AWS** (it. 42b): la instancia con su rol, los buckets, SES, Route 53, el certificado de Let's Encrypt (DNS en Route 53) y los secretos en SSM Parameter Store.
 - ⬜ **El entorno de producción, desde esa plantilla.** Los secretos, desde el gestor: `APP_KEY`, `DB_PASSWORD`, `MAIL_PASSWORD`, `EVIDENCE_AWS_SECRET_ACCESS_KEY`, `SEALING_PSEUDONYM_KEY` (fija para siempre) y las llaves de Stellar. `APP_DEBUG=false`.
 - ⬜ **El primer Super Administrador:** el panel no lo crea. Desde la consola del servidor, `php artisan admin:create <correo> --name="…"` (la contraseña se pregunta sin eco, o se genera y se muestra una vez; nunca va en la línea de comandos). En Docker, `make admin EMAIL=<correo>`.
 - ⬜ **Migraciones y DIVIPOLA:** `php artisan migrate --force`, `php artisan tenants:migrate --force` y `php artisan db:seed --class=DivipolaSeeder`.
