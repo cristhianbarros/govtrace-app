@@ -184,8 +184,10 @@ it('voids the invitation link of a veedor deactivated before accepting it', func
 
 it('lists the veedores with their id, so the panel can act on each one', function () {
     observerDecision($this->administrator, 'deactivate', $this->veedor)->assertOk();
+    // US-057-LEG: cuándo declaró no tener impedimentos para ser veedor.
+    $declaredAt = $this->tenant->run(fn () => $this->veedor->fresh()->impediments_declared_at->toIso8601String());
 
     expect($this->actingAs($this->administrator, 'tenant')->getJson('http://veeduria-smr.govtrace.localhost/observers')->json('data'))->toBe([
-        ['id' => $this->veedor->id, 'email' => 'carlos@correo.co', 'status' => 'Inactivo'],
+        ['id' => $this->veedor->id, 'email' => 'carlos@correo.co', 'status' => 'Inactivo', 'impediments_declared_at' => $declaredAt],
     ]);
 });

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Tenant;
 
 use App\Application\Organization\AcceptInvitation;
+use App\Application\Organization\DeclareImpediments;
 use App\Domain\Auth\Rules\StrongPassword;
 use App\Domain\Organization\Exceptions\InvitationRejected;
 use App\Domain\Organization\RoleBasedDashboard;
@@ -44,6 +45,8 @@ class SetPasswordController extends Controller
             'email' => $account->email,
             'token' => $token,
             'action' => "/set-password/{$account->id}",
+            // US-057-LEG: un veedor declara, al activar su cuenta, que no tiene impedimentos para serlo.
+            'declaration' => DeclareImpediments::isAskedOf($account),
         ]);
     }
 
@@ -56,9 +59,22 @@ class SetPasswordController extends Controller
         ]);
 
         $account = User::query()->find($user);
+        $accept = new AcceptInvitation;
 
         try {
-            (new AcceptInvitation)->handle($account ?? throw InvitationRejected::expiredOrInvalid(), $data['token'], $data['password']);
+            if ($account === null || ! $accept->isValid($account, $data['token'])) {
+                throw InvitationRejected::expiredOrInvalid();
+            }
+            // Solo con un enlace válido se dice qué falta: la pantalla nunca revela si una cuenta existe.
+            $declares = DeclareImpediments::isAskedOf($account);
+            if ($declares && ! $request->boolean('declaration')) {
+                throw ValidationException::withMessages(['declaration' => DeclareImpediments::REQUIRED]);
+            }
+
+            $accept->handle($account, $data['token'], $data['password']);
+            if ($declares) {
+                (new DeclareImpediments)->handle($account);
+            }
         } catch (InvitationRejected $e) {
             throw ValidationException::withMessages(['token' => $e->getMessage()]);
         }

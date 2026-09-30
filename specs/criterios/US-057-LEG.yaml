@@ -1,0 +1,26 @@
+story_id: "US-057-LEG"
+titulo_historia: "Como Veedor de Campo quiero declarar, al activar mi cuenta, que no estoy en ninguno de los impedimentos que la ley fija para ser veedor para que mis reportes no queden viciados por un conflicto de interés"
+bloque: "Alineación con el proceso actual — A4"
+criterios_aceptacion:
+  escenarios_exito:
+    - "Al abrir su invitación, el veedor ve los impedimentos del artículo 19 de la Ley 850 de 2003 en lenguaje claro y la casilla 'Declaro que no estoy en ninguno de estos casos'"
+    - "Al crear su contraseña con la casilla marcada, su cuenta queda activa y la declaración registrada con su fecha"
+    - "Un veedor que ya tenía cuenta es llevado a la declaración al abrir 'Nuevo Reporte'; al declarar, sigue a 'Nuevo Reporte'"
+    - "El Administrador ve, en Veedores, quién declaró y cuándo, y quién aún no"
+  validaciones_reglas:
+    - "R-LEG-05: sin la declaración no se activa la cuenta de un veedor ni se recibe un reporte suyo"
+    - "R-AUD-04: la declaración queda en el log de auditoría (observer.impediments_declared)"
+    - "El Administrador inicial activa su cuenta sin esta declaración"
+  manejo_errores:
+    - "Activar sin la casilla: 'Para ser veedor, declare que no está en ninguno de estos casos.'"
+    - "Reportar sin haber declarado: 403 'Antes de reportar, declare que no tiene impedimentos para ser veedor (Ley 850 de 2003, art. 19).'"
+  requisitos_ux:
+    - "La lista se lee en un celular, con letra de 16 px; la casilla y el botón miden 44 px o más"
+  casos_edge:
+    - "Un reporte guardado sin conexión por un veedor que no ha declarado no se descarta: el servidor responde 403, no 422, y se envía después de declarar"
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true

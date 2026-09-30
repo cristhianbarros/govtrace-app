@@ -29,6 +29,7 @@ final class AuditLabels
         'observer.invited' => 'Invitó a un veedor',
         'observer.deactivated' => 'Desactivó a un veedor',
         'observer.reactivated' => 'Reactivó a un veedor',
+        'observer.impediments_declared' => 'Declaró no tener impedimentos para ser veedor',
         'invitation.resent' => 'Reenvió una invitación',
         'invitation.revoked' => 'Revocó una invitación',
         'parameter.changed' => 'Cambió un parámetro global',
@@ -42,6 +43,7 @@ final class AuditLabels
     private const ACTORS = [
         'super_admin' => 'Super Administrador',
         'organization_admin' => 'Administrador de Organización',
+        'observer' => 'Veedor de Campo',
         'system' => 'Sistema',
     ];
 

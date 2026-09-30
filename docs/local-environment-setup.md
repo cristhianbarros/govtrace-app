@@ -70,7 +70,8 @@ Recorre los cuatro perfiles con la interfaz de las it. 40 y 43. Todo se hace con
    - **Publicar una:** después, en el menú de la cuenta, **Ver el sitio público** para verla en el mapa.
    - **Rechazar otra** con un motivo, que después verá el veedor.
    - **En el computador:** la barra lateral agrupa todas las pantallas. **En el celular:** tres pestañas y **Más**.
-   - **Veedores:** invitar un correo; su enlace, con `make invites`.
+   - **Veedores:** invitar un correo; su enlace, con `make invites`. Al activar su cuenta, el veedor declara que no tiene impedimentos para serlo (Ley 850 de 2003, art. 19).
+   - **Obras:** **Descargar expediente**: el ZIP con las evidencias, sus pruebas y las plantillas del derecho de petición y de la denuncia.
 4. **El veedor** (`ana.torres@correo.co`):
    - **Nuevo Reporte:** **📍 Obras cercanas**, o buscar `Calle 30`.
    - **¿Qué vio en la obra?:** cada opción con su explicación.

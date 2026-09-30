@@ -2052,6 +2052,24 @@ La revisión documental del control social de hoy (`docs/proceso-actual.md`, PR 
 - La declaración queda auditada, y el Administrador ve quién la hizo.
 - **Modelo:** Opus. Es una condición para reportar.
 
+✅ **44c cumplida (2026-09-30).**
+- **Al activar su cuenta,** el veedor lee los cinco casos del artículo 19, en lenguaje claro, y marca "Declaro que no estoy en ninguno de estos casos". Sin la casilla, la cuenta no se activa.
+- **El que ya tenía cuenta** llega a "Antes de reportar" (`/declaration`) al abrir "Nuevo Reporte", una sola vez.
+- **El servidor no recibe reportes de quien no ha declarado.** Responde 403 y no 422: la sincronización sin conexión solo descarta un reporte con un 422, así que el reporte se queda en el celular y se envía después de declarar.
+- **Queda guardado:** `users.impediments_declared_at` (migración por organización) y el log de auditoría, `observer.impediments_declared`, con el actor nuevo "Veedor de Campo".
+- **En Veedores,** el Administrador ve "Declaró no tener impedimentos el …" o "Aún no declara sus impedimentos".
+- **Los veedores de `make demo` y del fixture E2E** quedan como ya declarados. El que se invita en vivo lo hace al activar su cuenta.
+- ❓ **Decisiones por defecto:**
+  - El Administrador no declara: no reporta.
+  - La declaración es general, no por obra. El texto le pide al veedor no reportar una obra frente a la que tenga un impedimento, y avisar a su veeduría.
+  - Los cinco casos están en lenguaje claro (`resources/js/lib/impediments.js`). Conviene que un abogado los confirme frente al artículo 19.
+- **Prueba:**
+  - Pest, 8 casos: activar declarando, sin declarar, el Administrador, el que ya tenía cuenta, el 403 al reportar, el log, la lista del Administrador y quién puede declarar;
+  - Vitest: 413 de 413; la lista y la casilla en la activación, "Antes de reportar" y la lista de Veedores;
+  - `make e2e`: 40 pasan; el veedor invitado declara al activar, y una veedora que ya tenía cuenta declara antes de reportar;
+  - `make ux-check`: la pantalla nueva, sin letra pequeña ni botones chicos; la línea base, reescrita.
+- **De paso, un fallo intermitente.** La suite completa falló una vez en `SponsorAccountTest`: el correo de un usuario de fábrica chocó con uno que había quedado de una corrida anterior en la base de pruebas. La fábrica ahora hace sus correos únicos también entre corridas.
+
 **44d — A5: una veeduría sin NIT** (enmiendas a US-001 y US-011, EPIC-009).
 - El NIT pasa a opcional.
 - La alternativa es el número de la resolución o el acta de inscripción y su entidad de registro (personería o cámara de comercio).

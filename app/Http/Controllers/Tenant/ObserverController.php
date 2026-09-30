@@ -27,7 +27,13 @@ class ObserverController extends Controller
     {
         return response()->json([
             'data' => User::role(Roles::Observer->value, 'tenant')->orderBy('email')->get()
-                ->map(fn (User $observer) => ['id' => $observer->id, 'email' => $observer->email, 'status' => $observer->statusLabel()])
+                ->map(fn (User $observer) => [
+                    'id' => $observer->id,
+                    'email' => $observer->email,
+                    'status' => $observer->statusLabel(),
+                    // US-057-LEG: cuándo declaró no tener impedimentos para ser veedor; null, aún no.
+                    'impediments_declared_at' => $observer->impediments_declared_at?->toIso8601String(),
+                ])
                 ->values(),
         ]);
     }

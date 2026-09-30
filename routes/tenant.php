@@ -10,6 +10,7 @@ use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Tenant\AuditController;
 use App\Http\Controllers\Tenant\ContractListController;
 use App\Http\Controllers\Tenant\ContractSearchController;
+use App\Http\Controllers\Tenant\DeclarationController;
 use App\Http\Controllers\Tenant\EditorialController;
 use App\Http\Controllers\Tenant\EvidenceFileController;
 use App\Http\Controllers\Tenant\ExportController;
@@ -36,6 +37,7 @@ use App\Http\Controllers\Tenant\WorksiteDossierController;
 use App\Http\Controllers\Tenant\WorksiteGroupController;
 use App\Http\Controllers\Tenant\WorksiteLocationController;
 use App\Http\Middleware\EnsureAccountIsUsable;
+use App\Http\Middleware\EnsureImpedimentsDeclared;
 use App\Http\Middleware\EnsureMapIsOnline;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -193,9 +195,12 @@ Route::middleware([
 
         // US-008: solo el Veedor de Campo crea reportes, desde la PWA (it. 16).
         Route::middleware('role:'.Roles::Observer->value.',tenant')->group(function () {
-            Route::get('/reports/new', fn () => Inertia::render('Veedor/NewReport'))->name('reports.new');
+            // US-057-LEG (it. 44c): un veedor reporta después de declarar que no tiene impedimentos para serlo.
+            Route::get('/declaration', [DeclarationController::class, 'show'])->name('declaration.show');
+            Route::post('/declaration', [DeclarationController::class, 'store'])->name('declaration.store');
+            Route::get('/reports/new', fn () => Inertia::render('Veedor/NewReport'))->middleware(EnsureImpedimentsDeclared::class)->name('reports.new');
             // It. 41: cada reporte cuesta XLM y un turno de la selladora: un límite por veedor y por hora.
-            Route::post('/reports', [ReportController::class, 'store'])->middleware('throttle:reports')->name('reports.store');
+            Route::post('/reports', [ReportController::class, 'store'])->middleware([EnsureImpedimentsDeclared::class, 'throttle:reports'])->name('reports.store');
 
             // US-010 / US-023: "Mis Reportes", y el recibo de cada uno.
             Route::get('/my-reports', fn () => Inertia::render('Veedor/MyReports'))->name('reports.mine.show');

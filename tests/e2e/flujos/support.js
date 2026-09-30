@@ -17,6 +17,8 @@ export const PEOPLE = {
     superAdmin: 'e2e.superadmin@govtrace.test',
     admin: 'e2e.admin@correo.co',
     veedor: 'e2e.veedor@correo.co',
+    // Tiene cuenta desde antes de la declaración de impedimentos (it. 44c): la hace en su flujo.
+    undeclared: 'e2e.sin-declarar@correo.co',
 };
 export const WORKSITE = 'Parque de pruebas sin conexión';
 

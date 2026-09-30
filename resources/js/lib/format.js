@@ -10,6 +10,11 @@ export const formatCop = (value) => (value === null || value === undefined ? '�
 /** "2026-01-15" → "15/01/2026", sin pasar por zonas horarias. */
 export const formatDate = (isoDate) => (isoDate ? isoDate.split('-').reverse().join('/') : '—');
 
+const day = new Intl.DateTimeFormat('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'America/Bogota' });
+
+/** Una hora ISO → "30/09/2026", el día que era en Colombia. */
+export const formatDay = (iso) => day.format(new Date(iso));
+
 /** Una hora ISO, en la hora de Colombia. */
 export const formatDateTime = (iso) => dateTime.format(new Date(iso));
 
