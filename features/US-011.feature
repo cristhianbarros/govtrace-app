@@ -37,3 +37,19 @@ Característica: Actualización del NIT y datos legales por el Super Administrad
     Cuando intento cambiar el NIT de mi organización a "901234567-7"
     Entonces la acción es rechazada
     Y el NIT de la organización sigue siendo "900123456-8"
+
+  # It. 44d (docs/proceso-actual.md A5): la inscripción ante la personería o la cámara de comercio es
+  # un dato legal más, y una organización tiene su NIT, su inscripción o los dos.
+
+  @complexity:medium @origin:proceso_actual
+  Escenario: Actualización de la inscripción con registro de auditoría
+    Dado que estoy autenticado como Super Administrador en el panel global
+    Cuando le agrego a la organización la inscripción "Acta 45 de 2025" ante "Cámara de Comercio de Santa Marta"
+    Entonces la organización tiene su NIT y su inscripción
+    Y el log de auditoría registra los datos legales anteriores y los nuevos
+
+  @complexity:low @negative @origin:proceso_actual
+  Escenario: No se puede dejar una organización sin NIT ni inscripción
+    Dado que la organización solo tiene su inscripción
+    Cuando intento quitarle la inscripción sin darle un NIT
+    Entonces el cambio es rechazado con "Ingrese el NIT de la organización, o el número de la resolución o el acta de su inscripción y la entidad que la registró."

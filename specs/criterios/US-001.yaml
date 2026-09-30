@@ -19,7 +19,9 @@ criterios_aceptacion:
     - {caso: "Subdominio con formato incorrecto", mensaje: "El subdominio solo puede contener letras minúsculas, números y guiones, sin espacios ni caracteres especiales."}
     - {caso: "Subdominio es palabra reservada", mensaje: "El subdominio utiliza una palabra reservada del sistema y no puede ser utilizado."}
   requisitos_ux: []
-  casos_edge: []
+  casos_edge:
+    - "It. 44d (A5): una veeduría sin NIT se registra con su inscripción — el número de la resolución o el acta y la entidad que la registró, una personería o una cámara de comercio (Ley 850 de 2003, art. 3) —; una organización tiene su NIT, su inscripción o los dos, nunca ninguno (R-LEG-06)"
+    - "Dos inscripciones son la misma aunque se escriban con otras mayúsculas, tildes o espacios; la misma resolución de otra personería es otra inscripción"
 validacion_smart:
   specific: true
   measurable: true

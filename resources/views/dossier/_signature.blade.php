@@ -5,5 +5,5 @@
     <p>Firma: ________________________________</p>
     <p>Nombre: ________________________________</p>
     <p>C.C. n.º ________________</p>
-    <p>Veeduría ciudadana «{{ $organization['name'] }}»</p>
+    <p>Veeduría ciudadana «{{ $organization['name'] }}» · {{ $organization['identification'] }}</p>
 </div>

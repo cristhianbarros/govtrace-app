@@ -62,3 +62,9 @@ Característica: El expediente de una obra, con el derecho de petición y la den
   Escenario: Solo el Administrador descarga el expediente
     Cuando un veedor pide el expediente de una obra
     Entonces se le niega
+
+  @complexity:low
+  Escenario: Las plantillas identifican a la veeduría
+    Dado que la veeduría no tiene NIT y está inscrita con "Resolución 012 de 2026" ante "Personería de Santa Marta"
+    Cuando descargo el expediente
+    Entonces el derecho de petición y la denuncia la identifican por su inscripción

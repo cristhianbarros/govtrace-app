@@ -7,7 +7,7 @@ import SuperAdminLayout from '@/Layouts/SuperAdminLayout.vue';
 import { registerOrganization } from '@/services/api.js';
 import { errorMessage } from '@/services/errors.js';
 
-const empty = { name: '', nit: '', subdomain: '', administratorName: '', administratorEmail: '' };
+const empty = { name: '', nit: '', registrationNumber: '', registrationAuthority: '', subdomain: '', administratorName: '', administratorEmail: '' };
 const form = reactive({ ...empty });
 
 const sending = ref(false);
@@ -28,7 +28,10 @@ async function submit() {
         sent.value = (
             await registerOrganization({
                 name: form.name,
-                nit: form.nit,
+                nit: form.nit.trim() || null,
+                // It. 44d (R-LEG-06): una veeduría sin NIT se identifica con su inscripción.
+                registration_number: form.registrationNumber.trim() || null,
+                registration_authority: form.registrationAuthority.trim() || null,
                 subdomain: form.subdomain,
                 administrator_name: form.administratorName.trim() || null,
                 administrator_email: form.administratorEmail.trim() || null,
@@ -58,9 +61,18 @@ async function submit() {
                         <label for="name" class="text-sm font-semibold text-slate-700">Nombre</label>
                         <input id="name" v-model="form.name" type="text" class="w-full rounded-lg border border-slate-300 px-3 py-3 text-base" />
                     </div>
+                    <p class="text-sm text-slate-700">Para identificarla: su NIT. Si no tiene NIT, su inscripción: el número de la resolución o el acta, y la personería o la cámara de comercio que la registró.</p>
                     <div class="flex flex-col gap-1">
-                        <label for="nit" class="text-sm font-semibold text-slate-700">NIT (con dígito de verificación)</label>
+                        <label for="nit" class="text-sm font-semibold text-slate-700">NIT (con dígito de verificación, si tiene)</label>
                         <input id="nit" v-model="form.nit" type="text" placeholder="900123456-8" class="w-full rounded-lg border border-slate-300 px-3 py-3 text-base" />
+                    </div>
+                    <div class="flex flex-col gap-1">
+                        <label for="registration-number" class="text-sm font-semibold text-slate-700">Resolución o acta de inscripción</label>
+                        <input id="registration-number" v-model="form.registrationNumber" type="text" placeholder="Resolución 012 de 2026" class="w-full rounded-lg border border-slate-300 px-3 py-3 text-base" />
+                    </div>
+                    <div class="flex flex-col gap-1">
+                        <label for="registration-authority" class="text-sm font-semibold text-slate-700">Entidad que la registró</label>
+                        <input id="registration-authority" v-model="form.registrationAuthority" type="text" placeholder="Personería de Santa Marta" class="w-full rounded-lg border border-slate-300 px-3 py-3 text-base" />
                     </div>
                     <div class="flex flex-col gap-1">
                         <label for="subdomain" class="text-sm font-semibold text-slate-700">Subdominio</label>

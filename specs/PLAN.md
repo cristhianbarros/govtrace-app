@@ -2076,6 +2076,28 @@ La revisión documental del control social de hoy (`docs/proceso-actual.md`, PR 
 - Una organización tiene una de las dos, o ambas.
 - **Modelo:** Opus xhigh. Cambia el esquema y la regla que evita suplantaciones (US-001).
 
+✅ **44d cumplida (2026-09-30).** El usuario decidió no esperar la validación en campo: diseño flexible, y la validación por telemetría.
+- **Esquema** (`tenants`):
+  - `nit` pasa a opcional;
+  - columnas nuevas: `registration_number` (el `Numero_de_Resolucion_o_Acta` que pidió el usuario), `registration_authority` (su `Entidad_de_Registro`) y `registration_key`, única;
+  - una restricción CHECK no deja una organización sin NIT ni inscripción.
+- **Reglas** (`Registration`, R-LEG-06):
+  - la entidad tiene que ser una personería o una cámara de comercio, con o sin tildes;
+  - número y entidad van juntos;
+  - la misma inscripción no se registra dos veces, aunque cambien las mayúsculas, las tildes o los espacios; la misma resolución de otra personería es otra inscripción.
+- **Alta y datos legales:** el Super Administrador da de alta con NIT, inscripción o ambos, y los corrige en "Editar datos legales" (antes, "Editar NIT"). El log guarda la inscripción anterior y la nueva.
+- **El expediente (44b)** identifica a la veeduría por su NIT, su inscripción o los dos.
+- **De paso, accesibilidad.** En el celular, la barra fija de abajo tapaba el botón "Guardar datos legales". Tapaba cualquier botón al llegar a él con el teclado (WCAG 2.2, 2.4.11). Un `scroll-padding-bottom` en el celular lo deja siempre por encima.
+- ❓ **Decisiones por defecto:**
+  - la entidad es un texto libre ("Personería de Santa Marta"), no una lista;
+  - las autoridades de las comunidades indígenas, que también inscriben veedurías (Ley 850, art. 3), no están: el usuario pidió personería o cámara de comercio.
+- **Prueba:**
+  - Pest, 15 casos: alta con inscripción, sin identificación, inscripción incompleta, entidad inválida, duplicada, NIT e inscripción, actualización auditada, no dejarla sin ninguno, la restricción de la base y la plantilla;
+  - Vitest: 418 de 418;
+  - `make e2e`: 40 pasan; el Super Administrador corrige el NIT y agrega la inscripción;
+  - `make ux-check`: sin retroceso;
+  - `make trace-check`: 295 de 295.
+
 **44e — A2: "Informar a esta veeduría"** (US-058-LEG). Va después de 44d.
 - El ciudadano, con su correo verificado por un código, informa a la veeduría (Ley 850, art. 18 a)).
 - No se sella ni se publica.

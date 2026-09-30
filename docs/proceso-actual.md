@@ -114,7 +114,7 @@ En verde, lo que GovTrace cubre hoy: documentar en la obra (la evidencia sellada
 | A2 | **"Informar a esta veeduría."** Un botón en la obra pública. El ciudadano, con su correo verificado, deja un texto y una foto opcional. La veeduría lo recibe en su panel como "informe ciudadano".<br/>Es su deber (Ley 850, art. 18 a)). **No se sella ni se publica**, así que no gasta XLM. La veeduría decide si manda a un veedor.<br/>Es la puerta "alertar" de `specs/V2-CIUDADANO.md`, adelantada y con base legal. | B2 y B1 | Mediano |
 | A3 ✅ it. 44b | **El paquete de evidencia para el proceso formal.** Desde una obra, la veeduría descarga un expediente: los datos del contrato en SECOP, sus evidencias publicadas, sus recibos y pruebas y el enlace al verificador. Viene con plantillas de derecho de petición a la entidad y de denuncia ante la Contraloría, que presenta ella. | B3 y B10 | Mediano |
 | A4 ✅ it. 44c | **Los impedimentos del veedor.** Al activar su cuenta, el veedor declara que no está en ninguno de los casos del art. 19. La declaración queda en el log de auditoría. | B5 | Pequeño |
-| A5 | **Los datos legales de la veeduría:** su inscripción (personería o cámara, número y fecha), su objeto y su duración. Y el NIT, **opcional** si se confirma que una veeduría de base no lo tiene ❓. | B4 | Pequeño a mediano |
+| A5 ✅ it. 44d | **Los datos legales de la veeduría:** su inscripción (personería o cámara, número y fecha), su objeto y su duración. Y el NIT, **opcional** si se confirma que una veeduría de base no lo tiene ❓. | B4 | Pequeño a mediano |
 
 ### Para la v1 si cabe, o la v1.1
 

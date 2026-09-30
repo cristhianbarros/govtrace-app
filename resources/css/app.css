@@ -29,6 +29,22 @@
 }
 
 /*
+ * It. 44d: en el celular la barra de navegación de abajo es fija. Al llegar a un
+ * botón con el teclado, o al desplazarse hasta él, el navegador lo deja por
+ * encima de la barra y no debajo (WCAG 2.2, 2.4.11: el foco no queda tapado).
+ * Desde md: la barra se va o deja de ser fija.
+ */
+html {
+    scroll-padding-bottom: 5.5rem;
+}
+
+@media (min-width: 48rem) {
+    html {
+        scroll-padding-bottom: 0;
+    }
+}
+
+/*
  * It. 40c: los botones de zoom del mapa (Leaflet) miden 30 px; a 44 px se
  * tocan sin atinar (R-UX-02).
  */

@@ -9,7 +9,7 @@
 
     <p><strong>Asunto: Denuncia por presuntas irregularidades en la ejecución {{ count($contracts) === 1 ? 'del contrato' : 'de los contratos' }} {{ collect($contracts)->pluck('id')->join(', ', ' y ') }}.</strong></p>
 
-    <p>Yo, ________________________________, con C.C. n.º ________________, en nombre de la veeduría ciudadana «{{ $organization['name'] }}», con fundamento en el artículo 69 de la Ley 1757 de 2015 y en el artículo 16 de la Ley 850 de 2003, pongo en su conocimiento los siguientes hechos, para que se evalúen dentro del control fiscal.</p>
+    <p>Yo, ________________________________, con C.C. n.º ________________, en nombre de la veeduría ciudadana «{{ $organization['name'] }}» ({{ $organization['identification'] }}), con fundamento en el artículo 69 de la Ley 1757 de 2015 y en el artículo 16 de la Ley 850 de 2003, pongo en su conocimiento los siguientes hechos, para que se evalúen dentro del control fiscal.</p>
 
     <h2>El contrato</h2>
     @include('dossier._contracts')

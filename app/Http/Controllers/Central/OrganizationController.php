@@ -32,6 +32,8 @@ class OrganizationController extends Controller
                 ->map(fn (Tenant $tenant) => [
                     'id' => $tenant->id,
                     'nit' => $tenant->nit,
+                    // It. 44d (R-LEG-06): su NIT, su inscripción o los dos, en una línea.
+                    'identification' => $tenant->identification(),
                     'name' => $tenant->name,
                     'subdomain' => $tenant->domains()->first()?->domain,
                     'status' => $tenant->statusLabel(),
@@ -46,7 +48,9 @@ class OrganizationController extends Controller
     {
         $data = $request->validate([
             'name' => ['required', 'string'],
-            'nit' => ['required', 'string'],
+            'nit' => ['nullable', 'string'],
+            'registration_number' => ['nullable', 'string', 'max:100'],
+            'registration_authority' => ['nullable', 'string', 'max:150'],
             'subdomain' => ['required', 'string'],
             'administrator_name' => ['nullable', 'string', 'required_with:administrator_email'],
             'administrator_email' => ['nullable', 'string', 'required_with:administrator_name'],
@@ -54,11 +58,13 @@ class OrganizationController extends Controller
 
         try {
             $tenant = (new RegisterOrganizationWithAdministrator)->handle(
-                $data['nit'],
+                $data['nit'] ?? null,
                 $data['name'],
                 $data['subdomain'],
                 $data['administrator_name'] ?? null,
                 $data['administrator_email'] ?? null,
+                $data['registration_number'] ?? null,
+                $data['registration_authority'] ?? null,
             );
         } catch (OrganizationValidationException $e) {
             throw ValidationException::withMessages([$this->fieldFor($e) => $e->getMessage()]);
@@ -77,6 +83,8 @@ class OrganizationController extends Controller
             'id' => $organization->id,
             'name' => $organization->name,
             'nit' => $organization->nit,
+            'registration_number' => $organization->registration_number,
+            'registration_authority' => $organization->registration_authority,
             'subdomain' => $organization->domains()->first()?->domain,
             'status' => $organization->statusLabel(),
         ]]);
@@ -84,16 +92,20 @@ class OrganizationController extends Controller
 
     public function updateNit(Request $request, string $tenant): JsonResponse
     {
-        $data = $request->validate(['nit' => ['required', 'string']]);
+        $data = $request->validate([
+            'nit' => ['nullable', 'string'],
+            'registration_number' => ['nullable', 'string', 'max:100'],
+            'registration_authority' => ['nullable', 'string', 'max:150'],
+        ]);
         $organization = Tenant::query()->findOrFail($tenant);
 
         try {
-            (new UpdateOrganizationLegalData)->handle($organization, $data['nit']);
+            (new UpdateOrganizationLegalData)->handle($organization, $data['nit'] ?? null, $data['registration_number'] ?? null, $data['registration_authority'] ?? null);
         } catch (OrganizationValidationException $e) {
-            throw ValidationException::withMessages(['nit' => $e->getMessage()]);
+            throw ValidationException::withMessages([$this->fieldFor($e) => $e->getMessage()]);
         }
 
-        return response()->json(['message' => 'El NIT ha sido actualizado.']);
+        return response()->json(['message' => 'Los datos legales han sido actualizados.']);
     }
 
     /** US-003a */
@@ -167,6 +179,8 @@ class OrganizationController extends Controller
     private function fieldFor(OrganizationValidationException $e): string
     {
         return match (true) {
+            str_contains($e->getMessage(), 'entidad de registro debe') => 'registration_authority',
+            str_contains($e->getMessage(), 'inscripción') && ! str_contains($e->getMessage(), 'NIT') => 'registration_number',
             str_contains($e->getMessage(), 'NIT') => 'nit',
             str_contains($e->getMessage(), 'subdominio') => 'subdomain',
             str_contains($e->getMessage(), 'nombre de la organización') => 'name',

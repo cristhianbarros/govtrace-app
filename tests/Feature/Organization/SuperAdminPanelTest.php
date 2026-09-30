@@ -65,8 +65,9 @@ it('lists the organizations with their NIT, subdomain and status', function () {
     $cienaga = (new RegisterOrganization)->handle('890000062-6', 'Veeduría Ciénaga', 'veeduria-cienaga');
 
     expect(asSuperAdmin('GET', '/admin/organizations/data')->assertOk()->json('data'))->toBe([
-        ['id' => $smr->id, 'nit' => '900123456-8', 'name' => 'Veeduría Ciudadana Santa Marta', 'subdomain' => 'veeduria-smr.govtrace.localhost', 'status' => 'Activa', 'administrators' => []],
-        ['id' => $cienaga->id, 'nit' => '890000062-6', 'name' => 'Veeduría Ciénaga', 'subdomain' => 'veeduria-cienaga.govtrace.localhost', 'status' => 'Activa', 'administrators' => []], // it. 43a: quién la administra
+        // it. 44d: su identificación en una línea — su NIT, su inscripción o los dos.
+        ['id' => $smr->id, 'nit' => '900123456-8', 'identification' => 'NIT 900123456-8', 'name' => 'Veeduría Ciudadana Santa Marta', 'subdomain' => 'veeduria-smr.govtrace.localhost', 'status' => 'Activa', 'administrators' => []],
+        ['id' => $cienaga->id, 'nit' => '890000062-6', 'identification' => 'NIT 890000062-6', 'name' => 'Veeduría Ciénaga', 'subdomain' => 'veeduria-cienaga.govtrace.localhost', 'status' => 'Activa', 'administrators' => []], // it. 43a: quién la administra
     ]);
 });
 
@@ -145,11 +146,12 @@ it('shows the organization detail with its legal data and lets the Super Adminis
     $tenant = Tenant::query()->sole();
 
     expect(asSuperAdmin('GET', "/admin/organizations/{$tenant->id}")->assertOk()->json('data'))
-        ->toBe(['id' => $tenant->id, 'name' => 'Veeduría Ciudadana Santa Marta', 'nit' => '900123456-8', 'subdomain' => 'veeduria-smr.govtrace.localhost', 'status' => 'Activa']);
+        ->toBe(['id' => $tenant->id, 'name' => 'Veeduría Ciudadana Santa Marta', 'nit' => '900123456-8', 'registration_number' => null, 'registration_authority' => null, 'subdomain' => 'veeduria-smr.govtrace.localhost', 'status' => 'Activa']);
 
+    // It. 44d: la misma pantalla cambia el NIT y la inscripción, los datos legales.
     asSuperAdmin('PUT', "/admin/organizations/{$tenant->id}/nit", ['nit' => '901234567-7'])
         ->assertOk()
-        ->assertJson(['message' => 'El NIT ha sido actualizado.']);
+        ->assertJson(['message' => 'Los datos legales han sido actualizados.']);
 
     expect($tenant->refresh()->nit)->toBe('901234567-7')
         ->and(AuditLog::query()->where('action', 'organization.legal_data_updated')->exists())->toBeTrue();

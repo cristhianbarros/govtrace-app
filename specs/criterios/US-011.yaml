@@ -12,7 +12,8 @@ criterios_aceptacion:
     - {caso: "NIT duplicado", mensaje: "Ya existe una organización registrada con el NIT ingresado."}
     - {caso: "NIT sin dígito de verificación o con DV que no coincide", mensaje: "El NIT ingresado no es válido o el dígito de verificación no coincide con el algoritmo de la DIAN."}
   requisitos_ux: []
-  casos_edge: []
+  casos_edge:
+    - "It. 44d (A5): el Super Administrador agrega, cambia o quita la inscripción, con las mismas reglas del alta; la organización nunca queda sin NIT ni inscripción, y el cambio va al log de auditoría"
 validacion_smart:
   specific: true
   measurable: true

@@ -21,6 +21,27 @@ class OrganizationValidationException extends DomainException
         return new self('Ya existe una organización registrada con el NIT ingresado.');
     }
 
+    /** R-LEG-06 (it. 44d): una organización se identifica con su NIT, su inscripción o los dos. */
+    public static function identificationRequired(): self
+    {
+        return new self('Ingrese el NIT de la organización, o el número de la resolución o el acta de su inscripción y la entidad que la registró.');
+    }
+
+    public static function incompleteRegistration(): self
+    {
+        return new self('Para identificar la inscripción hacen falta los dos datos: el número de la resolución o el acta, y la entidad que la registró.');
+    }
+
+    public static function invalidRegistrationAuthority(): self
+    {
+        return new self('La entidad de registro debe ser una personería o una cámara de comercio. Por ejemplo: Personería de Santa Marta.');
+    }
+
+    public static function duplicateRegistration(): self
+    {
+        return new self('Ya existe una organización registrada con esa inscripción.');
+    }
+
     public static function invalidSubdomainFormat(): self
     {
         return new self('El subdominio solo puede contener letras minúsculas, números y guiones, sin espacios ni caracteres especiales.');

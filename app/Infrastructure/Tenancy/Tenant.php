@@ -19,7 +19,7 @@ class Tenant extends BaseTenant implements TenantWithDatabase
 {
     use HasDatabase, HasDomains;
 
-    protected $fillable = ['id', 'nit', 'name', 'display_name', 'logo_path', 'status', 'decommissioned_at', 'evidence_files_purged_at'];
+    protected $fillable = ['id', 'nit', 'registration_number', 'registration_authority', 'registration_key', 'name', 'display_name', 'logo_path', 'status', 'decommissioned_at', 'evidence_files_purged_at'];
 
     protected $casts = [
         'decommissioned_at' => 'datetime',
@@ -37,7 +37,16 @@ class Tenant extends BaseTenant implements TenantWithDatabase
      */
     public static function getCustomColumns(): array
     {
-        return ['id', 'nit', 'name', 'display_name', 'logo_path', 'status', 'decommissioned_at', 'evidence_files_purged_at'];
+        return ['id', 'nit', 'registration_number', 'registration_authority', 'registration_key', 'name', 'display_name', 'logo_path', 'status', 'decommissioned_at', 'evidence_files_purged_at'];
+    }
+
+    /** R-LEG-06: how it is identified — "NIT 900123456-8 · Acta 45 de 2025, Cámara de Comercio de Santa Marta". */
+    public function identification(): string
+    {
+        return collect([
+            $this->nit ? "NIT {$this->nit}" : null,
+            $this->registration_number ? "{$this->registration_number}, {$this->registration_authority}" : null,
+        ])->filter()->join(' · ');
     }
 
     /** What veedores and the public see: the display name (US-007), or the legal name until there is one. */

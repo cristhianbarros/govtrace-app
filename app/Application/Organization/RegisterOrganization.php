@@ -6,6 +6,7 @@ use App\Domain\Audit\AuditLog;
 use App\Domain\Organization\Exceptions\OrganizationValidationException;
 use App\Domain\Organization\Nit;
 use App\Domain\Organization\OrganizationName;
+use App\Domain\Organization\Registration;
 use App\Domain\Organization\Subdomain;
 use App\Infrastructure\Tenancy\Tenant;
 use App\Jobs\SyncSecopContracts;
@@ -27,7 +28,12 @@ use Throwable;
  */
 class RegisterOrganization
 {
-    public function handle(string $nit, string $name, string $subdomain): Tenant
+    /**
+     * R-LEG-06 (it. 44d): a NIT, a registration — the number of the resolución
+     * or acta and the personería or cámara de comercio that registered it —,
+     * or both; never neither.
+     */
+    public function handle(?string $nit, string $name, string $subdomain, ?string $registrationNumber = null, ?string $registrationAuthority = null): Tenant
     {
         // Structural guard for R-TA-01: the Super Administrator operates
         // from the central domain, where tenancy is never initialized.
@@ -39,12 +45,19 @@ class RegisterOrganization
             throw OrganizationValidationException::cannotRegisterFromTenantContext();
         }
 
-        $nit = Nit::fromString($nit);
+        $nit = filled($nit) ? Nit::fromString($nit) : null;
+        $registration = Registration::from($registrationNumber, $registrationAuthority);
+        if ($nit === null && $registration === null) {
+            throw OrganizationValidationException::identificationRequired();
+        }
         $subdomain = Subdomain::fromString($subdomain);
         $name = OrganizationName::fromString($name);
 
-        if (Tenant::query()->where('nit', $nit->value())->exists()) {
+        if ($nit && Tenant::query()->where('nit', $nit->value())->exists()) {
             throw OrganizationValidationException::duplicateNit();
+        }
+        if ($registration && Tenant::query()->where('registration_key', $registration->key())->exists()) {
+            throw OrganizationValidationException::duplicateRegistration();
         }
 
         $domainName = "{$subdomain->value}.".config('tenancy.apex_domain');
@@ -54,7 +67,10 @@ class RegisterOrganization
         }
 
         $tenant = new Tenant([
-            'nit' => $nit->value(),
+            'nit' => $nit?->value(),
+            'registration_number' => $registration?->number,
+            'registration_authority' => $registration?->authority,
+            'registration_key' => $registration?->key(),
             'name' => $name->value,
             'status' => 'active',
         ]);
@@ -78,7 +94,7 @@ class RegisterOrganization
             actorType: 'super_admin',
             actorId: $actor ? (string) $actor->getKey() : null,
             actorName: $actor?->name,
-            after: ['nit' => $nit->value(), 'name' => $name->value, 'subdomain' => $domainName],
+            after: ['nit' => $nit?->value(), 'name' => $name->value, 'subdomain' => $domainName, ...($registration ? ['registration' => $registration->describe()] : [])],
         );
 
         // US-013, edge "sincronización inmediata al dar de alta": no

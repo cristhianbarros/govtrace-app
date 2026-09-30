@@ -26,6 +26,8 @@ class OrganizationProfileController extends Controller
             'display_name' => $tenant->displayName(),
             'legal_name' => $tenant->name,
             'nit' => $tenant->nit,
+            'registration_number' => $tenant->registration_number,
+            'registration_authority' => $tenant->registration_authority,
             'subdomain' => $tenant->domains()->first()?->domain,
             'logo_url' => $tenant->logoUrl(),
         ]]);

@@ -38,6 +38,8 @@ describe('Alta de organización', () => {
         expect(registerOrganization).toHaveBeenCalledWith({
             name: 'Veeduría Ciudadana Santa Marta',
             nit: '900123456-8',
+            registration_number: null,
+            registration_authority: null,
             subdomain: 'veeduria-smr',
             administrator_name: null,
             administrator_email: null,
@@ -55,6 +57,8 @@ describe('Alta de organización', () => {
         expect(registerOrganization).toHaveBeenCalledWith({
             name: 'Veeduría Ciudadana Santa Marta',
             nit: '900123456-8',
+            registration_number: null,
+            registration_authority: null,
             subdomain: 'veeduria-smr',
             administrator_name: 'Ana Pérez',
             administrator_email: 'ana.perez@veeduria-smr.org',
@@ -84,3 +88,33 @@ describe('Alta de organización', () => {
         expect(wrapper.text()).toContain('Escriba también el nombre del Administrador inicial.');
     });
 });
+
+// It. 44d — R-LEG-06: una veeduría sin NIT se identifica con su inscripción.
+describe('Una veeduría sin NIT (it. 44d)', () => {
+    it('Alta de una veeduría sin NIT, con su inscripción: sends the registration instead of the NIT', async () => {
+        registerOrganization.mockResolvedValue({ message: SUCCESS });
+        const wrapper = mount(NewOrganization);
+
+        await wrapper.get('input#registration-number').setValue('Resolución 012 de 2026');
+        await wrapper.get('input#registration-authority').setValue('Personería de Santa Marta');
+        await fillAndSubmit(wrapper, { name: 'Veeduría del Parque Los Trupillos', nit: '', subdomain: 'trupillos' });
+
+        expect(registerOrganization).toHaveBeenCalledWith({
+            name: 'Veeduría del Parque Los Trupillos',
+            nit: null,
+            registration_number: 'Resolución 012 de 2026',
+            registration_authority: 'Personería de Santa Marta',
+            subdomain: 'trupillos',
+            administrator_name: null,
+            administrator_email: null,
+        });
+    });
+
+    it('says that a veeduría without NIT is identified by its registration', () => {
+        const wrapper = mount(NewOrganization);
+
+        expect(wrapper.text()).toContain('Si no tiene NIT, su inscripción: el número de la resolución o el acta, y la personería o la cámara de comercio que la registró.');
+        expect(wrapper.get('label[for="nit"]').text()).toBe('NIT (con dígito de verificación, si tiene)');
+    });
+});
+
