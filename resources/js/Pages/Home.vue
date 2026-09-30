@@ -60,6 +60,8 @@ const STEPS = [
 
             <footer class="border-t border-slate-200 pt-4">
                 <Link href="/login" class="inline-flex min-h-11 items-center text-sm font-semibold text-slate-700 underline">Acceso para administradores de GovTrace</Link>
+                <!-- US-058-LEG (it. 44e). -->
+                <Link href="/privacidad" class="ml-4 inline-flex min-h-11 items-center text-sm font-semibold text-slate-700 underline">Política de tratamiento de datos</Link>
             </footer>
         </div>
     </AppLayout>

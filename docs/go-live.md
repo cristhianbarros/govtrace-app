@@ -47,6 +47,11 @@ La salida de GovTrace a la red principal de Stellar. Lo que se preparó sin dato
 - ⬜ **Migraciones y DIVIPOLA:** `php artisan migrate --force`, `php artisan tenants:migrate --force` y `php artisan db:seed --class=DivipolaSeeder`.
 - ⬜ **El worker de la cola y el calendario corriendo.** Tras cada despliegue, `php artisan queue:restart`: el worker guarda en memoria el código con que arrancó, y sin reiniciarlo seguiría sellando con el anterior. Las horas del calendario son UTC (deuda aceptada): la sincronización de las 02:00 son las 21:00 en Colombia.
 - ⬜ **Correo SMTP real** para las alertas, y `ALERT_WEBHOOK_URL`, si se usa Slack o Discord.
+- ⬜ **La política de tratamiento de datos** (it. 44e, Ley 1581 de 2012):
+  - un abogado revisa el texto de `/privacidad` (`resources/js/Pages/Public/Privacy.vue`) y decide quién es el responsable del tratamiento (D-V2-10);
+  - sus datos van en `PRIVACY_CONTROLLER_*`, y `PRIVACY_HOSTING` dice dónde están los servidores;
+  - mientras falte uno, la página se ve como borrador;
+  - si el responsable está obligado, inscribir las bases de datos en el Registro Nacional de Bases de Datos de la SIC.
 
 ## 4. Respaldos (R-BCK-01..05)
 

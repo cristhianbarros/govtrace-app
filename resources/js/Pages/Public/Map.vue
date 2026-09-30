@@ -196,6 +196,8 @@ onMounted(async () => {
         <div class="mt-4 flex flex-wrap gap-2">
             <Link href="/verify" class="inline-flex min-h-11 items-center rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold">Validar un archivo</Link>
             <Link href="/stats" class="inline-flex min-h-11 items-center rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold">Estadísticas del territorio</Link>
+            <!-- US-058-LEG (it. 44e). -->
+            <Link href="/privacidad" class="inline-flex min-h-11 items-center px-1 text-sm font-semibold text-slate-700 underline">Política de tratamiento de datos</Link>
         </div>
     </AppLayout>
 </template>

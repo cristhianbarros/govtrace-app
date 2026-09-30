@@ -44,6 +44,7 @@ it('activates the account and logs the user in immediately', function () {
         'password' => 'Veeduria#2026',
         'password_confirmation' => 'Veeduria#2026',
         'declaration' => true, // US-057-LEG: un veedor declara que no tiene impedimentos para serlo
+        'data_authorization' => true, // US-058-LEG: y autoriza el tratamiento de sus datos
     ]);
 
     // Hasta "Mis Reportes" (it. 28), el veedor entra a su pantalla central.

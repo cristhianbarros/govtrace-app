@@ -252,4 +252,10 @@ describe('Cómo funciona (it. 40d)', () => {
 
         expect(howItWorks.text()).toContain('Los colores (Normal, Alerta y En riesgo) son alertas de GovTrace, no decisiones de una autoridad. Cada obra explica por qué tiene el suyo.');
     });
+
+    it('La política está enlazada donde se entra: the map of a veeduría (it. 44e)', async () => {
+        const wrapper = await openMap();
+
+        expect(wrapper.findAll('a').find((link) => link.text() === 'Política de tratamiento de datos').attributes('href')).toBe('/privacidad');
+    });
 });

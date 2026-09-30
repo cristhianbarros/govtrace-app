@@ -1,0 +1,25 @@
+story_id: "US-058-LEG"
+titulo_historia: "Como persona cuyos datos trata GovTrace quiero conocer la política de tratamiento y autorizar el tratamiento de los míos al crear mi cuenta para que el tratamiento cumpla la Ley 1581 de 2012"
+bloque: "Alineación con el proceso actual — Ley 1581"
+criterios_aceptacion:
+  escenarios_exito:
+    - "La política se lee en /privacidad, en el dominio central y en el de cada veeduría, sin cuenta, en lenguaje claro"
+    - "Tiene el contenido mínimo del Decreto 1074 de 2015 (art. 2.2.2.25.3.1): el responsable, los datos y sus finalidades, los derechos, el área que atiende, el procedimiento y la vigencia"
+    - "Dice que en la red Stellar solo quedan huellas (hashes), no datos personales, y que la ubicación exacta del veedor no se publica (unos 100 m)"
+    - "Al activar su cuenta, un veedor o un Administrador autoriza el tratamiento de sus datos, con el enlace a la política; queda la fecha, la versión y el registro en el log de auditoría"
+    - "El pie del Inicio, del mapa y de la pantalla de entrada enlaza la política"
+  validaciones_reglas:
+    - "R-LEG-07: sin la autorización no se activa una cuenta"
+    - "R-LEG-08: la política muestra al responsable que configura producción; si faltan sus datos, la página se ve como borrador y lo dice"
+  manejo_errores:
+    - "Activar sin autorizar: 'Para crear su cuenta, autorice el tratamiento de sus datos personales.'"
+  requisitos_ux:
+    - "La política se lee en un celular con letra de 16 px, con títulos para cada parte"
+  casos_edge:
+    - "Consultas en 10 días hábiles y reclamos en 15 (Ley 1581, arts. 14 y 15); la queja ante la Superintendencia de Industria y Comercio, después de agotar el reclamo"
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true

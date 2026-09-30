@@ -43,3 +43,11 @@ describe('Inicio del dominio central', () => {
         expect(wrapper.get('footer a[href="/login"]').text()).toBe('Acceso para administradores de GovTrace');
     });
 });
+
+describe('La política de datos (it. 44e)', () => {
+    it('La política está enlazada donde se entra: the footer of the Home', () => {
+        const wrapper = mount(Home, { props: { organizations: [] } });
+
+        expect(wrapper.findAll('a').find((link) => link.text() === 'Política de tratamiento de datos').attributes('href')).toBe('/privacidad');
+    });
+});

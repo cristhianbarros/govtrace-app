@@ -1996,7 +1996,7 @@ La revisión documental del control social de hoy (`docs/proceso-actual.md`, PR 
 - A3 lleva las plantillas, que citan el sello de Stellar como "Prueba Pericial Criptográfica"; sale en PDF, y cada descarga queda registrada para medir su uso.
 - A5 se destraba sin validar en campo: el NIT pasa a opcional, con el número de la resolución o el acta y la entidad de registro como alternativa.
 
-**Orden:** A1 → A3 → A4 → A5, y después A2.
+**Orden:** A1 → A3 → A4 → A5, la política de datos (44e) y después A2 (44f).
 
 ### Iteración 44 — Del mapa al proceso formal
 
@@ -2098,7 +2098,41 @@ La revisión documental del control social de hoy (`docs/proceso-actual.md`, PR 
   - `make ux-check`: sin retroceso;
   - `make trace-check`: 295 de 295.
 
-**44e — A2: "Informar a esta veeduría"** (US-058-LEG). Va después de 44d.
+**44e — La política de tratamiento de datos y la autorización** (US-058-LEG, EPIC-006). La pidió el usuario el 2026-09-30 ("continúa con la política de datos"). Va antes de A2, que recoge correos de ciudadanos.
+- La política se lee en `/privacidad`, en el dominio central y en el de cada veeduría. Tiene el contenido mínimo del Decreto 1074 de 2015 (art. 2.2.2.25.3.1), en lenguaje claro.
+- El responsable viene de la configuración de producción. Mientras falten sus datos, la página es un borrador y lo dice.
+- Al activar su cuenta, cada persona autoriza el tratamiento de sus datos (Ley 1581, art. 9). Queda la fecha, la versión de la política y el log de auditoría.
+- **Done-when:** los 6 escenarios de `features/US-058-LEG.feature`, en verde.
+- **Modelo:** Opus. Un texto legal y una condición para crear cuentas.
+
+✅ **44e cumplida (2026-09-30).**
+- **`/privacidad`**, en el dominio central y en cada veeduría, tiene seis partes en lenguaje claro:
+  - quién responde por sus datos;
+  - qué datos se tratan y para qué;
+  - qué queda en la red pública;
+  - los derechos;
+  - cómo ejercerlos: consultas en 10 días hábiles y reclamos en 15, y la queja ante la SIC;
+  - desde cuándo rige y cuánto tiempo se guardan los datos.
+- **El texto es honesto con lo que GovTrace hace:**
+  - la ubicación exacta del veedor no se publica, y su nombre tampoco;
+  - en Stellar solo queda una huella;
+  - OpenStreetMap recibe el pedido de los mapas;
+  - los reportes son evidencia y su borrado se estudia frente al deber de conservarlos;
+  - los plazos de conservación son los reales: el log de auditoría para siempre, los seudónimos 5 años y los archivos 5 años tras la baja.
+- **El responsable** viene de `PRIVACY_CONTROLLER_*` (`config/privacy.php`, `.env.production.example`). Sin sus datos, la página es un borrador y dice cuáles faltan.
+- **Al activar su cuenta,** cada persona lee un aviso corto con el enlace a la política y marca "Autorizo el tratamiento de mis datos personales según esta política". Queda `users.data_authorized_at`, `data_policy_version` y `privacy.data_authorized` en el log.
+- **El pie del Inicio, del mapa y de la pantalla de entrada** enlaza la política.
+- **Sin puerta para las cuentas que ya existen.** Son de desarrollo y de la demostración: el MVP no ha salido a producción, y las reales entran todas por la activación.
+- ❓ **Decisiones por defecto:**
+  - **El responsable del tratamiento** (D-V2-10). Si es cada veeduría, con GovTrace como encargado, cambia el texto, no el mecanismo.
+  - **El texto es un borrador para un abogado.** Está en la lista de salida (`docs/go-live.md`), con el Registro Nacional de Bases de Datos si aplica.
+- **Prueba:**
+  - Pest, 6 casos: la política en los dos dominios, el borrador, la autorización con su prueba, sin autorización y las dos casillas a la vez;
+  - Vitest: 427 de 427;
+  - `make e2e`: 41 pasan; el Administrador y el veedor autorizan al activar, y el ciudadano lee la política desde el mapa;
+  - `make ux-check`: la página nueva, sin letra pequeña ni botones chicos.
+
+**44f — A2: "Informar a esta veeduría"** (US-059-LEG). Va después de 44e.
 - El ciudadano, con su correo verificado por un código, informa a la veeduría (Ley 850, art. 18 a)).
 - No se sella ni se publica.
 - **Modelo:** Opus xhigh. Es un endpoint público, con verificación de correo, spam y datos personales.

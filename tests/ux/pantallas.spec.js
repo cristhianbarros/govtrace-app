@@ -109,6 +109,7 @@ for (const [viewport, options] of Object.entries(VIEWPORTS)) {
                 ['publico-validador', `${ORG}/verify`],
                 ['publico-entrar-veeduria', `${ORG}/login`],
                 ['publico-entrar-central', `${CENTRAL}/login`],
+                ['publico-privacidad', `${ORG}/privacidad`], // it. 44e
             ]) {
                 await visit(page, viewport, name, url);
             }

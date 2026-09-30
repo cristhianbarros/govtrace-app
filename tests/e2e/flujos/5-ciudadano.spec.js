@@ -79,6 +79,14 @@ test('Comprueba una evidencia: su recibo, su descarga y su prueba', async ({ pag
     expect((await proof).suggestedFilename()).toMatch(/\.prueba\.json$/);
 });
 
+test('Lee la política de tratamiento de datos desde el mapa (it. 44e)', async ({ page }) => {
+    await page.goto(ORG);
+    await page.getByRole('link', { name: 'Política de tratamiento de datos' }).click();
+
+    await expect(page.getByRole('heading', { name: 'Política de tratamiento de datos personales' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Sus derechos' })).toBeVisible();
+});
+
 test('Ve las estadísticas del territorio y descarga los datos abiertos', async ({ page }) => {
     await page.goto(`${ORG}/stats`);
     await expect(page.getByRole('heading', { name: 'Estadísticas del territorio', exact: true })).toBeVisible();

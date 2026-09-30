@@ -57,6 +57,9 @@ test('El Administrador activa su cuenta con el enlace del correo', async ({ page
     await page.goto(latestLinkTo(ALTA.admin));
     await page.getByLabel('Contraseña', { exact: true }).fill(ALTA.password);
     await page.getByLabel('Confirmar contraseña').fill(ALTA.password);
+    // It. 44e: la política de datos, enlazada, y la autorización del tratamiento de sus datos.
+    await expect(page.getByRole('link', { name: 'Lea la política de tratamiento de datos' })).toHaveAttribute('href', '/privacidad');
+    await page.getByLabel('Autorizo el tratamiento de mis datos personales según esta política.').check();
     await page.getByRole('button', { name: 'Activar mi cuenta' }).click();
 
     await page.waitForURL('**/admin/inbox');
@@ -94,6 +97,7 @@ test('El veedor activa su cuenta y encuentra la obra para reportar', async ({ pa
     await page.getByRole('button', { name: 'Activar mi cuenta' }).click();
     await expect(page.getByText('Para ser veedor, declare que no está en ninguno de estos casos.')).toBeVisible();
     await page.getByLabel('Declaro que no estoy en ninguno de estos casos.').check();
+    await page.getByLabel('Autorizo el tratamiento de mis datos personales según esta política.').check();
     await page.getByRole('button', { name: 'Activar mi cuenta' }).click();
     await page.waitForURL('**/reports/new');
 
