@@ -28,6 +28,8 @@ test('Entra al panel global, a las organizaciones', async ({ page }) => {
 
     await expect(page.getByRole('heading', { name: 'Organizaciones', exact: true })).toBeVisible();
     await expect(rowOf(page, ALTA)).toBeVisible();
+    // V16: quién la administra (activó su cuenta en el flujo de alta).
+    await expect(rowOf(page, ALTA).locator('[data-test="administrators"]')).toContainText('Activo');
 });
 
 test('Corrige el NIT de una organización a solicitud formal', async ({ page }) => {

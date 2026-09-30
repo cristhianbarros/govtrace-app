@@ -88,6 +88,10 @@ export const registerOrganization = (data) => dataOf(http.post('/admin/organizat
 /** US-011 */
 export const fetchOrganizationDetail = async (id) => (await dataOf(http.get(`/admin/organizations/${id}`))).data;
 export const updateOrganizationNit = (id, nit) => dataOf(http.put(`/admin/organizations/${id}/nit`, { nit }));
+// It. 43a (V2): el Administrador de cada organización — asignarlo si no tiene, y reenviar o revocar su invitación.
+export const assignAdministrator = (id, data) => dataOf(http.post(`/admin/organizations/${id}/administrators`, data));
+export const resendAdministratorInvitation = (id, userId) => dataOf(http.post(`/admin/organizations/${id}/administrators/${userId}/invitation/resend`));
+export const revokeAdministratorInvitation = (id, userId) => dataOf(http.post(`/admin/organizations/${id}/administrators/${userId}/invitation/revoke`));
 
 /** US-038-CFG: { configurable, fixed } */
 export const fetchParameters = () => dataOf(http.get('/admin/parameters/data'));

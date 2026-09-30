@@ -36,6 +36,23 @@ test('El Super Administrador da de alta la organización con su Administrador in
     await expect(page.getByText(/Organización registrada\./)).toBeVisible({ timeout: 60_000 });
 });
 
+test('El Super Administrador ve la invitación pendiente del Administrador y se la reenvía (V2)', async ({ page }) => {
+    await logIn(page, CENTRAL, PEOPLE.superAdmin);
+    await page.waitForURL('**/admin/organizations');
+    const administrators = page.locator('[data-test="organization-row"]').filter({ hasText: ALTA.name }).locator('[data-test="administrators"]');
+
+    await expect(administrators).toContainText(ALTA.admin);
+    await expect(administrators).toContainText('Invitación pendiente');
+    const firstLink = latestLinkTo(ALTA.admin);
+    await administrators.getByRole('button', { name: 'Reenviar invitación' }).click();
+    await expect(page.getByText(`Invitación reenviada a ${ALTA.admin}.`, { exact: false })).toBeVisible();
+
+    // El enlace anterior deja de servir: solo vale el del último correo.
+    expect(latestLinkTo(ALTA.admin)).not.toBe(firstLink);
+    await page.goto(firstLink);
+    await expect(page.getByRole('button', { name: 'Activar mi cuenta' })).toHaveCount(0);
+});
+
 test('El Administrador activa su cuenta con el enlace del correo', async ({ page }) => {
     await page.goto(latestLinkTo(ALTA.admin));
     await page.getByLabel('Contraseña', { exact: true }).fill(ALTA.password);
@@ -44,8 +61,6 @@ test('El Administrador activa su cuenta con el enlace del correo', async ({ page
 
     await page.waitForURL('**/admin/inbox');
 });
-
-test.fixme('V2: el Super Administrador ve si el Administrador activó su cuenta, y le reenvía la invitación', async () => {});
 
 test('El Administrador configura el territorio', async ({ page }) => {
     await logIn(page, orgUrl(ALTA.subdomain), ALTA.admin, ALTA.password);

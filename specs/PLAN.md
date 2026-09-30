@@ -1886,6 +1886,26 @@ Esta iteración estaba reservada para ese recorrido. El recorrido se hizo para e
 
 **Modelo:** toca quién controla cada organización, es decir, el acceso: **Opus xhigh**.
 
+⚠️ **43a, V2 y V16 cumplidos (2026-09-30)**, sin revisión del usuario y con Opus.
+- **Sin `/discovery` nuevo:** cabe en historias que ya existían. US-002 dice que el Administrador inicial se asigna "tras el alta, o en un paso consecutivo", y el reenviar y revocar es el de US-040-USR, ahora desde el panel global.
+- **El panel global** (`OrganizationAdministrators` y `OrganizationAdministratorController`):
+  - cada organización muestra su Administrador y el estado de su invitación: activo, pendiente, vencida o inactivo;
+  - el Super Administrador reenvía una invitación sin responder (el enlace anterior deja de servir) o la revoca si el correo estaba mal;
+  - a una organización sin Administrador le asigna uno;
+  - cada cambio va al log de auditoría como `super_admin`.
+- **No se permite** asignar un segundo Administrador ni reemplazar uno activo: responde 409 y explica que primero hay que revocar la invitación. Eso es la decisión V3.
+- **Spec:** dos escenarios nuevos en US-002. `make trace-check`: 262 de 262.
+
+**Prueba:**
+- Pest: 7 casos. Estado de la invitación, reenviar (enlace nuevo, auditado, segundo correo), revocar, asignar sin Administrador, no asignar un segundo, 404 para un veedor y solo para el Super Administrador.
+- Vitest: 391 de 391.
+- `make e2e`: 35 pasan y 12 siguen pendientes. En el flujo de alta, el Super Administrador reenvía la invitación antes de que el Administrador la use. Se comprueba que el primer enlace ya no deja activar la cuenta y que la activación funciona con el nuevo.
+
+**Queda de la 43a:**
+- V3 (❓ varios administradores o reemplazarlo);
+- V7 (la pantalla para reportar en nombre de una organización);
+- V8 (la razón social).
+
 **43b — Llegar y volver.**
 - V6: la app del veedor, instalable, con un manifiesto por veeduría (su nombre y su logo) y los íconos.
 - V10: la solicitud de alta en el Inicio, que llega al Super Administrador para que apruebe o rechace (sin autorregistro).

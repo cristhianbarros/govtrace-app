@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\Central;
 
 use App\Application\Organization\DecommissionOrganization;
+use App\Application\Organization\OrganizationAdministrators;
 use App\Application\Organization\ReactivateOrganization;
 use App\Application\Organization\RegisterOrganizationWithAdministrator;
 use App\Application\Organization\SuspendOrganization;
 use App\Application\Organization\UpdateOrganizationLegalData;
 use App\Domain\Organization\Exceptions\OrganizationValidationException;
+use App\Domain\Organization\OrganizationStatus;
 use App\Http\Controllers\Controller;
 use App\Infrastructure\Tenancy\Tenant;
 use Illuminate\Http\JsonResponse;
@@ -23,6 +25,8 @@ class OrganizationController extends Controller
 {
     public function index(): JsonResponse
     {
+        $administrators = new OrganizationAdministrators;
+
         return response()->json([
             'data' => Tenant::query()->orderBy('name')->get()
                 ->map(fn (Tenant $tenant) => [
@@ -31,6 +35,9 @@ class OrganizationController extends Controller
                     'name' => $tenant->name,
                     'subdomain' => $tenant->domains()->first()?->domain,
                     'status' => $tenant->statusLabel(),
+                    // It. 43a (V16): quién la administra y en qué va su invitación. Una
+                    // dada de baja ya no tiene su base de datos de usuarios.
+                    'administrators' => $tenant->status === OrganizationStatus::Decommissioned->value ? [] : $administrators->of($tenant),
                 ]),
         ]);
     }

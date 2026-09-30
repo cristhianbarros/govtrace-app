@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\ChangePasswordController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Central\AuditController;
 use App\Http\Controllers\Central\LoginController;
+use App\Http\Controllers\Central\OrganizationAdministratorController;
 use App\Http\Controllers\Central\OrganizationController;
 use App\Http\Controllers\Central\OrganizationReportController;
 use App\Http\Controllers\Central\ParameterController;
@@ -47,6 +48,10 @@ foreach (config('tenancy.central_domains') as $domain) {
             Route::post('/admin/organizations', [OrganizationController::class, 'store'])->name('admin.organizations.store');
             Route::get('/admin/organizations/{tenant}', [OrganizationController::class, 'show'])->name('admin.organizations.detail');
             Route::put('/admin/organizations/{tenant}/nit', [OrganizationController::class, 'updateNit'])->name('admin.organizations.update-nit');
+            // It. 43a (V2): su Administrador — asignarlo si no tiene, y reenviar o revocar su invitación.
+            Route::post('/admin/organizations/{tenant}/administrators', [OrganizationAdministratorController::class, 'store'])->name('admin.organizations.administrators.store');
+            Route::post('/admin/organizations/{tenant}/administrators/{user}/invitation/resend', [OrganizationAdministratorController::class, 'resend'])->whereNumber('user')->name('admin.organizations.administrators.resend');
+            Route::post('/admin/organizations/{tenant}/administrators/{user}/invitation/revoke', [OrganizationAdministratorController::class, 'revoke'])->whereNumber('user')->name('admin.organizations.administrators.revoke');
             Route::post('/admin/organizations/{tenant}/suspend', [OrganizationController::class, 'suspend'])->name('admin.organizations.suspend');
             Route::post('/admin/organizations/{tenant}/reactivate', [OrganizationController::class, 'reactivate'])->name('admin.organizations.reactivate');
             // US-003b: la baja definitiva, con doble confirmación.

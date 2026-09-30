@@ -362,7 +362,7 @@ También está completo:
 | # | Vacío | Rol | Sev. | Por qué pasa | Propuesta |
 |---|---|---|---|---|---|
 | V1 | ✅ **Cerrado en la it. 40b.** No se puede cerrar sesión en los paneles, y el dominio central no tiene ruta de salida. | Admin, Super Admin | 🔴 | Omisión | Ya está en la **it. 40b**. |
-| V2 | El Administrador inicial:<br>• si su invitación vence o el correo estaba mal, nadie la reenvía ni la corrige;<br>• si la organización se creó sin él, no se puede asignar después.<br>La organización queda sin quien la gestione. | Super Admin | 🔴 | US-002 dice "tras el alta (o en un paso consecutivo)"; se hizo solo en el alta. | En el panel global, cada organización muestra sus administradores y el estado de su invitación, con "Reenviar" y "Asignar administrador". |
+| V2 | ✅ **Cerrado en la it. 43a.** El Administrador inicial:<br>• si su invitación vence o el correo estaba mal, nadie la reenvía ni la corrige;<br>• si la organización se creó sin él, no se puede asignar después.<br>La organización queda sin quien la gestione. | Super Admin | 🔴 | US-002 dice "tras el alta (o en un paso consecutivo)"; se hizo solo en el alta. | En el panel global, cada organización muestra sus administradores y el estado de su invitación, con "Reenviar" y "Asignar administrador". |
 | V3 | Un solo administrador, sin reemplazo posible. El Super Administrador solo puede suspender la organización entera. | Admin, Super Admin | 🔴 | Omisión | El Super Administrador asigna y desactiva administradores. ❓ ¿El administrador también puede invitar a otro? |
 | V4 | ✅ **Cerrado en la it. 40b.** La Bandeja no dice de qué obra es la evidencia ni quién la envió: el JSON trae `worksite_id`, pero no el nombre ni el autor. | Admin | 🔴 | US-036 pide "revisión responsable" sin nombrar los datos. | La obra (nombre y municipio) y el veedor en cada tarjeta. La obra ya está en la it. 40b; el veedor, ❓. |
 | V5 | ✅ **Cerrado en la it. 40d.** El dominio central no lleva a ninguna veeduría. El ciudadano no tiene cómo llegar, y el veedor que olvidó su enlace tampoco. | Ciudadano, veedor | 🟠 | Omisión (R-MAP-01 aísla los mapas; no prohíbe un directorio). | Un directorio de veedurías activas en el Inicio ❓, ya en la it. 40d. |
@@ -376,7 +376,7 @@ También está completo:
 | V13 | La página de la veeduría no tiene datos de contacto. | Ciudadano | 🟡 | US-007 solo pide nombre y logo. | ❓ Correo, teléfono o web en el perfil de la organización. |
 | V14 | El validador no enlaza el script de verificación independiente. | Ciudadano experto | 🟡 | Omisión | Un enlace "Verificarlo por su cuenta" hacia `tools/verify`. |
 | V15 | No se puede sincronizar SECOP a mano desde el panel global: corre cada noche y al cambiar un territorio. | Super Admin | 🟡 | US-014 solo pide ver la salud. | Un botón "Sincronizar ahora". |
-| V16 | El Super Administrador no ve quién administra cada organización. | Super Admin | 🟡 | Omisión | Va con V2. |
+| V16 | ✅ **Cerrado en la it. 43a.** El Super Administrador no ve quién administra cada organización. | Super Admin | 🟡 | Omisión | Va con V2. |
 | V17 | Al veedor no le llega correo cuando su reporte se publica o se rechaza: lo ve al entrar. | Veedor | 🟡 | No estaba en la SPEC. | ❓ Opcional. |
 
 **Decidido así en el discovery, y no es un vacío:**
