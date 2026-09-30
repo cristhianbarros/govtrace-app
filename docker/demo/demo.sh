@@ -6,6 +6,8 @@
 #   3. la organización de demostración: su gente, sus obras y sus reportes,
 #      sellados de verdad en esa red, y unos publicados.
 # Se puede repetir: cada corrida deja la demostración como nueva.
+# make demo LUGAR="6.2442,-75.5812" lleva la obra de la Calle 30 al lugar de la
+# presentación, para que el veedor la reporte en vivo (la geocerca, R-GEO-01).
 set -uo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
@@ -31,12 +33,13 @@ $COMPOSE --profile stellar run --rm -T soroban ./scripts/ensure-local-contract.s
 $COMPOSE restart worker >/dev/null && $COMPOSE up -d --wait worker >/dev/null || die "el worker no volvió a arrancar."
 
 step "3/3 La organización de demostración"
-$EXEC php artisan demo:prepare || die "la demostración no quedó lista."
+$EXEC php artisan demo:prepare ${LUGAR:+--lugar="$LUGAR"} || die "la demostración no quedó lista."
 
 cat <<'TEXT'
 
 Para la demostración:
   make invites            los enlaces de los correos (invitar a un veedor, recuperar una contraseña)
   make demo               vuelve a dejar todo como nuevo
+  make demo LUGAR="lat,lng"  lo mismo, con la obra de la Calle 30 donde se presenta
   make admin EMAIL=…      otro Super Administrador
 TEXT

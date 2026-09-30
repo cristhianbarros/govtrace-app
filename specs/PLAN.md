@@ -1969,6 +1969,23 @@ Esta iteración estaba reservada para ese recorrido. El recorrido se hizo para e
   - el veedor invitado activa su cuenta, reporta y llega a "Sellado" (unos 10 s en la red local);
   - el Super Administrador crea una organización y reenvía la invitación, y sincroniza SECOP.
 
+**43d — La demostración en el lugar de la presentación.** La demostración será en un portátil, en Medellín. El servidor rechaza un reporte hecho a más de 500 m de su obra (la geocerca), y todas las obras de `make demo` están en Magdalena. Por eso el veedor no podía reportar en vivo. El ensayo de la 43c no lo mostró porque simulaba el GPS en Santa Marta.
+
+✅ **43d cumplida (2026-09-30).**
+- `make demo LUGAR="6.2442,-75.5812"` lleva la obra de la Calle 30 a ese punto, con sus reportes a unos metros.
+- Las demás obras se quedan en Magdalena.
+- Al terminar, dice qué obra quedó y dónde.
+- Un LUGAR que no es «latitud,longitud», o que está fuera de rango, se rechaza antes de tocar nada.
+- Las reglas no se relajan: la geocerca y la precisión de 50 m (US-008) siguen iguales. Si el WiFi del portátil no da esa precisión, el guion dice cómo simular la ubicación con DevTools.
+
+**Prueba:**
+- Pest:
+  - la obra anclada, con sus reportes dentro de 100 m;
+  - las demás en Magdalena;
+  - lo que dice el comando;
+  - tres LUGAR inválidos: un nombre, un solo número y fuera de rango.
+- El ensayo con el GPS en Medellín: el veedor encuentra la Calle 30 en «Obras cercanas», la reporta y llega a «Sellado».
+
 ## Pivote a Stellar (2026-09-28)
 
 El proyecto participa en **Stellar Apex**, así que la blockchain pasa de EVM/Polygon a **Stellar**, con Smart Contracts en **Soroban (Rust)**:

@@ -6,7 +6,7 @@ Al 2026-09-29. Empezó sobre `77e6030` (iteración 39) y se actualizó en las it
 
 ## Dónde quedó (2026-09-30)
 
-El usuario pidió avanzar sin su revisión hasta el día siguiente, con la interfaz como prioridad, "como si mañana fuera el día de la demo". Se hicieron siete iteraciones, cada una con su PR:
+El usuario pidió avanzar sin su revisión hasta el día siguiente, con la interfaz como prioridad, "como si mañana fuera el día de la demo". Se hicieron ocho iteraciones, cada una con su PR:
 
 | Iteración | Qué | PR |
 |---|---|---|
@@ -17,6 +17,7 @@ El usuario pidió avanzar sin su revisión hasta el día siguiente, con la inter
 | 43a (parte) | El Super Administrador ve, reinvita, revoca y asigna el Administrador de cada organización | #54 |
 | 43b (parte) | La app instalable, el verificador independiente enlazado, sincronizar SECOP ahora | #55 |
 | 43c | El ensayo de la demostración, de punta a punta: descargar el original de una foto, la cuenta de la Bandeja que baja, el valor de los contratos de `make demo` | #57 |
+| 43d | `make demo LUGAR="lat,lng"`: la obra de la Calle 30 en el lugar de la presentación, para reportarla en vivo dentro de la geocerca | #58 |
 
 **Frente al checkpoint base:**
 
