@@ -18,14 +18,15 @@ import {
     resendAdministratorInvitation,
     revokeAdministratorInvitation,
     suspendOrganization,
-    updateOrganizationNit,
+    updateOrganizationLegalData,
 } from '@/services/api.js';
 import { errorMessage } from '@/services/errors.js';
 
 const { data: organizations, loading, error, load } = useLoader(fetchOrganizations);
 
-const editing = ref(null); // {id, name, nit} de la organización que se corrige
-const nit = ref('');
+const editing = ref(null); // la organización cuyos datos legales se corrigen
+// It. 44d (R-LEG-06): su NIT, su inscripción o los dos.
+const legal = ref({ nit: '', registrationNumber: '', registrationAuthority: '' });
 const saving = ref(false);
 const saved = ref(null);
 const refused = ref(null);
@@ -34,14 +35,24 @@ async function edit(organization) {
     saved.value = null;
     refused.value = null;
     editing.value = await fetchOrganizationDetail(organization.id);
-    nit.value = editing.value.nit;
+    legal.value = {
+        nit: editing.value.nit ?? '',
+        registrationNumber: editing.value.registration_number ?? '',
+        registrationAuthority: editing.value.registration_authority ?? '',
+    };
 }
 
 async function save() {
     saving.value = true;
     refused.value = null;
     try {
-        saved.value = (await updateOrganizationNit(editing.value.id, nit.value)).message;
+        saved.value = (
+            await updateOrganizationLegalData(editing.value.id, {
+                nit: legal.value.nit.trim() || null,
+                registration_number: legal.value.registrationNumber.trim() || null,
+                registration_authority: legal.value.registrationAuthority.trim() || null,
+            })
+        ).message;
         editing.value = null;
         await load();
     } catch (failure) {
@@ -106,13 +117,13 @@ onMounted(load);
                         <div class="flex items-center justify-between gap-2">
                             <div>
                                 <p class="font-semibold">{{ organization.name }}</p>
-                                <p class="text-slate-600">{{ organization.nit }} · {{ organization.subdomain }}</p>
+                                <p class="text-slate-600">{{ organization.identification }} · {{ organization.subdomain }}</p>
                             </div>
                             <div class="flex shrink-0 items-center gap-2">
                                 <span class="rounded px-2 py-0.5 text-xs font-semibold" :class="statusStyle[organization.status] ?? 'bg-slate-100 text-slate-700'">
                                     {{ organization.status }}
                                 </span>
-                                <button type="button" class="min-h-11 rounded-lg border px-3 text-sm font-semibold" @click="edit(organization)">Editar NIT</button>
+                                <button type="button" class="min-h-11 rounded-lg border px-3 text-sm font-semibold" @click="edit(organization)">Editar datos legales</button>
                             </div>
                         </div>
 
@@ -175,12 +186,17 @@ onMounted(load);
                         </div>
 
                         <form v-if="editing?.id === organization.id" class="mt-3 flex flex-col gap-2" novalidate @submit.prevent="save">
+                            <p class="text-sm text-slate-700">Su NIT, su inscripción o los dos.</p>
                             <label for="nit" class="text-xs font-semibold text-slate-700">NIT</label>
-                            <input id="nit" v-model="nit" type="text" class="rounded-lg border border-slate-300 px-3 py-2 text-base" />
+                            <input id="nit" v-model="legal.nit" type="text" class="rounded-lg border border-slate-300 px-3 py-2 text-base" />
+                            <label for="registration-number" class="text-xs font-semibold text-slate-700">Resolución o acta de inscripción</label>
+                            <input id="registration-number" v-model="legal.registrationNumber" type="text" placeholder="Resolución 012 de 2026" class="rounded-lg border border-slate-300 px-3 py-2 text-base" />
+                            <label for="registration-authority" class="text-xs font-semibold text-slate-700">Entidad que la registró</label>
+                            <input id="registration-authority" v-model="legal.registrationAuthority" type="text" placeholder="Personería de Santa Marta" class="rounded-lg border border-slate-300 px-3 py-2 text-base" />
                             <p v-if="refused" role="alert" class="text-sm text-red-700">{{ refused }}</p>
                             <div class="flex gap-2">
                                 <button type="submit" :disabled="saving" class="min-h-11 rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white disabled:opacity-40">
-                                    {{ saving ? 'Guardando…' : 'Guardar NIT' }}
+                                    {{ saving ? 'Guardando…' : 'Guardar datos legales' }}
                                 </button>
                                 <button type="button" class="min-h-11 rounded-lg border px-3 py-2 text-sm font-semibold" @click="editing = null">Cancelar</button>
                             </div>

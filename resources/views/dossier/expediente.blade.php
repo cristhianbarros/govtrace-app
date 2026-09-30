@@ -2,7 +2,7 @@
 @section('title', 'Expediente de la obra')
 @section('content')
     <h1>Expediente de la obra: {{ $worksite['name'] }}</h1>
-    <p>Veeduría ciudadana «{{ $organization['name'] }}» · Generado el {{ $generated_at }} con GovTrace ({{ $organization['url'] }}).</p>
+    <p>Veeduría ciudadana «{{ $organization['name'] }}» ({{ $organization['identification'] }}) · Generado el {{ $generated_at }} con GovTrace ({{ $organization['url'] }}).</p>
 
     <h2>1. Contratos de la obra en SECOP II</h2>
     @include('dossier._contracts')

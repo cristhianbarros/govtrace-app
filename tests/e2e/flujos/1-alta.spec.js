@@ -26,7 +26,7 @@ test('El Super Administrador da de alta la organización con su Administrador in
 
     const organization = page.getByRole('group', { name: 'Organización' });
     await organization.getByLabel('Nombre').fill(ALTA.name);
-    await organization.getByLabel('NIT (con dígito de verificación)').fill(ALTA.nit);
+    await organization.getByLabel('NIT (con dígito de verificación, si tiene)').fill(ALTA.nit);
     await organization.getByLabel('Subdominio').fill(ALTA.subdomain);
     const administrator = page.getByRole('group', { name: 'Administrador inicial (opcional)' });
     await administrator.getByLabel('Nombre').fill('Administradora de Alta');

@@ -8,6 +8,7 @@ use App\Domain\Contracts\Contract;
 use App\Domain\Reports\Evidence;
 use App\Domain\Reports\Report;
 use App\Domain\Worksites\Worksite;
+use App\Infrastructure\Tenancy\Tenant;
 use App\Infrastructure\Tenancy\TenantUrl;
 use Carbon\CarbonInterface;
 
@@ -42,7 +43,7 @@ class WorksiteDossier
             ->get();
 
         return [
-            'organization' => ['name' => $tenant->name, 'url' => TenantUrl::to($domain, '/')],
+            'organization' => ['name' => $tenant->name, 'identification' => $this->identification($tenant), 'url' => TenantUrl::to($domain, '/')],
             'worksite' => ['id' => $worksite->id, 'name' => $worksite->name ?? $contracts->first()?->object ?? 'Obra sin nombre'],
             'condition' => (new WorksiteCondition)->of($worksite, $contracts),
             'contracts' => $contracts->map(fn (Contract $contract) => $this->contract($contract))->all(),
@@ -102,6 +103,15 @@ class WorksiteDossier
                 'proof' => InclusionProof::of($evidence),
             ])->all(),
         ];
+    }
+
+    /** R-LEG-06 (it. 44d): "NIT 900123456-8", "inscrita ante Personería de Santa Marta con Resolución 012 de 2026", o los dos. */
+    private function identification(Tenant $tenant): string
+    {
+        return collect([
+            $tenant->nit ? "NIT {$tenant->nit}" : null,
+            $tenant->registration_number ? "inscrita ante {$tenant->registration_authority} con {$tenant->registration_number}" : null,
+        ])->filter()->join(', ');
     }
 
     private function dateTime(CarbonInterface $moment): string

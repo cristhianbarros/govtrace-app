@@ -8,7 +8,7 @@
 
     <p><strong>Asunto: Derecho de petición de información sobre {{ count($contracts) === 1 ? 'el contrato' : 'los contratos' }} {{ collect($contracts)->pluck('id')->join(', ', ' y ') }}.</strong></p>
 
-    <p>Yo, ________________________________, con C.C. n.º ________________, en nombre de la veeduría ciudadana «{{ $organization['name'] }}», me dirijo a ustedes en ejercicio del derecho de petición (artículo 23 de la Constitución Política y Ley 1755 de 2015) y de las funciones y los derechos de las veedurías ciudadanas (Ley 850 de 2003, artículos 15, literal f), y 17).</p>
+    <p>Yo, ________________________________, con C.C. n.º ________________, en nombre de la veeduría ciudadana «{{ $organization['name'] }}» ({{ $organization['identification'] }}), me dirijo a ustedes en ejercicio del derecho de petición (artículo 23 de la Constitución Política y Ley 1755 de 2015) y de las funciones y los derechos de las veedurías ciudadanas (Ley 850 de 2003, artículos 15, literal f), y 17).</p>
 
     <h2>El contrato</h2>
     @include('dossier._contracts')

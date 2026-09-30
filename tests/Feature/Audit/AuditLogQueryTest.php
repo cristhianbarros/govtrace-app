@@ -59,7 +59,7 @@ it('El Super Administrador ve todo el log: each entry says who, when, the action
     expect($nitChange)->toMatchArray([
         'organization' => 'Veeduría Ciudadana Santa Marta',
         'actor' => 'Root · Super Administrador',
-        'action' => 'Cambió el NIT',
+        'action' => 'Cambió los datos legales (NIT o inscripción)',
         'before' => ['nit' => '900123456-8'],
         'after' => ['nit' => '901234567-7'],
     ])->and($nitChange['created_at'])->toBe($this->smrEntries[2]->created_at->toIso8601String());

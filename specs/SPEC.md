@@ -218,6 +218,7 @@ Suma los impedimentos del veedor (it. 44c) y los datos de inscripción de una ve
 - **R-LEG-02** — Los canales para denunciar son los oficiales de la Contraloría; GovTrace no recibe ni reenvía la denuncia — US-055-LEG
 - **R-LEG-03** — El expediente de una obra solo lleva sus evidencias publicadas, cada archivo byte a byte con su prueba de inclusión; las plantillas no se radican desde GovTrace: las completa, las firma y las presenta la veeduría — US-056-LEG
 - **R-LEG-04** — Cada descarga del expediente queda en el log de auditoría (`dossier.downloaded`): es la medida de si se usa — US-056-LEG
+- **R-LEG-06** — Una organización se identifica con su NIT, con su inscripción (el número de la resolución o el acta, y la personería o la cámara de comercio que la registró; Ley 850 de 2003, art. 3) o con los dos, nunca con ninguno; la base misma lo exige. Dos inscripciones son la misma aunque cambien mayúsculas, tildes o espacios — US-001, US-011
 - **R-LEG-05** — Un veedor reporta solo después de declarar que no está en los impedimentos del artículo 19 de la Ley 850 de 2003: al activar su cuenta o, si ya la tenía, antes de su próximo reporte. La declaración queda con su fecha y en el log de auditoría. Sin ella, el servidor responde 403 (nunca 422: un reporte guardado sin conexión no se descarta) — US-057-LEG
 
 ### Backup y recuperación

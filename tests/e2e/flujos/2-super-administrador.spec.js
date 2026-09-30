@@ -32,16 +32,18 @@ test('Entra al panel global, a las organizaciones', async ({ page }) => {
     await expect(rowOf(page, ALTA).locator('[data-test="administrators"]')).toContainText('Activo');
 });
 
-test('Corrige el NIT de una organización a solicitud formal', async ({ page }) => {
+test('Corrige los datos legales de una organización a solicitud formal: su NIT y su inscripción (it. 44d)', async ({ page }) => {
     await enterThePanel(page);
     const row = rowOf(page, ALTA);
 
-    await row.getByRole('button', { name: 'Editar NIT' }).click();
+    await row.getByRole('button', { name: 'Editar datos legales' }).click();
     await row.getByLabel('NIT', { exact: true }).fill('901555999-2');
-    await row.getByRole('button', { name: 'Guardar NIT' }).click();
+    await row.getByLabel('Resolución o acta de inscripción').fill('Acta 45 de 2025');
+    await row.getByLabel('Entidad que la registró').fill('Cámara de Comercio de Santa Marta');
+    await row.getByRole('button', { name: 'Guardar datos legales' }).click();
 
-    await expect(page.getByText('El NIT ha sido actualizado.')).toBeVisible();
-    await expect(row).toContainText('901555999-2');
+    await expect(page.getByText('Los datos legales han sido actualizados.')).toBeVisible();
+    await expect(row).toContainText('NIT 901555999-2 · Acta 45 de 2025, Cámara de Comercio de Santa Marta');
 });
 
 test.fixme('V8: cambia la razón social de una organización a solicitud formal', async () => {});

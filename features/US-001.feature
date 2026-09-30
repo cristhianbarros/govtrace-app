@@ -90,3 +90,39 @@ Característica: Alta de una organización con validación legal y subdominio
     Cuando intento cambiar el subdominio de mi organización a "smr-veeduria"
     Entonces la acción es rechazada
     Y el subdominio sigue siendo "veeduria-smr"
+
+  # It. 44d (docs/proceso-actual.md A5): una veeduría que forman unos ciudadanos se inscribe en la
+  # personería o en la cámara de comercio (Ley 850 de 2003, art. 3) y puede no tener NIT.
+
+  @complexity:medium @origin:proceso_actual
+  Escenario: Alta de una veeduría sin NIT, con su inscripción
+    Dado que estoy autenticado como Super Administrador en el panel global
+    Cuando registro la organización "Veeduría del Parque Los Trupillos" sin NIT, con la inscripción "Resolución 012 de 2026" ante "Personería de Santa Marta" y el subdominio "trupillos"
+    Entonces la organización queda activa en "trupillos.govtrace.localhost"
+    Y el log de auditoría registra su inscripción
+
+  @complexity:low @negative @origin:proceso_actual
+  Escenario: Una organización necesita su NIT o su inscripción
+    Cuando registro una organización sin NIT y sin inscripción
+    Entonces veo "Ingrese el NIT de la organización, o el número de la resolución o el acta de su inscripción y la entidad que la registró."
+
+  @complexity:low @negative @origin:proceso_actual
+  Escenario: La inscripción necesita el número y la entidad
+    Cuando registro una organización con el número de su resolución pero sin la entidad que la registró, o al revés
+    Entonces veo "Para identificar la inscripción hacen falta los dos datos: el número de la resolución o el acta, y la entidad que la registró."
+
+  @complexity:low @negative @origin:proceso_actual
+  Escenario: La entidad de registro es una personería o una cámara de comercio
+    Cuando registro una organización inscrita ante "Notaría Tercera de Santa Marta"
+    Entonces veo "La entidad de registro debe ser una personería o una cámara de comercio. Por ejemplo: Personería de Santa Marta."
+
+  @complexity:low @negative @origin:proceso_actual
+  Escenario: No se puede registrar una inscripción que ya tiene otra organización
+    Dado que existe una organización inscrita con "Resolución 012 de 2026" ante "Personería de Santa Marta"
+    Cuando registro otra con "resolución 012 de 2026" ante "personeria de santa marta"
+    Entonces veo "Ya existe una organización registrada con esa inscripción."
+
+  @complexity:low @origin:proceso_actual
+  Escenario: Una organización puede tener su NIT y su inscripción
+    Cuando registro una organización con NIT "900123456-8" y con su inscripción
+    Entonces quedan los dos, y el panel los muestra

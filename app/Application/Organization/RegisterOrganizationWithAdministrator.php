@@ -12,9 +12,9 @@ use App\Infrastructure\Tenancy\Tenant;
  */
 class RegisterOrganizationWithAdministrator
 {
-    public function handle(string $nit, string $name, string $subdomain, ?string $administratorName, ?string $administratorEmail): Tenant
+    public function handle(?string $nit, string $name, string $subdomain, ?string $administratorName, ?string $administratorEmail, ?string $registrationNumber = null, ?string $registrationAuthority = null): Tenant
     {
-        $tenant = (new RegisterOrganization)->handle($nit, $name, $subdomain);
+        $tenant = (new RegisterOrganization)->handle($nit, $name, $subdomain, $registrationNumber, $registrationAuthority);
 
         if ($administratorName !== null && $administratorEmail !== null) {
             try {

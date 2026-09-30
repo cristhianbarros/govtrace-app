@@ -118,3 +118,15 @@ describe('Más de la organización (it. 29)', () => {
         expect(wrapper.get('main').get('a[href="/admin/authorization"]').text()).toBe('Autorización al Super Administrador');
     });
 });
+
+// It. 44d — R-LEG-06.
+describe('Una veeduría sin NIT (it. 44d)', () => {
+    it('shows its registration, and no NIT', async () => {
+        const wrapper = await openSettings({ ...profile, nit: null, registration_number: 'Resolución 012 de 2026', registration_authority: 'Personería de Santa Marta' });
+
+        expect(wrapper.text()).toContain('Inscripción');
+        expect(wrapper.text()).toContain('Resolución 012 de 2026, Personería de Santa Marta');
+        expect(wrapper.text()).toContain('Sin NIT');
+    });
+});
+

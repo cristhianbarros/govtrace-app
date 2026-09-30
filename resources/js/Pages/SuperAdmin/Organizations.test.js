@@ -13,14 +13,14 @@ import {
     revokeAdministratorInvitation,
     startDecommission,
     suspendOrganization,
-    updateOrganizationNit,
+    updateOrganizationLegalData,
 } from '@/services/api.js';
 
 vi.mock('@inertiajs/vue3', async () => await import('@/testing/inertia.js'));
 vi.mock('@/services/api.js');
 
-const smr = { id: 'tenant-smr', nit: '900123456-8', name: 'Veeduría Ciudadana Santa Marta', subdomain: 'veeduria-smr.govtrace.localhost', status: 'Activa' };
-const smrDetail = { id: 'tenant-smr', name: 'Veeduría Ciudadana Santa Marta', nit: '900123456-8', subdomain: 'veeduria-smr.govtrace.localhost', status: 'Activa' };
+const smr = { id: 'tenant-smr', nit: '900123456-8', identification: 'NIT 900123456-8', name: 'Veeduría Ciudadana Santa Marta', subdomain: 'veeduria-smr.govtrace.localhost', status: 'Activa' };
+const smrDetail = { id: 'tenant-smr', name: 'Veeduría Ciudadana Santa Marta', nit: '900123456-8', registration_number: null, registration_authority: null, subdomain: 'veeduria-smr.govtrace.localhost', status: 'Activa' };
 
 async function openOrganizations(rows = [smr]) {
     fetchOrganizations.mockResolvedValue(rows);
@@ -65,7 +65,7 @@ describe('Organizaciones', () => {
 
         const row = wrapper.get('[data-test="organization-row"]').text();
         expect(row).toContain('Veeduría Ciudadana Santa Marta');
-        expect(row).toContain('900123456-8');
+        expect(row).toContain('NIT 900123456-8');
         expect(row).toContain('veeduria-smr.govtrace.localhost');
         expect(row).toContain('Activa');
     });
@@ -78,10 +78,10 @@ describe('Organizaciones', () => {
 
     it('Actualización exitosa del NIT: edits the NIT of an organization, with audit', async () => {
         fetchOrganizationDetail.mockResolvedValue(smrDetail);
-        updateOrganizationNit.mockResolvedValue({ message: 'El NIT ha sido actualizado.' });
+        updateOrganizationLegalData.mockResolvedValue({ message: 'Los datos legales han sido actualizados.' });
         const wrapper = await openOrganizations([smr]);
 
-        await button(wrapper, 'Editar NIT').trigger('click');
+        await button(wrapper, 'Editar datos legales').trigger('click');
         await flushPromises();
 
         expect(fetchOrganizationDetail).toHaveBeenCalledWith('tenant-smr');
@@ -91,8 +91,8 @@ describe('Organizaciones', () => {
         await wrapper.get('form').trigger('submit');
         await flushPromises();
 
-        expect(updateOrganizationNit).toHaveBeenCalledWith('tenant-smr', '901234567-7');
-        expect(wrapper.get('[role="status"]').text()).toBe('El NIT ha sido actualizado.');
+        expect(updateOrganizationLegalData).toHaveBeenCalledWith('tenant-smr', { nit: '901234567-7', registration_number: null, registration_authority: null });
+        expect(wrapper.get('[role="status"]').text()).toBe('Los datos legales han sido actualizados.');
     });
 
     it.each([
@@ -100,10 +100,10 @@ describe('Organizaciones', () => {
         ['El NIT ingresado no es válido o el dígito de verificación no coincide con el algoritmo de la DIAN.'],
     ])('shows why the server refused the new NIT: %s', async (message) => {
         fetchOrganizationDetail.mockResolvedValue(smrDetail);
-        updateOrganizationNit.mockRejectedValue({ response: { status: 422, data: { message, errors: { nit: [message] } } } });
+        updateOrganizationLegalData.mockRejectedValue({ response: { status: 422, data: { message, errors: { nit: [message] } } } });
         const wrapper = await openOrganizations([smr]);
 
-        await button(wrapper, 'Editar NIT').trigger('click');
+        await button(wrapper, 'Editar datos legales').trigger('click');
         await flushPromises();
         await wrapper.get('form').trigger('submit');
         await flushPromises();
@@ -227,7 +227,7 @@ describe('Dar de baja (US-003b)', () => {
         const wrapper = await openOrganizations([{ ...smr, status: 'Dada de baja' }]);
 
         const row = wrapper.get('[data-test="organization-row"]');
-        expect(row.findAll('button').map((candidate) => candidate.text())).toEqual(['Editar NIT']);
+        expect(row.findAll('button').map((candidate) => candidate.text())).toEqual(['Editar datos legales']);
     });
 });
 
@@ -287,6 +287,32 @@ describe('Administradores de cada organización (it. 43a, V2)', () => {
 
         expect(block(wrapper).text()).toContain('Activo');
         expect(block(wrapper).findAll('button')).toHaveLength(0);
+    });
+});
+
+// It. 44d — R-LEG-06: el NIT, la inscripción o los dos.
+describe('Los datos legales de una veeduría sin NIT (it. 44d)', () => {
+    const trupillos = { id: 'tenant-trupillos', nit: null, identification: 'Resolución 012 de 2026, Personería de Santa Marta', name: 'Veeduría del Parque Los Trupillos', subdomain: 'trupillos.govtrace.localhost', status: 'Activa' };
+
+    it('lists a veeduría without NIT by its registration', async () => {
+        const wrapper = await openOrganizations([trupillos]);
+
+        expect(wrapper.get('[data-test="organization-row"]').text()).toContain('Resolución 012 de 2026, Personería de Santa Marta');
+    });
+
+    it('Actualización de la inscripción con registro de auditoría: adds the registration to an organization', async () => {
+        fetchOrganizationDetail.mockResolvedValue(smrDetail);
+        updateOrganizationLegalData.mockResolvedValue({ message: 'Los datos legales han sido actualizados.' });
+        const wrapper = await openOrganizations([smr]);
+
+        await button(wrapper, 'Editar datos legales').trigger('click');
+        await flushPromises();
+        await wrapper.get('input#registration-number').setValue('Acta 45 de 2025');
+        await wrapper.get('input#registration-authority').setValue('Cámara de Comercio de Santa Marta');
+        await wrapper.get('form').trigger('submit');
+        await flushPromises();
+
+        expect(updateOrganizationLegalData).toHaveBeenCalledWith('tenant-smr', { nit: '900123456-8', registration_number: 'Acta 45 de 2025', registration_authority: 'Cámara de Comercio de Santa Marta' });
     });
 });
 

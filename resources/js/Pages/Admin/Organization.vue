@@ -93,7 +93,9 @@ onMounted(load);
             <section class="rounded-lg bg-white p-3 text-sm">
                 <dl class="grid grid-cols-1 gap-2 md:grid-cols-2">
                     <div><dt class="text-xs text-slate-500">Nombre legal</dt><dd>{{ profile.legal_name }}</dd></div>
-                    <div><dt class="text-xs text-slate-500">NIT</dt><dd>{{ profile.nit }}</dd></div>
+                    <div><dt class="text-xs text-slate-500">NIT</dt><dd>{{ profile.nit ?? 'Sin NIT' }}</dd></div>
+                    <!-- It. 44d (R-LEG-06): una veeduría de base se identifica con su inscripción. -->
+                    <div v-if="profile.registration_number"><dt class="text-xs text-slate-500">Inscripción</dt><dd>{{ profile.registration_number }}, {{ profile.registration_authority }}</dd></div>
                     <div><dt class="text-xs text-slate-500">Subdominio</dt><dd>{{ profile.subdomain }}</dd></div>
                 </dl>
                 <p class="mt-2 text-xs text-slate-500">Solo el Super Administrador lo cambia, a solicitud formal.</p>
