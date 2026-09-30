@@ -1986,6 +1986,64 @@ Esta iteración estaba reservada para ese recorrido. El recorrido se hizo para e
   - tres LUGAR inválidos: un nombre, un solo número y fuera de rango.
 - El ensayo con el GPS en Medellín: el veedor encuentra la Calle 30 en «Obras cercanas», la reporta y llega a «Sellado».
 
+## Fase v1 — Alinear con el proceso actual (2026-09-30)
+
+La revisión documental del control social de hoy (`docs/proceso-actual.md`, PR #60) comparó GovTrace con la ley. Encontró que GovTrace termina en el mapa, un paso antes del proceso formal, y que nuestro "En riesgo" se confunde con la "obra inconclusa" de la ley.
+
+**Decisiones del usuario (2026-09-30):**
+- A1 a A5 entran en el MVP v1.
+- A2 exige correo verificado.
+- A3 lleva las plantillas, que citan el sello de Stellar como "Prueba Pericial Criptográfica"; sale en PDF, y cada descarga queda registrada para medir su uso.
+- A5 se destraba sin validar en campo: el NIT pasa a opcional, con el número de la resolución o el acta y la entidad de registro como alternativa.
+
+**Orden:** A1 → A3 → A4 → A5, y después A2.
+
+### Iteración 44 — Del mapa al proceso formal
+
+**44a — A1: el estado es una alerta, y los canales de la Contraloría** (US-055-LEG, EPIC-008).
+- Bajo el estado de cada obra: es una alerta de GovTrace, no la decisión de una autoridad.
+- En una obra "En riesgo": no es una "obra inconclusa" (Ley 2020 de 2020).
+- En cada obra, "¿Sabe de un problema en esta obra?", con los canales oficiales de la Contraloría y la aclaración de que, con recursos locales, puede ser competente la contraloría territorial.
+- El "¿Cómo funciona?" del mapa y las estadísticas, con la misma aclaración.
+- **Done-when:** los 6 escenarios de `features/US-055-LEG.feature`, en verde; `make ux-check` sin retroceso.
+- **Modelo:** Opus. El riesgo no está en el código sino en la precisión de un texto legal público.
+
+✅ **44a cumplida (2026-09-30).**
+- Los canales se tomaron el mismo día de la página de denuncias de la Contraloría. Viven en `resources/js/lib/oversight.js`: si cambian, se cambian ahí.
+- Esa página dice que la Contraloría General "atiende denuncias fiscales relacionadas con recursos nacionales". Por eso la sección nombra a la contraloría territorial.
+- **Prueba:**
+  - Vitest: los 6 escenarios, y que una obra que no está en riesgo no habla de "obra inconclusa";
+  - `make e2e`: el ciudadano ve la aclaración y los canales en una obra;
+  - `make ux-check`: sin retroceso;
+  - `make trace-check`: 270 de 270.
+
+**44b — A3: el expediente de una obra** (US-056-LEG, EPIC-008).
+- El Administrador descarga, desde la obra, un ZIP con:
+  - el expediente en PDF: el contrato de SECOP II y cada evidencia, con su SHA-256, su raíz de Merkle y su transacción en Stellar;
+  - las plantillas en PDF, pre-llenadas: el derecho de petición a la entidad (Ley 1755 de 2015) y la denuncia ante la Contraloría (Ley 1757 de 2015, art. 69);
+  - los archivos originales, byte a byte, con sus pruebas de inclusión.
+- Cada descarga va al log de auditoría: es la telemetría para validar el uso de la función.
+- **Modelo:** Opus xhigh. El expediente presenta evidencia criptográfica en un documento legal.
+
+**44c — A4: los impedimentos del veedor** (US-057-LEG, EPIC-006).
+- Al activar su cuenta, el veedor declara no estar en los impedimentos del art. 19 de la Ley 850 de 2003.
+- El que ya tiene cuenta lo declara antes de su próximo reporte.
+- La declaración queda auditada, y el Administrador ve quién la hizo.
+- **Modelo:** Opus. Es una condición para reportar.
+
+**44d — A5: una veeduría sin NIT** (enmiendas a US-001 y US-011, EPIC-009).
+- El NIT pasa a opcional.
+- La alternativa es el número de la resolución o el acta de inscripción y su entidad de registro (personería o cámara de comercio).
+- Una organización tiene una de las dos, o ambas.
+- **Modelo:** Opus xhigh. Cambia el esquema y la regla que evita suplantaciones (US-001).
+
+**44e — A2: "Informar a esta veeduría"** (US-058-LEG). Va después de 44d.
+- El ciudadano, con su correo verificado por un código, informa a la veeduría (Ley 850, art. 18 a)).
+- No se sella ni se publica.
+- **Modelo:** Opus xhigh. Es un endpoint público, con verificación de correo, spam y datos personales.
+
+**Done-when de la 44:** cada sub-iteración, con sus escenarios en verde y su PR.
+
 ## Pivote a Stellar (2026-09-28)
 
 El proyecto participa en **Stellar Apex**, así que la blockchain pasa de EVM/Polygon a **Stellar**, con Smart Contracts en **Soroban (Rust)**:

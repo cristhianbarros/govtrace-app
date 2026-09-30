@@ -298,3 +298,56 @@ describe('El estado de la obra (it. 40b)', () => {
         wrapper.unmount();
     });
 });
+
+// It. 44a — US-055-LEG: el estado es una alerta de GovTrace, y los canales de la Contraloría.
+describe('Qué significa el estado, y cómo avisar a la Contraloría (it. 44a)', () => {
+    const ALERT = 'Es una alerta de GovTrace, calculada con los datos de SECOP II y las evidencias publicadas. No es la decisión de una autoridad.';
+    const NORMAL = { color: 'green', label: 'Normal', reason: 'Ningún reporte publicado habla de retraso o abandono, y el contrato está dentro del plazo.' };
+
+    it('El estado de una obra es una alerta de GovTrace: said under every state', async () => {
+        for (const condition of [AT_RISK, NORMAL]) {
+            const wrapper = await openWorksite(calle30({ condition }));
+
+            expect(wrapper.get('[data-test="condition"]').text()).toContain(ALERT);
+            wrapper.unmount();
+        }
+    });
+
+    it('En riesgo no es lo mismo que obra inconclusa: the legal definition, and a link to what one can do', async () => {
+        const wrapper = await openWorksite();
+        const condition = wrapper.get('[data-test="condition"]');
+
+        expect(condition.text()).toContain('«En riesgo» no es lo mismo que «obra inconclusa». Para la ley, una obra es inconclusa cuando, un año después de vencido el plazo para liquidar su contrato, no se terminó o no presta el servicio (Ley 2020 de 2020).');
+        expect(condition.get('a[href="#contraloria"]').text()).toBe('¿Qué puede hacer?');
+        wrapper.unmount();
+    });
+
+    it('does not bring up obra inconclusa for a worksite that is not at risk', async () => {
+        const wrapper = await openWorksite(calle30({ condition: NORMAL }));
+
+        expect(wrapper.get('[data-test="condition"]').text()).not.toContain('obra inconclusa');
+        expect(wrapper.find('[data-test="condition"] a[href="#contraloria"]').exists()).toBe(false);
+        wrapper.unmount();
+    });
+
+    it('Cualquier ciudadano puede avisar a la Contraloría: its free lines, SIPAR and all its channels, without an account', async () => {
+        const wrapper = await openWorksite(calle30({ condition: NORMAL }));
+        const section = wrapper.get('section#contraloria');
+        const link = (text) => section.findAll('a').find((candidate) => candidate.text() === text);
+
+        expect(section.get('h2').text()).toBe('¿Sabe de un problema en esta obra?');
+        expect(section.text()).toContain('No hace falta ser veedor ni tener cuenta en GovTrace');
+        expect(link('Línea gratuita 199').attributes('href')).toBe('tel:199');
+        expect(link('01 8000 910060').attributes('href')).toBe('tel:018000910060');
+        expect(link('Denunciar en línea (SIPAR)').attributes()).toMatchObject({ href: 'https://denuncie.contraloria.gov.co:8443/sipar/', target: '_blank', rel: 'noopener' });
+        expect(link('Todos los canales de la Contraloría').attributes()).toMatchObject({ href: 'https://www.contraloria.gov.co/atencion-al-ciudadano/denuncias-y-otras-solicitudes-pqrd', target: '_blank' });
+        wrapper.unmount();
+    });
+
+    it('Con recursos locales puede ser competente la contraloría territorial: said beside the channels', async () => {
+        const wrapper = await openWorksite();
+
+        expect(wrapper.get('section#contraloria').text()).toContain('La Contraloría General atiende las denuncias sobre recursos nacionales. Si la obra se paga con recursos del departamento o del municipio, puede ser competente la contraloría de ese territorio.');
+        wrapper.unmount();
+    });
+});

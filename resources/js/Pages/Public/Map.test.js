@@ -245,4 +245,11 @@ describe('Cómo funciona (it. 40d)', () => {
         expect(how.findAll('li')).toHaveLength(3);
         expect(how.text()).toContain('La veeduría los revisa y publica aquí');
     });
+
+    it('Los colores del mapa son alertas de GovTrace: said in "¿Cómo funciona?" (it. 44a)', async () => {
+        const wrapper = await openMap();
+        const howItWorks = wrapper.findAll('details').find((details) => details.get('summary').text() === '¿Cómo funciona?');
+
+        expect(howItWorks.text()).toContain('Los colores (Normal, Alerta y En riesgo) son alertas de GovTrace, no decisiones de una autoridad. Cada obra explica por qué tiene el suyo.');
+    });
 });

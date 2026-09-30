@@ -19,6 +19,14 @@ El ciudadano/veedor puede formalizar ("radicar") una denuncia **ante la Contralo
 | **Suma / promedio** | **49 / 8.17** | |
 
 ## MVP
-`mvp_included: false`
+`mvp_included: true` desde el 2026-09-30, para el **MVP v1** (antes, `false`).
+
+**Decisión del usuario (2026-09-30).** La revisión del proceso actual (`docs/proceso-actual.md`) mostró que GovTrace terminaba en el mapa, un paso antes del proceso formal: peticiones, recomendaciones y denuncias. Entran:
+- A1: el estado de una obra como alerta, y los canales de la Contraloría (US-055-LEG, it. 44a);
+- A3: el expediente de una obra, con las plantillas pre-llenadas de derecho de petición y de denuncia (it. 44b).
+
+La radicación ante la Contraloría sigue fuera: la hace la veeduría, o el ciudadano, por los canales oficiales.
+
+Decisión original, del discovery:
 
 **Justificación del usuario:** "Aunque es una idea brillante, requiere maquetar documentos legales complejos en PDF y flujos de envío externo que consumen tiempo valioso que es mejor invertir en pulir el sellado blockchain y el mapa."

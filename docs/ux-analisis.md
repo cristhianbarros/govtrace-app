@@ -214,6 +214,10 @@ Está en todas partes. La sección 5 trae el glosario, con el reemplazo de cada 
 
 **Recomendación:** cada pin con su ícono (✓ Normal, ! Alerta, ✕ En riesgo), los mismos nombres en todas partes y el color siempre acompañado de la palabra.
 
+**"En riesgo" no es "obra inconclusa" (it. 44a, R-LEG-01).**
+- Los tres estados son alertas de GovTrace, no decisiones de una autoridad.
+- "Obra inconclusa" es un término legal (Ley 2020 de 2020). Ningún texto de GovTrace lo usa para describir una obra.
+
 ### T8 · Botones deshabilitados sin explicación 🟠
 
 **Qué pasa:**

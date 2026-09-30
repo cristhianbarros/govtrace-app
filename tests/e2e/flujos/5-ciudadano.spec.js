@@ -57,6 +57,10 @@ test('Abre una obra: el contrato de SECOP y sus evidencias publicadas', async ({
     await expect(page.getByText('Constructora de Pruebas S.A.S.')).toBeVisible();
     // It. 40b: su estado y por qué, en palabras.
     await expect(page.locator('[data-test="condition"]')).toContainText('El reporte publicado más reciente');
+    // It. 44a: el estado es una alerta, y los canales de la Contraloría están a mano.
+    await expect(page.locator('[data-test="condition"]')).toContainText('No es la decisión de una autoridad.');
+    await expect(page.getByRole('heading', { name: '¿Sabe de un problema en esta obra?' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Línea gratuita 199' })).toHaveAttribute('href', 'tel:199');
     await expect(page.getByRole('button', { name: 'Comprobar que es original' }).first()).toBeVisible();
 });
 
