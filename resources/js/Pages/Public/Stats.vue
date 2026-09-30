@@ -23,7 +23,7 @@ onMounted(load);
         <div class="flex flex-col gap-4">
             <OrganizationNotice />
             <Link href="/" class="self-start text-sm font-semibold text-slate-700 underline">Volver al mapa</Link>
-            <h2 class="text-xl font-semibold">Estadísticas del territorio</h2>
+            <h1 class="text-xl font-semibold">Estadísticas del territorio</h1>
 
             <LoadState :loading="loading" :error="error" loading-text="Cargando las estadísticas…" empty-text="" @retry="load">
                 <template v-if="stats">

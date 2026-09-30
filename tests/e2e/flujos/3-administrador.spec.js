@@ -1,7 +1,7 @@
 // It. 40a — el flujo del Administrador de Organización (docs/mapa-funcional.md,
 // sección 2), en la organización del fixture: dos evidencias esperan en su Bandeja.
 import { expect, test } from '@playwright/test';
-import { ORG, PEOPLE, WORKSITE, logIn } from './support.js';
+import { ORG, PEOPLE, WORKSITE, logIn, logOut } from './support.js';
 
 test.describe.configure({ mode: 'serial' });
 
@@ -20,7 +20,14 @@ test('Entra y llega a su Bandeja, con las evidencias por revisar', async ({ page
     await expect(page.getByRole('button', { name: 'Publicar' })).toHaveCount(2);
 });
 
-test.fixme('V4: cada evidencia de la Bandeja dice de qué obra es y qué veedor la envió', async () => {});
+test('Cada evidencia de la Bandeja dice de qué obra es y qué veedor la envió (V4)', async ({ page }) => {
+    await enter(page);
+    const card = page.locator('article').first();
+
+    await expect(card.locator('[data-test="worksite"]')).toHaveText(WORKSITE);
+    await expect(card).toContainText('Santa Marta');
+    await expect(card).toContainText('Enviada por Veedor E2E');
+});
 
 test('Publica una evidencia: pasa al mapa', async ({ page }) => {
     await enter(page);
@@ -88,4 +95,8 @@ test('Autoriza al Super Administrador por 30 días y revoca la autorización', a
 
 test.fixme('V9: le llega un aviso de que hay evidencias por revisar', async () => {});
 
-test.fixme('V1: cierra la sesión', async () => {});
+test('Cierra la sesión desde el menú de su cuenta (V1)', async ({ page }) => {
+    await enter(page);
+
+    await logOut(page);
+});

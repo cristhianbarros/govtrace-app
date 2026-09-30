@@ -26,7 +26,7 @@ const isCurrent = (href) => page.url === href || page.url.startsWith(`${href}?`)
     <Head :title="title" />
     <AppLayout title="Panel global">
         <div class="flex flex-col gap-4">
-            <h2 class="text-xl font-semibold">{{ title }}</h2>
+            <h1 class="text-xl font-semibold">{{ title }}</h1>
             <slot />
         </div>
 

@@ -35,7 +35,9 @@ describe('Resumen del territorio', () => {
         const wrapper = await openSummary();
 
         expect(figure(wrapper, 'green')).toContain('10');
-        expect(figure(wrapper, 'green')).toContain('Verdes');
+        expect(figure(wrapper, 'green')).toContain('Normal');
+        expect(figure(wrapper, 'yellow')).toContain('Alerta');
+        expect(figure(wrapper, 'red')).toContain('En riesgo');
         expect(figure(wrapper, 'yellow')).toContain('4');
         expect(figure(wrapper, 'red')).toContain('3');
         expect(figure(wrapper, 'Avance')).toContain('25');

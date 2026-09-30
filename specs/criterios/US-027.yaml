@@ -14,7 +14,8 @@ criterios_aceptacion:
     - "Si una ficha agrupa varios contratos (US-045-INT), el pin toma el peor estado entre sus contratos"
     - "El color refleja la última verdad conocida: lo dicta la evidencia publicada más reciente (ej. si tras un 'Abandono' se publica un 'Avance', el pin deja de ser rojo por abandono)"
   manejo_errores: []
-  requisitos_ux: []
+  requisitos_ux:
+    - "(It. 40b, 2026-09-29) Los estados se explican junto al mapa, arriba y sin desplazarse, con un signo además del color (✓ Normal, ! Alerta, ✕ En riesgo) y cuántas obras hay de cada uno; tocar un estado filtra el mapa"
   casos_edge: []
 validacion_smart:
   specific: true

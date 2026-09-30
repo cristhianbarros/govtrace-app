@@ -12,8 +12,8 @@ describe('AdminLayout', () => {
         page.url = '/admin/contracts?page=2';
         const wrapper = mount(AdminLayout, { props: { title: 'Contratos' }, slots: { default: '<p>contenido</p>' } });
 
-        expect(wrapper.get('h1').text()).toBe('Veeduría Ciudadana Santa Marta');
-        expect(wrapper.find('h2').text()).toBe('Contratos');
+        expect(wrapper.get('header').text()).toContain('Veeduría Ciudadana Santa Marta');
+        expect(wrapper.get('h1').text()).toBe('Contratos');
         expect(wrapper.findAll('nav a').map((link) => [link.text(), link.attributes('href')])).toEqual([
             ['Bandeja', '/admin/inbox'],
             ['Veedores', '/admin/observers'],

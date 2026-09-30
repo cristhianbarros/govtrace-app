@@ -126,3 +126,10 @@ Característica: Crear un reporte de evidencia con ubicación GPS
     Y los veedores en el sitio real quedan fuera de la geocerca
     Cuando el Administrador de Organización corrige la ubicación de la obra
     Entonces los veedores en el sitio real pueden reportar
+
+  @complexity:low
+  Escenario: El botón de enviar dice qué falta
+    Dado que elegí la obra y el GPS tiene mi ubicación
+    Pero aún no elegí la clasificación ni adjunté archivos
+    Cuando miro el botón "Enviar Reporte"
+    Entonces junto a él leo "Para enviar falta:" con "decir qué vio en la obra" y "adjuntar al menos una foto o un PDF"

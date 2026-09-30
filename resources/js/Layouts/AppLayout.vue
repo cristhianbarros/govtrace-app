@@ -1,4 +1,6 @@
 <script setup>
+import AccountMenu from '@/Components/AccountMenu.vue';
+
 defineProps({
     title: {
         type: String,
@@ -18,7 +20,9 @@ defineProps({
         <header class="sticky top-0 z-10 bg-slate-900 px-4 pt-[env(safe-area-inset-top)] text-white">
             <div class="mx-auto flex h-14 w-full items-center gap-3 md:max-w-3xl lg:max-w-5xl">
                 <img v-if="logo" :src="logo" :alt="`Logo de ${title}`" class="size-9 rounded bg-white object-contain p-0.5" />
-                <h1 class="truncate text-lg font-semibold">{{ title }}</h1>
+                <!-- La marca, no el título de la pantalla: ese es el h1 de cada página (it. 40b). -->
+                <p class="truncate text-lg font-semibold">{{ title }}</p>
+                <AccountMenu />
             </div>
         </header>
 

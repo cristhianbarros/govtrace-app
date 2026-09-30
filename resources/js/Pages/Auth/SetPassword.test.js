@@ -7,7 +7,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import SetPassword from './SetPassword.vue';
 import { respondWith, resetInertia, submissions } from '@/testing/inertia.js';
 
-vi.mock('@inertiajs/vue3', async () => ({ Head: { render: () => null }, useForm: (await import('@/testing/inertia.js')).useForm }));
+vi.mock('@inertiajs/vue3', async () => { const inertia = await import('@/testing/inertia.js'); return { Head: { render: () => null }, useForm: inertia.useForm, usePage: inertia.usePage, Link: inertia.Link, router: inertia.router }; });
 
 const RULES = 'La contraseña debe tener al menos 8 caracteres, incluir una mayúscula, una minúscula, un número y un símbolo especial.';
 const EXPIRED = 'El enlace de invitación ha expirado o no es válido. Solicite una nueva invitación al administrador.';

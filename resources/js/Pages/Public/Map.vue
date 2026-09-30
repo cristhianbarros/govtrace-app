@@ -3,7 +3,7 @@
 // solo los pines (R-MAP-02); tocar uno abre la vista de su obra, que pide
 // sus datos en ese momento.
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { computed, onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 import LoadState from '@/Components/LoadState.vue';
 import OrganizationNotice from '@/Components/Public/OrganizationNotice.vue';
 import PinsMap from '@/Components/Public/PinsMap.vue';
@@ -14,11 +14,15 @@ import { fetchMapFilters, fetchPins } from '@/services/api.js';
 const page = usePage();
 const { data: pins, loading, error, load } = useLoader(fetchPins);
 
-const LEGEND = [
-    { css: 'bg-green-600', label: 'Normal' },
-    { css: 'bg-yellow-400', label: 'Alerta' },
-    { css: 'bg-red-600', label: 'En riesgo' },
+// It. 40b: los estados, junto al mapa y con su signo (no solo el color):
+// son a la vez la leyenda y el filtro más usado. Cuántas obras hay de cada
+// uno se cuenta sin el filtro de estado, para que no se pierdan de vista.
+const STATES = [
+    { value: 'green', icon: '✓', label: 'Normal', css: 'bg-green-700 text-white', idle: 'border-green-700 text-green-900' },
+    { value: 'yellow', icon: '!', label: 'Alerta', css: 'bg-yellow-400 text-slate-900', idle: 'border-yellow-500 text-slate-900' },
+    { value: 'red', icon: '✕', label: 'En riesgo', css: 'bg-red-700 text-white', idle: 'border-red-700 text-red-900' },
 ];
+const counts = ref({ green: 0, yellow: 0, red: 0 });
 
 // US-028: estado, fechas de las evidencias, presupuesto y municipio.
 const STATUSES = [
@@ -37,6 +41,17 @@ function apply() {
     active.value = chosen.value;
     load(active.value);
 }
+
+function toggleState(value) {
+    filters.status = filters.status === value ? '' : value;
+    apply();
+}
+
+watch(pins, (loaded) => {
+    if (loaded && !active.value.status) {
+        counts.value = Object.fromEntries(STATES.map((state) => [state.value, loaded.filter((pin) => pin.color_pin === state.value).length]));
+    }
+});
 
 function clear() {
     Object.assign(filters, EMPTY_FILTERS);
@@ -58,14 +73,30 @@ onMounted(async () => {
     <Head title="Mapa de obras" />
     <AppLayout :title="page.props.organization ?? 'GovTrace'" :logo="page.props.organizationLogo">
         <OrganizationNotice />
+        <h1 class="text-xl font-semibold">Obras vigiladas</h1>
+        <p class="mb-3 text-base text-slate-700">Toque un punto para ver la obra y sus fotos.</p>
+
+        <div role="group" aria-label="Estado de las obras" class="mb-3 flex flex-wrap gap-2">
+            <button
+                v-for="state in STATES"
+                :key="state.value"
+                type="button"
+                data-test="state"
+                :aria-pressed="filters.status === state.value && active.status === state.value ? 'true' : 'false'"
+                class="inline-flex min-h-11 items-center gap-2 rounded-full border-2 px-3 text-base font-semibold"
+                :class="active.status === state.value ? `${state.css} border-transparent` : `bg-white ${state.idle}`"
+                @click="toggleState(state.value)"
+            ><span aria-hidden="true" class="grid size-6 place-items-center rounded-full font-bold" :class="state.css">{{ state.icon }}</span> {{ state.label }} <span class="rounded-full bg-slate-100 px-2 text-sm text-slate-900">{{ counts[state.value] }}</span></button>
+        </div>
+
         <div class="mb-3 flex flex-wrap gap-2">
             <Link href="/verify" class="inline-flex min-h-11 items-center rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold">Validar un archivo</Link>
             <Link href="/stats" class="inline-flex min-h-11 items-center rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold">Estadísticas del territorio</Link>
         </div>
 
         <details class="mb-3 rounded-lg border border-slate-200 bg-white p-3 text-sm">
-            <summary class="min-h-11 cursor-pointer py-2 font-semibold">Filtrar obras</summary>
-            <div class="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <summary class="min-h-11 cursor-pointer py-2 text-base font-semibold">Más filtros</summary>
+            <div class="mt-2 grid grid-cols-1 gap-3 md:grid-cols-2">
                 <label for="filter-status" class="flex flex-col gap-1">
                     <span class="text-xs font-semibold text-slate-700">Estado</span>
                     <select id="filter-status" v-model="filters.status" class="min-h-11 rounded-lg border border-slate-300 px-2 text-base">
@@ -88,7 +119,7 @@ onMounted(async () => {
                     <span class="text-xs font-semibold text-slate-700">Evidencias hasta</span>
                     <input id="filter-to" v-model="filters.to" type="date" class="min-h-11 rounded-lg border border-slate-300 px-2 text-base" />
                 </label>
-                <label for="filter-min-value" class="flex flex-col gap-1 sm:col-span-2">
+                <label for="filter-min-value" class="flex flex-col gap-1 md:col-span-2">
                     <span class="text-xs font-semibold text-slate-700">Presupuesto mayor a (pesos)</span>
                     <input id="filter-min-value" v-model="filters.min_value" type="number" min="0" inputmode="numeric" class="min-h-11 rounded-lg border border-slate-300 px-2 text-base" />
                 </label>
@@ -107,11 +138,6 @@ onMounted(async () => {
             @retry="load(active)"
         >
             <PinsMap :pins="pins ?? []" @select="(id) => router.visit(`/worksite/${id}`)" />
-            <ul class="mt-3 flex flex-wrap gap-4 text-sm text-slate-700" aria-label="Qué significa cada color">
-                <li v-for="item in LEGEND" :key="item.label" class="flex items-center gap-2">
-                    <span class="size-3 rounded-full" :class="item.css" aria-hidden="true"></span>{{ item.label }}
-                </li>
-            </ul>
         </LoadState>
     </AppLayout>
 </template>

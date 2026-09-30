@@ -34,10 +34,11 @@ function submit() {
 
 <template>
     <Head title="Iniciar sesión" />
-    <AppLayout title="GovTrace">
+    <AppLayout :title="page.props.organization ?? 'GovTrace'" :logo="page.props.organizationLogo ?? null">
+        <Link v-if="page.props.organization" href="/" class="mb-2 inline-flex min-h-11 items-center text-base font-semibold text-slate-700">← Volver al mapa de obras</Link>
         <form class="mx-auto flex w-full max-w-sm flex-col gap-5 pt-4" novalidate @submit.prevent="submit">
             <div>
-                <h2 class="text-xl font-semibold">Iniciar sesión</h2>
+                <h1 class="text-xl font-semibold">Iniciar sesión</h1>
                 <p class="text-sm text-slate-600">{{ context }}</p>
             </div>
 
@@ -82,7 +83,7 @@ function submit() {
                 {{ form.processing ? 'Entrando…' : 'Entrar' }}
             </button>
 
-            <Link href="/forgot-password" class="text-center text-sm font-semibold text-slate-700 underline">¿Olvidó su contraseña?</Link>
+            <Link href="/forgot-password" class="inline-flex min-h-11 items-center justify-center text-center text-base font-semibold text-slate-700 underline">¿Olvidó su contraseña?</Link>
         </form>
     </AppLayout>
 </template>

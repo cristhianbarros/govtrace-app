@@ -55,3 +55,9 @@ Característica: Bandeja de revisión y publicación de evidencias
     Cuando abro la bandeja de entrada
     Entonces veo la marca en esa evidencia
     Y puedo publicarla o rechazarla igual que las demás
+
+  @complexity:low
+  Escenario: Cada evidencia de la bandeja dice de qué obra es y quién la envió
+    Cuando abro la bandeja de entrada
+    Entonces cada evidencia muestra el nombre de su obra y su municipio
+    Y el nombre del veedor que la envió

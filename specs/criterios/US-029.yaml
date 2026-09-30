@@ -11,6 +11,7 @@ criterios_aceptacion:
   manejo_errores: []
   requisitos_ux:
     - "Visor de fotos al tocar una miniatura"
+    - "(It. 40b, 2026-09-29) La vista de la obra dice su estado (el color de su pin) y por qué, en palabras, según las reglas de US-027"
   casos_edge:
     - {caso: "El Administrador revoca una evidencia que ya estaba publicada", resultado: "La tarjeta NO desaparece: se convierte en una 'lápida' que oculta fotos y comentario y muestra \"🚫 Evidencia retirada por la organización por incumplimiento de políticas.\"; el sello criptográfico sigue disponible para auditoría externa (US-037)"}
 validacion_smart:

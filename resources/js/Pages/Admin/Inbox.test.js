@@ -16,6 +16,8 @@ const TOMBSTONE = '🚫 Evidencia retirada por la organización por incumplimien
 const evidence = (overrides = {}) => ({
     id: 7,
     worksite_id: 1,
+    worksite: { id: 1, name: 'Pavimentación Calle 30', municipality: 'Santa Marta' },
+    observer: 'Carlos Pérez',
     classification: 'Retraso',
     comment: 'Obra detenida hace 2 meses',
     captured_at: '2026-09-28T15:00:00+00:00',
@@ -183,5 +185,23 @@ describe('Publicadas', () => {
         await button(wrapper, 'Retirar').trigger('click');
 
         expect(button(wrapper, 'Confirmar retiro').attributes('disabled')).toBeDefined();
+    });
+});
+
+describe('Contexto de cada evidencia (it. 40b)', () => {
+    it('Cada evidencia de la bandeja dice de qué obra es y quién la envió: the worksite, its municipality and the veedor', async () => {
+        const wrapper = await openInbox([evidence()]);
+        const card = wrapper.get('article');
+
+        expect(card.get('[data-test="worksite"]').text()).toBe('Pavimentación Calle 30');
+        expect(card.text()).toContain('Santa Marta');
+        expect(card.text()).toContain('Enviada por Carlos Pérez');
+    });
+
+    it('still shows the evidence when the veedor is no longer known', async () => {
+        const wrapper = await openInbox([evidence({ observer: null })]);
+
+        expect(wrapper.get('[data-test="worksite"]').text()).toBe('Pavimentación Calle 30');
+        expect(wrapper.text()).not.toContain('Enviada por');
     });
 });

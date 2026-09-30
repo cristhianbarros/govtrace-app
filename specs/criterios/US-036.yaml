@@ -14,6 +14,7 @@ criterios_aceptacion:
   manejo_errores: []
   requisitos_ux:
     - "Publicación de una evidencia a la vez, para forzar la revisión responsable"
+    - "(It. 40b, 2026-09-29, decidido por el usuario) Cada evidencia de la bandeja dice de qué obra es (nombre y municipio) y qué veedor la envió"
   casos_edge: []
 validacion_smart:
   specific: true

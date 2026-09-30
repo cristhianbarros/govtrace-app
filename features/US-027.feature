@@ -57,3 +57,10 @@ Característica: Pines del mapa por color de estado
   Escenario: La carga inicial del mapa es liviana
     Cuando abro el mapa
     Entonces la carga inicial solo trae id, latitud, longitud y color de cada pin
+
+  @complexity:low
+  Escenario: Los estados del mapa se explican junto al mapa, con ícono y palabra
+    Cuando abro el mapa público de la organización
+    Entonces arriba del mapa veo "✓ Normal", "! Alerta" y "✕ En riesgo", cada uno con cuántas obras tiene
+    Y cada pin lleva el mismo signo que su estado, además de su color
+    Y al tocar un estado, el mapa muestra solo sus obras

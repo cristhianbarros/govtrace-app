@@ -51,7 +51,8 @@ const progress = {
     receipt_url: '/public/reports/10/receipt',
 };
 
-const calle30 = (changes = {}) => ({ id: 7, name: 'Pavimentación Calle 30', contracts: [contract], timeline: [abandonment, withdrawn, progress], ...changes });
+const AT_RISK = { color: 'red', label: 'En riesgo', reason: 'El reporte publicado más reciente, del 27/09/2026, es de abandono.' };
+const calle30 = (changes = {}) => ({ id: 7, name: 'Pavimentación Calle 30', contracts: [contract], timeline: [abandonment, withdrawn, progress], condition: AT_RISK, ...changes });
 
 async function openWorksite(worksite = calle30()) {
     fetchWorksite.mockResolvedValue(worksite);
@@ -104,7 +105,7 @@ describe('Vista de obra — el contrato (US-017)', () => {
     it('shows every contract a worksite groups (US-045-INT)', async () => {
         const wrapper = await openWorksite(calle30({ name: 'Acueducto Gaira', contracts: [contract, { ...contract, secop_contract_id: 'CO1.PCCNTR.3333333', object: 'Acueducto Gaira, fase 2' }] }));
 
-        expect(wrapper.find('h2').text()).toBe('Acueducto Gaira');
+        expect(wrapper.get('h1').text()).toBe('Acueducto Gaira');
         expect(wrapper.findAll('[data-test="contract"]')).toHaveLength(2);
         wrapper.unmount();
     });
@@ -253,6 +254,19 @@ describe('Vista de obra — estados', () => {
 
         expect(wrapper.get('[role="status"]').text()).toContain('suspendida temporalmente');
         expect(wrapper.get('a[href="/"]').text()).toBe('← Volver al mapa');
+        wrapper.unmount();
+    });
+});
+
+describe('El estado de la obra (it. 40b)', () => {
+    it('La obra muestra su estado y por qué: its state with its sign, and the reason in words, right under its name', async () => {
+        const wrapper = await openWorksite();
+        const condition = wrapper.get('[data-test="condition"]');
+
+        expect(condition.attributes('data-color')).toBe('red');
+        expect(condition.text()).toContain('✕');
+        expect(condition.text()).toContain('En riesgo');
+        expect(condition.text()).toContain('El reporte publicado más reciente, del 27/09/2026, es de abandono.');
         wrapper.unmount();
     });
 });

@@ -32,7 +32,7 @@ function submit() {
     <AppLayout title="GovTrace">
         <form class="mx-auto flex w-full max-w-sm flex-col gap-5 pt-4" novalidate @submit.prevent="submit">
             <div>
-                <h2 class="text-xl font-semibold">¿Olvidó su contraseña?</h2>
+                <h1 class="text-xl font-semibold">¿Olvidó su contraseña?</h1>
                 <p class="text-sm text-slate-600">{{ context }}</p>
             </div>
 

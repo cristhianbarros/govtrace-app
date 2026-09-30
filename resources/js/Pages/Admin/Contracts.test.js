@@ -107,3 +107,12 @@ describe('Contratos', () => {
         expect(fetchContracts).toHaveBeenLastCalledWith({ sort: 'signed_at', direction: 'desc', page: 2 });
     });
 });
+
+describe('Estado de un contrato anulado (it. 40b)', () => {
+    it('names an annulled contract as the public card does, not with the internal word "cancelled"', async () => {
+        const wrapper = await openContracts(pageOf([contract({ status: 'cancelled' })]));
+
+        expect(wrapper.text()).toContain('Anulado/Retirado en SECOP');
+        expect(wrapper.text()).not.toContain('cancelled');
+    });
+});

@@ -5,6 +5,7 @@ use App\Domain\Organization\Roles;
 use App\Domain\Organization\User as OrganizationUser;
 use App\Infrastructure\Tenancy\Tenant;
 use App\Models\User;
+use Inertia\Testing\AssertableInertia as Assert;
 
 /*
  * Iteración 4 — Identidad y acceso (specs/PLAN.md). Traduce
@@ -141,4 +142,47 @@ it('El Verificador Público no necesita iniciar sesión: lets a public visitor r
 
     $this->get("http://{$domain}/")->assertOk();
     $this->assertGuest('tenant');
+});
+
+/*
+ * It. 40b — V1 de docs/mapa-funcional.md: cerrar sesión desde cualquier panel.
+ * La salida del veedor la prueba OfflineReportsTest; la ruta central no existía.
+ */
+
+it('Cerrar sesión desde cualquier panel: the Super Administrador logs out of the global panel, which then asks to log in again', function () {
+    $superAdministrator = User::factory()->create(['email' => 'root@govtrace.app', 'password' => 'Veeduria#2026']);
+
+    $this->actingAs($superAdministrator, 'web')->postJson('http://govtrace.localhost:8080/logout')->assertNoContent();
+
+    $this->assertGuest('web');
+    $this->get('http://govtrace.localhost:8080/admin/organizations')->assertRedirect();
+});
+
+it('Cerrar sesión desde cualquier panel: the Administrador de Organización logs out of the panel of the organization', function () {
+    [$tenant, $domain] = registerOrganizationWithMember(Roles::Administrator->value, 'ana.perez@veeduria-smr.org');
+    $administrator = $tenant->run(fn () => OrganizationUser::query()->where('email', 'ana.perez@veeduria-smr.org')->firstOrFail());
+
+    $this->actingAs($administrator, 'tenant')->postJson("http://{$domain}/logout")->assertNoContent();
+
+    $this->assertGuest('tenant');
+});
+
+it('shares who is logged in with every screen of a panel, so the header can name them', function () {
+    [$tenant, $domain] = registerOrganizationWithMember(Roles::Administrator->value, 'ana.perez@veeduria-smr.org');
+    $administrator = $tenant->run(fn () => OrganizationUser::query()->where('email', 'ana.perez@veeduria-smr.org')->firstOrFail());
+
+    $this->withoutVite()->actingAs($administrator, 'tenant')
+        ->get("http://{$domain}/admin/inbox")
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->where('account', ['name' => 'Usuario de prueba', 'email' => 'ana.perez@veeduria-smr.org', 'role' => 'Administrador de Organización']));
+});
+
+it('shares the Super Administrador too, and nobody on a public screen', function () {
+    $superAdministrator = User::factory()->create(['name' => 'Raíz', 'email' => 'root@govtrace.app', 'password' => 'Veeduria#2026']);
+    registerOrganizationWithMember(Roles::Observer->value, 'carlos@correo.co');
+
+    $this->withoutVite()->actingAs($superAdministrator, 'web')->get('http://govtrace.localhost:8080/admin/organizations')
+        ->assertInertia(fn (Assert $page) => $page->where('account', ['name' => 'Raíz', 'email' => 'root@govtrace.app', 'role' => 'Super Administrador']));
+    $this->withoutVite()->get('http://veeduria-smr.govtrace.localhost/')
+        ->assertInertia(fn (Assert $page) => $page->where('account', null));
 });

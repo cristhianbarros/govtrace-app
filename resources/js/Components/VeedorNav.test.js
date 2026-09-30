@@ -1,68 +1,24 @@
-// Iteración 30 — US-018: cerrar sesión desde la app del veedor, con aviso si
-// quedan reportes sin enviar en el teléfono.
-import { flushPromises, mount } from '@vue/test-utils';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+// Iteración 30, it. 40b — las pestañas de la app del veedor, al alcance del
+// pulgar. "Salir" pasó al menú de cuenta de la cabecera (AccountMenu.test.js),
+// donde siempre pregunta antes.
+import { mount } from '@vue/test-utils';
+import { describe, expect, it, vi } from 'vitest';
 import VeedorNav from './VeedorNav.vue';
-import { configureOutbox } from '@/composables/useOutbox.js';
-import { createOutbox, memoryStore } from '@/lib/outbox.js';
-import { logout } from '@/services/api.js';
-import { router } from '@/testing/inertia.js';
 
 vi.mock('@inertiajs/vue3', async () => await import('@/testing/inertia.js'));
-vi.mock('@/services/api.js');
 
-const WARNING = '🚨 Tienes reportes sin enviar. Si cierras sesión ahora, se borrarán permanentemente del teléfono. ¿Deseas continuar?';
+describe('VeedorNav', () => {
+    it('links the two screens of the veedor, marking the open one', () => {
+        const wrapper = mount(VeedorNav, { props: { current: '/my-reports' } });
 
-async function withPending(count) {
-    const store = memoryStore();
-    const outbox = createOutbox(store);
-    for (let i = 0; i < count; i++) {
-        await outbox.add({ fields: { captured_at: new Date().toISOString() }, hashes: ['ab'.repeat(32)], files: [new File(['x'], 'x.jpg')] });
-    }
-    configureOutbox({ store });
-    const wrapper = mount(VeedorNav, { props: { current: '/my-reports' } });
-    await flushPromises();
-    return { wrapper, outbox };
-}
-
-const button = (wrapper, text) => wrapper.findAll('button').find((candidate) => candidate.text() === text);
-
-beforeEach(() => {
-    vi.resetAllMocks();
-    logout.mockResolvedValue(undefined);
-});
-
-describe('Cerrar sesión', () => {
-    it('Cerrar sesión con reportes pendientes: warns, and does not log out until confirmed', async () => {
-        const { wrapper, outbox } = await withPending(2);
-
-        await button(wrapper, 'Salir').trigger('click');
-        await flushPromises();
-
-        expect(wrapper.get('[role="alertdialog"]').text()).toContain(WARNING);
-        expect(logout).not.toHaveBeenCalled();
-        await button(wrapper, 'Cancelar').trigger('click');
-        expect(wrapper.find('[role="alertdialog"]').exists()).toBe(false);
-        expect(await outbox.pending()).toHaveLength(2);
-
-        await button(wrapper, 'Salir').trigger('click');
-        await flushPromises();
-        await button(wrapper, 'Sí, cerrar sesión').trigger('click');
-        await flushPromises();
-
-        expect(logout).toHaveBeenCalledOnce();
-        expect(await outbox.pending()).toEqual([]);
-        expect(router.visit).toHaveBeenCalledWith('/login');
+        expect(wrapper.findAll('a').map((tab) => [tab.text(), tab.attributes('href')])).toEqual([
+            ['Nuevo Reporte', '/reports/new'],
+            ['Mis Reportes', '/my-reports'],
+        ]);
+        expect(wrapper.get('a[aria-current="page"]').text()).toBe('Mis Reportes');
     });
 
-    it('logs out at once when nothing is pending', async () => {
-        const { wrapper } = await withPending(0);
-
-        await button(wrapper, 'Salir').trigger('click');
-        await flushPromises();
-
-        expect(wrapper.find('[role="alertdialog"]').exists()).toBe(false);
-        expect(logout).toHaveBeenCalledOnce();
-        expect(router.visit).toHaveBeenCalledWith('/login');
+    it('no longer has "Salir", which lives in the account menu of the header', () => {
+        expect(mount(VeedorNav, { props: { current: '/reports/new' } }).find('button').exists()).toBe(false);
     });
 });
