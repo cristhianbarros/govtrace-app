@@ -5,6 +5,8 @@ criterios_aceptacion:
   escenarios_exito:
     - "Inmediatamente tras el alta (o en un paso consecutivo), el Super Administrador ingresa correo y nombre del Administrador inicial"
     - "El sistema crea el usuario y envía un correo de bienvenida con un enlace para establecer su contraseña"
+    - "(It. 43a, 2026-09-30) El Super Administrador ve en el panel global quién administra cada organización y el estado de su invitación (pendiente, vencida o activo); reenvía una invitación sin responder (el enlace anterior deja de servir) o la revoca si el correo estaba mal"
+    - "(It. 43a, 2026-09-30) A una organización sin Administrador (se creó sin él o se revocó su invitación) le asigna uno con nombre y correo. Reemplazar a un Administrador activo, o tener varios, queda para la decisión V3 de docs/mapa-funcional.md"
   validaciones_reglas:
     - "Correo del Administrador inicial: formato de correo válido (RFC 5322)"
     - "Correo del Administrador inicial: no asociado previamente a otro usuario activo en el sistema"

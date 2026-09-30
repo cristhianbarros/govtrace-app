@@ -34,3 +34,19 @@ Característica: Asignación del Administrador inicial de una organización
     Cuando asigno como Administrador inicial a "Ana Pérez" con correo "ana.perez@veeduria-smr.org"
     Entonces la asignación es rechazada
     Y veo el mensaje "El correo electrónico ya se encuentra registrado en el sistema."
+
+  @complexity:low
+  Escenario: Reenviar la invitación del Administrador inicial
+    Dado que la invitación del Administrador inicial de "Veeduría Ciudadana Santa Marta" venció sin respuesta
+    Cuando en el panel global reenvío su invitación
+    Entonces veo "Invitación reenviada a marta@veeduria.org. El nuevo enlace vence en 48 horas."
+    Y el enlace anterior deja de servir
+    Y queda en el log de auditoría
+
+  @complexity:low
+  Escenario: Asignar el Administrador inicial después del alta
+    Dado que "Veeduría Ciudadana Santa Marta" no tiene Administrador
+    Cuando en el panel global le asigno a "Ana Pérez" con el correo "ana@veeduria.org"
+    Entonces "Ana Pérez" recibe la invitación para crear su contraseña
+    Y si la organización ya tiene un Administrador, no se asigna otro
+

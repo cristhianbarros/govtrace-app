@@ -4,10 +4,13 @@ import { flushPromises, mount } from '@vue/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import Organizations from './Organizations.vue';
 import {
+    assignAdministrator,
     confirmDecommission,
     fetchOrganizationDetail,
     fetchOrganizations,
     reactivateOrganization,
+    resendAdministratorInvitation,
+    revokeAdministratorInvitation,
     startDecommission,
     suspendOrganization,
     updateOrganizationNit,
@@ -227,3 +230,63 @@ describe('Dar de baja (US-003b)', () => {
         expect(row.findAll('button').map((candidate) => candidate.text())).toEqual(['Editar NIT']);
     });
 });
+
+describe('Administradores de cada organización (it. 43a, V2)', () => {
+    const pending = { id: 7, name: 'Marta Ospina', email: 'marta@veeduria.org', status: 'pending', label: 'Invitación pendiente' };
+    const expired = { ...pending, status: 'expired', label: 'Invitación vencida' };
+    const active = { ...pending, status: 'active', label: 'Activo' };
+    const block = (wrapper) => wrapper.get('[data-test="administrators"]');
+
+    it('Reenviar la invitación del Administrador inicial: shows who administers each organization, and resends an unanswered invitation', async () => {
+        const wrapper = await openOrganizations([{ ...smr, administrators: [expired] }]);
+        expect(block(wrapper).text()).toContain('Marta Ospina');
+        expect(block(wrapper).text()).toContain('marta@veeduria.org');
+        expect(block(wrapper).text()).toContain('Invitación vencida');
+
+        resendAdministratorInvitation.mockResolvedValue({ message: 'Invitación reenviada a marta@veeduria.org. El nuevo enlace vence en 48 horas.' });
+        fetchOrganizations.mockResolvedValue([{ ...smr, administrators: [pending] }]);
+        await button(block(wrapper), 'Reenviar invitación').trigger('click');
+        await flushPromises();
+
+        expect(resendAdministratorInvitation).toHaveBeenCalledWith('tenant-smr', 7);
+        expect(wrapper.text()).toContain('Invitación reenviada a marta@veeduria.org.');
+        expect(block(wrapper).text()).toContain('Invitación pendiente');
+    });
+
+    it('revokes an invitation sent to a wrong address, after asking', async () => {
+        const wrapper = await openOrganizations([{ ...smr, administrators: [pending] }]);
+        revokeAdministratorInvitation.mockResolvedValue({ message: 'Invitación revocada.' });
+        fetchOrganizations.mockResolvedValue([{ ...smr, administrators: [] }]);
+
+        await button(block(wrapper), 'Revocar invitación').trigger('click');
+        expect(revokeAdministratorInvitation).not.toHaveBeenCalled();
+        await button(block(wrapper), 'Confirmar revocación').trigger('click');
+        await flushPromises();
+
+        expect(revokeAdministratorInvitation).toHaveBeenCalledWith('tenant-smr', 7);
+        expect(block(wrapper).text()).toContain('Sin Administrador');
+    });
+
+    it('Asignar el Administrador inicial después del alta: to an organization that has none, with a name and an email', async () => {
+        const wrapper = await openOrganizations([{ ...smr, administrators: [] }]);
+        assignAdministrator.mockResolvedValue({ message: 'Invitación enviada a ana@veeduria.org.' });
+        fetchOrganizations.mockResolvedValue([{ ...smr, administrators: [{ ...pending, name: 'Ana Pérez', email: 'ana@veeduria.org' }] }]);
+
+        await button(block(wrapper), 'Asignar Administrador').trigger('click');
+        await block(wrapper).get('input[name="administrator-name"]').setValue('Ana Pérez');
+        await block(wrapper).get('input[name="administrator-email"]').setValue('ana@veeduria.org');
+        await block(wrapper).get('form').trigger('submit');
+        await flushPromises();
+
+        expect(assignAdministrator).toHaveBeenCalledWith('tenant-smr', { name: 'Ana Pérez', email: 'ana@veeduria.org' });
+        expect(block(wrapper).text()).toContain('Ana Pérez');
+    });
+
+    it('offers nothing to an active Administrador: replacing one is a pending decision (V3)', async () => {
+        const wrapper = await openOrganizations([{ ...smr, administrators: [active] }]);
+
+        expect(block(wrapper).text()).toContain('Activo');
+        expect(block(wrapper).findAll('button')).toHaveLength(0);
+    });
+});
+

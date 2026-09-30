@@ -10,7 +10,16 @@ import RowAction from '@/Components/RowAction.vue';
 import DecommissionAction from '@/Components/SuperAdmin/DecommissionAction.vue';
 import SuperAdminLayout from '@/Layouts/SuperAdminLayout.vue';
 import { useLoader } from '@/composables/useLoader.js';
-import { fetchOrganizationDetail, fetchOrganizations, reactivateOrganization, suspendOrganization, updateOrganizationNit } from '@/services/api.js';
+import {
+    assignAdministrator,
+    fetchOrganizationDetail,
+    fetchOrganizations,
+    reactivateOrganization,
+    resendAdministratorInvitation,
+    revokeAdministratorInvitation,
+    suspendOrganization,
+    updateOrganizationNit,
+} from '@/services/api.js';
 import { errorMessage } from '@/services/errors.js';
 
 const { data: organizations, loading, error, load } = useLoader(fetchOrganizations);
@@ -46,6 +55,29 @@ async function changed(message) {
     saved.value = message;
     await load();
 }
+
+// It. 43a (V2): asignar el Administrador a una organización que no tiene.
+const assigning = ref(null); // el id de la organización
+const newAdministrator = ref({ name: '', email: '' });
+const assignError = ref(null);
+
+function startAssigning(organization) {
+    assigning.value = organization.id;
+    newAdministrator.value = { name: '', email: '' };
+    assignError.value = null;
+}
+
+async function assign(organization) {
+    assignError.value = null;
+    try {
+        await changed((await assignAdministrator(organization.id, { ...newAdministrator.value })).message);
+        assigning.value = null;
+    } catch (failure) {
+        assignError.value = errorMessage(failure);
+    }
+}
+
+const administratorStyle = { active: 'bg-emerald-100 text-emerald-800', pending: 'bg-amber-100 text-amber-900', expired: 'bg-red-100 text-red-800', inactive: 'bg-slate-200 text-slate-700' };
 
 const statusStyle = { Activa: 'bg-emerald-100 text-emerald-800', Suspendida: 'bg-amber-100 text-amber-900', 'Dada de baja': 'bg-slate-200 text-slate-700' };
 
@@ -83,6 +115,45 @@ onMounted(load);
                                 <button type="button" class="min-h-11 rounded-lg border px-3 text-sm font-semibold" @click="edit(organization)">Editar NIT</button>
                             </div>
                         </div>
+
+                        <!-- It. 43a (V2): quién la administra y el estado de su invitación. -->
+                        <section v-if="organization.status !== 'Dada de baja'" data-test="administrators" class="mt-3 rounded-lg bg-slate-50 p-3" :aria-label="`Administrador de ${organization.name}`">
+                            <p class="text-sm font-semibold text-slate-700">Administrador</p>
+                            <ul v-if="organization.administrators?.length" class="mt-1 flex flex-col gap-2">
+                                <li v-for="administrator in organization.administrators" :key="administrator.id" class="flex flex-col gap-2">
+                                    <p class="flex flex-wrap items-center gap-2">
+                                        <span class="font-semibold">{{ administrator.name }}</span>
+                                        <span class="text-slate-700">{{ administrator.email }}</span>
+                                        <span class="rounded px-2 py-0.5 text-xs font-semibold" :class="administratorStyle[administrator.status]">{{ administrator.label }}</span>
+                                    </p>
+                                    <div v-if="administrator.status === 'pending' || administrator.status === 'expired'" class="flex flex-wrap gap-2">
+                                        <RowAction label="Reenviar invitación" :run="() => resendAdministratorInvitation(organization.id, administrator.id)" @done="changed" />
+                                        <RowAction
+                                            label="Revocar invitación"
+                                            confirm-label="Confirmar revocación"
+                                            warning="El enlace enviado dejará de servir. Después podrá asignar otro Administrador."
+                                            :run="() => revokeAdministratorInvitation(organization.id, administrator.id)"
+                                            @done="changed"
+                                        />
+                                    </div>
+                                </li>
+                            </ul>
+                            <template v-else>
+                                <p class="mt-1 text-sm text-slate-700">Sin Administrador: nadie puede gestionar sus veedores.</p>
+                                <form v-if="assigning === organization.id" class="mt-2 flex flex-col gap-2" novalidate @submit.prevent="assign(organization)">
+                                    <label :for="`administrator-name-${organization.id}`" class="text-sm font-semibold text-slate-700">Nombre</label>
+                                    <input :id="`administrator-name-${organization.id}`" v-model="newAdministrator.name" name="administrator-name" type="text" class="min-h-11 rounded-lg border border-slate-300 bg-white px-3 text-base" />
+                                    <label :for="`administrator-email-${organization.id}`" class="text-sm font-semibold text-slate-700">Correo electrónico</label>
+                                    <input :id="`administrator-email-${organization.id}`" v-model="newAdministrator.email" name="administrator-email" type="email" class="min-h-11 rounded-lg border border-slate-300 bg-white px-3 text-base" />
+                                    <p v-if="assignError" role="alert" class="text-sm text-red-700">{{ assignError }}</p>
+                                    <div class="flex gap-2">
+                                        <button type="submit" class="min-h-11 rounded-lg bg-slate-900 px-3 text-sm font-semibold text-white">Enviar invitación</button>
+                                        <button type="button" class="min-h-11 rounded-lg border bg-white px-3 text-sm font-semibold" @click="assigning = null">Cancelar</button>
+                                    </div>
+                                </form>
+                                <button v-else type="button" class="mt-2 min-h-11 rounded-lg border bg-white px-3 text-sm font-semibold" @click="startAssigning(organization)">Asignar Administrador</button>
+                            </template>
+                        </section>
 
                         <!-- Dada de baja es definitivo: ni suspender, ni reactivar, ni otra baja. -->
                         <div v-if="organization.status !== 'Dada de baja'" class="mt-2 flex flex-col gap-2">

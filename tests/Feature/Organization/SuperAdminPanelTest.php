@@ -65,8 +65,8 @@ it('lists the organizations with their NIT, subdomain and status', function () {
     $cienaga = (new RegisterOrganization)->handle('890000062-6', 'Veeduría Ciénaga', 'veeduria-cienaga');
 
     expect(asSuperAdmin('GET', '/admin/organizations/data')->assertOk()->json('data'))->toBe([
-        ['id' => $smr->id, 'nit' => '900123456-8', 'name' => 'Veeduría Ciudadana Santa Marta', 'subdomain' => 'veeduria-smr.govtrace.localhost', 'status' => 'Activa'],
-        ['id' => $cienaga->id, 'nit' => '890000062-6', 'name' => 'Veeduría Ciénaga', 'subdomain' => 'veeduria-cienaga.govtrace.localhost', 'status' => 'Activa'],
+        ['id' => $smr->id, 'nit' => '900123456-8', 'name' => 'Veeduría Ciudadana Santa Marta', 'subdomain' => 'veeduria-smr.govtrace.localhost', 'status' => 'Activa', 'administrators' => []],
+        ['id' => $cienaga->id, 'nit' => '890000062-6', 'name' => 'Veeduría Ciénaga', 'subdomain' => 'veeduria-cienaga.govtrace.localhost', 'status' => 'Activa', 'administrators' => []], // it. 43a: quién la administra
     ]);
 });
 
