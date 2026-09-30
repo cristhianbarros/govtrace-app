@@ -16,7 +16,9 @@ Es el punto de partida para mejorar todo lo que falta. El tag `checkpoint-base` 
 | Accesibilidad técnica (axe, WCAG 2.2 AA) | 2 reglas incumplidas en 52 vistas; contraste AA en todas | `docs/ux-analisis.md` |
 | Texto de menos de 16 px (celular) | 80 % en la pantalla típica | `docs/ux-analisis.md`, anexo A |
 | Botones de menos de 44 px | 84 % en el panel del Administrador, 91 % en el del Super Administrador, 23 % en el sitio público y el veedor | `docs/ux-analisis.md`, anexo A |
-| Tests | Más de 1.100, cada uno de una historia sola; 2 en un navegador; **ninguno recorre el flujo de un rol** | `docs/mapa-funcional.md`, sección 6 |
+| Tests | Más de 1.100, cada uno de una historia sola; hasta la it. 40a, solo 2 en un navegador y **ninguno recorre el flujo de un rol** | `docs/mapa-funcional.md`, sección 6 |
+| Flujos de punta a punta, como tests (it. 40a, `make e2e`) | **27 pasos pasan y 20 son `fixme`**, uno por vacío | `tests/e2e/flujos/` |
+| Pantallas medidas (it. 40a, `make ux-check`) | 52 (26 por tamaño), comparadas con `tests/ux/baseline.json` | `tests/ux/` |
 
 **Por dónde empezar:** por la **it. 40a**, que convierte los dos análisis en tests: el recorrido con axe (`make ux-check`) y los flujos de cada rol como tests de extremo a extremo. Los vacíos quedan como tests pendientes, y cada iteración los pasa a verde. El orden completo está en la sección 6.
 

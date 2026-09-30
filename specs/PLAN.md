@@ -1600,6 +1600,15 @@ Esta iteración estaba reservada para ese recorrido. El recorrido se hizo para e
 - cada paso de la sección 2 de `docs/mapa-funcional.md` tiene su test: ✅ pasa, y ⬜ o ⚠️ es un `fixme` con su vacío;
 - la línea base (vacíos pendientes, violaciones de axe, letra y botones) queda anotada en `docs/estado-mvp.md`.
 
+✅ **40a cumplida (2026-09-29).** El usuario pidió seguir sin revisión hasta el día siguiente, con la interfaz como prioridad: "como si mañana fuera el día de la demo".
+- **El fixture** (`tests/e2e/fixture.php`) deja el Super Administrador, la Administradora, el veedor y cinco reportes por el camino de un teléfono (`CreateReport`, la huella, el sello): dos publicados, dos en la Bandeja y uno rechazado con su motivo. Se sellan en la red en memoria de los tests, sin Stellar ni cola, en unos 3 segundos. Tampoco dispara la sincronización con SECOP.
+- **Los flujos** (`tests/e2e/flujos/`): el de alta entre roles, con el enlace de cada invitación leído del correo de desarrollo, y uno por rol (Super Administrador, Administradora, veedor y ciudadano). **27 pasos pasan y 20 son `fixme`**, cada uno con su vacío (`V1`… `V15` y la Ley 1581). Corren en unos 40 segundos.
+- **`make ux-check`** (`tests/ux/pantallas.spec.js`): 52 pantallas (26 por tamaño), con capturas, axe, letra y botones.
+  - Falla si aparece una regla nueva de axe, si la letra o los botones empeoran más allá de la tolerancia (5 y 10 puntos), o si hay una pantalla sin línea base. `make ux-baseline` reescribe la línea base.
+  - El sellado y la salud de SECOP se fotografían pero no se comparan: dependen de la red Stellar y del historial de SECOP.
+- **Probado rompiéndolo:** una línea base con la letra "mejor" de lo que está, sin una regla de axe que sí aparece, y sin una pantalla. Los tres casos se atraparon, cada uno con su mensaje.
+- **En el pipeline:** la etapa E2E corre los dos y guarda las capturas como artefacto.
+
 **40b — Lo urgente.**
 - Sesión:
   - "Salir" y el nombre del usuario en los paneles del Administrador y del Super Administrador;

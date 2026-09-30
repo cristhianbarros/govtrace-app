@@ -94,8 +94,12 @@ test-stellar: ## Sealing tests against the local Stellar network (needs make ste
 	@$(EXEC) ./vendor/bin/pest --group=stellar $(ARGS)
 verify-check: ## Independent verifier (tools/verify) on a published evidence, isolated with the Stellar node alone
 	@bash tests/infra/check-verify.sh
-e2e: .env.docker ## End-to-end in a real Chromium against make up (US-018 offline; needs make up and make npm-build)
+e2e: .env.docker ## End-to-end in a real Chromium against make up: each role's journey, gaps as fixme (it. 40a), and US-018 offline (needs make up and make npm-build)
 	@bash tests/infra/run-e2e.sh
+ux-check: .env.docker ## UX checkpoint (it. 40a): every screen of every role, phone and computer, with screenshots, axe (WCAG 2.2 AA) and text/target sizes, against tests/ux/baseline.json
+	@bash tests/infra/run-ux-check.sh
+ux-baseline: .env.docker ## Rewrite tests/ux/baseline.json after a UX improvement (review its diff)
+	@UPDATE_BASELINE=1 bash tests/infra/run-ux-check.sh
 admin: .env.docker ## The first Super Administrador of a new environment. Usage: make admin EMAIL=ana@x.co [NAME="Ana"] (asks for the password, or generates one)
 	@test -n "$(EMAIL)" || { echo "Uso: make admin EMAIL=ana@correo.co [NAME=\"Ana Directora\"]"; exit 1; }
 	@$(EXEC) php artisan admin:create "$(EMAIL)" $(if $(NAME),--name="$(NAME)")

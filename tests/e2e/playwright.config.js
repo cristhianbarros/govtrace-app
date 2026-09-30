@@ -7,6 +7,9 @@ export default defineConfig({
     testDir: '.',
     timeout: 90_000,
     retries: 0,
+    // Uno a la vez y en orden: los flujos comparten la base de desarrollo, y el
+    // del Super Administrador gobierna la organización que da de alta el primero.
+    workers: 1,
     reporter: [['list']],
     outputDir: '../../storage/framework/testing/e2e',
     use: {
