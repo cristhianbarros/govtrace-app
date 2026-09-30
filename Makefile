@@ -105,8 +105,8 @@ admin: .env.docker ## The first Super Administrador of a new environment. Usage:
 	@$(EXEC) php artisan admin:create "$(EMAIL)" $(if $(NAME),--name="$(NAME)")
 invites: .env.docker ## The links of the latest mails (mail goes to a log in development): invitations, password recovery
 	@$(EXEC) php artisan invitations:latest $(if $(LIMIT),--limit=$(LIMIT))
-demo: .env.docker .env docker/app/xdebug.ini ## ONE command for a live demo: the app, the Stellar network and a demo organization with sealed reports (LUGAR="lat,lng": the Calle 30 worksite where the presentation is)
-	@LUGAR="$(LUGAR)" bash docker/demo/demo.sh
+demo: .env.docker .env docker/app/xdebug.ini ## ONE command for a live demo: the app, the Stellar network and a demo organization with sealed reports (LUGAR="lat,lng": an example worksite where the presentation is; TERRITORIO=medellin: the Comuna 13)
+	@LUGAR="$(LUGAR)" TERRITORIO="$(TERRITORIO)" bash docker/demo/demo.sh
 test-front: .env.docker ## Frontend tests (Vitest)
 	@$(NODE) npm run test
 test-all: lint test test-front ## Pint + Pest + Vitest (same as CI)

@@ -86,6 +86,16 @@ Recorre los cuatro perfiles con la interfaz de las it. 40 y 43. Todo se hace con
 
 Las capturas de todas las pantallas, en celular y en computador: `make ux-check` las deja en `storage/framework/testing/ux/shots/`.
 
+### La demostración en la Comuna 13 de Medellín
+
+`make demo TERRITORIO=medellin` (it. 43e) cambia Magdalena por la Comuna 13: la misma gente, las mismas contraseñas y el mismo guion.
+- **Una obra real:** la sección Escuela Municipal San Javier y su espacio público (EDU), con su interventoría en la misma ficha. Los contratos son los de SECOP II (CO1.PCCNTR.9033732 y 9047349), tal como estaban publicados el 2026-09-30. Solo tiene evidencias de "Avance", marcadas como visita de demostración.
+  - Su pin está cerca de la estación San Javier: SECOP no trae coordenadas, así que la ubicación es aproximada.
+- **Cinco obras de ejemplo, ficticias a la vista:** "Obra de ejemplo: …" en el nombre, "Entidad de ejemplo (ficticia)" y "Contratista de ejemplo S.A.S. (ficticio)". Son las andenes de La Pradera, el parque de El Salado, las escaleras de Las Independencias, la placa del Veinte de Julio y una quebrada sin ubicación.
+  - El retraso y el abandono van solo en estas. Nunca se le atribuye un problema a una obra o a un contratista reales.
+- **La obra de ejemplo de La Pradera** es la que `LUGAR` mueve. Sin `LUGAR`, queda en La Pradera: `make demo TERRITORIO=medellin LUGAR="lat,lng"` la lleva al sitio exacto de la presentación.
+- **En vivo, reporte sobre una obra de ejemplo.** Un "Abandono" en la obra real sería una afirmación falsa sobre una obra de verdad.
+
 ### Lo que hay que saber antes de una demostración
 
 - **Varios reportes a la vez se sellan por turnos.** Stellar admite una sola transacción pendiente de la cuenta selladora: cada sello espera a que el anterior entre en un ledger (en la red local, cerca de un segundo; en testnet y la red principal, unos 5). Ninguno gasta intentos por esperar su turno (it. 39). `make demo` envía sus 9 reportes de golpe, como los que un celular guarda sin señal.
