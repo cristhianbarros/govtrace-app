@@ -72,3 +72,11 @@ Característica: Pines del mapa por color de estado
     Entonces veo "¿Cómo funciona?" en tres pasos
     Y veo "Veeduría Ciudadana Santa Marta", que vigila Magdalena, con el enlace "Ver su mapa de obras"
     Y una veeduría dada de baja no aparece
+
+  # It. 40e: el sitio de la veeduría se recorre con pestañas, no con botones sueltos.
+
+  @complexity:low
+  Escenario: Las secciones del sitio de la veeduría se recorren con pestañas
+    Cuando abro el mapa, las estadísticas o el validador de la veeduría
+    Entonces veo las pestañas "Obras", "Estadísticas" y "Validar", con la de la pantalla actual marcada
+    Y desde una obra, la pestaña marcada es "Obras"

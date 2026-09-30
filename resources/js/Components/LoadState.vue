@@ -20,6 +20,6 @@ defineEmits(['retry']);
             Reintentar
         </button>
     </div>
-    <p v-else-if="empty" class="rounded-lg bg-white p-4 text-sm text-slate-600">{{ emptyText }}</p>
+    <p v-else-if="empty" class="rounded-2xl bg-white p-4 text-sm text-slate-600 shadow-soft ring-1 ring-slate-900/5">{{ emptyText }}</p>
     <slot v-else />
 </template>

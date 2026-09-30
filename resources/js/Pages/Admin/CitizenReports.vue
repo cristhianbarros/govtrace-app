@@ -60,7 +60,7 @@ onMounted(load);
 
         <LoadState :loading="loading" :error="error" :empty="reports?.length === 0" loading-text="Cargando informes…" empty-text="Aún no hay informes de ciudadanos." @retry="load">
             <div class="flex flex-col gap-3">
-                <article v-for="report in reports" :key="report.id" data-test="citizen-report" class="flex flex-col gap-2 rounded-lg bg-white p-3 text-base">
+                <article v-for="report in reports" :key="report.id" data-test="citizen-report" class="flex flex-col gap-2 rounded-2xl bg-white p-3 text-base shadow-soft ring-1 ring-slate-900/5">
                     <header class="flex flex-wrap items-center justify-between gap-2">
                         <span class="font-semibold">{{ report.worksite }}</span>
                         <span class="rounded px-2 py-0.5 text-sm font-semibold" :class="STATE[report.status]">{{ report.status_label }}</span>
@@ -78,12 +78,12 @@ onMounted(load);
                             <textarea :id="`answer-${report.id}`" v-model="answer" rows="3" maxlength="2000" class="rounded-lg border border-slate-300 px-3 py-2 text-base"></textarea>
                             <p v-if="refused" role="alert" class="text-sm text-red-700">{{ refused }}</p>
                             <div class="flex flex-wrap gap-2">
-                                <button type="button" :disabled="sending || answer.trim().length < 5" class="min-h-11 rounded-lg bg-slate-900 px-3 font-semibold text-white disabled:opacity-40" @click="sendAnswer">Enviar respuesta</button>
-                                <button type="button" class="min-h-11 rounded-lg border px-3 font-semibold" @click="answering = null">Cancelar</button>
+                                <button type="button" :disabled="sending || answer.trim().length < 5" class="min-h-11 rounded-xl bg-brand-700 px-3 font-semibold text-white disabled:opacity-40 hover:bg-brand-800" @click="sendAnswer">Enviar respuesta</button>
+                                <button type="button" class="min-h-11 rounded-xl border border-brand-200 text-brand-800 hover:bg-brand-50 px-3 font-semibold" @click="answering = null">Cancelar</button>
                             </div>
                         </div>
                         <div v-else class="flex flex-wrap gap-2">
-                            <button type="button" class="min-h-11 rounded-lg border-2 border-slate-900 bg-white px-3 font-semibold" @click="startAnswer(report)">Responder</button>
+                            <button type="button" class="min-h-11 rounded-xl border-2 border-brand-700 bg-white px-3 font-semibold text-brand-800 hover:bg-brand-50" @click="startAnswer(report)">Responder</button>
                             <RowAction label="Descartar" confirm-label="Confirmar descarte" warning="Al ciudadano no le llega ningún correo." :run="() => discardCitizenReport(report.id)" @done="done" />
                         </div>
                     </template>

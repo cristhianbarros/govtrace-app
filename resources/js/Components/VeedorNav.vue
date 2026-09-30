@@ -22,6 +22,6 @@ const TABS = [
         :href="tab.href"
         :aria-current="tab.href === current ? 'page' : undefined"
         class="flex min-h-16 flex-1 flex-col items-center justify-center gap-0.5 text-base font-semibold"
-        :class="tab.href === current ? 'border-t-4 border-slate-900 text-slate-900' : 'border-t-4 border-transparent text-slate-600'"
+        :class="tab.href === current ? 'border-t-4 border-brand-700 text-brand-800' : 'border-t-4 border-transparent text-slate-600'"
     ><component :is="tab.icon" aria-hidden="true" class="size-6" />{{ tab.label }}</Link>
 </template>

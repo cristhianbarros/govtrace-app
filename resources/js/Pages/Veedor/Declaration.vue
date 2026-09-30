@@ -27,7 +27,7 @@ function submit() {
             <h1 class="text-xl font-semibold">Antes de reportar</h1>
             <p class="text-base">Solo se hace una vez. Después sigue a «Nuevo Reporte».</p>
             <ImpedimentsDeclaration v-model="form.declaration" :error="missing ?? form.errors.declaration ?? null" />
-            <button type="submit" :disabled="form.processing" class="min-h-11 rounded-lg bg-slate-900 px-3 py-4 text-base font-semibold text-white disabled:opacity-40">
+            <button type="submit" :disabled="form.processing" class="min-h-11 rounded-xl bg-brand-700 px-3 py-4 text-base font-semibold text-white disabled:opacity-40 hover:bg-brand-800">
                 Declarar y continuar
             </button>
         </form>

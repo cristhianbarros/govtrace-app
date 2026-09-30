@@ -90,11 +90,12 @@ function startOver() {
 }
 
 const FIELD = 'w-full rounded-lg border border-slate-300 bg-white px-3 py-3 text-base';
-const BUTTON = 'min-h-11 rounded-lg bg-slate-900 px-4 py-3 text-base font-semibold text-white disabled:opacity-40';
+const BUTTON = 'min-h-12 rounded-xl bg-brand-700 px-4 py-3 text-base font-semibold text-white shadow-sm hover:bg-brand-800 disabled:opacity-40';
 </script>
 
 <template>
-    <section id="informar" aria-labelledby="informar-title" class="mt-6 flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-4 text-base">
+    <!-- It. 40e: una invitación cálida, en terracota, distinta de las tarjetas de la obra. -->
+    <section id="informar" aria-labelledby="informar-title" class="mt-6 flex flex-col gap-3 rounded-2xl border-l-8 border-warm-500 bg-warm-50 p-5 text-base shadow-soft">
         <h2 id="informar-title" class="text-lg font-semibold">Informar a esta veeduría</h2>
         <p>¿Vio algo en esta obra? Cuénteselo a la veeduría: la ley la obliga a recibir lo que le informen los ciudadanos (Ley 850 de 2003, art. 18). No hace falta tener cuenta.</p>
 

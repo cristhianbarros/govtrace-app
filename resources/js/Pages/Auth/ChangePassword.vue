@@ -62,7 +62,7 @@ async function submit() {
                 <PasswordField id="password" v-model="form.password" label="Nueva contraseña" autocomplete="new-password" :hint="hints.password" />
                 <p class="-mt-2 text-sm text-slate-700">{{ PASSWORD_RULES_MESSAGE }}</p>
                 <PasswordField id="password_confirmation" v-model="form.password_confirmation" label="Escriba otra vez la nueva contraseña" autocomplete="new-password" :hint="hints.password_confirmation" />
-                <button type="submit" :disabled="sending" class="min-h-12 rounded-lg bg-slate-900 px-4 text-base font-semibold text-white disabled:opacity-40">
+                <button type="submit" :disabled="sending" class="min-h-12 rounded-xl bg-brand-700 px-4 text-base font-semibold text-white disabled:opacity-40 hover:bg-brand-800">
                     {{ sending ? 'Cambiando…' : 'Cambiar contraseña' }}
                 </button>
             </form>

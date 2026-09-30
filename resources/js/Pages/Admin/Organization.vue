@@ -70,7 +70,7 @@ onMounted(load);
         <p v-if="saved" role="status" class="rounded-lg bg-emerald-50 p-3 text-sm font-semibold text-emerald-800">{{ saved }}</p>
 
         <LoadState :loading="loading" :error="error" loading-text="Cargando organización…" empty-text="" @retry="load">
-            <form class="flex flex-col gap-4 rounded-lg bg-white p-3" novalidate @submit.prevent="save">
+            <form class="flex flex-col gap-4 rounded-2xl bg-white p-3 shadow-soft ring-1 ring-slate-900/5" novalidate @submit.prevent="save">
                 <div class="flex flex-col gap-1">
                     <label for="display-name" class="text-sm font-semibold text-slate-700">Nombre de fantasía</label>
                     <input id="display-name" v-model="displayName" type="text" maxlength="100" class="w-full rounded-lg border border-slate-300 px-3 py-3 text-base" />
@@ -85,12 +85,12 @@ onMounted(load);
 
                 <p v-if="refused" role="alert" class="rounded bg-red-50 p-2 text-sm text-red-800">{{ refused }}</p>
 
-                <button type="submit" :disabled="saving" class="rounded-lg bg-slate-900 px-3 py-3 font-semibold text-white disabled:opacity-40">
+                <button type="submit" :disabled="saving" class="rounded-xl bg-brand-700 px-3 py-3 font-semibold text-white disabled:opacity-40 hover:bg-brand-800">
                     {{ saving ? 'Guardando…' : 'Guardar cambios' }}
                 </button>
             </form>
 
-            <section class="rounded-lg bg-white p-3 text-sm">
+            <section class="rounded-2xl bg-white p-3 text-sm shadow-soft ring-1 ring-slate-900/5">
                 <dl class="grid grid-cols-1 gap-2 md:grid-cols-2">
                     <div><dt class="text-xs text-slate-500">Nombre legal</dt><dd>{{ profile.legal_name }}</dd></div>
                     <div><dt class="text-xs text-slate-500">NIT</dt><dd>{{ profile.nit ?? 'Sin NIT' }}</dd></div>

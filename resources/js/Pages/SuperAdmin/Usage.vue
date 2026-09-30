@@ -33,7 +33,7 @@ onMounted(load);
             @retry="load"
         >
             <ul class="flex flex-col gap-2">
-                <li v-for="row in rows" :key="row.organization" data-test="usage-row" class="flex flex-col gap-2 rounded-lg bg-white p-3 text-sm">
+                <li v-for="row in rows" :key="row.organization" data-test="usage-row" class="flex flex-col gap-2 rounded-2xl bg-white p-3 text-sm shadow-soft ring-1 ring-slate-900/5">
                     <div class="flex items-start justify-between gap-2">
                         <p class="font-semibold">{{ row.organization }}</p>
                         <span class="shrink-0 rounded bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">{{ row.status }}</span>

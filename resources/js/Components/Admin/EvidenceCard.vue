@@ -8,6 +8,13 @@ import { formatDateTime } from '@/lib/format.js';
 import { decideOnEvidence } from '@/services/api.js';
 import { errorMessage } from '@/services/errors.js';
 
+// It. 40e: el mismo color de cada clasificación que en el sitio público.
+const CLASSIFICATION = {
+    Avance: 'bg-green-100 text-green-800',
+    Retraso: 'bg-yellow-100 text-yellow-900',
+    Abandono: 'bg-red-100 text-red-800',
+};
+
 const props = defineProps({
     evidence: { type: Object, required: true },
 });
@@ -60,7 +67,7 @@ async function decide(decision) {
             </p>
         </div>
         <div class="flex flex-wrap items-center gap-2 text-sm">
-            <span class="rounded bg-slate-900 px-2 py-0.5 font-semibold text-white">{{ evidence.classification }}</span>
+            <span class="rounded px-2 py-0.5 font-semibold" :class="CLASSIFICATION[evidence.classification]">{{ evidence.classification }}</span>
             <span class="text-slate-600">{{ formatDateTime(evidence.captured_at) }}</span>
             <span v-if="evidence.suspicious_capture_time" class="rounded bg-amber-100 px-2 py-0.5 font-semibold text-amber-900">
                 Hora de captura sospechosa
@@ -100,7 +107,7 @@ async function decide(decision) {
                     class="flex-1 rounded-lg bg-red-700 px-3 py-3 font-semibold text-white disabled:opacity-40"
                     @click="decide(asking)"
                 >{{ withReason[asking].confirm }}</button>
-                <button type="button" class="rounded-lg border px-3 py-3 font-semibold" @click="asking = null">Cancelar</button>
+                <button type="button" class="rounded-xl border border-brand-200 text-brand-800 hover:bg-brand-50 px-3 py-3 font-semibold" @click="asking = null">Cancelar</button>
             </div>
         </div>
 
@@ -109,11 +116,11 @@ async function decide(decision) {
                 v-if="evidence.actions.includes('publish')"
                 type="button"
                 :disabled="busy"
-                class="flex-1 rounded-lg bg-slate-900 px-3 py-3 font-semibold text-white disabled:opacity-40"
+                class="flex-1 rounded-xl bg-brand-700 px-3 py-3 font-semibold text-white disabled:opacity-40 hover:bg-brand-800"
                 @click="decide('publish')"
             >Publicar</button>
-            <button v-if="evidence.actions.includes('reject')" type="button" class="flex-1 rounded-lg border px-3 py-3 font-semibold" @click="ask('reject')">Rechazar</button>
-            <button v-if="evidence.actions.includes('withdraw')" type="button" class="flex-1 rounded-lg border px-3 py-3 font-semibold" @click="ask('withdraw')">Retirar</button>
+            <button v-if="evidence.actions.includes('reject')" type="button" class="flex-1 rounded-xl border-2 border-red-700 px-3 py-3 font-semibold text-red-800 hover:bg-red-50" @click="ask('reject')">Rechazar</button>
+            <button v-if="evidence.actions.includes('withdraw')" type="button" class="flex-1 rounded-xl border border-brand-200 text-brand-800 hover:bg-brand-50 px-3 py-3 font-semibold" @click="ask('withdraw')">Retirar</button>
         </div>
     </article>
 </template>

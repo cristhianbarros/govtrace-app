@@ -98,7 +98,7 @@ onMounted(load);
 <template>
     <SuperAdminLayout title="Organizaciones">
         <div class="flex flex-col gap-4">
-            <Link href="/admin/organizations/new" class="min-h-11 self-start rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white">
+            <Link href="/admin/organizations/new" class="min-h-11 self-start rounded-xl bg-brand-700 px-3 py-2 text-sm font-semibold text-white hover:bg-brand-800">
                 + Nueva organización
             </Link>
 
@@ -113,7 +113,7 @@ onMounted(load);
                 @retry="load"
             >
                 <ul class="flex flex-col gap-2">
-                    <li v-for="organization in organizations" :key="organization.id" data-test="organization-row" class="rounded-lg bg-white p-3 text-sm">
+                    <li v-for="organization in organizations" :key="organization.id" data-test="organization-row" class="rounded-2xl bg-white p-3 text-sm shadow-soft ring-1 ring-slate-900/5">
                         <div class="flex items-center justify-between gap-2">
                             <div>
                                 <p class="font-semibold">{{ organization.name }}</p>
@@ -123,7 +123,7 @@ onMounted(load);
                                 <span class="rounded px-2 py-0.5 text-xs font-semibold" :class="statusStyle[organization.status] ?? 'bg-slate-100 text-slate-700'">
                                     {{ organization.status }}
                                 </span>
-                                <button type="button" class="min-h-11 rounded-lg border px-3 text-sm font-semibold" @click="edit(organization)">Editar datos legales</button>
+                                <button type="button" class="min-h-11 rounded-xl border border-brand-200 text-brand-800 hover:bg-brand-50 px-3 text-sm font-semibold" @click="edit(organization)">Editar datos legales</button>
                             </div>
                         </div>
 
@@ -158,7 +158,7 @@ onMounted(load);
                                     <input :id="`administrator-email-${organization.id}`" v-model="newAdministrator.email" name="administrator-email" type="email" class="min-h-11 rounded-lg border border-slate-300 bg-white px-3 text-base" />
                                     <p v-if="assignError" role="alert" class="text-sm text-red-700">{{ assignError }}</p>
                                     <div class="flex gap-2">
-                                        <button type="submit" class="min-h-11 rounded-lg bg-slate-900 px-3 text-sm font-semibold text-white">Enviar invitación</button>
+                                        <button type="submit" class="min-h-11 rounded-xl bg-brand-700 px-3 text-sm font-semibold text-white hover:bg-brand-800">Enviar invitación</button>
                                         <button type="button" class="min-h-11 rounded-lg border bg-white px-3 text-sm font-semibold" @click="assigning = null">Cancelar</button>
                                     </div>
                                 </form>
@@ -195,10 +195,10 @@ onMounted(load);
                             <input id="registration-authority" v-model="legal.registrationAuthority" type="text" placeholder="Personería de Santa Marta" class="rounded-lg border border-slate-300 px-3 py-2 text-base" />
                             <p v-if="refused" role="alert" class="text-sm text-red-700">{{ refused }}</p>
                             <div class="flex gap-2">
-                                <button type="submit" :disabled="saving" class="min-h-11 rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white disabled:opacity-40">
+                                <button type="submit" :disabled="saving" class="min-h-11 rounded-xl bg-brand-700 px-3 py-2 text-sm font-semibold text-white disabled:opacity-40 hover:bg-brand-800">
                                     {{ saving ? 'Guardando…' : 'Guardar datos legales' }}
                                 </button>
-                                <button type="button" class="min-h-11 rounded-lg border px-3 py-2 text-sm font-semibold" @click="editing = null">Cancelar</button>
+                                <button type="button" class="min-h-11 rounded-xl border border-brand-200 text-brand-800 hover:bg-brand-50 px-3 py-2 text-sm font-semibold" @click="editing = null">Cancelar</button>
                             </div>
                         </form>
                     </li>

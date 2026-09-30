@@ -55,7 +55,7 @@ async function submit() {
             <p v-if="refused" role="alert" class="rounded-lg bg-red-50 p-3 text-sm text-red-800">{{ refused }}</p>
 
             <form class="flex flex-col gap-4" novalidate @submit.prevent="submit">
-                <fieldset class="flex flex-col gap-3 rounded-lg bg-white p-3">
+                <fieldset class="flex flex-col gap-3 rounded-2xl bg-white p-3 shadow-soft ring-1 ring-slate-900/5">
                     <legend class="px-1 text-sm font-semibold text-slate-700">Organización</legend>
                     <div class="flex flex-col gap-1">
                         <label for="name" class="text-sm font-semibold text-slate-700">Nombre</label>
@@ -80,7 +80,7 @@ async function submit() {
                     </div>
                 </fieldset>
 
-                <fieldset class="flex flex-col gap-3 rounded-lg bg-white p-3">
+                <fieldset class="flex flex-col gap-3 rounded-2xl bg-white p-3 shadow-soft ring-1 ring-slate-900/5">
                     <legend class="px-1 text-sm font-semibold text-slate-700">Administrador inicial (opcional)</legend>
                     <div class="flex flex-col gap-1">
                         <label for="administrator-name" class="text-sm font-semibold text-slate-700">Nombre</label>
@@ -92,7 +92,7 @@ async function submit() {
                     </div>
                 </fieldset>
 
-                <button type="submit" :disabled="sending" class="rounded-lg bg-slate-900 px-3 py-4 font-semibold text-white disabled:opacity-40">
+                <button type="submit" :disabled="sending" class="rounded-xl bg-brand-700 px-3 py-4 font-semibold text-white disabled:opacity-40 hover:bg-brand-800">
                     {{ sending ? 'Registrando…' : 'Registrar organización' }}
                 </button>
             </form>

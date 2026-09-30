@@ -105,12 +105,12 @@ onMounted(load);
         >
             <p class="text-sm text-slate-700"><strong>Descargar expediente:</strong> Un ZIP con las evidencias publicadas, sus pruebas y las plantillas del derecho de petición y de la denuncia ante la Contraloría.</p>
             <div class="flex flex-col gap-3">
-                <article v-for="worksite in worksites" :key="worksite.id" class="flex flex-col gap-2 rounded-lg bg-white p-3 text-sm">
+                <article v-for="worksite in worksites" :key="worksite.id" class="flex flex-col gap-2 rounded-2xl bg-white p-3 text-sm shadow-soft ring-1 ring-slate-900/5">
                     <p v-if="worksite.name" class="text-base font-semibold">{{ worksite.name }}</p>
                     <ul class="flex flex-col gap-1">
                         <li v-for="contract in worksite.contracts" :key="contract.secop_contract_id" class="flex flex-wrap items-center justify-between gap-2">
                             <span class="font-semibold">{{ contract.object }}</span>
-                            <button type="button" class="min-h-11 rounded-lg border px-3 text-sm font-semibold" @click="addToGroup(contract.secop_contract_id)">Unir con otra obra</button>
+                            <button type="button" class="min-h-11 rounded-xl border border-brand-200 text-brand-800 hover:bg-brand-50 px-3 text-sm font-semibold" @click="addToGroup(contract.secop_contract_id)">Unir con otra obra</button>
                         </li>
                     </ul>
                     <p class="text-slate-600">Ubicación oficial: {{ where(worksite) }}</p>
@@ -129,20 +129,20 @@ onMounted(load);
                         </div>
                         <p v-if="refused" role="alert" class="rounded bg-red-50 p-2 text-red-800">{{ refused }}</p>
                         <div class="flex gap-2">
-                            <button type="button" :disabled="!typed || saving" class="flex-1 rounded-lg bg-slate-900 px-3 py-3 font-semibold text-white disabled:opacity-40" @click="save">
+                            <button type="button" :disabled="!typed || saving" class="flex-1 rounded-xl bg-brand-700 px-3 py-3 font-semibold text-white disabled:opacity-40 hover:bg-brand-800" @click="save">
                                 Guardar ubicación
                             </button>
-                            <button type="button" class="rounded-lg border px-3 py-3 font-semibold" @click="editing = null">Cancelar</button>
+                            <button type="button" class="rounded-xl border border-brand-200 text-brand-800 hover:bg-brand-50 px-3 py-3 font-semibold" @click="editing = null">Cancelar</button>
                         </div>
                     </div>
-                    <button v-else type="button" class="min-h-11 self-start rounded-lg border px-3 py-2 font-semibold" @click="correct(worksite)">Corregir ubicación</button>
+                    <button v-else type="button" class="min-h-11 self-start rounded-xl border border-brand-200 text-brand-800 hover:bg-brand-50 px-3 py-2 font-semibold" @click="correct(worksite)">Corregir ubicación</button>
                     <!-- US-056-LEG (it. 44b): lo que la veeduría lleva a la entidad y a la Contraloría. -->
-                    <a data-test="dossier" :href="`/worksites/${worksite.id}/dossier.zip`" class="inline-flex min-h-11 items-center self-start rounded-lg border-2 border-slate-900 bg-white px-3 font-semibold text-slate-900">Descargar expediente</a>
+                    <a data-test="dossier" :href="`/worksites/${worksite.id}/dossier.zip`" class="inline-flex min-h-11 items-center self-start rounded-xl border-2 border-brand-700 bg-white px-3 font-semibold text-brand-800 hover:bg-brand-50">Descargar expediente</a>
                 </article>
             </div>
         </LoadState>
 
-        <section aria-labelledby="group-title" class="flex flex-col gap-2 rounded-lg bg-white p-3 text-sm">
+        <section aria-labelledby="group-title" class="flex flex-col gap-2 rounded-2xl bg-white p-3 text-sm shadow-soft ring-1 ring-slate-900/5">
             <h2 id="group-title" class="font-semibold">Unir contratos de una misma obra</h2>
             <p class="text-slate-600">Para que una obra con varias fases o reinicios se vea y se reporte como una sola. Un reporte nunca cambia de ficha: dos fichas que ya tienen reportes no se unen.</p>
             <label for="group-name" class="text-xs font-semibold text-slate-700">Nombre de la ficha</label>
@@ -150,7 +150,7 @@ onMounted(load);
             <label for="group-contracts" class="text-xs font-semibold text-slate-700">Contratos de SECOP II (uno por línea)</label>
             <textarea id="group-contracts" v-model="groupIds" rows="3" class="rounded-lg border border-slate-300 px-3 py-2 font-mono text-base"></textarea>
             <p v-if="groupRefused" role="alert" class="rounded bg-red-50 p-2 text-red-800">{{ groupRefused }}</p>
-            <button type="button" :disabled="grouping || !groupName.trim() || idsToGroup.length < 2" class="min-h-11 self-start rounded-lg bg-slate-900 px-4 font-semibold text-white disabled:opacity-40" @click="group">Agrupar</button>
+            <button type="button" :disabled="grouping || !groupName.trim() || idsToGroup.length < 2" class="min-h-11 self-start rounded-xl bg-brand-700 px-4 font-semibold text-white disabled:opacity-40 hover:bg-brand-800" @click="group">Agrupar</button>
         </section>
     </AdminLayout>
 </template>

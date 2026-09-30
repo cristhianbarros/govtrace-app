@@ -123,6 +123,15 @@ Cada una se puede medir con un test, como las demás reglas de la SPEC:
 7. **R-UX-07 — Botones deshabilitados.** Ninguno queda deshabilitado sin decir por qué, junto al botón.
 8. **R-UX-08 — Qué pasó y qué sigue.** Después de cada acción, la pantalla lo dice. Por ejemplo: "Su reporte quedó guardado con sello digital. La veeduría lo revisará antes de publicarlo".
 9. **R-UX-09 — Accesibilidad.** El recorrido de Playwright no tiene ninguna violación de WCAG 2.2 AA (axe), ni en celular ni en escritorio.
+10. **R-UX-10 — Una identidad simple y acogedora** (it. 40e). Lo pidió el usuario: la interfaz se veía "muy común", y la idea es que impresione sin complicarse.
+    - **Paleta cálida** (`resources/css/app.css`): verde pino (`brand-*`) para la marca y las acciones principales; sol (`accent-*`) para "Entrar", la pestaña actual y el foco sobre fondos oscuros; terracota (`warm-*`) para la invitación a informar; grises cálidos y un fondo crema. La escala `slate` de toda la app se redefine en el tema, así que no cambió ninguna pantalla por eso.
+    - **Letras:** Atkinson Hyperlegible para el texto, hecha para leerse con baja visión; Fraunces, una serif suave, para los títulos. Las dos con licencia OFL y servidas desde el propio sitio.
+    - **Formas:** tarjetas con esquinas de 16 px y una sombra suave (`shadow-soft`), botones de 12 px, y el logotipo de GovTrace (una lupa con un visto bueno) cuando la veeduría no tiene el suyo.
+    - **Bienvenidas:**
+      - una banda en verde en el Inicio, con una ilustración;
+      - un encabezado en el mapa, con los tres estados como fichas grandes que también filtran;
+      - pestañas en el sitio de cada veeduría (Obras, Estadísticas, Validar), en vez de botones sueltos.
+    - Todo pasa `make ux-check`: el contraste AA lo mide axe.
 
 ## 3. Hallazgos transversales
 

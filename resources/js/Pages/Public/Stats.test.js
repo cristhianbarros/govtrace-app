@@ -67,7 +67,8 @@ describe('Estadísticas del territorio', () => {
 
         expect(wrapper.get('a[href="/open-data.csv"]').text()).toBe('Descargar para Excel (CSV)');
         expect(wrapper.get('a[href="/open-data.json"]').text()).toBe('Datos para programadores (JSON)');
-        expect(wrapper.get('a[href="/"]').text()).toBe('Volver al mapa');
+        // It. 40e: al mapa se vuelve por la pestaña "Obras".
+        expect(wrapper.get('nav[aria-label="Secciones de la veeduría"] a[href="/"]').text()).toBe('Obras');
     });
 
     it('Las estadísticas no llaman inconclusas a las obras en riesgo (it. 44a)', async () => {

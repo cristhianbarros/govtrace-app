@@ -32,7 +32,7 @@ onMounted(load);
 <template>
     <SuperAdminLayout title="Salud de SECOP II">
         <div class="flex flex-col gap-2 md:flex-row md:items-center">
-            <button type="button" :disabled="syncing" class="min-h-11 self-start rounded-lg bg-slate-900 px-4 text-base font-semibold text-white disabled:opacity-40" @click="syncNow">Sincronizar ahora</button>
+            <button type="button" :disabled="syncing" class="min-h-11 self-start rounded-xl bg-brand-700 px-4 text-base font-semibold text-white disabled:opacity-40 hover:bg-brand-800" @click="syncNow">Sincronizar ahora</button>
             <p v-if="notice" role="status" class="text-base text-slate-800">{{ notice }}</p>
         </div>
         <LoadState
@@ -43,7 +43,7 @@ onMounted(load);
             empty-text="Aún no ha corrido ninguna sincronización con SECOP II."
             @retry="load"
         >
-            <section class="flex flex-col gap-3 rounded-lg bg-white p-3 text-sm">
+            <section class="flex flex-col gap-3 rounded-2xl bg-white p-3 text-sm shadow-soft ring-1 ring-slate-900/5">
                 <div class="flex items-center gap-2">
                     <span data-test="health" class="size-3 rounded-full" :class="run.healthy ? 'bg-emerald-500' : 'bg-red-600'" aria-hidden="true"></span>
                     <span class="font-semibold">{{ run.status }}</span>

@@ -202,13 +202,13 @@ function startOver() {
 
             <!-- 1. La obra: una cercana (US-019) o buscada (US-016) -->
             <section v-if="!contract" class="flex flex-col gap-2">
-                <button type="button" class="min-h-11 rounded-lg border border-slate-300 bg-white px-3 text-base font-semibold" :disabled="nearby.status === 'locating'" @click="findNearby">📍 Obras cercanas</button>
+                <button type="button" class="min-h-11 rounded-xl border border-brand-200 text-brand-800 hover:bg-brand-50 bg-white px-3 text-base font-semibold" :disabled="nearby.status === 'locating'" @click="findNearby">📍 Obras cercanas</button>
                 <p v-if="nearby.status === 'locating'" class="text-sm text-slate-600">Buscando obras cercanas…</p>
                 <p v-else-if="nearby.status === 'failed'" role="alert" class="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">{{ nearby.message }}</p>
-                <p v-else-if="nearby.status === 'ready' && nearby.list.length === 0" class="rounded-lg bg-white p-3 text-sm text-slate-700">{{ NO_NEARBY }}</p>
+                <p v-else-if="nearby.status === 'ready' && nearby.list.length === 0" class="rounded-2xl bg-white p-3 text-sm text-slate-700 shadow-soft ring-1 ring-slate-900/5">{{ NO_NEARBY }}</p>
                 <ul v-else-if="nearby.status === 'ready'" class="flex flex-col gap-2">
                     <li v-for="item in nearby.list" :key="item.worksite_id">
-                        <button type="button" data-test="nearby" class="flex w-full items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white p-3 text-left active:bg-slate-100" @click="chooseWorksite(item.contract)">
+                        <button type="button" data-test="nearby" class="flex w-full items-center justify-between gap-3 rounded-2xl bg-white shadow-soft ring-1 ring-slate-900/5 p-3 text-left active:bg-slate-100" @click="chooseWorksite(item.contract)">
                             <span>
                                 <span class="block font-semibold">{{ item.name }}</span>
                                 <span class="block text-sm text-slate-600">{{ item.contract.entity_name }}</span>
@@ -219,7 +219,7 @@ function startOver() {
                 </ul>
             </section>
             <ContractSearch v-if="!contract" @select="chooseWorksite" />
-            <section v-else class="flex items-start justify-between gap-3 rounded-lg bg-white p-3">
+            <section v-else class="flex items-start justify-between gap-3 rounded-2xl bg-white p-3 shadow-soft ring-1 ring-slate-900/5">
                 <div>
                     <p class="font-semibold">{{ contract.object }}</p>
                     <p class="text-sm text-slate-600">{{ contract.entity_name }}</p>
@@ -241,7 +241,7 @@ function startOver() {
                         <button
                             type="button"
                             data-test="retry-gps"
-                            class="rounded-lg border border-slate-300 bg-white px-3 py-3 text-base font-semibold"
+                            class="rounded-xl border border-brand-200 text-brand-800 hover:bg-brand-50 bg-white px-3 py-3 text-base font-semibold"
                             @click="locate"
                         >
                             Reintentar GPS
@@ -299,7 +299,7 @@ function startOver() {
                         type="submit"
                         :disabled="!canSend"
                         :aria-describedby="missing.length ? 'send-missing' : undefined"
-                        class="rounded-lg bg-slate-900 px-3 py-4 text-base font-semibold text-white disabled:opacity-40"
+                        class="rounded-xl bg-brand-700 px-3 py-4 text-base font-semibold text-white disabled:opacity-40 hover:bg-brand-800"
                     >
                         {{ sending ? 'Enviando…' : 'Enviar Reporte' }}
                     </button>

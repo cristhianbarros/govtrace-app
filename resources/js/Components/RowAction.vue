@@ -47,10 +47,10 @@ async function go() {
                 type="button"
                 :disabled="busy"
                 class="min-h-11 rounded-lg border px-3 text-sm font-semibold disabled:opacity-40"
-                :class="asking ? 'border-red-700 bg-red-700 text-white' : 'bg-white'"
+                :class="asking ? 'border-red-700 bg-red-700 text-white hover:bg-red-800' : 'border-brand-200 bg-white text-brand-800 hover:bg-brand-50'"
                 @click="go"
             >{{ asking ? confirmLabel : label }}</button>
-            <button v-if="asking" type="button" class="min-h-11 rounded-lg border bg-white px-3 text-sm font-semibold" @click="asking = false">Cancelar</button>
+            <button v-if="asking" type="button" class="min-h-11 rounded-xl border border-brand-200 bg-white px-3 text-sm font-semibold text-brand-800 hover:bg-brand-50" @click="asking = false">Cancelar</button>
         </div>
         <p v-if="error" role="alert" class="text-xs text-red-700">{{ error }}</p>
     </div>

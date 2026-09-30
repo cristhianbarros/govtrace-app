@@ -2001,6 +2001,27 @@ Esta iteración estaba reservada para ese recorrido. El recorrido se hizo para e
   - Pest, 5 casos: la organización y los contratos reales, solo "Avance" en lo real, lo negativo solo en lo ficticio, la obra que mueve `LUGAR` y el territorio que no conoce. Los 17 de Magdalena siguen en verde.
   - El ensayo en un navegador, con el GPS en La Pradera: el mapa, la obra real "Normal" con sus contratistas, una obra de ejemplo "En riesgo", y la veedora que reporta en la obra de ejemplo desde "Obras cercanas".
 
+**40e — Pestañas y una identidad simple y acogedora** (US-027, R-UX-10). El usuario pidió pestañas en vez de botones sueltos, un estilo con contraste y, sobre todo, una interfaz que impresione: "es como muy común… simple pero acogedora".
+
+✅ **40e cumplida (2026-09-30).**
+- **Pestañas en el sitio de cada veeduría** (`SectionTabs`): Obras, Estadísticas y Validar, bajo la cabecera, con la actual marcada con `aria-current`. Desde una obra, la marcada es Obras. Salen los botones del pie del mapa y los "Volver al mapa" de las estadísticas y el validador.
+- **Una identidad propia** (R-UX-10):
+  - el verde pino, el sol y la terracota;
+  - grises cálidos y fondo crema;
+  - Atkinson Hyperlegible y Fraunces;
+  - tarjetas redondeadas con sombra suave y botones redondeados;
+  - el logotipo de GovTrace, la ilustración del barrio y la obra, el Inicio con su banda de bienvenida, el mapa con su encabezado y sus fichas de estado, y la invitación a informar en terracota.
+- **Los colores viven en el tema:** los cambios se hicieron con reglas sobre las clases, así que los 42 archivos quedaron coherentes.
+  - Las acciones principales son verdes, las secundarias blancas con borde verde, y el rechazo tiene un borde rojo.
+  - Las clasificaciones del Administrador usan los mismos colores que el sitio público.
+- **Una trampa de CSS:** una regla fuera de `@layer` le gana a toda utilidad de Tailwind. Por eso el título del Inicio salía oscuro sobre verde, y lo global quedó en `@layer base`.
+- **Prueba:**
+  - Vitest: 439 de 439, con las pestañas;
+  - `make e2e`: 42 pasan;
+  - `make ux-check`: sin retroceso y sin problemas de contraste de axe; la línea base se reescribió;
+  - `make audit`: sin vulnerabilidades, con las dos tipografías nuevas;
+  - capturas del Inicio, el mapa, una obra, el Administrador y el veedor, revisadas en celular y en computador.
+
 ## Fase v1 — Alinear con el proceso actual (2026-09-30)
 
 La revisión documental del control social de hoy (`docs/proceso-actual.md`, PR #60) comparó GovTrace con la ley. Encontró que GovTrace termina en el mapa, un paso antes del proceso formal, y que nuestro "En riesgo" se confunde con la "obra inconclusa" de la ley.

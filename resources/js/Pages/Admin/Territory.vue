@@ -97,7 +97,7 @@ onMounted(load);
             <p v-if="refused" role="alert" class="rounded-lg bg-red-50 p-3 text-sm text-red-800">{{ refused }}</p>
             <p v-if="saved" role="status" class="rounded-lg bg-emerald-50 p-3 text-sm font-semibold text-emerald-800">{{ saved }}</p>
 
-            <button type="button" :disabled="saving" class="rounded-lg bg-slate-900 px-3 py-4 font-semibold text-white disabled:opacity-40" @click="save">
+            <button type="button" :disabled="saving" class="rounded-xl bg-brand-700 px-3 py-4 font-semibold text-white disabled:opacity-40 hover:bg-brand-800" @click="save">
                 {{ saving ? 'Guardando…' : 'Guardar territorio' }}
             </button>
         </LoadState>

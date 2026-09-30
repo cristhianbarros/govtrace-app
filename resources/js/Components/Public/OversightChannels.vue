@@ -4,11 +4,11 @@
 // avisarle de una obra inconclusa (Ley 2020 de 2020, art. 8).
 import { CONTRALORIA } from '@/lib/oversight.js';
 
-const LINK = 'inline-flex min-h-11 items-center justify-center rounded-lg border-2 border-slate-900 bg-white px-3 text-base font-semibold text-slate-900';
+const LINK = 'inline-flex min-h-11 items-center justify-center rounded-xl border-2 border-brand-700 bg-white px-3 text-base font-semibold text-brand-800 hover:bg-brand-50';
 </script>
 
 <template>
-    <section id="contraloria" aria-labelledby="contraloria-title" class="mt-6 rounded-lg border border-slate-200 bg-white p-4">
+    <section id="contraloria" aria-labelledby="contraloria-title" class="mt-6 rounded-2xl bg-white shadow-soft ring-1 ring-slate-900/5 p-4">
         <h2 id="contraloria-title" class="text-lg font-semibold">¿Sabe de un problema en esta obra?</h2>
         <p class="mt-2 text-base">
             Cualquier ciudadano puede denunciar ante la Contraloría el mal uso de recursos públicos, o avisarle de una obra inconclusa.

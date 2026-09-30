@@ -57,13 +57,13 @@ async function leave() {
 </script>
 
 <template>
-    <Link v-if="offersLogin" href="/login" class="ml-auto inline-flex min-h-11 items-center rounded-lg border-2 border-white px-4 text-base font-semibold hover:bg-slate-800">Entrar</Link>
+    <Link v-if="offersLogin" href="/login" class="ml-auto inline-flex min-h-11 items-center rounded-xl bg-accent-400 px-4 text-base font-semibold text-slate-900 shadow-sm hover:bg-accent-300">Entrar</Link>
     <div v-else-if="account" ref="root" class="relative ml-auto">
         <button
             type="button"
             aria-haspopup="menu"
             :aria-expanded="open"
-            class="flex min-h-11 items-center gap-2 rounded-lg px-2 text-base font-semibold hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-white"
+            class="flex min-h-11 items-center gap-2 rounded-xl px-2 text-base font-semibold hover:bg-brand-700 focus-visible:outline-2 focus-visible:outline-white"
             @click="open = !open"
         >
             <svg aria-hidden="true" viewBox="0 0 24 24" class="size-6 shrink-0" fill="none" stroke="currentColor" stroke-width="2">
@@ -87,12 +87,12 @@ async function leave() {
         </div>
 
         <div v-if="confirming" role="alertdialog" aria-modal="true" aria-labelledby="leave-title" class="fixed inset-0 z-50 flex items-end bg-black/60 p-4 md:items-center md:justify-center">
-            <div class="w-full rounded-lg bg-white p-4 text-slate-900 md:max-w-md">
+            <div class="w-full rounded-2xl bg-white p-4 text-slate-900 md:max-w-md shadow-soft ring-1 ring-slate-900/5">
                 <p id="leave-title" class="text-lg font-semibold">{{ pendingReports ? MESSAGES.logout : '¿Cerrar la sesión?' }}</p>
                 <p v-if="!pendingReports" class="mt-1 text-base text-slate-700">Para volver a entrar necesitará su correo y su contraseña.</p>
                 <div class="mt-4 flex flex-col gap-2 md:flex-row-reverse">
                     <button type="button" :disabled="leaving" class="min-h-12 rounded-lg bg-red-700 px-4 text-base font-semibold text-white disabled:opacity-40" @click="leave">Sí, cerrar sesión</button>
-                    <button type="button" class="min-h-12 rounded-lg border border-slate-300 px-4 text-base font-semibold" @click="confirming = false">Cancelar</button>
+                    <button type="button" class="min-h-12 rounded-xl border border-brand-200 text-brand-800 hover:bg-brand-50 px-4 text-base font-semibold" @click="confirming = false">Cancelar</button>
                 </div>
             </div>
         </div>

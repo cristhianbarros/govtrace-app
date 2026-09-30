@@ -80,7 +80,7 @@ onBeforeUnmount(() => window.removeEventListener('online', onOnline));
             @retry="load"
         >
             <ol class="flex flex-col gap-3">
-                <li v-for="report in reports" :key="report.id" data-test="report" class="rounded-lg border border-slate-200 bg-white p-4">
+                <li v-for="report in reports" :key="report.id" data-test="report" class="rounded-2xl bg-white shadow-soft ring-1 ring-slate-900/5 p-4">
                     <p class="text-sm text-slate-600">{{ formatDateTime(report.captured_at) }} · {{ report.classification }}</p>
                     <p class="font-semibold">{{ report.worksite }}</p>
                     <dl class="mt-2 grid grid-cols-2 gap-2 text-sm">
@@ -88,7 +88,7 @@ onBeforeUnmount(() => window.removeEventListener('online', onOnline));
                         <div><dt class="text-xs text-slate-600">Publicación</dt><dd data-test="editorial" class="font-semibold">{{ report.editorial_status }}</dd></div>
                     </dl>
                     <p v-if="report.rejection_reason" class="mt-2 rounded bg-red-50 p-2 text-sm text-red-800">Motivo: {{ report.rejection_reason }}</p>
-                    <button type="button" class="mt-3 min-h-11 rounded-lg border border-slate-300 px-3 text-sm font-semibold" :aria-expanded="Boolean(receipts[report.id])" @click="toggleReceipt(report)">Ver recibo</button>
+                    <button type="button" class="mt-3 min-h-11 rounded-xl border border-brand-200 text-brand-800 hover:bg-brand-50 px-3 text-sm font-semibold" :aria-expanded="Boolean(receipts[report.id])" @click="toggleReceipt(report)">Ver recibo</button>
                     <div v-if="receipts[report.id]" data-test="receipt" class="mt-3 rounded-lg bg-slate-50 p-3 text-sm">
                         <p v-if="receipts[report.id].loading">Consultando el recibo…</p>
                         <p v-else-if="receipts[report.id].error" role="alert">{{ receipts[report.id].error }}</p>

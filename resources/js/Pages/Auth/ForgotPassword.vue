@@ -44,7 +44,7 @@ function submit() {
                 <p v-if="hint" class="text-sm text-red-700">{{ hint }}</p>
             </div>
 
-            <button type="submit" :disabled="form.processing" class="rounded-lg bg-slate-900 px-3 py-4 text-base font-semibold text-white disabled:opacity-40">
+            <button type="submit" :disabled="form.processing" class="rounded-xl bg-brand-700 px-3 py-4 text-base font-semibold text-white disabled:opacity-40 hover:bg-brand-800">
                 {{ form.processing ? 'Enviando…' : 'Enviarme el enlace' }}
             </button>
 

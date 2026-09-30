@@ -23,7 +23,7 @@ function pick(files) {
 <template>
     <label
         class="flex min-h-24 cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed p-4 text-center text-sm"
-        :class="dragging ? 'border-slate-900 bg-slate-100' : 'border-slate-300 bg-white'"
+        :class="dragging ? 'border-brand-700 bg-slate-100' : 'border-slate-300 bg-white'"
         @dragover.prevent="dragging = true"
         @dragleave="dragging = false"
         @drop.prevent="dragging = false; pick($event.dataTransfer?.files)"

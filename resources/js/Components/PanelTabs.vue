@@ -31,7 +31,7 @@ document.addEventListener('click', closeOnOutsideClick);
 onBeforeUnmount(() => document.removeEventListener('click', closeOnOutsideClick));
 
 const tabClass = (active) =>
-    `flex min-h-16 flex-1 flex-col items-center justify-center gap-0.5 border-t-4 text-sm font-semibold ${active ? 'border-slate-900 text-slate-900' : 'border-transparent text-slate-600'}`;
+    `flex min-h-16 flex-1 flex-col items-center justify-center gap-0.5 border-t-4 text-sm font-semibold ${active ? 'border-brand-700 text-brand-800' : 'border-transparent text-slate-600'}`;
 </script>
 
 <template>
@@ -62,7 +62,7 @@ const tabClass = (active) =>
                 role="menuitem"
                 :aria-current="current(screen) ? 'page' : undefined"
                 class="flex min-h-12 items-center gap-3 rounded-lg px-3 text-base"
-                :class="current(screen) ? 'bg-slate-900 font-semibold text-white' : 'text-slate-900 hover:bg-slate-100'"
+                :class="current(screen) ? 'bg-brand-700 font-semibold text-white' : 'text-slate-900 hover:bg-slate-100'"
             >
                 <component :is="screen.icon" aria-hidden="true" class="size-6 shrink-0" />
                 {{ screen.label }}
