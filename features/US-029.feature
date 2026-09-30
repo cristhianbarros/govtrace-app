@@ -14,7 +14,7 @@ Característica: Línea de tiempo de evidencias publicadas de una obra
     Cuando hago clic en el pin de "Pavimentación Calle 30"
     Entonces se cargan en ese momento los datos del contrato y la línea de tiempo
     Y veo las 3 evidencias publicadas ordenadas por fecha
-    Y cada tarjeta muestra fecha y hora, clasificación, comentario, miniaturas y el botón "Verificar Sello Blockchain"
+    Y cada tarjeta muestra fecha y hora, clasificación, comentario, miniaturas y el botón "Comprobar que es original"
 
   @complexity:low
   Escenario: Visor de fotos

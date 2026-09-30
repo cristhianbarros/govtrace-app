@@ -14,16 +14,46 @@ describe('AdminLayout', () => {
 
         expect(wrapper.get('header').text()).toContain('Veeduría Ciudadana Santa Marta');
         expect(wrapper.get('h1').text()).toBe('Contratos');
-        expect(wrapper.findAll('nav a').map((link) => [link.text(), link.attributes('href')])).toEqual([
+        // It. 40c: en el computador, la barra lateral con todas, por grupos.
+        expect(wrapper.findAll('[data-test="sidebar"] a').map((link) => [link.text(), link.attributes('href')])).toEqual([
             ['Bandeja', '/admin/inbox'],
-            ['Veedores', '/admin/observers'],
+            ['Resumen', '/admin/summary'],
             ['Territorio', '/admin/territory'],
             ['Contratos', '/admin/contracts'],
             ['Obras', '/admin/worksites'],
+            ['Veedores', '/admin/observers'],
             ['Organización', '/admin/organization'],
+            ['Auditoría', '/admin/audit'],
+            ['Autorización', '/admin/authorization'],
         ]);
-        expect(wrapper.get('nav a[aria-current="page"]').text()).toBe('Contratos');
+        expect(wrapper.get('[data-test="sidebar"] a[aria-current="page"]').text()).toBe('Contratos');
         expect(wrapper.text()).toContain('contenido');
+    });
+
+    it('Navegación del panel con íconos: on the phone, three tabs with an icon and their name, and "Más" for the rest', async () => {
+        page.url = '/admin/territory';
+        const wrapper = mount(AdminLayout, { props: { title: 'Territorio' }, attachTo: document.body });
+        const tabs = wrapper.get('[data-test="tabs"]');
+
+        expect(tabs.findAll('a').map((tab) => tab.text())).toEqual(['Bandeja', 'Obras', 'Veedores']);
+        expect(tabs.findAll('a svg')).toHaveLength(3);
+        const more = tabs.get('button[aria-haspopup="menu"]');
+        expect(more.text()).toBe('Más');
+        expect(more.attributes('data-current')).toBe('true'); // Territorio vive en "Más"
+
+        await more.trigger('click');
+        expect(wrapper.get('[data-test="more"]').findAll('a').map((link) => link.text())).toEqual(['Resumen', 'Territorio', 'Contratos', 'Organización', 'Auditoría', 'Autorización']);
+        wrapper.unmount();
+    });
+
+    it('counts on the tab of the Bandeja how many evidences wait for review', () => {
+        page.url = '/admin/observers';
+        page.props.inboxPending = 3;
+        const wrapper = mount(AdminLayout, { props: { title: 'Veedores' } });
+
+        expect(wrapper.get('[data-test="tabs"] a[href="/admin/inbox"]').text()).toContain('3');
+        expect(wrapper.get('[data-test="sidebar"] a[href="/admin/inbox"]').attributes('aria-label')).toBe('Bandeja, 3 por revisar');
+        page.props.inboxPending = null;
     });
 
     it('shows the logo of the organization in the header (US-007)', () => {

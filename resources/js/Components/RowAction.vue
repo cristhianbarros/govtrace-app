@@ -46,11 +46,11 @@ async function go() {
             <button
                 type="button"
                 :disabled="busy"
-                class="rounded-lg border px-2 py-1 text-xs font-semibold disabled:opacity-40"
+                class="min-h-11 rounded-lg border px-3 text-sm font-semibold disabled:opacity-40"
                 :class="asking ? 'border-red-700 bg-red-700 text-white' : 'bg-white'"
                 @click="go"
             >{{ asking ? confirmLabel : label }}</button>
-            <button v-if="asking" type="button" class="rounded-lg border bg-white px-2 py-1 text-xs font-semibold" @click="asking = false">Cancelar</button>
+            <button v-if="asking" type="button" class="min-h-11 rounded-lg border bg-white px-3 text-sm font-semibold" @click="asking = false">Cancelar</button>
         </div>
         <p v-if="error" role="alert" class="text-xs text-red-700">{{ error }}</p>
     </div>

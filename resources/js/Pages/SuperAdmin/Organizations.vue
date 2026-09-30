@@ -55,7 +55,7 @@ onMounted(load);
 <template>
     <SuperAdminLayout title="Organizaciones">
         <div class="flex flex-col gap-4">
-            <Link href="/admin/organizations/new" class="self-start rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white">
+            <Link href="/admin/organizations/new" class="min-h-11 self-start rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white">
                 + Nueva organización
             </Link>
 
@@ -80,7 +80,7 @@ onMounted(load);
                                 <span class="rounded px-2 py-0.5 text-xs font-semibold" :class="statusStyle[organization.status] ?? 'bg-slate-100 text-slate-700'">
                                     {{ organization.status }}
                                 </span>
-                                <button type="button" class="rounded-lg border px-2 py-1 text-xs font-semibold" @click="edit(organization)">Editar NIT</button>
+                                <button type="button" class="min-h-11 rounded-lg border px-3 text-sm font-semibold" @click="edit(organization)">Editar NIT</button>
                             </div>
                         </div>
 
@@ -108,10 +108,10 @@ onMounted(load);
                             <input id="nit" v-model="nit" type="text" class="rounded-lg border border-slate-300 px-3 py-2 text-base" />
                             <p v-if="refused" role="alert" class="text-sm text-red-700">{{ refused }}</p>
                             <div class="flex gap-2">
-                                <button type="submit" :disabled="saving" class="rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white disabled:opacity-40">
+                                <button type="submit" :disabled="saving" class="min-h-11 rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white disabled:opacity-40">
                                     {{ saving ? 'Guardando…' : 'Guardar NIT' }}
                                 </button>
-                                <button type="button" class="rounded-lg border px-3 py-2 text-sm font-semibold" @click="editing = null">Cancelar</button>
+                                <button type="button" class="min-h-11 rounded-lg border px-3 py-2 text-sm font-semibold" @click="editing = null">Cancelar</button>
                             </div>
                         </form>
                     </li>

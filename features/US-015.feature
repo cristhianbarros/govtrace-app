@@ -42,3 +42,10 @@ Característica: Listado de contratos del territorio para el administrador
     Dado que no hay contratos de obra sincronizados en "Magdalena"
     Cuando abro el módulo "Contratos"
     Entonces veo el mensaje "Aún no hay contratos de obra sincronizados para su territorio. La actualización desde SECOP II se ejecuta automáticamente cada madrugada."
+
+  @complexity:low
+  Escenario: Buscar un contrato del territorio
+    Dado que mi territorio tiene 742 contratos sincronizados
+    Cuando busco "trupillos"
+    Entonces veo solo los contratos cuyo objeto, contratista, número de proceso o id de SECOP lo contienen
+    Y si ninguno coincide, veo "Ningún contrato del territorio coincide con «trupillos»."

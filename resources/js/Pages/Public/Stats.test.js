@@ -65,8 +65,8 @@ describe('Estadísticas del territorio', () => {
     it('Descarga de datos abiertos: offers the published evidences and their seals in CSV and JSON', async () => {
         const wrapper = await openStats();
 
-        expect(wrapper.get('a[href="/open-data.csv"]').text()).toBe('Descargar CSV');
-        expect(wrapper.get('a[href="/open-data.json"]').text()).toBe('Descargar JSON');
+        expect(wrapper.get('a[href="/open-data.csv"]').text()).toBe('Descargar para Excel (CSV)');
+        expect(wrapper.get('a[href="/open-data.json"]').text()).toBe('Datos para programadores (JSON)');
         expect(wrapper.get('a[href="/"]').text()).toBe('Volver al mapa');
     });
 });

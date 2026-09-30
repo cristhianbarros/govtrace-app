@@ -24,3 +24,9 @@ Característica: Filtros del mapa público
     Cuando filtro por municipio "Santa Marta" y presupuesto mayor a 900000000000
     Y aplico los filtros
     Entonces veo el mensaje "No se encontraron obras o evidencias que coincidan con estos filtros en este territorio."
+
+  @complexity:low
+  Escenario: Buscar una obra por su nombre
+    Cuando elijo ver las obras como "Lista" y escribo "cienaga"
+    Entonces veo solo las obras cuyo nombre lo contiene, aunque lleve tilde
+    Y cada una con su estado en palabras y su municipio

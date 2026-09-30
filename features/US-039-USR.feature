@@ -38,3 +38,10 @@ Característica: Restablecer la contraseña por correo
     Cuando abro el enlace y defino la nueva contraseña "corta1#"
     Entonces la contraseña es rechazada
     Y veo el mensaje "La contraseña debe tener al menos 8 caracteres, incluir una mayúscula, una minúscula, un número y un símbolo especial."
+
+  @complexity:low
+  Escenario: Cambiar la contraseña con la sesión abierta
+    Dado que inicié sesión con la contraseña "Veeduria#2026"
+    Cuando abro "Cambiar contraseña" en el menú de mi cuenta y escribo la actual y la nueva dos veces
+    Entonces veo "Su contraseña fue cambiada. La próxima vez entre con la nueva."
+    Y si la actual no es correcta, veo "La contraseña actual no es correcta." y nada cambia

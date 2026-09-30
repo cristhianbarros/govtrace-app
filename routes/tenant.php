@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Application\Publication\PublicStats;
 use App\Application\Publication\StellarForBrowser;
 use App\Domain\Organization\Roles;
+use App\Http\Controllers\Auth\ChangePasswordController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Tenant\AuditController;
 use App\Http\Controllers\Tenant\ContractListController;
@@ -75,6 +76,8 @@ Route::middleware([
         // US-027 / US-029: el mapa público — los pines, y lo que pide un clic en uno (it. 24).
         Route::get('/public/worksites', [PublicWorksiteController::class, 'index'])->name('public.worksites.index');
         Route::get('/public/worksites/filters', [PublicWorksiteController::class, 'filters'])->name('public.worksites.filters');
+        // It. 40c: el mapa como lista, al abrirla (la carga del mapa no cambia, R-MAP-02).
+        Route::get('/public/worksites/list', [PublicWorksiteController::class, 'listing'])->name('public.worksites.list');
         Route::get('/public/worksites/{worksite}', [PublicWorksiteController::class, 'show'])->whereNumber('worksite')->name('public.worksites.show');
         Route::get('/public/evidences/{evidence}/photo', [PublicEvidenceController::class, 'photo'])->whereNumber('evidence')->name('public.evidences.photo');
         Route::get('/public/stats', fn (PublicStats $stats) => response()->json($stats->handle()))->name('public.stats.data');
@@ -117,6 +120,9 @@ Route::middleware([
     Route::middleware(['auth:tenant', EnsureAccountIsUsable::class])->group(function () {
         // US-018: cerrar sesión (la app del veedor avisa antes si tiene reportes sin enviar).
         Route::post('/logout', [LoginController::class, 'destroy'])->name('tenant.logout');
+        // It. 40c (V11): cambiar la contraseña con la sesión abierta, desde "Mi cuenta".
+        Route::get('/account/password', [ChangePasswordController::class, 'show'])->name('tenant.account.password.show');
+        Route::put('/account/password', [ChangePasswordController::class, 'update'])->middleware('throttle:6,1')->name('tenant.account.password.update');
 
         // El panel del Administrador abre en la bandeja de entrada (it. 18).
         Route::get('/organization/dashboard', fn () => redirect('/admin/inbox'))->name('organization.dashboard');

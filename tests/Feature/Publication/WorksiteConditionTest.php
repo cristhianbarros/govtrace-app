@@ -132,3 +132,24 @@ it('names every reason when there is more than one', function () {
         'reason' => "La fecha de terminación del contrato ya pasó y SECOP II lo sigue mostrando en ejecución. El reporte publicado más reciente, del {$day}, es de retraso.",
     ]);
 });
+
+/*
+ * It. 40c — el mapa, también como lista (V12 de docs/mapa-funcional.md): se
+ * pide al abrir la lista, no con el mapa (R-MAP-02 sigue igual), y trae de
+ * cada obra con pin su nombre, su municipio y su estado.
+ */
+it('lists the worksites of the map with their name, municipality and state, when the list is opened', function () {
+    reportableContract('CO1.PCCNTR.1234567');
+    reportableContract('CO1.PCCNTR.7654321', ['object' => 'Construcción del parque Los Trupillos', 'end_date' => CarbonImmutable::today()->subMonth()->toDateString()]);
+    $calle30 = worksiteWithContracts($this->tenant, ['CO1.PCCNTR.1234567'], santaMartaWorksiteLocation())->id;
+    $parque = worksiteWithContracts($this->tenant, ['CO1.PCCNTR.7654321'], [11.2195, -74.2054])->id;
+    worksiteWithContracts($this->tenant, [], null); // sin ubicación: sin pin, y fuera de la lista
+
+    expect(publicGet('/public/worksites/list')->assertOk()->json('data'))->toBe([
+        ['id' => $calle30, 'name' => 'Pavimentación Calle 30', 'municipality' => 'Santa Marta', 'color_pin' => 'green'],
+        ['id' => $parque, 'name' => 'Construcción del parque Los Trupillos', 'municipality' => 'Santa Marta', 'color_pin' => 'red'],
+    ])
+        ->and(publicGet('/public/worksites/list?status=red')->json('data.*.id'))->toBe([$parque])
+        // R-MAP-02: la carga del mapa no cambia.
+        ->and(array_keys(publicGet('/public/worksites')->json('data.0')))->toBe(['id', 'lat', 'lng', 'color_pin']);
+});

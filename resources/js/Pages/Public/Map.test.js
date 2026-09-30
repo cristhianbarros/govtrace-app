@@ -5,7 +5,7 @@ import { flushPromises, mount } from '@vue/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { defineComponent, h } from 'vue';
 import Map from './Map.vue';
-import { fetchMapFilters, fetchPins } from '@/services/api.js';
+import { fetchMapFilters, fetchPins, fetchWorksiteList } from '@/services/api.js';
 import { page, router } from '@/testing/inertia.js';
 
 vi.mock('@inertiajs/vue3', async () => await import('@/testing/inertia.js'));
@@ -195,3 +195,44 @@ describe('Los estados, junto al mapa (it. 40b)', () => {
         expect(wrapper.text()).toContain('Toque un punto para ver la obra y sus fotos.');
     });
 });
+
+describe('El mapa, también como lista (it. 40c)', () => {
+    const LIST = [
+        { id: 3, name: 'Pavimentación de la Calle 30', municipality: 'Santa Marta', color_pin: 'green' },
+        { id: 9, name: 'Mejoramiento de la vía Ciénaga – Sevilla', municipality: 'Ciénaga', color_pin: 'red' },
+    ];
+
+    async function openList() {
+        const wrapper = await openMap();
+        fetchWorksiteList.mockResolvedValue(LIST);
+        await wrapper.findAll('button').find((button) => button.text() === 'Lista').trigger('click');
+        await flushPromises();
+        return wrapper;
+    }
+
+    it('shows the worksites as a list, with their state in words, asked for only when the list is opened', async () => {
+        const wrapper = await openMap();
+        expect(fetchWorksiteList).not.toHaveBeenCalled();
+
+        fetchWorksiteList.mockResolvedValue(LIST);
+        await wrapper.findAll('button').find((button) => button.text() === 'Lista').trigger('click');
+        await flushPromises();
+
+        const items = wrapper.findAll('[data-test="listed"]');
+        expect(items.map((item) => item.text())).toEqual(['✓ Normal Pavimentación de la Calle 30 Santa Marta', '✕ En riesgo Mejoramiento de la vía Ciénaga – Sevilla Ciénaga']);
+        expect(items[1].get('a').attributes('href')).toBe('/worksite/9');
+        expect(wrapper.find('[data-test="pin"]').exists()).toBe(false);
+    });
+
+    it('Buscar una obra por su nombre: filters the list as the person writes, without caring about accents or capitals', async () => {
+        const wrapper = await openList();
+
+        await wrapper.get('input[type="search"]').setValue('cienaga');
+        expect(wrapper.findAll('[data-test="listed"]').map((item) => item.get('a').attributes('href'))).toEqual(['/worksite/9']);
+
+        await wrapper.get('input[type="search"]').setValue('parque');
+        expect(wrapper.find('[data-test="listed"]').exists()).toBe(false);
+        expect(wrapper.text()).toContain('Ninguna obra se llama así. Pruebe con otra palabra.');
+    });
+});
+

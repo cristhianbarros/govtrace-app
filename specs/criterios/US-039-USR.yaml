@@ -6,6 +6,7 @@ criterios_aceptacion:
   escenarios_exito:
     - "El usuario solicita restablecer su contraseña y recibe un enlace por correo"
     - "Con el enlace define una nueva contraseña y recupera el acceso"
+    - "(It. 40c, 2026-09-30) Con la sesión abierta, desde 'Mi cuenta', la persona cambia su contraseña escribiendo la actual y la nueva dos veces, con las mismas reglas que al crearla; la ruta limita los intentos"
   validaciones_reglas:
     - "El enlace de restablecimiento vence a la 1 hora de emitido"
     - "Ante un correo no registrado, la respuesta es neutra: \"Si el correo existe, recibirás un enlace\" (misma respuesta que para uno registrado)"

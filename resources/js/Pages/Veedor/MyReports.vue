@@ -84,8 +84,8 @@ onBeforeUnmount(() => window.removeEventListener('online', onOnline));
                     <p class="text-sm text-slate-600">{{ formatDateTime(report.captured_at) }} · {{ report.classification }}</p>
                     <p class="font-semibold">{{ report.worksite }}</p>
                     <dl class="mt-2 grid grid-cols-2 gap-2 text-sm">
-                        <div><dt class="text-xs text-slate-500">Estado técnico</dt><dd data-test="technical" class="font-semibold">{{ report.technical_status }}</dd></div>
-                        <div><dt class="text-xs text-slate-500">Estado editorial</dt><dd data-test="editorial" class="font-semibold">{{ report.editorial_status }}</dd></div>
+                        <div><dt class="text-xs text-slate-600">Sello digital</dt><dd data-test="technical" class="font-semibold">{{ report.technical_status }}</dd></div>
+                        <div><dt class="text-xs text-slate-600">Publicación</dt><dd data-test="editorial" class="font-semibold">{{ report.editorial_status }}</dd></div>
                     </dl>
                     <p v-if="report.rejection_reason" class="mt-2 rounded bg-red-50 p-2 text-sm text-red-800">Motivo: {{ report.rejection_reason }}</p>
                     <button type="button" class="mt-3 min-h-11 rounded-lg border border-slate-300 px-3 text-sm font-semibold" :aria-expanded="Boolean(receipts[report.id])" @click="toggleReceipt(report)">Ver recibo</button>

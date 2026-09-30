@@ -9,7 +9,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 /**
- * GET /contracts?sort=signed_at|value&direction=desc|asc&page= (US-015):
+ * GET /contracts?sort=signed_at|value&direction=desc|asc&page=&q= (US-015):
  * the contracts of the territory, 20 per page, for the Administrador's
  * panel (it. 18). Any other sort falls back to the default: signing date,
  * newest first.
@@ -21,7 +21,7 @@ class ContractListController extends Controller
         $sort = in_array($request->query('sort'), ['signed_at', 'value'], true) ? $request->query('sort') : 'signed_at';
         $direction = $request->query('direction') === 'asc' ? 'asc' : 'desc';
 
-        $page = (new ListTerritoryContracts)->handle(tenant(), $sort, $direction);
+        $page = (new ListTerritoryContracts)->handle(tenant(), $sort, $direction, $request->string('q')->limit(100, '')->toString());
 
         return response()->json([
             'data' => collect($page->items())->map(fn (Contract $contract) => [

@@ -2,7 +2,8 @@
 // US-015: los contratos de obra del territorio, para planear a qué obras
 // mandar a los veedores. De 20 en 20, por fecha de firma (lo más reciente
 // primero) o por valor; cada orden se invierte con un segundo toque.
-import { onMounted, ref } from 'vue';
+// It. 40c: y un buscador, por objeto, contratista o número de proceso.
+import { computed, onMounted, ref } from 'vue';
 import LoadState from '@/Components/LoadState.vue';
 import { useLoader } from '@/composables/useLoader.js';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
@@ -14,9 +15,23 @@ const OBJECT_PREVIEW = 50;
 const sort = ref('signed_at');
 const direction = ref('desc');
 const page = ref(1);
+const words = ref('');
+const searched = ref('');
 const { data: contracts, loading, error, load } = useLoader(fetchContracts);
 
-const reload = () => load({ sort: sort.value, direction: direction.value, page: page.value });
+const reload = () => load({ sort: sort.value, direction: direction.value, page: page.value, ...(searched.value ? { q: searched.value } : {}) });
+
+function search() {
+    searched.value = words.value.trim();
+    page.value = 1;
+    reload();
+}
+
+const emptyText = computed(() =>
+    searched.value
+        ? `Ningún contrato del territorio coincide con «${searched.value}».`
+        : 'Aún no hay contratos de obra sincronizados para su territorio. La actualización desde SECOP II se ejecuta automáticamente cada madrugada.',
+);
 
 function sortBy(field) {
     direction.value = sort.value === field && direction.value === 'desc' ? 'asc' : 'desc';
@@ -42,12 +57,24 @@ const statusOf = (contract) => (contract.status === 'cancelled' ? 'Anulado/Retir
 
 <template>
     <AdminLayout title="Contratos">
-        <div class="flex gap-2 text-sm">
+        <form role="search" class="flex flex-col gap-2 md:flex-row" @submit.prevent="search">
+            <label for="contract-words" class="sr-only">Buscar un contrato</label>
+            <input
+                id="contract-words"
+                v-model="words"
+                type="search"
+                placeholder="Buscar por obra, contratista o número de proceso"
+                class="min-h-12 flex-1 rounded-lg border border-slate-300 bg-white px-3 text-base"
+            />
+            <button type="submit" class="min-h-12 rounded-lg bg-slate-900 px-4 text-base font-semibold text-white">Buscar</button>
+        </form>
+
+        <div class="flex flex-wrap gap-2 text-sm">
             <span class="self-center text-slate-600">Ordenar por:</span>
-            <button type="button" class="rounded-lg border bg-white px-3 py-2 font-semibold" :aria-pressed="sort === 'signed_at'" @click="sortBy('signed_at')">
+            <button type="button" class="min-h-11 rounded-lg border bg-white px-3 py-2 font-semibold" :aria-pressed="sort === 'signed_at'" @click="sortBy('signed_at')">
                 Fecha de firma{{ arrow('signed_at') }}
             </button>
-            <button type="button" class="rounded-lg border bg-white px-3 py-2 font-semibold" :aria-pressed="sort === 'value'" @click="sortBy('value')">
+            <button type="button" class="min-h-11 rounded-lg border bg-white px-3 py-2 font-semibold" :aria-pressed="sort === 'value'" @click="sortBy('value')">
                 Valor{{ arrow('value') }}
             </button>
         </div>
@@ -57,7 +84,7 @@ const statusOf = (contract) => (contract.status === 'cancelled' ? 'Anulado/Retir
             :error="error"
             :empty="contracts?.meta.total === 0"
             loading-text="Cargando contratos…"
-            empty-text="Aún no hay contratos de obra sincronizados para su territorio. La actualización desde SECOP II se ejecuta automáticamente cada madrugada."
+            :empty-text="emptyText"
             @retry="reload"
         >
             <ul class="flex flex-col gap-2">
@@ -74,13 +101,13 @@ const statusOf = (contract) => (contract.status === 'cancelled' ? 'Anulado/Retir
             </ul>
 
             <nav class="flex items-center justify-between gap-2 text-sm" aria-label="Páginas">
-                <button type="button" class="rounded-lg border bg-white px-3 py-2 font-semibold disabled:opacity-40" :disabled="page <= 1" @click="goTo(page - 1)">
+                <button type="button" class="min-h-11 rounded-lg border bg-white px-3 py-2 font-semibold disabled:opacity-40" :disabled="page <= 1" @click="goTo(page - 1)">
                     Anterior
                 </button>
                 <span class="text-slate-600">Página {{ contracts.meta.current_page }} de {{ contracts.meta.last_page }} · {{ contracts.meta.total }} contratos</span>
                 <button
                     type="button"
-                    class="rounded-lg border bg-white px-3 py-2 font-semibold disabled:opacity-40"
+                    class="min-h-11 rounded-lg border bg-white px-3 py-2 font-semibold disabled:opacity-40"
                     :disabled="page >= contracts.meta.last_page"
                     @click="goTo(page + 1)"
                 >

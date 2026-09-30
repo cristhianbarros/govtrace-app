@@ -122,8 +122,8 @@ describe('Mis Reportes (US-010)', () => {
 
         expect(first.get('[data-test="technical"]').text()).toBe('Sellado');
         expect(first.get('[data-test="editorial"]').text()).toBe('Publicado');
-        expect(first.text()).toContain('Estado técnico');
-        expect(first.text()).toContain('Estado editorial');
+        expect(first.text()).toContain('Sello digital');
+        expect(first.text()).toContain('Publicación');
         expect(first.text()).toContain(formatDateTime(published.captured_at));
         expect(first.text()).toContain('Pavimentación Calle 30');
         expect(first.text()).toContain('Abandono');

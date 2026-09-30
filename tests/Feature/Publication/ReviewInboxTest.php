@@ -11,6 +11,7 @@ use App\Infrastructure\Tenancy\Tenant;
 use Database\Seeders\DivipolaSeeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Inertia\Testing\AssertableInertia as Assert;
 use Stancl\Tenancy\Middleware\ScopeSessions;
 use Tests\Support\FakeSealingNetwork;
 
@@ -246,4 +247,20 @@ it('Cada evidencia de la bandeja dice de qué obra es y quién la envió: the wo
 
     expect($evidence['worksite'])->toBe(['id' => $this->worksite->id, 'name' => 'Pavimentación Calle 30', 'municipality' => 'Santa Marta'])
         ->and($evidence['observer'])->toBe('Miembro de prueba');
+});
+
+/*
+ * It. 40c — la pestaña de la Bandeja cuenta cuántas evidencias esperan (solo
+ * para el Administrador: al veedor no le toca revisar).
+ */
+it('shares how many evidences wait in the inbox, for the tab of the Bandeja', function () {
+    $this->withoutVite()->actingAs($this->administrator, 'tenant')
+        ->get('http://veeduria-smr.govtrace.localhost/admin/inbox')
+        ->assertInertia(fn (Assert $page) => $page->where('inboxPending', 4));
+
+    tenancy()->end();
+    $this->flushSession();
+    $this->withoutVite()->actingAs($this->veedor, 'tenant')
+        ->get('http://veeduria-smr.govtrace.localhost/my-reports')
+        ->assertInertia(fn (Assert $page) => $page->where('inboxPending', null));
 });

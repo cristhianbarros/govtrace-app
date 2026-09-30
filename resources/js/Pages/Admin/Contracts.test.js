@@ -116,3 +116,24 @@ describe('Estado de un contrato anulado (it. 40b)', () => {
         expect(wrapper.text()).not.toContain('cancelled');
     });
 });
+
+describe('Buscar un contrato (it. 40c)', () => {
+    it('Buscar un contrato del territorio: asks for the words, from the first page, and says when nothing matches', async () => {
+        const wrapper = await openContracts(pageOf([contract()]));
+        fetchContracts.mockResolvedValue(pageOf([contract({ object: 'Construcción del parque Los Trupillos' })], { current_page: 1, last_page: 1, total: 1 }));
+
+        await wrapper.get('input[type="search"]').setValue('trupillos');
+        await wrapper.get('form[role="search"]').trigger('submit');
+        await flushPromises();
+
+        expect(fetchContracts).toHaveBeenLastCalledWith(expect.objectContaining({ q: 'trupillos', page: 1 }));
+        expect(wrapper.text()).toContain('Construcción del parque Los Trupillos');
+
+        fetchContracts.mockResolvedValue(pageOf([], { current_page: 1, last_page: 1, total: 0 }));
+        await wrapper.get('input[type="search"]').setValue('no existe');
+        await wrapper.get('form[role="search"]').trigger('submit');
+        await flushPromises();
+        expect(wrapper.text()).toContain('Ningún contrato del territorio coincide con «no existe».');
+    });
+});
+

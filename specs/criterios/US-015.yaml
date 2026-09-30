@@ -6,6 +6,7 @@ criterios_aceptacion:
     - "El Administrador entra al módulo 'Contratos' y ve una tabla paginada de 20 registros"
     - "Columnas: Número de Proceso, Objeto (truncado a 50 caracteres con tooltip), Contratista, Valor Total, Estado y Fecha de Firma"
     - "Orden por defecto: Fecha de Firma descendente; clic en el encabezado de 'Valor' o 'Fecha' invierte el orden"
+    - "(It. 40c, 2026-09-30) El Administrador busca un contrato del territorio por palabras de su objeto, su contratista, su número de proceso o su id de SECOP"
   validaciones_reglas:
     - "Filtro territorial obligatorio: se suman todos los territorios configurados por la organización; un departamento incluye la Gobernación y todos sus municipios (jerarquía DIVIPOLA, ej. Magdalena 47 incluye Santa Marta 47001)"
   manejo_errores:

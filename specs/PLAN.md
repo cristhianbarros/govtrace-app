@@ -1687,6 +1687,53 @@ Esta iteración estaba reservada para ese recorrido. El recorrido se hizo para e
 - como mucho el 5 % del texto por debajo de 14 px en cada pantalla;
 - cada pantalla con un `h1` igual a su título.
 
+✅ **40c cumplida (2026-09-30)**, sin revisión del usuario, como la 40b.
+- **Navegación** (`PanelTabs.vue`, `PanelSidebar.vue`, con los íconos de Heroicons, MIT, empaquetados: la CSP no cambia):
+  - en el celular, tres pestañas con ícono y nombre y "Más" con el resto; la pestaña activa, con una barra;
+  - en el computador, una barra lateral por grupos (Revisar · Territorio y obras · Equipo · Organización);
+  - la Bandeja cuenta cuántas evidencias esperan (la prop `inboxPending`, solo para el Administrador);
+  - el veedor, con sus dos pestañas con ícono;
+  - en el computador, la barra de abajo deja de ser fija.
+- **Letra (R-UX-01):** en `app.css`, `text-xs` pasa a 14 px y `text-sm` a 16 px, en toda la app.
+- **Botones (R-UX-02):**
+  - las acciones de cada fila, los "Quitar" y los botones de 40 px pasan a 44 px;
+  - el zoom del mapa, a 44 px.
+- **Lenguaje claro (glosario de `docs/ux-analisis.md`):**
+  - "Comprobar que es original" en lugar de "Verificar Sello Blockchain";
+  - "Con sello digital · bloque N";
+  - "Sello digital" y "Publicación" en lugar de estado técnico y editorial;
+  - "¿Qué vio en la obra?", con una línea de explicación por opción;
+  - el territorio explicado;
+  - "Unir con otra obra";
+  - el validador sin "huella" ni "red Stellar";
+  - "Descargar para Excel (CSV)" y "Datos para programadores (JSON)".
+- **Buscadores:**
+  - Contratos, por objeto, contratista, número de proceso o id de SECOP (`q` en `/contracts`);
+  - el mapa también como **lista** (`/public/worksites/list`, pedida al abrirla: la carga del mapa no cambia, R-MAP-02), con búsqueda por nombre sin distinguir tildes (V12).
+- **"Cambiar contraseña"** en el menú de cuenta, en los dos dominios (V11): pide la actual y aplica las reglas de US-030, con un límite de 6 intentos por minuto. El inicio de sesión y esta pantalla tienen "Mostrar" en la contraseña.
+- **Spec:**
+  - escenarios nuevos en US-039-USR, US-015 y US-028 (YAML primero);
+  - el botón del sello, enmendado en US-024 y US-029 (criterio y Gherkin);
+  - `make trace-check`: 258 de 258.
+
+**Prueba:**
+- Pest:
+  - cambiar la contraseña, en 6 casos: veedor, Super Administrador, la actual equivocada, la nueva débil o distinta, y sin sesión;
+  - el buscador de Contratos;
+  - la lista del mapa;
+  - el contador de la Bandeja, probado rompiéndolo.
+- Vitest: 382 de 382.
+- `make e2e`: 32 pasan y 15 siguen pendientes (se cerraron V11 y V12).
+- `make ux-check`:
+  - axe sigue en cero;
+  - en la pantalla típica, el texto de menos de 16 px bajó del 73 al 12,5 %, el de menos de 14 px del 25,5 al 0 %, y los botones de menos de 44 px del 66 al 0 %;
+  - la medición deja la barra de abajo al final de la página antes de correr axe, porque en el celular tapaba un rato lo que pasa por debajo según el desplazamiento; la captura se toma como la ve la persona.
+
+**Decisiones de la iteración (❓, por confirmar):**
+1. **Los textos del glosario que el spec fijaba** ("Verificar Sello Blockchain" en US-024 y US-029) se enmendaron a "Comprobar que es original". El botón dejó de ser el elemento más llamativo de la tarjeta (US-029 lo pedía "destacado").
+2. **Las explicaciones de Avance, Retraso y Abandono son provisionales:** las valida una veeduría, porque cambian el color del mapa.
+3. **La escala de letra cambia en toda la app a la vez**, en lugar de pantalla por pantalla.
+
 **40d — Orientación y confianza.**
 - El inicio central con "¿Cómo funciona?" y el directorio de veedurías.
 - La guía de primer uso del veedor.

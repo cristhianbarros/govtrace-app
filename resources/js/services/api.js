@@ -22,6 +22,8 @@ export const sendReport = (form) => dataOf(http.post('/reports', form));
 
 /** Cerrar sesión (US-018 avisa antes si hay reportes sin enviar). */
 export const logout = () => dataOf(http.post('/logout'));
+// It. 40c: cambiar la contraseña con la sesión abierta (en una organización o en el panel global).
+export const changePassword = (data) => dataOf(http.put('/account/password', data));
 
 /** US-010: sus reportes, con el estado técnico y el editorial por separado. */
 export const fetchMyReports = async () => (await dataOf(http.get('/me/reports'))).data;
@@ -52,7 +54,7 @@ export const searchTerritories = async (keyword) => (await dataOf(http.get('/ter
 export const saveTerritory = (codes) => dataOf(http.put('/territory', { codes }));
 
 /** US-015: { data, meta: { current_page, last_page, total } } */
-export const fetchContracts = ({ sort, direction, page }) => dataOf(http.get('/contracts', { params: { sort, direction, page } }));
+export const fetchContracts = ({ sort, direction, page, q }) => dataOf(http.get('/contracts', { params: { sort, direction, page, ...(q ? { q } : {}) } }));
 
 /** US-007: nombre de fantasía y logo (multipart). */
 export const fetchProfile = async () => (await dataOf(http.get('/organization/profile'))).data;
@@ -120,6 +122,8 @@ export const fetchPins = async (filters = {}) => (await dataOf(http.get('/public
 
 /** US-028: lo que los filtros pueden elegir (los municipios del mapa). */
 export const fetchMapFilters = async () => (await dataOf(http.get('/public/worksites/filters'))).data;
+// It. 40c: el mapa como lista, con los mismos filtros; se pide al abrir la lista.
+export const fetchWorksiteList = async (filters = {}) => (await dataOf(http.get('/public/worksites/list', { params: filters }))).data;
 
 /** US-051-RPT: las estadísticas públicas del territorio. */
 export const fetchPublicStats = () => dataOf(http.get('/public/stats'));

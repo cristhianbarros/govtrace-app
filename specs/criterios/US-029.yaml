@@ -4,7 +4,7 @@ bloque: "B8 — Mapa y publicación"
 criterios_aceptacion:
   escenarios_exito:
     - "Al hacer clic en un pin se abre una línea de tiempo vertical ordenada por fecha (datos cargados bajo demanda, R-MAP-02)"
-    - "Cada tarjeta muestra: fecha/hora, clasificación, comentario, miniaturas de las fotos (con visor) y un botón destacado 'Verificar Sello Blockchain'"
+    - "Cada tarjeta muestra: fecha/hora, clasificación, comentario, miniaturas de las fotos (con visor) y un botón 'Comprobar que es original' (antes el destacado 'Verificar Sello Blockchain'; lenguaje claro, it. 40c)"
     - "Si se muestran las coordenadas de la evidencia, son aproximadas (redondeadas a ~100 m), nunca las exactas (R-PRIV-02)"
   validaciones_reglas:
     - "Publicación manual: toda evidencia sellada nace 'Oculta'; solo aparece en el mapa y en la línea de tiempo cuando el Administrador de Organización pulsa 'Publicar' (US-036)"

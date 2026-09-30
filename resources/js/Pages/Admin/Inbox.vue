@@ -41,7 +41,7 @@ onMounted(() => open(tabs[0]));
                 type="button"
                 role="tab"
                 :aria-selected="tab.status === candidate.status"
-                class="flex-1 rounded-md py-2 text-sm font-semibold"
+                class="min-h-11 flex-1 rounded-md py-2 text-sm font-semibold"
                 :class="tab.status === candidate.status ? 'bg-white shadow-sm' : 'text-slate-600'"
                 @click="open(candidate)"
             >{{ candidate.label }}</button>

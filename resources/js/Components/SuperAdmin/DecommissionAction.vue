@@ -56,7 +56,7 @@ const matches = () => typed.value.trim().toLowerCase() === first.value.summary.s
 <template>
     <div class="flex flex-col gap-2">
         <template v-if="!first">
-            <button type="button" :disabled="busy" class="self-start rounded-lg border border-red-300 bg-white px-2 py-1 text-xs font-semibold text-red-800 disabled:opacity-40" @click="begin">
+            <button type="button" :disabled="busy" class="min-h-11 self-start rounded-lg border border-red-300 bg-white px-3 text-sm font-semibold text-red-800" @click="begin">
                 Dar de baja
             </button>
             <p v-if="error" role="alert" class="text-xs text-red-700">{{ error }}</p>
@@ -81,10 +81,10 @@ const matches = () => typed.value.trim().toLowerCase() === first.value.summary.s
             />
             <p v-if="error" role="alert" class="text-red-700">{{ error }}</p>
             <div class="flex flex-wrap gap-2">
-                <button type="button" :disabled="!matches() || busy" class="rounded-lg bg-red-700 px-3 py-2 font-semibold text-white disabled:opacity-40" @click="confirm">
+                <button type="button" :disabled="!matches() || busy" class="min-h-11 rounded-lg bg-red-700 px-3 py-2 font-semibold text-white disabled:opacity-40" @click="confirm">
                     Dar de baja definitivamente
                 </button>
-                <button type="button" class="rounded-lg border bg-white px-3 py-2 font-semibold" @click="cancel">Cancelar</button>
+                <button type="button" class="min-h-11 rounded-lg border bg-white px-3 py-2 font-semibold" @click="cancel">Cancelar</button>
             </div>
         </section>
     </div>

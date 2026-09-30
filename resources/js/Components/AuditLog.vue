@@ -49,13 +49,13 @@ onMounted(() => load(1));
         </ul>
 
         <nav class="flex items-center justify-between gap-2 text-sm" aria-label="Páginas">
-            <button type="button" class="rounded-lg border bg-white px-3 py-2 font-semibold disabled:opacity-40" :disabled="pageNumber <= 1" @click="goTo(pageNumber - 1)">
+            <button type="button" class="min-h-11 rounded-lg border bg-white px-3 py-2 font-semibold disabled:opacity-40" :disabled="pageNumber <= 1" @click="goTo(pageNumber - 1)">
                 Anterior
             </button>
             <span class="text-slate-600">Página {{ log.meta.current_page }} de {{ log.meta.last_page }} · {{ log.meta.total }} entradas</span>
             <button
                 type="button"
-                class="rounded-lg border bg-white px-3 py-2 font-semibold disabled:opacity-40"
+                class="min-h-11 rounded-lg border bg-white px-3 py-2 font-semibold disabled:opacity-40"
                 :disabled="pageNumber >= log.meta.last_page"
                 @click="goTo(pageNumber + 1)"
             >

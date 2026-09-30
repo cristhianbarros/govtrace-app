@@ -75,6 +75,7 @@ async function leave() {
                 <span class="block truncate text-sm text-slate-600">{{ account.email }}</span>
             </p>
             <Link v-if="inOrganization" href="/" role="menuitem" class="flex min-h-11 items-center rounded-lg px-3 text-base hover:bg-slate-100">Ver el sitio público</Link>
+            <Link href="/account/password" role="menuitem" class="flex min-h-11 items-center rounded-lg px-3 text-base hover:bg-slate-100">Cambiar contraseña</Link>
             <button type="button" role="menuitem" class="flex min-h-11 w-full items-center rounded-lg px-3 text-left text-base font-semibold text-red-700 hover:bg-red-50" @click="askToLeave">Salir</button>
         </div>
 

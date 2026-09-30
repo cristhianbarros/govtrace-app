@@ -20,7 +20,7 @@ Característica: Validador público de integridad
   @complexity:high
   Escenario: Modo contextual con un archivo alterado
     Dado que estoy en la tarjeta de la evidencia de "obra-gaira.jpg" en la línea de tiempo
-    Cuando pulso "Verificar Sello Blockchain" y arrastro una copia de "obra-gaira.jpg" con un píxel modificado
+    Cuando pulso "Comprobar que es original" y arrastro una copia de "obra-gaira.jpg" con un píxel modificado
     Entonces veo el banner rojo "❌ Archivo Alterado o Falso. Las huellas criptográficas no coinciden con la blockchain."
 
   @complexity:medium @negative

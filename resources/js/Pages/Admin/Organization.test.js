@@ -106,7 +106,7 @@ describe('Organización', () => {
     it('leads to the audit log of the organization', async () => {
         const wrapper = await openSettings();
 
-        expect(wrapper.find('a[href="/admin/audit"]').text()).toBe('Ver el registro de auditoría');
+        expect(wrapper.get('main').find('a[href="/admin/audit"]').text()).toBe('Ver el registro de auditoría');
     });
 });
 
@@ -114,7 +114,7 @@ describe('Más de la organización (it. 29)', () => {
     it('leads to the summary of the territory and to the authorization of the Super Administrador', async () => {
         const wrapper = await openSettings();
 
-        expect(wrapper.get('a[href="/admin/summary"]').text()).toBe('Resumen del territorio');
-        expect(wrapper.get('a[href="/admin/authorization"]').text()).toBe('Autorización al Super Administrador');
+        expect(wrapper.get('main').get('a[href="/admin/summary"]').text()).toBe('Resumen del territorio');
+        expect(wrapper.get('main').get('a[href="/admin/authorization"]').text()).toBe('Autorización al Super Administrador');
     });
 });

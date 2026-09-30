@@ -124,3 +124,13 @@ describe('Territorio', () => {
         expect(wrapper.get('[role="alert"]').text()).toBe(message);
     });
 });
+
+describe('Qué es el territorio (it. 40c)', () => {
+    it('says what the territory is and what it is for, in plain words', async () => {
+        const wrapper = await openTerritory();
+
+        expect(wrapper.text()).toContain('Municipios y departamentos que vigila la veeduría');
+        expect(wrapper.text()).toContain('De estos lugares se traen los contratos de obra de SECOP II.');
+        expect(wrapper.text()).not.toContain('Vigilamos');
+    });
+});

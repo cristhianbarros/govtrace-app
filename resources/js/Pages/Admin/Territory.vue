@@ -61,12 +61,13 @@ onMounted(load);
     <AdminLayout title="Territorio">
         <LoadState :loading="loading" :error="error" loading-text="Cargando territorio…" empty-text="" @retry="load">
             <section class="flex flex-col gap-2">
-                <h3 class="text-sm font-semibold text-slate-700">Vigilamos</h3>
+                <h2 class="text-base font-semibold">Municipios y departamentos que vigila la veeduría</h2>
+                <p class="text-sm text-slate-700">De estos lugares se traen los contratos de obra de SECOP II.</p>
                 <p v-if="chosen.length === 0" class="text-sm text-slate-600">Aún no ha elegido territorio.</p>
                 <ul v-else class="flex flex-col gap-2">
                     <li v-for="place in chosen" :key="place.code" data-test="territory-chosen" class="flex items-center justify-between rounded-lg bg-white px-3 py-2 text-sm">
                         <span>{{ place.name }} · {{ place.kind }}</span>
-                        <button type="button" class="px-2 py-1 font-semibold text-red-700" @click="remove(place.code)">Quitar</button>
+                        <button type="button" class="min-h-11 px-3 font-semibold text-red-700" @click="remove(place.code)">Quitar</button>
                     </li>
                 </ul>
             </section>
@@ -86,7 +87,7 @@ onMounted(load);
                 <p v-else-if="results && results.length === 0" class="text-sm text-slate-700">No se encontraron departamentos ni municipios.</p>
                 <ul v-if="results && results.length" class="flex flex-col gap-1">
                     <li v-for="place in results" :key="place.code">
-                        <button type="button" data-test="territory-result" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-left text-sm" @click="add(place)">
+                        <button type="button" data-test="territory-result" class="min-h-11 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-left text-sm" @click="add(place)">
                             {{ place.name }} <span class="text-slate-500">· {{ place.kind }}</span>
                         </button>
                     </li>

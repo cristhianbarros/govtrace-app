@@ -9,7 +9,7 @@ import OrganizationNotice from '@/Components/Public/OrganizationNotice.vue';
 import PinsMap from '@/Components/Public/PinsMap.vue';
 import { useLoader } from '@/composables/useLoader.js';
 import AppLayout from '@/Layouts/AppLayout.vue';
-import { fetchMapFilters, fetchPins } from '@/services/api.js';
+import { fetchMapFilters, fetchPins, fetchWorksiteList } from '@/services/api.js';
 
 const page = usePage();
 const { data: pins, loading, error, load } = useLoader(fetchPins);
@@ -23,6 +23,32 @@ const STATES = [
     { value: 'red', icon: '✕', label: 'En riesgo', css: 'bg-red-700 text-white', idle: 'border-red-700 text-red-900' },
 ];
 const counts = ref({ green: 0, yellow: 0, red: 0 });
+const LOOK = Object.fromEntries(STATES.map((state) => [state.value, state]));
+
+// It. 40c (V12): el mapa también como lista, para quien no maneja mapas y para
+// los lectores de pantalla, con una búsqueda por nombre. Se pide al abrirla.
+const view = ref('map');
+const listed = ref(null);
+const listError = ref(null);
+const words = ref('');
+const plain = (text) => (text ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+const shown = computed(() => (listed.value ?? []).filter((worksite) => plain(worksite.name).includes(plain(words.value.trim()))));
+
+async function loadList() {
+    listError.value = null;
+    try {
+        listed.value = await fetchWorksiteList(active.value);
+    } catch {
+        listError.value = 'No se pudo cargar la lista de obras. Revise su conexión e intente de nuevo.';
+    }
+}
+
+function show(next) {
+    view.value = next;
+    if (next === 'list') {
+        loadList();
+    }
+}
 
 // US-028: estado, fechas de las evidencias, presupuesto y municipio.
 const STATUSES = [
@@ -40,6 +66,9 @@ const chosen = computed(() => Object.fromEntries(Object.entries(filters).filter(
 function apply() {
     active.value = chosen.value;
     load(active.value);
+    if (view.value === 'list') {
+        loadList();
+    }
 }
 
 function toggleState(value) {
@@ -129,7 +158,25 @@ onMounted(async () => {
                 <button type="button" class="min-h-11 rounded-lg border border-slate-300 px-3 font-semibold" @click="clear">Limpiar</button>
             </div>
         </details>
+        <div role="group" aria-label="Cómo ver las obras" class="mb-3 grid grid-cols-2 gap-2 md:inline-grid md:w-72">
+            <button v-for="[value, name] in [['map', 'Mapa'], ['list', 'Lista']]" :key="value" type="button" :aria-pressed="view === value ? 'true' : 'false'" class="min-h-11 rounded-lg border-2 px-3 text-base font-semibold" :class="view === value ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-300 bg-white'" @click="show(value)">{{ name }}</button>
+        </div>
+
+        <section v-if="view === 'list'" aria-label="Lista de obras" class="flex flex-col gap-3">
+            <label for="worksite-words" class="text-base font-semibold">Buscar una obra por su nombre</label>
+            <input id="worksite-words" v-model="words" type="search" placeholder="Por ejemplo: parque, colegio, Calle 30" class="min-h-12 rounded-lg border border-slate-300 bg-white px-3 text-base" />
+            <p v-if="listError" role="alert" class="rounded-lg bg-red-50 p-3 text-base text-red-800">{{ listError }}</p>
+            <p v-else-if="listed === null" class="text-base text-slate-700">Cargando obras…</p>
+            <p v-else-if="shown.length === 0" class="rounded-lg bg-white p-3 text-base text-slate-700">{{ words.trim() ? 'Ninguna obra se llama así. Pruebe con otra palabra.' : 'No hay obras que coincidan con estos filtros.' }}</p>
+            <ul v-else class="flex flex-col gap-2">
+                <li v-for="worksite in shown" :key="worksite.id" data-test="listed">
+                    <Link :href="`/worksite/${worksite.id}`" class="flex min-h-16 items-center gap-3 rounded-lg border border-slate-200 bg-white p-3 hover:bg-slate-50"><span aria-hidden="true" class="grid size-9 shrink-0 place-items-center rounded-full text-lg font-bold" :class="LOOK[worksite.color_pin].css">{{ LOOK[worksite.color_pin].icon }}</span> <span class="flex flex-col"><span class="text-sm font-semibold">{{ LOOK[worksite.color_pin].label }}</span> <span class="text-base font-semibold">{{ worksite.name }}</span> <span class="text-sm text-slate-700">{{ worksite.municipality }}</span></span></Link>
+                </li>
+            </ul>
+        </section>
+
         <LoadState
+            v-else
             :loading="loading"
             :error="error"
             :empty="pins !== null && pins.length === 0"
