@@ -1585,9 +1585,22 @@ Suite: 702 en verde (8 nuevos). Vitest: 351. `make backup-check`: 13 comprobacio
 #### Iteración 40 — Usable por cualquiera
 ⬜ **Propuesta el 2026-09-29, por aprobar.** Nació de probar la demo: el usuario notó que no hay botón de salir, que las pantallas confunden y que los estados del mapa quedan debajo del mapa. Pidió que fuera muy fácil de usar para gente muy diversa, incluidos adultos mayores. El análisis completo está en `docs/ux-analisis.md`: un recorrido con Playwright por las 26 vistas, en celular y escritorio, axe y mediciones de letra y botones.
 
-Esta iteración estaba reservada para ese recorrido. Como el recorrido ya se hizo, ahora corrige lo que encontró. Va en tres partes, un commit cada una.
+Esta iteración estaba reservada para ese recorrido. El recorrido se hizo para el análisis, y ahora pasa a ser el punto de partida: la **40a** lo deja en el repositorio como el *checkpoint base*, junto con los flujos de cada rol de `docs/mapa-funcional.md`. Las otras tres partes corrigen lo encontrado. Un commit por parte.
 
-**40a — Lo urgente.**
+**40a — Checkpoint base: el recorrido, axe y los flujos, como tests.** Pedido por el usuario el 2026-09-29: "definir un checkpoint base para mejorar todo lo que se deba de mejorar". Hoy hay más de 1.100 tests, cada uno de una historia sola, y solo 2 en un navegador. Ninguno recorre el flujo completo de un rol, y por eso pasaron los vacíos de `docs/mapa-funcional.md`.
+- El tag `checkpoint-base` marca el código tal como se analizó.
+- `make ux-check`: el recorrido de Playwright por las 27 vistas en los dos tamaños, con capturas (artefacto de Jenkins) y las mediciones de axe, letra y botones. Falla si algo empeora respecto de la línea base del análisis.
+- Los flujos de punta a punta como tests de Playwright (`make e2e`): uno por rol (Super Administrador, Administrador, veedor, ciudadano) y uno entre roles, de la veeduría interesada al ciudadano que comprueba la evidencia.
+  - Los pasos que hoy funcionan pasan.
+  - Cada vacío queda como `test.fixme('V2: …')`, con su número de `docs/mapa-funcional.md`.
+- Los dos, en el pipeline.
+
+**Done-when de la 40a:**
+- `make ux-check` y `make e2e` corren en local y en el pipeline;
+- cada paso de la sección 2 de `docs/mapa-funcional.md` tiene su test: ✅ pasa, y ⬜ o ⚠️ es un `fixme` con su vacío;
+- la línea base (vacíos pendientes, violaciones de axe, letra y botones) queda anotada en `docs/estado-mvp.md`.
+
+**40b — Lo urgente.**
 - Sesión:
   - "Salir" y el nombre del usuario en los paneles del Administrador y del Super Administrador;
   - la ruta de salida del dominio central (hoy no existe);
@@ -1600,9 +1613,9 @@ Esta iteración estaba reservada para ese recorrido. Como el recorrido ya se hiz
   - las clases `sm:` pasan a `md:`: `sm` está apagado en `app.css` y 11 clases de escritorio nunca se aplicaban;
   - el `h1` es el título de cada pantalla;
   - "cancelled" y "Success" pasan a español.
-- El recorrido de Playwright con axe entra al repositorio y al pipeline: `make ux-check`.
 
-**Done-when de la 40a:**
+**Done-when de la 40b:**
+- Los `fixme` de V1 y V4 (la obra), en verde.
 - Playwright:
   - "Salir" queda a dos toques o menos desde cada pantalla con sesión;
   - los estados del mapa se ven sin desplazarse, en 412×915 y en 1366×768.
@@ -1610,7 +1623,7 @@ Esta iteración estaba reservada para ese recorrido. Como el recorrido ya se hiz
 - axe: cero violaciones de WCAG 2.2 AA en las 52 vistas.
 - Ningún `sm:` en `resources/js`.
 
-**40b — Navegación y legibilidad.**
+**40c — Navegación y legibilidad.**
 - Una cabecera común con el menú de cuenta.
 - En celular, la barra de abajo con ícono y texto (máximo 5 destinos); en escritorio, una barra lateral.
 - Letra con base de 16 px y botones de 44 px en los paneles.
@@ -1619,12 +1632,12 @@ Esta iteración estaba reservada para ese recorrido. Como el recorrido ya se hiz
 - Buscador en Contratos.
 - Vista de lista en el mapa y agrupación de pines cercanos.
 
-**Done-when de la 40b (Playwright):**
+**Done-when de la 40c (Playwright):**
 - ningún control por debajo de 44 px, salvo los enlaces dentro de un texto;
 - como mucho el 5 % del texto por debajo de 14 px en cada pantalla;
 - cada pantalla con un `h1` igual a su título.
 
-**40c — Orientación y confianza.**
+**40d — Orientación y confianza.**
 - El inicio central con "¿Cómo funciona?" y el directorio de veedurías.
 - La guía de primer uso del veedor.
 - En Nuevo reporte: los pasos a la vista, y "Tomar foto" o "Galería".
@@ -1633,7 +1646,7 @@ Esta iteración estaba reservada para ese recorrido. Como el recorrido ya se hiz
 - Unir contratos eligiéndolos de una lista.
 - La prueba con 5 personas, al menos 2 mayores de 60.
 
-**Done-when de la 40c:** en la prueba con personas, al menos 4 de 5 terminan cada una de las 6 tareas sin ayuda.
+**Done-when de la 40d:** en la prueba con personas, al menos 4 de 5 terminan cada una de las 6 tareas sin ayuda.
 
 **Cubre:** las reglas R-UX-01 a R-UX-09 propuestas en `docs/ux-analisis.md` (sección 2), que entran a la SPEC si el usuario las aprueba · US-031 (iniciar sesión, y ahora salir), US-008, US-010, US-015, US-017, US-024, US-027, US-028, US-029, US-036, US-045-INT, US-049-RPT, US-051-RPT.
 
@@ -1737,6 +1750,26 @@ Esta iteración estaba reservada para ese recorrido. Como el recorrido ya se hiz
   - la imagen sin `storage/logs`: ni la app, ni el worker, ni el calendario podían escribir sus logs;
   - el despliegue sin la configuración en caché.
 - **`make demo` sobre un stack ya levantado se caía:** si Docker recreaba la app, el proxy de desarrollo se marcaba enfermo (su chequeo pasaba por la app) y `up --wait` abortaba. Ahora el proxy responde su propio `/healthz`, como el de producción. Cierra la deuda aceptada del "proxy impaciente".
+
+#### Iteración 43 — Flujos completos
+⬜ **Propuesta el 2026-09-29, por aprobar.** Cierra los vacíos de `docs/mapa-funcional.md` que no caben en la it. 40. Casi todos son historias nuevas: según el marco, pasan antes por un `/discovery` corto, en modo asesor, con sus criterios y su Gherkin. Las decisiones de la sección 5 del mapa lo alimentan.
+
+**43a — El gobierno de las organizaciones.**
+- V2, V3 y V16: cada organización muestra en el panel global sus administradores y el estado de su invitación. El Super Administrador reenvía la invitación, asigna un administrador nuevo o desactiva uno.
+- V7: la pantalla para reportar en nombre de una organización que lo autorizó. La regla ya existe (US-042-SEC).
+- V8: la razón social, editable junto con el NIT (US-011).
+
+**Modelo:** toca quién controla cada organización, es decir, el acceso: **Opus xhigh**.
+
+**43b — Llegar y volver.**
+- V6: la app del veedor, instalable, con un manifiesto por veeduría (su nombre y su logo) y los íconos.
+- V10: la solicitud de alta en el Inicio, que llega al Super Administrador para que apruebe o rechace (sin autorregistro).
+- V9: el aviso diario al administrador con las evidencias por revisar.
+- V13, V14 y V15: el contacto de la veeduría, el enlace al script de verificación y "Sincronizar ahora".
+
+**Modelo:** Sonnet medium.
+
+**Done-when de las dos:** los `fixme` de sus vacíos, en verde.
 
 ## Pivote a Stellar (2026-09-28)
 

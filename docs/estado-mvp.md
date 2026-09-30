@@ -1,8 +1,24 @@
 # Estado del MVP: lo que falta, por área
 
-Al 2026-09-29, sobre `main` en `77e6030` (iteración 39). Para ir abordándolo: cada punto dice qué falta y, cuando depende de ti, qué hay que decidir.
+Al 2026-09-29. Empezó sobre `77e6030` (iteración 39) y se actualizó en las it. 41 y 42a y con los análisis de UX y de flujos. Para ir abordándolo: cada punto dice qué falta y, cuando depende de ti, qué hay que decidir.
 
 ✅ hecho y probado · ⚠️ a medias · ⬜ falta · 🔒 espera algo externo · ❓ decisión tuya
+
+## Checkpoint base (2026-09-29)
+
+Es el punto de partida para mejorar todo lo que falta. El tag `checkpoint-base` marca el código tal como se analizó. Desde ahí, cada mejora se mide contra estas cifras:
+
+| Qué | Línea base | Detalle |
+|---|---|---|
+| Historias de la SPEC | 56 de 56, en 28 pantallas | `specs/AUDIT.md` |
+| Flujos de punta a punta | **17 vacíos:** 4 cortan un flujo, 6 lo dejan a medias y 7 son menores | `docs/mapa-funcional.md` |
+| Rutas del backend sin pantalla | 1: reportar en nombre de una organización | `docs/mapa-funcional.md`, sección 6 |
+| Accesibilidad técnica (axe, WCAG 2.2 AA) | 2 reglas incumplidas en 52 vistas; contraste AA en todas | `docs/ux-analisis.md` |
+| Texto de menos de 16 px (celular) | 80 % en la pantalla típica | `docs/ux-analisis.md`, anexo A |
+| Botones de menos de 44 px | 84 % en el panel del Administrador, 91 % en el del Super Administrador, 23 % en el sitio público y el veedor | `docs/ux-analisis.md`, anexo A |
+| Tests | Más de 1.100, cada uno de una historia sola; 2 en un navegador; **ninguno recorre el flujo de un rol** | `docs/mapa-funcional.md`, sección 6 |
+
+**Por dónde empezar:** por la **it. 40a**, que convierte los dos análisis en tests: el recorrido con axe (`make ux-check`) y los flujos de cada rol como tests de extremo a extremo. Los vacíos quedan como tests pendientes, y cada iteración los pasa a verde. El orden completo está en la sección 6.
 
 ## Resumen
 
@@ -17,8 +33,9 @@ Al 2026-09-29, sobre `main` en `77e6030` (iteración 39). Para ir abordándolo: 
 2. **Una prueba real en la nube** (staging en AWS, apuntando a testnet): celulares de verdad, HTTPS y correo real.
 3. **AWS KMS** para la llave de la selladora (37b): espera la cuenta de AWS.
 4. **La usabilidad.** Ya se revisó con capturas y mediciones (`docs/ux-analisis.md`). Hoy no se puede salir de los paneles, la leyenda del mapa queda lejos y hay lenguaje técnico, letra y botones pequeños. Lo corrige la it. 40.
-5. **La protección de datos personales** (Ley 1581 de 2012): no está en la SPEC.
-6. **La salida a la red principal** (37b): proveedor de RPC, tesorería y restauración con datos reales.
+5. **Los flujos completos.** Recorriendo cada rol aparecen 17 vacíos que la SPEC no cubrió (`docs/mapa-funcional.md`). Por ejemplo: el Super Administrador no puede reenviar la invitación del administrador de una organización ni reemplazarlo, y una veeduría no tiene cómo pedir su alta. Lo cierran la it. 40 y la it. 43.
+6. **La protección de datos personales** (Ley 1581 de 2012): no está en la SPEC.
+7. **La salida a la red principal** (37b): proveedor de RPC, tesorería y restauración con datos reales.
 
 ## Listo para producción: la lista
 
@@ -66,7 +83,7 @@ El MVP tiene que estar listo para producción, no solo funcionar. Esta es la var
 | | Qué | Detalle |
 |---|---|---|
 | ✅ | Todas las pantallas de la SPEC | 28 páginas: la app del veedor (PWA, con modo sin conexión), el panel del Administrador, el panel global y el sitio público. Mobile-first, con los estados carga / error / vacío / éxito probados en Vitest. Los botones de 44 px se cumplen en la app del veedor y el sitio público, no en los paneles: ahí la mayoría mide 26 a 41 px. |
-| ⚠️ | **Revisadas el 2026-09-29; falta corregir** | Un análisis experto de las 26 vistas, en celular y escritorio, con capturas y mediciones: `docs/ux-analisis.md`. **La accesibilidad técnica está sana:** axe incumple solo 2 reglas en 52 vistas y el contraste cumple AA. **La usabilidad no:** el Administrador y el Super Administrador no pueden cerrar sesión, la Bandeja no dice de qué obra es cada foto, la leyenda del mapa queda lejos, y hay lenguaje técnico, letra y botones pequeños. Lo corrige la **it. 40**, en tres partes: 40a, 40b y 40c. |
+| ⚠️ | **Revisadas el 2026-09-29; falta corregir** | Un análisis experto de las 26 vistas, en celular y escritorio, con capturas y mediciones: `docs/ux-analisis.md`. **La accesibilidad técnica está sana:** axe incumple solo 2 reglas en 52 vistas y el contraste cumple AA. **La usabilidad no:** el Administrador y el Super Administrador no pueden cerrar sesión, la Bandeja no dice de qué obra es cada foto, la leyenda del mapa queda lejos, y hay lenguaje técnico, letra y botones pequeños. Lo corrige la **it. 40**, en cuatro partes: la 40a es el checkpoint base, y la 40b, la 40c y la 40d corrigen. |
 | ✅ | Correos y mensajes en español (it. 41) | `APP_LOCALE=es` y `lang/es`: los correos ya no traen las frases en inglés de la plantilla de Laravel ("Regards", "If you're having trouble clicking…"), y los mensajes de validación por defecto y las páginas de error salen en español. |
 | ⬜ | Accesibilidad | ❓ La SPEC no fija una meta. Propuesta: WCAG 2.2 AA más las reglas R-UX de `docs/ux-analisis.md` (sección 2), medidas en el pipeline con `make ux-check`. Lo que falta no es contraste ni etiquetas: es el tamaño de letra y de botones, y el color como único significado. |
 | ⚠️ | Cámara y GPS en un celular | El navegador los exige con HTTPS: en local, solo desde el mismo equipo. Se prueban de verdad en staging. |
@@ -78,6 +95,7 @@ El MVP tiene que estar listo para producción, no solo funcionar. Esta es la var
 | | Qué | Detalle |
 |---|---|---|
 | ✅ | Historias, escenarios y reglas | De las 66 reglas de la SPEC, 64 en ✅ (`specs/AUDIT.md`). |
+| ⚠️ | **Flujos de punta a punta** | Revisados rol por rol el 2026-09-29 (`docs/mapa-funcional.md`): **17 vacíos** que la SPEC no cubrió. **4 cortan un flujo:** salir de los paneles; el administrador de una organización, que no se puede reinvitar, asignar después ni reemplazar; y la Bandeja sin obra ni autor. Solo una ruta del backend no tiene pantalla. Los cierran la it. 40 y la it. 43. |
 | 🔒 | R-CFG-01 y R-BCK-05 | La red principal (preparada y probada en testnet, sin desplegar) y la restauración con datos reales. Esperan producción (37b). |
 | ⚠️ | SECOP II de verdad | Los tests usan respuestas grabadas (R-TST-02). La sincronización contra la API real no se ha visto correr de punta a punta en un entorno desplegado: se comprueba en staging. |
 | ⬜ | Correo real | Hoy sale a un archivo (`make invites`). En staging, por SMTP (Amazon SES). |
@@ -160,21 +178,25 @@ Una sola máquina, sin balanceador de carga: un balanceador cuesta más que todo
 
 ## 6. Orden propuesto
 
+Desde el checkpoint base, primero lo que corta un flujo, después lo que lo deja a medias y al final el pulido. AWS avanza en paralelo, cuando exista la cuenta.
+
 | # | Qué | Cierra | Modelo |
 |---|---|---|---|
-| 1 | **Tú:** la cuenta de AWS y el perfil de KMS (sección 5) | Desbloquea el 2 y el 4 | — |
-| 2 | **37b, KMS:** la prueba de concepto y la firma detrás de `SealingNetwork` | La llave de la selladora fuera del servidor | Opus max |
-| 3 | **It. 41, salir a internet:** TLS listo, proxies de confianza, HSTS, CSP, `Permissions-Policy`, límites de abuso, auditoría de dependencias en el pipeline, rotación de logs, correos en español | Seguridad (sección 4) | Opus xhigh |
-| 4 | **It. 42, staging en AWS** con testnet | La prueba real | Opus xhigh |
-| 5 | **It. 40, usable por cualquiera:** 40a lo urgente, 40b navegación y legibilidad, 40c orientación (`docs/ux-analisis.md`) | UX/UI (sección 1) | Sonnet |
-| 6 | **37b, red principal:** proveedor de RPC, tesorería, despliegue y restauración con datos reales | Producción | Opus xhigh |
-
-El 3 no necesita AWS: se puede hacer mientras creas la cuenta.
+| 1 | **It. 40a, checkpoint base:** el recorrido con axe (`make ux-check`) y los flujos de cada rol como tests, con los vacíos pendientes | La medida de todo lo demás | Sonnet medium |
+| 2 | **It. 40b, lo urgente:** salir, la obra en la Bandeja, los estados junto al mapa, qué falta para enviar, `sm:` y `h1` | V1, V4 y lo más grave de UX | Sonnet medium |
+| 3 | **It. 43a, el gobierno de las organizaciones:** los administradores (asignar, reenviar, reemplazar), reportar en nombre de una organización, la razón social. Antes, un `/discovery` corto. | V2, V3, V7, V8 y V16 | Opus xhigh |
+| 4 | **It. 40c, navegación y legibilidad:** el menú nuevo, letra de 16 px, botones de 44 px, lenguaje claro, buscadores | UX y V11, V12 | Sonnet medium |
+| 5 | **It. 43b, llegar y volver:** la app instalable, la solicitud de alta, el aviso diario, el contacto | V6, V9, V10, V13 a V15 | Sonnet medium |
+| 6 | **It. 40d, orientación:** "¿Cómo funciona?", el directorio de veedurías, la guía del veedor y la prueba con 5 personas | V5 y la validación con gente real | Sonnet medium |
+| — | **Tú:** la cuenta de AWS y el perfil de KMS (sección 5) | Desbloquea las siguientes | — |
+| 7 | **It. 42b, staging en AWS** con testnet | La prueba real | Opus xhigh |
+| 8 | **37b:** KMS, y después la red principal (proveedor de RPC, tesorería, despliegue y restauración con datos reales) | Producción | Opus max / xhigh |
 
 **Decisiones tuyas (❓):**
 - el segundo factor para el Super Administrador;
 - la política de datos personales (Ley 1581) y la autorización de los veedores;
 - la meta de accesibilidad y las decisiones de UX (sección 9 de `docs/ux-analisis.md`);
+- las decisiones de los flujos: la solicitud de alta, varios administradores, el autor en la Bandeja, el aviso diario y el contacto de la veeduría (sección 5 de `docs/mapa-funcional.md`);
 - el límite de reportes por veedor;
 - el perfil del veedor;
 - el proveedor de mapas para la red principal;
