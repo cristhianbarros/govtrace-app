@@ -8,6 +8,7 @@ use App\Application\Publication\EditorialDecisions;
 use App\Application\Reports\CreateReport;
 use App\Application\Reports\NewReport;
 use App\Domain\Contracts\Contract;
+use App\Domain\Geography\GeoPoint;
 use App\Domain\Organization\Roles;
 use App\Domain\Organization\User;
 use App\Domain\Reports\EvidenceUpload;
@@ -72,6 +73,9 @@ class PrepareDemo
         'canal' => [['CO1.PCCNTR.9100007'], null, 6],
     ];
 
+    /** The worksite that make demo LUGAR=… moves to where the presentation is, so the veedor can report it live (the geofence, R-GEO-01). */
+    private const ANCHORED = 'via';
+
     /** [worksite, veedor (0 = Ana, 1 = Luis), classification, days ago, metres north of the worksite, comment] */
     private const REPORTS = [
         ['via', 0, 'Avance', 6, 30, 'Arrancó el fresado de la calzada.'],
@@ -88,8 +92,13 @@ class PrepareDemo
     /** @param  (Closure(Tenant, list<int>): void)|null  $awaitSeals  waits while the worker seals those reports; by default, it polls their seals */
     public function __construct(private readonly ?Closure $awaitSeals = null) {}
 
-    public function handle(): DemoEnvironment
+    private ?GeoPoint $place = null;
+
+    /** @param  GeoPoint|null  $place  where the presentation is (make demo LUGAR=…): the Calle 30 worksite goes there */
+    public function handle(?GeoPoint $place = null): DemoEnvironment
     {
+        $this->place = $place;
+
         if (app()->isProduction()) {
             throw new RuntimeException('La demostración no corre en producción: crea datos de mentira.');
         }
@@ -113,6 +122,24 @@ class PrepareDemo
         [$published, $pending] = $this->publishSealed($tenant, $reportIds);
 
         return new DemoEnvironment($tenant, $this->url($tenant), $this->credentials($tenant), $published, $pending);
+    }
+
+    /** The name of the worksite that LUGAR anchors, as SECOP II calls its contract. */
+    public static function anchoredWorksite(): string
+    {
+        $contract = self::WORKSITES[self::ANCHORED][0][0];
+
+        return collect(self::CONTRACTS)->firstWhere(0, $contract)[5];
+    }
+
+    /** @return array{float, float}|null */
+    private function location(string $worksite): ?array
+    {
+        if ($worksite === self::ANCHORED && $this->place) {
+            return [$this->place->latitude, $this->place->longitude];
+        }
+
+        return self::WORKSITES[$worksite][1];
     }
 
     /** Only the one at the demo subdomain: a real organization is never touched. */
@@ -150,7 +177,8 @@ class PrepareDemo
         $this->member('Ana Torres', self::VEEDORES[0], Roles::Observer, self::PASSWORDS['veedor']);
         $this->member('Luis Mendoza', self::VEEDORES[1], Roles::Observer, self::PASSWORDS['veedor']);
 
-        foreach (self::WORKSITES as [$contracts, $location]) {
+        foreach (self::WORKSITES as $key => [$contracts]) {
+            $location = $this->location($key);
             $worksite = Worksite::query()->create([
                 'latitude' => $location[0] ?? null,
                 'longitude' => $location[1] ?? null,
@@ -172,7 +200,8 @@ class PrepareDemo
         $reportIds = [];
 
         foreach (self::REPORTS as $number => [$worksite, $veedor, $classification, $daysAgo, $metersNorth, $comment]) {
-            [$contracts, [$latitude, $longitude], $photo] = self::WORKSITES[$worksite];
+            [$contracts, , $photo] = self::WORKSITES[$worksite];
+            [$latitude, $longitude] = $this->location($worksite);
 
             $draft = new NewReport(
                 secopContractId: $contracts[0],

@@ -8,6 +8,7 @@ use App\Application\Sealing\SealingNetwork;
 use App\Domain\Audit\AuditLog;
 use App\Domain\Contracts\Contract;
 use App\Domain\Geography\Department;
+use App\Domain\Geography\GeoPoint;
 use App\Domain\Organization\User as OrganizationUser;
 use App\Domain\Reports\Evidence;
 use App\Domain\Reports\JpegMetadata;
@@ -110,6 +111,41 @@ it('has contracts and worksites to show: one without location, one grouping two 
         // Con su valor, como lo publica SECOP II: la ficha de la obra no muestra "—" y el filtro de valor mínimo tiene qué filtrar.
         ->and(Contract::query()->where('secop_contract_id', 'like', 'CO1.PCCNTR.91%')->whereNull('value')->count())->toBe(0);
 });
+
+it('make demo LUGAR: anchors the Calle 30 worksite where the presentation is, with its reports around it', function () {
+    $medellin = new GeoPoint(6.2442, -75.5812);
+    (new PrepareDemo(sealOnFakeNetwork()))->handle($medellin);
+
+    Tenant::query()->firstOrFail()->run(function () use ($medellin) {
+        $calle30 = Worksite::query()->whereHas('contracts', fn ($contracts) => $contracts->where('secop_contract_id', 'CO1.PCCNTR.9100001'))->firstOrFail();
+        $parque = Worksite::query()->whereHas('contracts', fn ($contracts) => $contracts->where('secop_contract_id', 'CO1.PCCNTR.9100002'))->firstOrFail();
+
+        expect([(float) $calle30->latitude, (float) $calle30->longitude])->toBe([6.2442, -75.5812])
+            // Las demás siguen en Magdalena.
+            ->and([(float) $parque->latitude, (float) $parque->longitude])->toBe([11.2195, -74.2054])
+            ->and($calle30->reports()->count())->toBe(3);
+        // Sus reportes, a unos metros: dentro de la geocerca, como los de un veedor que estuvo ahí.
+        foreach ($calle30->reports as $report) {
+            expect($medellin->distanceInMetersTo(new GeoPoint((float) $report->latitude, (float) $report->longitude)))->toBeLessThan(100);
+        }
+    });
+});
+
+it('make demo LUGAR: says which worksite it anchored, and where', function () {
+    $output = new BufferedOutput;
+
+    expect(Artisan::call('demo:prepare', ['--seal-wait' => 0, '--lugar' => '6.2442,-75.5812'], $output))->toBe(0);
+
+    expect($output->fetch())->toContain('«Pavimentación de la Calle 30, barrio Bastidas» quedó en 6.2442, -75.5812: el veedor la encuentra en «Obras cercanas» desde ahí.');
+});
+
+it('make demo LUGAR: refuses what is not a place, before touching anything', function (string $place) {
+    $output = new BufferedOutput;
+
+    expect(Artisan::call('demo:prepare', ['--seal-wait' => 0, '--lugar' => $place], $output))->toBe(1)
+        ->and($output->fetch())->toContain('LUGAR debe ser «latitud,longitud», por ejemplo LUGAR="6.2442,-75.5812".')
+        ->and(Tenant::query()->count())->toBe(0);
+})->with(['a name' => 'Medellín', 'one number' => '6.2442', 'out of range' => '96.1,-75.5']);
 
 it('sends its reports through CreateReport, with photos that are all different and carry no metadata', function () {
     $environment = demo();

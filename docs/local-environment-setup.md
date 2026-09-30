@@ -88,6 +88,11 @@ Las capturas de todas las pantallas, en celular y en computador: `make ux-check`
 ### Lo que hay que saber antes de una demostración
 
 - **Varios reportes a la vez se sellan por turnos.** Stellar admite una sola transacción pendiente de la cuenta selladora: cada sello espera a que el anterior entre en un ledger (en la red local, cerca de un segundo; en testnet y la red principal, unos 5). Ninguno gasta intentos por esperar su turno (it. 39). `make demo` envía sus 9 reportes de golpe, como los que un celular guarda sin señal.
+- **El reporte del veedor, en vivo, lejos de Santa Marta.**
+  - El servidor rechaza un reporte hecho a más de 500 m de su obra (la geocerca, R-GEO-01), y todas las obras de la demostración están en Magdalena.
+  - `make demo LUGAR="6.2442,-75.5812"` lleva la obra de la Calle 30 al lugar de la presentación. Las demás se quedan en Magdalena, y el mapa se abre más lejos para mostrar todas.
+  - LUGAR tiene que ser el sitio exacto de la presentación, no el centro de la ciudad: por ejemplo, con clic derecho sobre el edificio en un mapa.
+  - Además, el GPS tiene que dar 50 m o menos (US-008). Un portátil ubica por WiFi y a veces da más. Entonces, en Chrome, DevTools → *Sensores* → *Ubicación*, con las mismas coordenadas. Es una limitación del portátil, no del sistema: un celular da la ubicación por GPS.
 - **Cámara, ubicación e instalar la app.** El navegador solo las da en un contexto seguro. En el mismo equipo, `*.localhost` lo es; desde un celular en tu red (`http://<tu IP>:8080`), no. Sin cámara, puedes subir una imagen desde el equipo. Por la misma razón, "Instalar la app en este celular" solo aparece por HTTPS (staging) o en el mismo equipo.
 - **Los correos no se envían:** salen al archivo `storage/logs/mail.log` (`MAIL_MAILER=log`). `make invites` muestra los enlaces de los últimos correos; `make invites LIMIT=10` muestra más.
 - **SECOP.** Al registrar una organización se lanza la sincronización con SECOP II en el worker. Con internet, llegan contratos reales de Magdalena, que se suman a los de demostración; sin internet, la sincronización falla y se reintenta sin afectar la demostración.
