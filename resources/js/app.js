@@ -1,4 +1,6 @@
 import '../css/app.css';
+// It. 43b: escuchar desde el primer momento si el celular deja instalar la app.
+import './lib/install.js';
 import { createApp, h } from 'vue';
 import { createInertiaApp } from '@inertiajs/vue3';
 

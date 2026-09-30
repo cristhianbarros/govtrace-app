@@ -2,19 +2,39 @@
 // US-014: la salud de la sincronización con SECOP II — la última corrida:
 // cuándo, cómo terminó, qué trajo para cada organización y qué descartó.
 // Verde si terminó bien; rojo, con el motivo y el reintento, si falló.
-import { onMounted } from 'vue';
+import { onMounted, ref } from 'vue';
 import LoadState from '@/Components/LoadState.vue';
 import { useLoader } from '@/composables/useLoader.js';
 import SuperAdminLayout from '@/Layouts/SuperAdminLayout.vue';
-import { fetchSecopHealth } from '@/services/api.js';
+import { fetchSecopHealth, syncSecopNow } from '@/services/api.js';
+import { errorMessage } from '@/services/errors.js';
 
 const { data: run, loading, error, load } = useLoader(fetchSecopHealth);
+
+// It. 43b (V15): sin esperar a la madrugada, por ejemplo tras una caída de la API.
+const syncing = ref(false);
+const notice = ref(null);
+
+async function syncNow() {
+    syncing.value = true;
+    try {
+        notice.value = (await syncSecopNow()).message;
+    } catch (failure) {
+        notice.value = errorMessage(failure);
+    } finally {
+        syncing.value = false;
+    }
+}
 
 onMounted(load);
 </script>
 
 <template>
     <SuperAdminLayout title="Salud de SECOP II">
+        <div class="flex flex-col gap-2 md:flex-row md:items-center">
+            <button type="button" :disabled="syncing" class="min-h-11 self-start rounded-lg bg-slate-900 px-4 text-base font-semibold text-white disabled:opacity-40" @click="syncNow">Sincronizar ahora</button>
+            <p v-if="notice" role="status" class="text-base text-slate-800">{{ notice }}</p>
+        </div>
         <LoadState
             :loading="loading"
             :error="error"

@@ -9,7 +9,8 @@ criterios_aceptacion:
   validaciones_reglas:
     - "No consulta ningún servicio de GovTrace"
   manejo_errores: []
-  requisitos_ux: []
+  requisitos_ux:
+    - "(It. 43b, 2026-09-30) El validador público enlaza este programa: Compruébelo por su cuenta con el programa independiente"
   casos_edge: []
 validacion_smart:
   specific: true

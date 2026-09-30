@@ -91,3 +91,10 @@ Característica: Reportes sin conexión con envío automático
     Cuando el miércoles el reporte llega al servidor
     Entonces el reporte es aceptado y encolado para sellado
     Y entra con estado "Oculto" para que el administrador decida
+
+  @complexity:low
+  Escenario: La app del veedor se instala en el celular
+    Dado que soy veedor de "Veeduría Ciudadana Santa Marta"
+    Cuando mi celular permite instalar la app
+    Entonces el menú de mi cuenta ofrece "Instalar la app en este celular"
+    Y la app instalada se llama "GovTrace · Veeduría Ciudadana Santa Marta" y abre en "Nuevo Reporte"

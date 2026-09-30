@@ -114,3 +114,14 @@ describe('En palabras de todos los días (it. 40c)', () => {
         expect(wrapper.text()).not.toContain('huella');
     });
 });
+
+describe('El verificador independiente (it. 43b, V14)', () => {
+    it('leads whoever wants to check it on their own to the independent verifier', async () => {
+        page.props = { ...page.props, stellar: STELLAR, verifierUrl: 'https://github.com/cristhianbarros/govtrace-app/tree/main/tools/verify' };
+        const wrapper = mount(Validator);
+
+        const link = wrapper.get('a[data-test="verifier"]');
+        expect(link.attributes('href')).toBe('https://github.com/cristhianbarros/govtrace-app/tree/main/tools/verify');
+        expect(link.text()).toBe('Compruébelo por su cuenta con el programa independiente');
+    });
+});

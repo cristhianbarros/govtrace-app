@@ -19,7 +19,15 @@ test('Entra y llega a Nuevo reporte', async ({ page }) => {
     await expect(page.getByRole('heading', { name: 'Nuevo Reporte', exact: true })).toBeVisible();
 });
 
-test.fixme('V6: instala la app en su celular, con el nombre, el logo y los íconos de su veeduría', async () => {});
+test('Puede instalar la app en su celular, con el nombre de su veeduría (V6)', async ({ page }) => {
+    await enter(page);
+
+    await expect(page.locator('link[rel="manifest"]')).toHaveAttribute('href', '/manifest.webmanifest');
+    const manifest = await (await page.request.get(`${ORG}/manifest.webmanifest`)).json();
+    expect(manifest.name).toBe('GovTrace · Veeduría de Pruebas E2E');
+    expect(manifest.start_url).toBe('/reports/new');
+    expect((await page.request.get(`${ORG}/pwa/govtrace-512.png`)).status()).toBe(200);
+});
 
 test('Arma un reporte: la obra, lo que vio y la foto', async ({ page }) => {
     await enter(page);

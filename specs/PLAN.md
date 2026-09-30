@@ -1914,6 +1914,29 @@ Esta iteración estaba reservada para ese recorrido. El recorrido se hizo para e
 
 **Modelo:** Sonnet medium.
 
+⚠️ **43b, V6, V14 y V15 cumplidos (2026-09-30)**, sin revisión del usuario.
+- **V6, la app instalable:**
+  - cada veeduría tiene su manifiesto (`/manifest.webmanifest`), con su nombre ("GovTrace · …"), que abre en "Nuevo Reporte";
+  - los íconos, en PNG de 192 y 512 px y en SVG, van en `public/pwa/`: Apache reserva `/icons/` para los suyos;
+  - las páginas de cada veeduría lo enlazan, y el panel global no;
+  - si el navegador lo permite, el menú de cuenta ofrece "Instalar la app en este celular".
+- **V14:** el validador enlaza el verificador independiente del repositorio (`APP_VERIFIER_URL`, US-046-INT).
+- **V15:** "Sincronizar ahora" en la salud de SECOP II. Pone en cola la sincronización de todas las organizaciones; otra pedida en los 5 minutos siguientes responde 429.
+- **Spec:** escenarios nuevos en US-018 (instalar) y US-014 (sincronizar), y un requisito de UX en US-046-INT. `make trace-check`: 264 de 264.
+
+**Prueba:**
+- Pest:
+  - el manifiesto: nombre, inicio e íconos; enlazado solo en las veedurías;
+  - el verificador;
+  - sincronizar: en cola, espera de 5 minutos y solo para el Super Administrador.
+- Vitest: 394 de 394.
+- `make e2e`: 38 pasan y 9 siguen pendientes (V3, V7, V8, V9, V10, V13 y la Ley 1581).
+
+**Queda de la 43b:**
+- V9 (❓ el aviso diario);
+- V10 (❓ la solicitud de alta);
+- V13 (❓ el contacto).
+
 **Done-when de las dos:** los `fixme` de sus vacíos, en verde.
 
 ## Pivote a Stellar (2026-09-28)

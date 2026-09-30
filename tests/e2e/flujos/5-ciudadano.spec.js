@@ -88,7 +88,11 @@ test('Abre el validador de evidencias', async ({ page }) => {
     await expect(page.getByRole('heading', { name: 'Validador de evidencias', exact: true })).toBeVisible();
 });
 
-test.fixme('V14: encuentra el script de verificación independiente desde el validador', async () => {});
+test('Encuentra el verificador independiente desde el validador (V14)', async ({ page }) => {
+    await page.goto(`${ORG}/verify`);
+
+    await expect(page.locator('a[data-test="verifier"]')).toHaveAttribute('href', /tools\/verify$/);
+});
 
 test.fixme('V13: contacta a la veeduría desde su página', async () => {});
 
