@@ -20,8 +20,11 @@ const CLASSIFICATION = {
 const viewing = ref(null); // la foto abierta en el visor
 const showingSeal = ref(false);
 
-const photos = () => (props.evidence.files ?? []).filter((file) => file.photo_url);
-const pdfs = () => (props.evidence.files ?? []).filter((file) => file.kind === 'pdf');
+const files = () => props.evidence.files ?? [];
+const photos = () => files().filter((file) => file.photo_url);
+
+// US-026: el binario exacto que se selló, para comprobarlo en el validador o en un peritaje.
+const original = (index) => (files().length > 1 ? `Descargar archivo original (${index + 1} de ${files().length})` : 'Descargar archivo original');
 </script>
 
 <template>
@@ -47,13 +50,20 @@ const pdfs = () => (props.evidence.files ?? []).filter((file) => file.kind === '
                     <img :src="photo.photo_url" loading="lazy" alt="" class="size-full object-cover" />
                 </button>
             </div>
-            <a
-                v-for="pdf in pdfs()"
-                :key="pdf.id"
-                data-test="download"
-                :href="pdf.download_url"
-                class="mt-3 inline-flex min-h-11 items-center rounded-lg border border-slate-300 px-3 text-sm font-semibold"
-            >Descargar PDF</a>
+            <ul v-if="files().length" class="mt-3 flex flex-col gap-2">
+                <li v-for="(file, index) in files()" :key="file.id" class="flex flex-wrap items-center gap-x-3 gap-y-1">
+                    <a
+                        data-test="download"
+                        :href="file.download_url"
+                        class="inline-flex min-h-11 items-center rounded-lg border border-slate-300 px-3 text-sm font-semibold"
+                    >{{ original(index) }}</a>
+                    <a
+                        data-test="proof"
+                        :href="file.proof_url"
+                        class="inline-flex min-h-11 items-center text-sm text-slate-700 underline"
+                    >Descargar su prueba</a>
+                </li>
+            </ul>
             <p v-if="evidence.approximate_location" class="mt-2 text-xs text-slate-500">
                 Ubicación aproximada (unos 100 m): {{ evidence.approximate_location.lat }}, {{ evidence.approximate_location.lng }}
             </p>

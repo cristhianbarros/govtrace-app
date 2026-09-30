@@ -168,8 +168,36 @@ describe('Vista de obra — la línea de tiempo (US-029)', () => {
         const wrapper = await openWorksite();
         const pdf = cards(wrapper)[2].get('a[data-test="download"]');
 
-        expect(pdf.text()).toBe('Descargar PDF');
+        expect(pdf.text()).toBe('Descargar archivo original');
         expect(pdf.attributes('href')).toBe('/public/evidences/30/download');
+        wrapper.unmount();
+    });
+
+    it('Descarga del archivo exacto y su prueba: a photo too has "Descargar archivo original", and its proof beside it', async () => {
+        const wrapper = await openWorksite();
+        const photo = cards(wrapper)[0];
+
+        expect(photo.get('a[data-test="download"]').text()).toBe('Descargar archivo original');
+        expect(photo.get('a[data-test="download"]').attributes('href')).toBe('/public/evidences/40/download');
+        expect(photo.get('a[data-test="proof"]').text()).toBe('Descargar su prueba');
+        expect(photo.get('a[data-test="proof"]').attributes('href')).toBe('/public/evidences/40/proof');
+        wrapper.unmount();
+    });
+
+    it('numbers the originals when an evidence has several files', async () => {
+        const second = { ...abandonment.files[0], id: 41, download_url: '/public/evidences/41/download', proof_url: '/public/evidences/41/proof' };
+        const wrapper = await openWorksite(calle30({ timeline: [{ ...abandonment, files: [abandonment.files[0], second] }] }));
+
+        expect(cards(wrapper)[0].findAll('a[data-test="download"]').map((link) => link.text())).toEqual(['Descargar archivo original (1 de 2)', 'Descargar archivo original (2 de 2)']);
+        wrapper.unmount();
+    });
+
+    it('Una evidencia retirada no se puede descargar: its tombstone has no download', async () => {
+        const leaky = { ...withdrawn, files: abandonment.files };
+        const wrapper = await openWorksite(calle30({ timeline: [abandonment, leaky, progress] }));
+
+        expect(cards(wrapper)[1].find('a[data-test="download"]').exists()).toBe(false);
+        expect(cards(wrapper)[1].find('a[data-test="proof"]').exists()).toBe(false);
         wrapper.unmount();
     });
 

@@ -59,9 +59,14 @@ Recorre los cuatro perfiles con la interfaz de las it. 40 y 43. Todo se hace con
    - **La lista:** **Lista** muestra las obras como lista; escribir `colegio` en *Buscar una obra por su nombre*.
    - **Una obra:** su estado y **por qué**, en palabras. En una foto, **Comprobar que es original** abre su recibo en la red.
    - **Al pie del mapa:** **Estadísticas del territorio** y **Validar un archivo**; el validador enlaza también al programa independiente.
+   - **El validador, el momento más vistoso:**
+     - en una foto de la obra, **Descargar archivo original** y **Descargar su prueba**;
+     - en **Validar un archivo**, soltar la foto: ✅ *Archivo Auténtico e Inmutable*, con su fecha y su ledger;
+     - cambiarla (recortarla o retocarla en cualquier programa) y soltarla otra vez: con **Un archivo** dice ⚠️ *no encontrado*, porque no hay ningún sello con esa huella;
+     - con **Archivo y su prueba** (la foto cambiada y la prueba descargada) dice ❌ *Alterado*.
 3. **El Administrador:**
    - **Entrar** (arriba a la derecha): `admin@veeduria-demo.org`.
-   - **La Bandeja:** la pestaña cuenta **3** por revisar, y cada evidencia dice su obra, su municipio y quién la envió.
+   - **La Bandeja:** la pestaña cuenta **3** por revisar, y cada evidencia dice su obra, su municipio y quién la envió. La cuenta baja con cada decisión.
    - **Publicar una:** después, en el menú de la cuenta, **Ver el sitio público** para verla en el mapa.
    - **Rechazar otra** con un motivo, que después verá el veedor.
    - **En el computador:** la barra lateral agrupa todas las pantallas. **En el celular:** tres pestañas y **Más**.

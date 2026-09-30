@@ -6,6 +6,7 @@ import { flushPromises, mount } from '@vue/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import Inbox from './Inbox.vue';
 import { decideOnEvidence, fetchInbox } from '@/services/api.js';
+import { router } from '@/testing/inertia.js';
 
 vi.mock('@inertiajs/vue3', async () => await import('@/testing/inertia.js'));
 vi.mock('@/services/api.js');
@@ -89,6 +90,16 @@ describe('Bandeja de entrada', () => {
         expect(wrapper.get('[role="status"]').text()).toBe(PUBLISHED);
         expect(wrapper.text()).not.toContain('Obra detenida hace 2 meses');
         expect(wrapper.text()).toContain('Otra');
+    });
+
+    it('the count on the Bandeja tab goes down with each decision: it asks the server for it again', async () => {
+        decideOnEvidence.mockResolvedValue({ message: PUBLISHED, status: 'Publicado' });
+        const wrapper = await openInbox([evidence(), evidence({ id: 8 })]);
+
+        await button(wrapper, 'Publicar').trigger('click');
+        await flushPromises();
+
+        expect(router.reload).toHaveBeenCalledWith({ only: ['inboxPending'] });
     });
 
     it('No existe publicación masiva: every evidence has its own buttons, and nothing selects several', async () => {

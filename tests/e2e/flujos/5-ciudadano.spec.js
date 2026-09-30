@@ -66,11 +66,13 @@ test('Comprueba una evidencia: su recibo, su descarga y su prueba', async ({ pag
     await page.getByRole('button', { name: 'Comprobar que es original' }).first().click();
     await expect(page.locator('[data-test="seal"]')).toContainText('Ledger');
 
-    const worksiteId = new URL(page.url()).pathname.split('/').pop();
-    const { data } = await (await page.request.get(`${ORG}/public/worksites/${worksiteId}`)).json();
-    const file = data.timeline.find((entry) => entry.files)?.files[0];
-    expect((await page.request.get(`${ORG}${file.download_url}`)).status()).toBe(200);
-    expect((await page.request.get(`${ORG}${file.proof_url}`)).status()).toBe(200);
+    // US-026: "Descargar archivo original" y su prueba, en la tarjeta (it. 43c).
+    const original = page.waitForEvent('download');
+    await page.getByRole('link', { name: 'Descargar archivo original' }).first().click();
+    expect((await original).suggestedFilename()).toMatch(/\.(jpg|png|pdf)$/);
+    const proof = page.waitForEvent('download');
+    await page.getByRole('link', { name: 'Descargar su prueba' }).first().click();
+    expect((await proof).suggestedFilename()).toMatch(/\.prueba\.json$/);
 });
 
 test('Ve las estadísticas del territorio y descarga los datos abiertos', async ({ page }) => {

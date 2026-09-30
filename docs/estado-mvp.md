@@ -6,7 +6,7 @@ Al 2026-09-29. Empezó sobre `77e6030` (iteración 39) y se actualizó en las it
 
 ## Dónde quedó (2026-09-30)
 
-El usuario pidió avanzar sin su revisión hasta el día siguiente, con la interfaz como prioridad, "como si mañana fuera el día de la demo". Se hicieron seis iteraciones, cada una con su PR:
+El usuario pidió avanzar sin su revisión hasta el día siguiente, con la interfaz como prioridad, "como si mañana fuera el día de la demo". Se hicieron siete iteraciones, cada una con su PR:
 
 | Iteración | Qué | PR |
 |---|---|---|
@@ -16,6 +16,7 @@ El usuario pidió avanzar sin su revisión hasta el día siguiente, con la inter
 | 40d (parte) | El Inicio con "¿Cómo funciona?" y el directorio de veedurías, "Entrar", tomar la foto o elegirla | #53 |
 | 43a (parte) | El Super Administrador ve, reinvita, revoca y asigna el Administrador de cada organización | #54 |
 | 43b (parte) | La app instalable, el verificador independiente enlazado, sincronizar SECOP ahora | #55 |
+| 43c | El ensayo de la demostración, de punta a punta: descargar el original de una foto, la cuenta de la Bandeja que baja, el valor de los contratos de `make demo` | #57 |
 
 **Frente al checkpoint base:**
 
@@ -27,7 +28,7 @@ El usuario pidió avanzar sin su revisión hasta el día siguiente, con la inter
 | Texto de menos de 16 px, en la pantalla típica | 73 % | **12,5 %** |
 | Texto de menos de 14 px, en la pantalla típica | 25,5 % | **0 %** |
 | Botones de menos de 44 px, en la pantalla típica | 66 % | **0 %** |
-| Tests | Pest 785, Vitest 351 | Pest 820, Vitest 394, E2E 47 (38 + 9 pendientes), trace-check 264 de 264 |
+| Tests | Pest 785, Vitest 351 | Pest 820, Vitest 398, E2E 47 (38 + 9 pendientes), trace-check 264 de 264 |
 
 **Para probar el flujo visual completo:** `make demo`, y el guion de `docs/local-environment-setup.md` (sección "Un guion para la demostración").
 

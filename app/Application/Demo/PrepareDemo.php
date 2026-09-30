@@ -51,15 +51,15 @@ class PrepareDemo
     /** How many of the reports get published: the rest wait in the inbox. */
     private const PUBLISHED = 6;
 
-    /** [id, entity, contract, municipality, state, object, months left] */
+    /** [id, entity, contract, municipality, state, object, months left, value in COP] */
     private const CONTRACTS = [
-        ['CO1.PCCNTR.9100001', 'Alcaldía Distrital de Santa Marta', 'Constructora Bahía S.A.S.', '47001', 'En ejecución', 'Pavimentación de la Calle 30, barrio Bastidas', 5],
-        ['CO1.PCCNTR.9100002', 'Alcaldía Distrital de Santa Marta', 'Consorcio Parques del Caribe', '47001', 'En ejecución', 'Construcción del parque Los Trupillos', 4],
-        ['CO1.PCCNTR.9100003', 'Gobernación del Magdalena', 'Vías del Magdalena S.A.', '47189', 'En ejecución', 'Mejoramiento de la vía Ciénaga – Sevilla', 1],
-        ['CO1.PCCNTR.9100004', 'Alcaldía de Fundación', 'Aguas de la Zona Bananera S.A.S.', '47288', 'En ejecución', 'Ampliación del acueducto veredal de Fundación', 6],
-        ['CO1.PCCNTR.9100005', 'Alcaldía Distrital de Santa Marta', 'Consorcio Educativo Santa Marta', '47001', 'En ejecución', 'Construcción del colegio distrital de Gaira', 8],
-        ['CO1.PCCNTR.9100006', 'Alcaldía Distrital de Santa Marta', 'Interventorías del Norte S.A.S.', '47001', 'En ejecución', 'Interventoría de la construcción del colegio distrital de Gaira', 8],
-        ['CO1.PCCNTR.9100007', 'Alcaldía Distrital de Santa Marta', 'Obras Hidráulicas del Caribe S.A.S.', '47001', 'Terminado', 'Canalización del arroyo San Joaquín', -1],
+        ['CO1.PCCNTR.9100001', 'Alcaldía Distrital de Santa Marta', 'Constructora Bahía S.A.S.', '47001', 'En ejecución', 'Pavimentación de la Calle 30, barrio Bastidas', 5, 2_850_000_000],
+        ['CO1.PCCNTR.9100002', 'Alcaldía Distrital de Santa Marta', 'Consorcio Parques del Caribe', '47001', 'En ejecución', 'Construcción del parque Los Trupillos', 4, 1_240_000_000],
+        ['CO1.PCCNTR.9100003', 'Gobernación del Magdalena', 'Vías del Magdalena S.A.', '47189', 'En ejecución', 'Mejoramiento de la vía Ciénaga – Sevilla', 1, 18_700_000_000],
+        ['CO1.PCCNTR.9100004', 'Alcaldía de Fundación', 'Aguas de la Zona Bananera S.A.S.', '47288', 'En ejecución', 'Ampliación del acueducto veredal de Fundación', 6, 3_960_000_000],
+        ['CO1.PCCNTR.9100005', 'Alcaldía Distrital de Santa Marta', 'Consorcio Educativo Santa Marta', '47001', 'En ejecución', 'Construcción del colegio distrital de Gaira', 8, 9_450_000_000],
+        ['CO1.PCCNTR.9100006', 'Alcaldía Distrital de Santa Marta', 'Interventorías del Norte S.A.S.', '47001', 'En ejecución', 'Interventoría de la construcción del colegio distrital de Gaira', 8, 780_000_000],
+        ['CO1.PCCNTR.9100007', 'Alcaldía Distrital de Santa Marta', 'Obras Hidráulicas del Caribe S.A.S.', '47001', 'Terminado', 'Canalización del arroyo San Joaquín', -1, 2_100_000_000],
     ];
 
     /** [contracts it groups, location (null = not anchored yet), photo] */
@@ -126,11 +126,12 @@ class PrepareDemo
 
     private function createContracts(): void
     {
-        foreach (self::CONTRACTS as [$id, $entity, $contractor, $municipality, $state, $object, $monthsLeft]) {
+        foreach (self::CONTRACTS as [$id, $entity, $contractor, $municipality, $state, $object, $monthsLeft, $value]) {
             Contract::fromSecop(fn () => Contract::query()->updateOrCreate(['secop_contract_id' => $id], [
                 'entity_name' => $entity,
                 'contractor_name' => $contractor,
                 'object' => $object,
+                'value' => $value,
                 'contract_type' => 'Obra',
                 'status' => $state,
                 'signed_at' => now()->subMonths(3)->toDateString(),
