@@ -1582,6 +1582,71 @@ Suite: 702 en verde (8 nuevos). Vitest: 351. `make backup-check`: 13 comprobacio
 2. **La congestión tampoco gasta intentos.** `txINSUFFICIENT_FEE` también llega si los ledgers van llenos y piden una comisión mayor. Se trata igual que la otra pendiente: el sello espera, sin quedar en "Falla de Sellado". Si durara horas, avisa la alerta de cola estancada (2 h, US-021). La oferta de inclusión del fee bump ya es alta (casi la comisión de recursos), así que es raro quedar por debajo.
 3. **Una sola selladora alcanza para el MVP**: 10 a 12 sellos por minuto. Si el volumen lo pidiera, el camino son las cuentas de canal (varias transacciones por ledger). Es un cambio de la firma que conviene hacer junto con AWS KMS (37b), porque la selladora pasaría a firmar la autorización de Soroban y no la transacción.
 
+#### Iteración 40 — Usable por cualquiera
+⬜ **Propuesta el 2026-09-29, por aprobar.** Nació de probar la demo: el usuario notó que no hay botón de salir, que las pantallas confunden y que los estados del mapa quedan debajo del mapa. Pidió que fuera muy fácil de usar para gente muy diversa, incluidos adultos mayores. El análisis completo está en `docs/ux-analisis.md`: un recorrido con Playwright por las 26 vistas, en celular y escritorio, axe y mediciones de letra y botones.
+
+Esta iteración estaba reservada para ese recorrido. Como el recorrido ya se hizo, ahora corrige lo que encontró. Va en tres partes, un commit cada una.
+
+**40a — Lo urgente.**
+- Sesión:
+  - "Salir" y el nombre del usuario en los paneles del Administrador y del Super Administrador;
+  - la ruta de salida del dominio central (hoy no existe);
+  - el "Salir" del veedor pasa a "Mi cuenta", siempre con confirmación.
+- El nombre de la obra en cada tarjeta de la Bandeja.
+- El estado de la obra y su motivo en la ficha pública, según las reglas de US-027.
+- En el mapa: filtros que hacen de leyenda, arriba del mapa; íconos en los pines; los mismos nombres de estado en todas partes.
+- "Enviar Reporte" dice qué falta.
+- Arreglos de código:
+  - las clases `sm:` pasan a `md:`: `sm` está apagado en `app.css` y 11 clases de escritorio nunca se aplicaban;
+  - el `h1` es el título de cada pantalla;
+  - "cancelled" y "Success" pasan a español.
+- El recorrido de Playwright con axe entra al repositorio y al pipeline: `make ux-check`.
+
+**Done-when de la 40a:**
+- Playwright:
+  - "Salir" queda a dos toques o menos desde cada pantalla con sesión;
+  - los estados del mapa se ven sin desplazarse, en 412×915 y en 1366×768.
+- Pest: salir invalida la sesión, en el dominio central y en una organización.
+- axe: cero violaciones de WCAG 2.2 AA en las 52 vistas.
+- Ningún `sm:` en `resources/js`.
+
+**40b — Navegación y legibilidad.**
+- Una cabecera común con el menú de cuenta.
+- En celular, la barra de abajo con ícono y texto (máximo 5 destinos); en escritorio, una barra lateral.
+- Letra con base de 16 px y botones de 44 px en los paneles.
+- Componentes comunes y un set de íconos SVG empaquetado, sin tocar la CSP.
+- El glosario de lenguaje claro del análisis, aplicado.
+- Buscador en Contratos.
+- Vista de lista en el mapa y agrupación de pines cercanos.
+
+**Done-when de la 40b (Playwright):**
+- ningún control por debajo de 44 px, salvo los enlaces dentro de un texto;
+- como mucho el 5 % del texto por debajo de 14 px en cada pantalla;
+- cada pantalla con un `h1` igual a su título.
+
+**40c — Orientación y confianza.**
+- El inicio central con "¿Cómo funciona?" y el directorio de veedurías.
+- La guía de primer uso del veedor.
+- En Nuevo reporte: los pasos a la vista, y "Tomar foto" o "Galería".
+- La auditoría del Administrador, en frases.
+- El nombre corto de la ficha de obra.
+- Unir contratos eligiéndolos de una lista.
+- La prueba con 5 personas, al menos 2 mayores de 60.
+
+**Done-when de la 40c:** en la prueba con personas, al menos 4 de 5 terminan cada una de las 6 tareas sin ayuda.
+
+**Cubre:** las reglas R-UX-01 a R-UX-09 propuestas en `docs/ux-analisis.md` (sección 2), que entran a la SPEC si el usuario las aprueba · US-031 (iniciar sesión, y ahora salir), US-008, US-010, US-015, US-017, US-024, US-027, US-028, US-029, US-036, US-045-INT, US-049-RPT, US-051-RPT.
+
+**Decisiones por confirmar (❓), en la sección 9 del análisis:**
+1. las reglas R-UX en la SPEC, con WCAG 2.2 AA como meta;
+2. el directorio de veedurías en el inicio central;
+3. el nombre corto de la ficha de obra (respeta R-SEC-01: el nombre de SECOP se sigue viendo intacto);
+4. la explicación de Avance, Retraso y Abandono, que valida una veeduría;
+5. "sello digital" en lugar de "blockchain", y "comprobante" o "recibo";
+6. conseguir a las 5 personas de la prueba.
+
+**Modelo:** Sonnet medium. Solo una pieza toca el acceso, la ruta de salida del dominio central: es pequeña, estándar y va con sus tests.
+
 #### Iteración 41 — Salir a internet con seguridad
 ✅ **Cumplido (2026-09-29).** Aprobada por el usuario ("continúa", sobre el orden de `docs/estado-mvp.md`), con la vara de que el MVP esté **listo para producción**. No necesita AWS: deja la aplicación lista para estar detrás de un proxy con TLS; el certificado y el servidor son de la it. 42 (staging).
 

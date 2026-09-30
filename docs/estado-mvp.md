@@ -16,7 +16,7 @@ Al 2026-09-29, sobre `main` en `77e6030` (iteración 39). Para ir abordándolo: 
 1. ~~**Salir a internet con seguridad**~~ — hecho en la it. 41: proxies de confianza, CSP y HSTS, límites de abuso, auditoría de dependencias, logs diarios y todo en español. Falta el certificado, que llega con staging.
 2. **Una prueba real en la nube** (staging en AWS, apuntando a testnet): celulares de verdad, HTTPS y correo real.
 3. **AWS KMS** para la llave de la selladora (37b): espera la cuenta de AWS.
-4. **La revisión visual y de accesibilidad** de todas las pantallas (it. 40).
+4. **La usabilidad.** Ya se revisó con capturas y mediciones (`docs/ux-analisis.md`). Hoy no se puede salir de los paneles, la leyenda del mapa queda lejos y hay lenguaje técnico, letra y botones pequeños. Lo corrige la it. 40.
 5. **La protección de datos personales** (Ley 1581 de 2012): no está en la SPEC.
 6. **La salida a la red principal** (37b): proveedor de RPC, tesorería y restauración con datos reales.
 
@@ -65,10 +65,10 @@ El MVP tiene que estar listo para producción, no solo funcionar. Esta es la var
 
 | | Qué | Detalle |
 |---|---|---|
-| ✅ | Todas las pantallas de la SPEC | 28 páginas: la app del veedor (PWA, con modo sin conexión), el panel del Administrador, el panel global y el sitio público. Mobile-first por regla: botones de 44 px, y los estados carga / error / vacío / éxito probados en Vitest. |
-| ⬜ | **Nadie las revisó con los ojos** | Los tests prueban el comportamiento, no cómo se ven. **It. 40:** un recorrido con Playwright por cada rol, con capturas en celular y escritorio, y la revisión de cada pantalla. |
+| ✅ | Todas las pantallas de la SPEC | 28 páginas: la app del veedor (PWA, con modo sin conexión), el panel del Administrador, el panel global y el sitio público. Mobile-first, con los estados carga / error / vacío / éxito probados en Vitest. Los botones de 44 px se cumplen en la app del veedor y el sitio público, no en los paneles: ahí la mayoría mide 26 a 41 px. |
+| ⚠️ | **Revisadas el 2026-09-29; falta corregir** | Un análisis experto de las 26 vistas, en celular y escritorio, con capturas y mediciones: `docs/ux-analisis.md`. **La accesibilidad técnica está sana:** axe incumple solo 2 reglas en 52 vistas y el contraste cumple AA. **La usabilidad no:** el Administrador y el Super Administrador no pueden cerrar sesión, la Bandeja no dice de qué obra es cada foto, la leyenda del mapa queda lejos, y hay lenguaje técnico, letra y botones pequeños. Lo corrige la **it. 40**, en tres partes: 40a, 40b y 40c. |
 | ✅ | Correos y mensajes en español (it. 41) | `APP_LOCALE=es` y `lang/es`: los correos ya no traen las frases en inglés de la plantilla de Laravel ("Regards", "If you're having trouble clicking…"), y los mensajes de validación por defecto y las páginas de error salen en español. |
-| ⬜ | Accesibilidad | ❓ La SPEC no fija una meta. Propuesta: en la it. 40, un análisis automático (axe) de cada pantalla, y corregir lo grave: etiquetas, contraste, foco y teclado (WCAG 2.1 AA como referencia). |
+| ⬜ | Accesibilidad | ❓ La SPEC no fija una meta. Propuesta: WCAG 2.2 AA más las reglas R-UX de `docs/ux-analisis.md` (sección 2), medidas en el pipeline con `make ux-check`. Lo que falta no es contraste ni etiquetas: es el tamaño de letra y de botones, y el color como único significado. |
 | ⚠️ | Cámara y GPS en un celular | El navegador los exige con HTTPS: en local, solo desde el mismo equipo. Se prueban de verdad en staging. |
 | ⬜ | Perfil del veedor | ❓ Su nombre es la parte local del correo (deuda aceptada). Ninguna historia pide editarlo. |
 | ⚠️ | Mapas | ❓ Las imágenes del mapa vienen de `tile.openstreetmap.org`, cuya política no admite tráfico de producción intenso. Para la red principal, un proveedor de mapas con su propia llave. |
@@ -166,7 +166,7 @@ Una sola máquina, sin balanceador de carga: un balanceador cuesta más que todo
 | 2 | **37b, KMS:** la prueba de concepto y la firma detrás de `SealingNetwork` | La llave de la selladora fuera del servidor | Opus max |
 | 3 | **It. 41, salir a internet:** TLS listo, proxies de confianza, HSTS, CSP, `Permissions-Policy`, límites de abuso, auditoría de dependencias en el pipeline, rotación de logs, correos en español | Seguridad (sección 4) | Opus xhigh |
 | 4 | **It. 42, staging en AWS** con testnet | La prueba real | Opus xhigh |
-| 5 | **It. 40, recorrido visual** con Playwright, capturas y accesibilidad | UX/UI (sección 1) | Sonnet |
+| 5 | **It. 40, usable por cualquiera:** 40a lo urgente, 40b navegación y legibilidad, 40c orientación (`docs/ux-analisis.md`) | UX/UI (sección 1) | Sonnet |
 | 6 | **37b, red principal:** proveedor de RPC, tesorería, despliegue y restauración con datos reales | Producción | Opus xhigh |
 
 El 3 no necesita AWS: se puede hacer mientras creas la cuenta.
@@ -174,7 +174,7 @@ El 3 no necesita AWS: se puede hacer mientras creas la cuenta.
 **Decisiones tuyas (❓):**
 - el segundo factor para el Super Administrador;
 - la política de datos personales (Ley 1581) y la autorización de los veedores;
-- la meta de accesibilidad;
+- la meta de accesibilidad y las decisiones de UX (sección 9 de `docs/ux-analisis.md`);
 - el límite de reportes por veedor;
 - el perfil del veedor;
 - el proveedor de mapas para la red principal;
