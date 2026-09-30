@@ -425,9 +425,11 @@ Celular                             Escritorio (md:)
 
 ## 7. Plan de mejora: la it. 40, "Usable por cualquiera"
 
-La it. 40 estaba reservada para "el recorrido visual con Playwright y axe". El recorrido ya se hizo para este análisis, así que se redefine para corregir lo encontrado. Van tres partes, cada una con su commit y su criterio de terminado.
+La it. 40 estaba reservada para "el recorrido visual con Playwright y axe". Ese recorrido se hizo para este análisis, y ahora se convierte en el punto de partida: la **40a** lo deja en el repositorio como el *checkpoint base*, junto con los flujos de `docs/mapa-funcional.md`. Las otras tres partes corrigen lo encontrado. Cada parte va con su commit y su criterio de terminado.
 
-**40a — Lo urgente (1–2 días)**
+**40a — Checkpoint base (1 día):** el recorrido, axe y los flujos de cada rol, como tests. Detalle en `docs/estado-mvp.md` y `specs/PLAN.md`.
+
+**40b — Lo urgente (1–2 días)**
 - **Sesión:**
   - "Salir" y el nombre del usuario en los dos paneles;
   - la ruta de salida del dominio central, con sus tests;
@@ -441,7 +443,6 @@ La it. 40 estaba reservada para "el recorrido visual con Playwright y axe". El r
   - `sm:` pasa a `md:`, con un test que lo vigila;
   - el `h1` es el título de cada pantalla;
   - "Anulado en SECOP" y "Correcta" en lugar de "cancelled" y "Success".
-- **El recorrido de Playwright con axe, en git:** `make ux-check`, que guarda las capturas y exige cero violaciones.
 
 **Done-when:**
 - Playwright:
@@ -451,7 +452,7 @@ La it. 40 estaba reservada para "el recorrido visual con Playwright y axe". El r
 - axe: cero violaciones en las 52 vistas.
 - Ningún `sm:` en `resources/js`.
 
-**40b — Navegación y legibilidad (2–3 días)**
+**40c — Navegación y legibilidad (2–3 días)**
 - **La navegación nueva:**
   - una cabecera común con el menú de cuenta;
   - en celular, la barra con íconos (máximo 5) y "Más";
@@ -471,7 +472,7 @@ La it. 40 estaba reservada para "el recorrido visual con Playwright y axe". El r
 - cada pantalla con un `h1` igual a su título;
 - la navegación con ícono y texto.
 
-**40c — Orientación y confianza (2–3 días)**
+**40d — Orientación y confianza (2–3 días)**
 - **Inicio y ayuda:**
   - el inicio central, con "¿Cómo funciona?" y el directorio de veedurías ❓;
   - la guía de primer uso del veedor.
