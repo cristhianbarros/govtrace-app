@@ -1986,6 +1986,21 @@ Esta iteración estaba reservada para ese recorrido. El recorrido se hizo para e
   - tres LUGAR inválidos: un nombre, un solo número y fuera de rango.
 - El ensayo con el GPS en Medellín: el veedor encuentra la Calle 30 en «Obras cercanas», la reporta y llega a «Sellado».
 
+**43e — La demostración en la Comuna 13.** La mayoría de los datos de la demo eran de Santa Marta; el usuario vive en La Pradera (Comuna 13, Medellín) y pidió obras de allí.
+- Se consultó SECOP II (datos.gov.co, jbjy-vk9h): 42 contratos de obra en Medellín que nombran la Comuna 13 o sus barrios. La mitad eran falsos positivos (ITM por "Metropolitano", Sonsón por "La Quiebra"). Ninguno nombra a La Pradera: Medellín contrata casi todo con objetos genéricos.
+- **Decisión del usuario:** los contratos reales, solo con "Avance"; el retraso y el abandono, en obras de ejemplo ficticias. Es una protección legal: no afirmar nada falso de obras ni de contratistas reales.
+
+✅ **43e cumplida (2026-09-30).**
+- `make demo TERRITORIO=medellin` (`DemoTerritory::medellin()`). La Magdalena de siempre sigue por defecto, idéntica.
+- **Real:** la sección Escuela Municipal San Javier y su interventoría (EDU; CO1.PCCNTR.9033732 y 9047349), agrupadas en una ficha. Son las de SECOP II del 2026-09-30, con sus contratistas, fechas, valores y enlaces.
+- **Ficticio:** cinco obras "de ejemplo" con entidad y contratista "de ejemplo (ficticio)" y códigos `EJEMPLO-C13-…`, que SECOP no puede tener.
+- **Los lugares salen de OpenStreetMap** (Nominatim). El pin de la escuela está cerca de la estación San Javier y es aproximado: SECOP no trae coordenadas.
+- ❓ **Fuera a propósito:** La Escombrera. Sus contratos de estabilización del talud, por el fallo de la JEP, son reales y de la Comuna 13, pero es el sitio de búsqueda de personas desaparecidas. No es para una demostración.
+- **Encontrado de paso: el respaldo de cada hora falla** si una base desaparece entre la lista y el `pg_dump`. En desarrollo pasa porque Pest crea y borra bases de organizaciones. En producción las organizaciones se dan de baja sin borrar su base, así que el riesgo es bajo. Pendiente como mejora de `docker/backup/backup.sh`: omitir la base que ya no existe, con su test en `make backup-check`. Mientras tanto, `make backup-now` devuelve el contenedor a sano.
+- **Prueba:**
+  - Pest, 5 casos: la organización y los contratos reales, solo "Avance" en lo real, lo negativo solo en lo ficticio, la obra que mueve `LUGAR` y el territorio que no conoce. Los 17 de Magdalena siguen en verde.
+  - El ensayo en un navegador, con el GPS en La Pradera: el mapa, la obra real "Normal" con sus contratistas, una obra de ejemplo "En riesgo", y la veedora que reporta en la obra de ejemplo desde "Obras cercanas".
+
 ## Fase v1 — Alinear con el proceso actual (2026-09-30)
 
 La revisión documental del control social de hoy (`docs/proceso-actual.md`, PR #60) comparó GovTrace con la ley. Encontró que GovTrace termina en el mapa, un paso antes del proceso formal, y que nuestro "En riesgo" se confunde con la "obra inconclusa" de la ley.

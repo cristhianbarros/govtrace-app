@@ -25,7 +25,8 @@ use RuntimeException;
 /**
  * make demo: a whole organization to walk through every screen without the
  * internet or SECOP — its people with known passwords, contracts and
- * worksites of Magdalena, and reports that take the same road as a veedor's:
+ * worksites of its territory (DemoTerritory: Magdalena, or the Comuna 13 of
+ * Medellín), and reports that take the same road as a veedor's:
  * CreateReport, the photo's hash, the seal. They are all sent at once, a
  * burst like the reports a phone keeps offline and sends when the signal
  * comes back: the sealer takes them by turns, one per ledger (it. 39). Once
@@ -52,52 +53,21 @@ class PrepareDemo
     /** How many of the reports get published: the rest wait in the inbox. */
     private const PUBLISHED = 6;
 
-    /** [id, entity, contract, municipality, state, object, months left, value in COP] */
-    private const CONTRACTS = [
-        ['CO1.PCCNTR.9100001', 'Alcaldía Distrital de Santa Marta', 'Constructora Bahía S.A.S.', '47001', 'En ejecución', 'Pavimentación de la Calle 30, barrio Bastidas', 5, 2_850_000_000],
-        ['CO1.PCCNTR.9100002', 'Alcaldía Distrital de Santa Marta', 'Consorcio Parques del Caribe', '47001', 'En ejecución', 'Construcción del parque Los Trupillos', 4, 1_240_000_000],
-        ['CO1.PCCNTR.9100003', 'Gobernación del Magdalena', 'Vías del Magdalena S.A.', '47189', 'En ejecución', 'Mejoramiento de la vía Ciénaga – Sevilla', 1, 18_700_000_000],
-        ['CO1.PCCNTR.9100004', 'Alcaldía de Fundación', 'Aguas de la Zona Bananera S.A.S.', '47288', 'En ejecución', 'Ampliación del acueducto veredal de Fundación', 6, 3_960_000_000],
-        ['CO1.PCCNTR.9100005', 'Alcaldía Distrital de Santa Marta', 'Consorcio Educativo Santa Marta', '47001', 'En ejecución', 'Construcción del colegio distrital de Gaira', 8, 9_450_000_000],
-        ['CO1.PCCNTR.9100006', 'Alcaldía Distrital de Santa Marta', 'Interventorías del Norte S.A.S.', '47001', 'En ejecución', 'Interventoría de la construcción del colegio distrital de Gaira', 8, 780_000_000],
-        ['CO1.PCCNTR.9100007', 'Alcaldía Distrital de Santa Marta', 'Obras Hidráulicas del Caribe S.A.S.', '47001', 'Terminado', 'Canalización del arroyo San Joaquín', -1, 2_100_000_000],
-    ];
-
-    /** [contracts it groups, location (null = not anchored yet), photo] */
-    private const WORKSITES = [
-        'via' => [['CO1.PCCNTR.9100001'], [11.2408, -74.1990], 1],
-        'parque' => [['CO1.PCCNTR.9100002'], [11.2195, -74.2054], 2],
-        'vía Ciénaga' => [['CO1.PCCNTR.9100003'], [11.0070, -74.2470], 3],
-        'acueducto' => [['CO1.PCCNTR.9100004'], [10.5200, -74.1850], 4],
-        'colegio' => [['CO1.PCCNTR.9100005', 'CO1.PCCNTR.9100006'], [11.2350, -74.1900], 5],
-        'canal' => [['CO1.PCCNTR.9100007'], null, 6],
-    ];
-
-    /** The worksite that make demo LUGAR=… moves to where the presentation is, so the veedor can report it live (the geofence, R-GEO-01). */
-    private const ANCHORED = 'via';
-
-    /** [worksite, veedor (0 = Ana, 1 = Luis), classification, days ago, metres north of the worksite, comment] */
-    private const REPORTS = [
-        ['via', 0, 'Avance', 6, 30, 'Arrancó el fresado de la calzada.'],
-        ['vía Ciénaga', 1, 'Retraso', 5, 60, 'No hay maquinaria en el frente desde hace una semana.'],
-        ['via', 1, 'Avance', 5, 45, 'Se extendió la base granular en el primer tramo.'],
-        ['parque', 1, 'Avance', 4, 40, 'Cimentación de la cancha terminada.'],
-        ['parque', 0, 'Retraso', 3, 70, 'El suministro de cemento lleva tres días detenido.'],
-        ['vía Ciénaga', 0, 'Abandono', 3, 55, 'La obra está sin personal ni cerramiento.'],
-        ['acueducto', 0, 'Avance', 2, 35, 'Instalada la tubería del primer kilómetro.'],
-        ['colegio', 1, 'Avance', 1, 25, 'Levantan el segundo piso del bloque A.'],
-        ['via', 0, 'Avance', 0, 50, 'Señalización horizontal en el tramo terminado.'],
-    ];
-
     /** @param  (Closure(Tenant, list<int>): void)|null  $awaitSeals  waits while the worker seals those reports; by default, it polls their seals */
     public function __construct(private readonly ?Closure $awaitSeals = null) {}
 
     private ?GeoPoint $place = null;
 
-    /** @param  GeoPoint|null  $place  where the presentation is (make demo LUGAR=…): the Calle 30 worksite goes there */
-    public function handle(?GeoPoint $place = null): DemoEnvironment
+    private DemoTerritory $territory;
+
+    /**
+     * @param  GeoPoint|null  $place  where the presentation is (make demo LUGAR=…): the anchored worksite goes there
+     * @param  DemoTerritory|null  $territory  make demo TERRITORIO=…: Magdalena, by default
+     */
+    public function handle(?GeoPoint $place = null, ?DemoTerritory $territory = null): DemoEnvironment
     {
         $this->place = $place;
+        $this->territory = $territory ?? DemoTerritory::magdalena();
 
         if (app()->isProduction()) {
             throw new RuntimeException('La demostración no corre en producción: crea datos de mentira.');
@@ -113,8 +83,8 @@ class PrepareDemo
         $this->removePreviousDemo();
         $this->createContracts();
 
-        $tenant = (new RegisterOrganization)->handle(self::NIT, 'Veeduría Ciudadana Santa Marta (demo)', self::SUBDOMAIN);
-        (new ConfigureTerritory)->handle($tenant, ['47']);
+        $tenant = (new RegisterOrganization)->handle(self::NIT, $this->territory->organizationName, self::SUBDOMAIN);
+        (new ConfigureTerritory)->handle($tenant, $this->territory->territory);
 
         $tenant->run(fn () => $this->createPeopleAndWorksites());
         $reportIds = $this->sendReports($tenant);
@@ -124,22 +94,14 @@ class PrepareDemo
         return new DemoEnvironment($tenant, $this->url($tenant), $this->credentials($tenant), $published, $pending);
     }
 
-    /** The name of the worksite that LUGAR anchors, as SECOP II calls its contract. */
-    public static function anchoredWorksite(): string
-    {
-        $contract = self::WORKSITES[self::ANCHORED][0][0];
-
-        return collect(self::CONTRACTS)->firstWhere(0, $contract)[5];
-    }
-
     /** @return array{float, float}|null */
     private function location(string $worksite): ?array
     {
-        if ($worksite === self::ANCHORED && $this->place) {
+        if ($worksite === $this->territory->anchored && $this->place) {
             return [$this->place->latitude, $this->place->longitude];
         }
 
-        return self::WORKSITES[$worksite][1];
+        return $this->territory->worksites[$worksite][1];
     }
 
     /** Only the one at the demo subdomain: a real organization is never touched. */
@@ -153,20 +115,8 @@ class PrepareDemo
 
     private function createContracts(): void
     {
-        foreach (self::CONTRACTS as [$id, $entity, $contractor, $municipality, $state, $object, $monthsLeft, $value]) {
-            Contract::fromSecop(fn () => Contract::query()->updateOrCreate(['secop_contract_id' => $id], [
-                'entity_name' => $entity,
-                'contractor_name' => $contractor,
-                'object' => $object,
-                'value' => $value,
-                'contract_type' => 'Obra',
-                'status' => $state,
-                'signed_at' => now()->subMonths(3)->toDateString(),
-                'end_date' => now()->addMonths($monthsLeft)->toDateString(),
-                'department_code' => '47',
-                'municipality_code' => $municipality,
-                'process_number' => 'DEMO-'.substr($id, -3),
-            ]));
+        foreach ($this->territory->contracts as $contract) {
+            Contract::fromSecop(fn () => Contract::query()->updateOrCreate(['secop_contract_id' => $contract['secop_contract_id']], $contract));
         }
     }
 
@@ -177,7 +127,7 @@ class PrepareDemo
         $this->member('Ana Torres', self::VEEDORES[0], Roles::Observer, self::PASSWORDS['veedor']);
         $this->member('Luis Mendoza', self::VEEDORES[1], Roles::Observer, self::PASSWORDS['veedor']);
 
-        foreach (self::WORKSITES as $key => [$contracts]) {
+        foreach ($this->territory->worksites as $key => [$contracts]) {
             $location = $this->location($key);
             $worksite = Worksite::query()->create([
                 'latitude' => $location[0] ?? null,
@@ -199,8 +149,8 @@ class PrepareDemo
     {
         $reportIds = [];
 
-        foreach (self::REPORTS as $number => [$worksite, $veedor, $classification, $daysAgo, $metersNorth, $comment]) {
-            [$contracts, , $photo] = self::WORKSITES[$worksite];
+        foreach ($this->territory->reports as $number => [$worksite, $veedor, $classification, $daysAgo, $metersNorth, $comment]) {
+            [$contracts, , $photo] = $this->territory->worksites[$worksite];
             [$latitude, $longitude] = $this->location($worksite);
 
             $draft = new NewReport(

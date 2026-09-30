@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Application\Demo\DemoTerritory;
 use App\Application\Demo\PrepareDemo;
 use App\Domain\Geography\GeoPoint;
 use Illuminate\Console\Command;
@@ -13,12 +14,21 @@ class PrepareDemoCommand extends Command
 {
     protected $signature = 'demo:prepare
         {--seal-wait= : Seconds to wait for the worker to seal the reports (default: DEMO_SEAL_WAIT_SECONDS, 180)}
-        {--lugar= : "latitude,longitude" of the presentation: the Calle 30 worksite goes there, so the veedor can report it live}';
+        {--lugar= : "latitude,longitude" of the presentation: the anchored worksite goes there, so the veedor can report it live}
+        {--territorio=magdalena : magdalena (made up) or medellin (the Comuna 13, with real SECOP II contracts)}';
 
     protected $description = 'Prepare the demonstration organization (starts over if it already exists; never runs in production)';
 
     public function handle(): int
     {
+        try {
+            $territory = DemoTerritory::named((string) $this->option('territorio'));
+        } catch (InvalidArgumentException $e) {
+            $this->error($e->getMessage());
+
+            return self::FAILURE;
+        }
+
         $place = null;
         if ($this->option('lugar') !== null) {
             $place = $this->place($this->option('lugar'));
@@ -36,7 +46,7 @@ class PrepareDemoCommand extends Command
         $this->line('Preparando la demostración (los reportes se sellan en la red, puede tardar un poco)…');
 
         try {
-            $demo = (new PrepareDemo)->handle($place);
+            $demo = (new PrepareDemo)->handle($place, $territory);
         } catch (RuntimeException $e) {
             $this->error($e->getMessage());
 
@@ -44,14 +54,14 @@ class PrepareDemoCommand extends Command
         }
 
         $this->newLine();
-        $this->info("Demostración lista: {$demo->url}");
+        $this->info("Demostración lista: {$demo->url} ({$demo->organization->name})");
         foreach ($demo->credentials as $credential) {
             $this->line(sprintf('  %-34s %s  %s  /  %s', $credential['role'], $credential['url'], $credential['email'], $credential['password']));
         }
 
         if ($place) {
             $this->newLine();
-            $this->line(sprintf('La obra «%s» quedó en %s, %s: el veedor la encuentra en «Obras cercanas» desde ahí.', PrepareDemo::anchoredWorksite(), $place->latitude, $place->longitude));
+            $this->line(sprintf('La obra «%s» quedó en %s, %s: el veedor la encuentra en «Obras cercanas» desde ahí.', $territory->anchoredWorksite(), $place->latitude, $place->longitude));
         }
 
         if ($demo->pendingSeals > 0) {

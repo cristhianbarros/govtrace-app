@@ -1,6 +1,7 @@
 <?php
 
 use App\Application\Demo\DemoEnvironment;
+use App\Application\Demo\DemoTerritory;
 use App\Application\Demo\PrepareDemo;
 use App\Application\Organization\ConfigureTerritory;
 use App\Application\Organization\RegisterOrganization;
@@ -146,6 +147,92 @@ it('make demo LUGAR: refuses what is not a place, before touching anything', fun
         ->and($output->fetch())->toContain('LUGAR debe ser «latitud,longitud», por ejemplo LUGAR="6.2442,-75.5812".')
         ->and(Tenant::query()->count())->toBe(0);
 })->with(['a name' => 'Medellín', 'one number' => '6.2442', 'out of range' => '96.1,-75.5']);
+
+// It. 43e — make demo TERRITORIO=medellin: la Comuna 13, con contratos reales de SECOP II solo para
+// evidencias de "Avance"; el retraso y el abandono, en obras de ejemplo, ficticias a la vista.
+
+/** @return DemoEnvironment the demo, in Medellín */
+function comuna13(): DemoEnvironment
+{
+    return (new PrepareDemo(sealOnFakeNetwork()))->handle(null, DemoTerritory::medellin());
+}
+
+/** @return list<string> the classifications of the reports on the worksite of that contract */
+function classificationsOn(string $secopContractId): array
+{
+    return Report::query()
+        ->whereHas('worksite.contracts', fn ($contracts) => $contracts->where('secop_contract_id', $secopContractId))
+        ->get()->map(fn (Report $report) => $report->classification->value)->all();
+}
+
+it('make demo TERRITORIO=medellin: the organization watches Medellín, with the real contracts of the Escuela Municipal San Javier', function () {
+    $environment = comuna13();
+
+    expect($environment->organization->name)->toBe('Veeduría Ciudadana Comuna 13 (demo)')
+        ->and($environment->organization->domains()->value('domain'))->toBe(DEMO_DOMAIN);
+
+    // Tal como los publica SECOP II (consultados el 2026-09-30).
+    $school = Contract::query()->where('secop_contract_id', 'CO1.PCCNTR.9033732')->sole();
+    expect($school->entity_name)->toBe('EMPRESA DE DESARROLLO URBANO DE MEDELLIN')
+        ->and($school->contractor_name)->toBe('U.T SAN JAVIER 2026')
+        ->and((float) $school->value)->toBe(15_364_531_133.0)
+        ->and($school->end_date->toDateString())->toBe('2027-01-26')
+        ->and($school->municipality_code)->toBe('05001')
+        ->and($school->secop_url)->toStartWith('https://community.secop.gov.co/Public/Tendering/OpportunityDetail/Index?noticeUID=CO1.NTC.9158086');
+
+    $environment->organization->run(function () {
+        // La obra y su interventoría, en una sola ficha.
+        $worksite = Worksite::query()->whereHas('contracts', fn ($contracts) => $contracts->where('secop_contract_id', 'CO1.PCCNTR.9033732'))->sole();
+        expect($worksite->contracts()->pluck('secop_contract_id')->sort()->values()->all())->toBe(['CO1.PCCNTR.9033732', 'CO1.PCCNTR.9047349'])
+            ->and(Worksite::query()->count())->toBe(6)
+            ->and(Report::query()->count())->toBe(9);
+    });
+});
+
+it('make demo TERRITORIO=medellin: the real contracts only carry evidences of Avance', function () {
+    comuna13()->organization->run(function () {
+        expect(classificationsOn('CO1.PCCNTR.9033732'))->not->toBeEmpty()
+            ->and(array_unique(classificationsOn('CO1.PCCNTR.9033732')))->toBe(['Avance']);
+    });
+});
+
+it('make demo TERRITORIO=medellin: the delays and abandonments go to example obras, fictitious for anyone who sees them', function () {
+    comuna13()->organization->run(function () {
+        $negative = Report::query()->whereIn('classification', ['Retraso', 'Abandono'])->with('worksite.contracts')->get();
+        expect($negative)->not->toBeEmpty();
+
+        foreach ($negative as $report) {
+            foreach ($report->worksite->contracts as $link) {
+                $contract = Contract::query()->where('secop_contract_id', $link->secop_contract_id)->sole();
+                expect($contract->secop_contract_id)->toStartWith('EJEMPLO-')
+                    ->and($contract->object)->toContain('de ejemplo')
+                    ->and($contract->entity_name)->toBe('Entidad de ejemplo (ficticia)')
+                    ->and($contract->contractor_name)->toContain('ficticio');
+            }
+        }
+    });
+});
+
+it('make demo TERRITORIO=medellin: the obra that LUGAR moves is an example one, at La Pradera until then', function () {
+    comuna13()->organization->run(function () {
+        $anchored = Worksite::query()->whereHas('contracts', fn ($contracts) => $contracts->where('secop_contract_id', 'EJEMPLO-C13-001'))->sole();
+
+        expect([(float) $anchored->latitude, (float) $anchored->longitude])->toBe([6.260664, -75.6110203]);
+    });
+
+    expect(DemoTerritory::medellin()->anchoredWorksite())->toBe('Obra de ejemplo: andenes de La Pradera');
+});
+
+it('make demo TERRITORIO: says where it is, and refuses a territory it does not know, before touching anything', function () {
+    $output = new BufferedOutput;
+    expect(Artisan::call('demo:prepare', ['--seal-wait' => 0, '--territorio' => 'bogota'], $output))->toBe(1)
+        ->and($output->fetch())->toContain('TERRITORIO debe ser magdalena o medellin.')
+        ->and(Tenant::query()->count())->toBe(0);
+
+    $output = new BufferedOutput;
+    expect(Artisan::call('demo:prepare', ['--seal-wait' => 0, '--territorio' => 'medellin'], $output))->toBe(0)
+        ->and($output->fetch())->toContain('Veeduría Ciudadana Comuna 13 (demo)');
+});
 
 it('sends its reports through CreateReport, with photos that are all different and carry no metadata', function () {
     $environment = demo();
