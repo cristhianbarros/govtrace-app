@@ -2025,6 +2025,27 @@ La revisión documental del control social de hoy (`docs/proceso-actual.md`, PR 
 - Cada descarga va al log de auditoría: es la telemetría para validar el uso de la función.
 - **Modelo:** Opus xhigh. El expediente presenta evidencia criptográfica en un documento legal.
 
+✅ **44b cumplida (2026-09-30).**
+- **Dónde:** en Obras, cada obra tiene "Descargar expediente" (`GET /worksites/{id}/dossier.zip`, solo el Administrador).
+- **El ZIP:**
+  - `01-expediente.pdf`, `02-derecho-de-peticion.pdf`, `03-denuncia-contraloria.pdf` y `LEAME.txt`;
+  - en `evidencias/`, cada archivo publicado tal como se selló, con la misma prueba de inclusión de la descarga pública (US-026).
+- **Las plantillas** toman los hechos de SECOP II (un contrato vencido que sigue "En ejecución") y de las evidencias publicadas. Dejan en blanco quién firma.
+- **"Prueba Pericial Criptográfica"**, el nombre que fijó el usuario, encabeza la sección de cada archivo: su SHA-256, la raíz de Merkle, la transacción, el ledger, la red y el contrato de sellado. La sección se apoya en los mensajes de datos de la Ley 527 de 1999 (arts. 9 a 11) y dice cómo comprobarlo sin GovTrace.
+- **PDF con dompdf** (`barryvdh/laravel-dompdf`, MIT sobre una librería LGPL). PHP no tiene GD: los PDF son de texto, y las fotos van como originales en el ZIP.
+- **Telemetría:** cada descarga va al log de auditoría como `dossier.downloaded`, con la obra, las evidencias y los archivos. Se ve en Auditoría como "Descargó el expediente de una obra".
+- ❓ **Decisiones por defecto:**
+  - **La etiqueta "Prueba Pericial".** En sentido estricto, es el dictamen de un perito. Conviene que un abogado la confirme. Está en un solo archivo: `resources/views/dossier/_proof.blade.php`.
+  - **Solo las evidencias publicadas.** Las ocultas, rechazadas y retiradas no entran (R-LEG-03).
+  - **El lugar de cada evidencia va aproximado,** como en el sitio público (R-PRIV-02).
+  - **Sin versión editable.** El PDF se completa a mano; una versión en texto sería un paso siguiente.
+- **Prueba:**
+  - Pest, 10 casos: el ZIP, los archivos byte a byte con su prueba, las tres plantillas, solo lo publicado, una obra sin evidencias, el log, y solo el Administrador;
+  - Vitest: el botón en cada obra;
+  - `make e2e`: 39 pasan; el Administrador descarga el expediente y lo ve en su auditoría;
+  - los tres PDF de una obra de `make demo`, revisados página por página;
+  - `make trace-check`: 279 de 279; `make audit`: sin vulnerabilidades.
+
 **44c — A4: los impedimentos del veedor** (US-057-LEG, EPIC-006).
 - Al activar su cuenta, el veedor declara no estar en los impedimentos del art. 19 de la Ley 850 de 2003.
 - El que ya tiene cuenta lo declara antes de su próximo reporte.

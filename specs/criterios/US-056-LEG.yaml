@@ -1,0 +1,27 @@
+story_id: "US-056-LEG"
+titulo_historia: "Como Administrador de Organización quiero descargar desde una obra un expediente con sus evidencias publicadas, sus sellos y las plantillas pre-llenadas del derecho de petición y de la denuncia para llevar la evidencia de GovTrace al proceso formal del control social"
+bloque: "Alineación con el proceso actual — A3"
+criterios_aceptacion:
+  escenarios_exito:
+    - "En Obras, cada obra tiene 'Descargar expediente': un ZIP con 01-expediente.pdf, 02-derecho-de-peticion.pdf, 03-denuncia-contraloria.pdf, LEAME.txt y, en evidencias/, cada archivo publicado con su prueba de inclusión"
+    - "Los archivos son los que se sellaron, byte a byte, y sus pruebas son las mismas de la descarga pública (US-026)"
+    - "El expediente PDF presenta el contrato de SECOP II, el estado de la obra en GovTrace (como alerta, R-LEG-01) y cada evidencia con su fecha, clasificación y comentario"
+    - "Bajo 'Prueba Pericial Criptográfica', cada archivo lleva su SHA-256, la raíz de Merkle, la transacción y el ledger de Stellar, la fecha del sello, la red y el contrato; con cómo verificarlo sin GovTrace y la Ley 527 de 1999"
+    - "El derecho de petición va dirigido a la entidad contratante, cita el contrato, la veeduría, la Ley 1755 de 2015 y la Ley 850 de 2003, y pide los informes de supervisión o interventoría y el estado de la ejecución"
+    - "La denuncia va dirigida a la Contraloría, cita la Ley 1757 de 2015 (art. 69), los hechos y la misma prueba, con los canales para radicarla y la aclaración de la contraloría territorial"
+    - "Las dos plantillas dejan en blanco el nombre, la identificación y la firma de quien la presenta"
+  validaciones_reglas:
+    - "R-LEG-03: solo entran las evidencias publicadas; las ocultas, rechazadas y retiradas, no"
+    - "R-LEG-04: cada descarga queda en el log de auditoría (dossier.downloaded), con la obra y el número de archivos"
+    - "Solo el Administrador de la organización descarga el expediente"
+  manejo_errores: []
+  requisitos_ux:
+    - "El botón mide 44 px o más, y el nombre del ZIP dice la obra y la fecha"
+  casos_edge:
+    - "Una obra sin evidencias publicadas también tiene expediente: dice que aún no hay evidencias, y el derecho de petición sirve para pedir información"
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true

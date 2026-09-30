@@ -1,0 +1,1 @@
+<p class="note">Plantilla generada por GovTrace el {{ $generated_at }}. Antes de presentarla: complete los espacios en blanco, revise los hechos y fírmela. GovTrace no la radica: la presenta la veeduría.</p>

@@ -71,6 +71,18 @@ test('Ve su territorio, sus contratos y sus obras', async ({ page }) => {
     await expect(page.getByText(WORKSITE).first()).toBeVisible();
 });
 
+test('Descarga el expediente de una obra, para el derecho de petición y la denuncia (it. 44b)', async ({ page }) => {
+    await enter(page, 'worksites');
+
+    const downloading = page.waitForEvent('download');
+    await page.getByRole('link', { name: 'Descargar expediente' }).first().click();
+    expect((await downloading).suggestedFilename()).toMatch(/^expediente-.+-\d{4}-\d{2}-\d{2}\.zip$/);
+
+    // Cada descarga queda en el log de auditoría.
+    await page.goto(`${ORG}/admin/audit`);
+    await expect(page.getByText('Descargó el expediente de una obra').first()).toBeVisible();
+});
+
 test('Cuida la identidad de la organización y sigue el resumen y la auditoría', async ({ page }) => {
     await enter(page, 'organization');
     await expect(page.getByLabel('Nombre de fantasía')).toHaveValue('Veeduría de Pruebas E2E');

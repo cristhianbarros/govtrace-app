@@ -32,6 +32,7 @@ use App\Http\Controllers\Tenant\SuperAdminAuthorizationController;
 use App\Http\Controllers\Tenant\TerritoryController;
 use App\Http\Controllers\Tenant\WebManifestController;
 use App\Http\Controllers\Tenant\WorksiteController;
+use App\Http\Controllers\Tenant\WorksiteDossierController;
 use App\Http\Controllers\Tenant\WorksiteGroupController;
 use App\Http\Controllers\Tenant\WorksiteLocationController;
 use App\Http\Middleware\EnsureAccountIsUsable;
@@ -142,6 +143,8 @@ Route::middleware([
             Route::patch('/worksites/{worksite}/location', [WorksiteLocationController::class, 'update'])->name('worksites.location.update');
             // US-045-INT: agrupar varios contratos en una ficha de obra.
             Route::post('/worksites/group', [WorksiteGroupController::class, 'store'])->name('worksites.group');
+            // US-056-LEG (it. 44b): el expediente de una obra, para el derecho de petición y la denuncia.
+            Route::get('/worksites/{worksite}/dossier.zip', WorksiteDossierController::class)->whereNumber('worksite')->name('worksites.dossier');
 
             // US-042-SEC: autorizar al Super Administrador a reportar en nombre de la organización (30 días).
             Route::get('/authorizations/super-admin', [SuperAdminAuthorizationController::class, 'show'])->name('authorizations.super-admin.show');
