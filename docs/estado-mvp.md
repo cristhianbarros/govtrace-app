@@ -4,6 +4,41 @@ Al 2026-09-29. Empezó sobre `77e6030` (iteración 39) y se actualizó en las it
 
 ✅ hecho y probado · ⚠️ a medias · ⬜ falta · 🔒 espera algo externo · ❓ decisión tuya
 
+## Dónde quedó (2026-09-30)
+
+El usuario pidió avanzar sin su revisión hasta el día siguiente, con la interfaz como prioridad, "como si mañana fuera el día de la demo". Se hicieron seis iteraciones, cada una con su PR:
+
+| Iteración | Qué | PR |
+|---|---|---|
+| 40a | El checkpoint base: los flujos de cada rol como tests y `make ux-check` | #50 |
+| 40b | Salir en todos los paneles, la Bandeja con obra y veedor, los estados junto al mapa, el estado de la obra y su motivo, qué falta para enviar | #51 |
+| 40c | Navegación con íconos (barra lateral en el computador), letra de 16 px, botones de 44 px, lenguaje claro, buscadores, el mapa como lista, cambiar contraseña | #52 |
+| 40d (parte) | El Inicio con "¿Cómo funciona?" y el directorio de veedurías, "Entrar", tomar la foto o elegirla | #53 |
+| 43a (parte) | El Super Administrador ve, reinvita, revoca y asigna el Administrador de cada organización | #54 |
+| 43b (parte) | La app instalable, el verificador independiente enlazado, sincronizar SECOP ahora | #55 |
+
+**Frente al checkpoint base:**
+
+| Qué | Antes | Ahora |
+|---|---|---|
+| Vacíos de flujo | 17 | **7**: V3, V7, V8, V9, V10, V13 y la Ley 1581. Todos esperan una decisión o son trabajo que no hace falta para la demo. |
+| Flujos como tests (`make e2e`) | 27 pasan y 20 `fixme` | **38 pasan y 9 `fixme`** |
+| axe (WCAG 2.2 AA) | 2 reglas en 52 vistas | **0** |
+| Texto de menos de 16 px, en la pantalla típica | 73 % | **12,5 %** |
+| Texto de menos de 14 px, en la pantalla típica | 25,5 % | **0 %** |
+| Botones de menos de 44 px, en la pantalla típica | 66 % | **0 %** |
+| Tests | Pest 785, Vitest 351 | Pest 820, Vitest 394, E2E 47 (38 + 9 pendientes), trace-check 264 de 264 |
+
+**Para probar el flujo visual completo:** `make demo`, y el guion de `docs/local-environment-setup.md` (sección "Un guion para la demostración").
+
+**Decisiones que se tomaron por defecto y esperan tu confirmación:** están en `specs/PLAN.md`, en cada iteración (40b a 43b).
+- "Salir" siempre pregunta.
+- Los textos del glosario enmendados en el spec ("Comprobar que es original").
+- Las explicaciones de Avance, Retraso y Abandono, provisionales.
+- La escala de letra, cambiada en toda la app.
+- El directorio de veedurías, publicado.
+- No se asigna un segundo Administrador (V3).
+
 ## Checkpoint base (2026-09-29)
 
 Es el punto de partida para mejorar todo lo que falta. El tag `checkpoint-base` marca el código tal como se analizó. Desde ahí, cada mejora se mide contra estas cifras:
@@ -182,17 +217,17 @@ Una sola máquina, sin balanceador de carga: un balanceador cuesta más que todo
 
 Desde el checkpoint base, primero lo que corta un flujo, después lo que lo deja a medias y al final el pulido. AWS avanza en paralelo, cuando exista la cuenta.
 
-| # | Qué | Cierra | Modelo |
+| # | Qué | Cierra | Estado |
 |---|---|---|---|
-| 1 | **It. 40a, checkpoint base:** el recorrido con axe (`make ux-check`) y los flujos de cada rol como tests, con los vacíos pendientes | La medida de todo lo demás | Sonnet medium |
-| 2 | **It. 40b, lo urgente:** salir, la obra en la Bandeja, los estados junto al mapa, qué falta para enviar, `sm:` y `h1` | V1, V4 y lo más grave de UX | Sonnet medium |
-| 3 | **It. 43a, el gobierno de las organizaciones:** los administradores (asignar, reenviar, reemplazar), reportar en nombre de una organización, la razón social. Antes, un `/discovery` corto. | V2, V3, V7, V8 y V16 | Opus xhigh |
-| 4 | **It. 40c, navegación y legibilidad:** el menú nuevo, letra de 16 px, botones de 44 px, lenguaje claro, buscadores | UX y V11, V12 | Sonnet medium |
-| 5 | **It. 43b, llegar y volver:** la app instalable, la solicitud de alta, el aviso diario, el contacto | V6, V9, V10, V13 a V15 | Sonnet medium |
-| 6 | **It. 40d, orientación:** "¿Cómo funciona?", el directorio de veedurías, la guía del veedor y la prueba con 5 personas | V5 y la validación con gente real | Sonnet medium |
-| — | **Tú:** la cuenta de AWS y el perfil de KMS (sección 5) | Desbloquea las siguientes | — |
-| 7 | **It. 42b, staging en AWS** con testnet | La prueba real | Opus xhigh |
-| 8 | **37b:** KMS, y después la red principal (proveedor de RPC, tesorería, despliegue y restauración con datos reales) | Producción | Opus max / xhigh |
+| 1 | **It. 40a, checkpoint base** | La medida de todo lo demás | ✅ #50 |
+| 2 | **It. 40b, lo urgente** | V1, V4 | ✅ #51 |
+| 3 | **It. 43a, el gobierno de las organizaciones** | V2, V16 ✅ (#54); V3 ❓, V7 y V8 pendientes | ⚠️ |
+| 4 | **It. 40c, navegación y legibilidad** | V11, V12 | ✅ #52 |
+| 5 | **It. 43b, llegar y volver** | V6, V14, V15 ✅ (#55); V9, V10 y V13 ❓ | ⚠️ |
+| 6 | **It. 40d, orientación** | V5 ✅ (#53); quedan la guía del veedor, los pasos del reporte, la auditoría en frases, el nombre corto de la obra, unir contratos de una lista y la prueba con 5 personas | ⚠️ |
+| — | **Tú:** la cuenta de AWS y el perfil de KMS (sección 5) | Desbloquea las siguientes | 🔒 |
+| 7 | **It. 42b, staging en AWS** con testnet | La prueba real | 🔒 |
+| 8 | **37b:** KMS, y después la red principal | Producción | 🔒 |
 
 **Decisiones tuyas (❓):**
 - el segundo factor para el Super Administrador;
