@@ -4,6 +4,14 @@ Al 2026-09-29, sobre `main` en `b937ff5` (it. 42a). Revisión experta de todas l
 
 🔴 crítico: impide la tarea · 🟠 alto: la tarea sale, pero con esfuerzo o errores · 🟡 medio: confunde o molesta · ⚪ bajo: detalle · ❓ decisión tuya
 
+> **Estado (2026-09-30):** las it. 40a a 40d y 43a–43b corrigieron casi todo este análisis. Lo que se hizo y las cifras de antes y después están en `docs/estado-mvp.md` ("Dónde quedó"), y el detalle de cada parte, en `specs/PLAN.md`. Siguen pendientes:
+> - la guía del primer uso;
+> - los pasos a la vista en Nuevo reporte;
+> - la auditoría en frases;
+> - el nombre corto de la obra;
+> - unir contratos eligiéndolos de una lista;
+> - la prueba con personas.
+
 ## Cómo se hizo
 
 - **Un recorrido con Playwright sobre `make demo`.** Pasó por las 27 vistas de los cuatro perfiles, en celular (412×915) y en escritorio (1366×768), y dejó 54 capturas de página completa.
