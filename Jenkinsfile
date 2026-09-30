@@ -72,7 +72,17 @@ pipeline {
                 // R-TST-03 (it. 30): US-018 in a real Chromium (Playwright) against the
                 // stack make setup brought up — the phone loses its signal, the report
                 // waits in IndexedDB, the app opens offline, and it is sent on its own.
+                // It. 40a: each role's journey end to end; the gaps of
+                // docs/mapa-funcional.md stay as fixme until they are closed.
                 sh 'make e2e'
+                // It. 40a: every screen of every role against tests/ux/baseline.json
+                // (axe, text and target sizes), with its screenshots.
+                sh 'make ux-check'
+            }
+            post {
+                always {
+                    archiveArtifacts artifacts: 'storage/framework/testing/ux/shots/*.png', allowEmptyArchive: true
+                }
             }
         }
 
