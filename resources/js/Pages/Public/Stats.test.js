@@ -69,4 +69,10 @@ describe('Estadísticas del territorio', () => {
         expect(wrapper.get('a[href="/open-data.json"]').text()).toBe('Datos para programadores (JSON)');
         expect(wrapper.get('a[href="/"]').text()).toBe('Volver al mapa');
     });
+
+    it('Las estadísticas no llaman inconclusas a las obras en riesgo (it. 44a)', async () => {
+        const wrapper = await openStats();
+
+        expect(wrapper.text()).toContain('Las obras en riesgo son alertas de GovTrace, no obras inconclusas en el sentido de la Ley 2020 de 2020.');
+    });
 });

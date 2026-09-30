@@ -7,6 +7,7 @@ import LoadState from '@/Components/LoadState.vue';
 import ContractCard from '@/Components/Public/ContractCard.vue';
 import EvidenceCard from '@/Components/Public/EvidenceCard.vue';
 import OrganizationNotice from '@/Components/Public/OrganizationNotice.vue';
+import OversightChannels from '@/Components/Public/OversightChannels.vue';
 import { useLoader } from '@/composables/useLoader.js';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { fetchWorksite } from '@/services/api.js';
@@ -44,10 +45,18 @@ onMounted(load);
                     :class="CONDITION[worksite.condition.color].border"
                 >
                     <span aria-hidden="true" class="grid size-9 shrink-0 place-items-center rounded-full text-lg font-bold" :class="CONDITION[worksite.condition.color].css">{{ CONDITION[worksite.condition.color].sign }}</span>
-                    <p class="text-base">
-                        <span class="block text-lg font-semibold">{{ worksite.condition.label }}</span>
-                        {{ worksite.condition.reason }}
-                    </p>
+                    <div class="text-base">
+                        <p>
+                            <span class="block text-lg font-semibold">{{ worksite.condition.label }}</span>
+                            {{ worksite.condition.reason }}
+                        </p>
+                        <!-- It. 44a (R-LEG-01): una alerta, no la decisión de una autoridad ni una "obra inconclusa". -->
+                        <p class="mt-2 text-sm text-slate-700">Es una alerta de GovTrace, calculada con los datos de SECOP II y las evidencias publicadas. No es la decisión de una autoridad.</p>
+                        <template v-if="worksite.condition.color === 'red'">
+                            <p class="mt-2 text-sm text-slate-700">«En riesgo» no es lo mismo que «obra inconclusa». Para la ley, una obra es inconclusa cuando, un año después de vencido el plazo para liquidar su contrato, no se terminó o no presta el servicio (Ley 2020 de 2020).</p>
+                            <a href="#contraloria" class="mt-1 inline-flex min-h-11 items-center text-base font-semibold underline">¿Qué puede hacer?</a>
+                        </template>
+                    </div>
                 </section>
                 <section aria-label="Contratos" class="flex flex-col gap-3">
                     <ContractCard v-for="contract in worksite.contracts" :key="contract.secop_contract_id" :contract="contract" />
@@ -60,6 +69,8 @@ onMounted(load);
                         <EvidenceCard :evidence="evidence" />
                     </li>
                 </ol>
+
+                <OversightChannels />
             </template>
         </LoadState>
     </AppLayout>

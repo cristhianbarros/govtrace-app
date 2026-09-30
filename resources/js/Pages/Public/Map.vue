@@ -112,6 +112,7 @@ onMounted(async () => {
                 <li>Cada foto recibe un sello digital en el momento: nadie puede borrarla ni cambiarla.</li>
                 <li>La veeduría los revisa y publica aquí. En cada foto, "Comprobar que es original" lo demuestra.</li>
             </ol>
+            <p class="mt-2 text-base text-slate-800">Los colores (Normal, Alerta y En riesgo) son alertas de GovTrace, no decisiones de una autoridad. Cada obra explica por qué tiene el suyo.</p>
         </details>
 
         <div role="group" aria-label="Estado de las obras" class="mb-3 flex flex-wrap gap-2">

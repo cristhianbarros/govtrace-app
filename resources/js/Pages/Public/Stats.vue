@@ -37,6 +37,8 @@ onMounted(load);
                             <span class="text-xs text-slate-600">Contratos anulados con evidencias</span>
                         </p>
                     </div>
+                    <!-- It. 44a (R-LEG-01). -->
+                    <p class="text-sm text-slate-700">Las obras en riesgo son alertas de GovTrace, no obras inconclusas en el sentido de la Ley 2020 de 2020.</p>
 
                     <section aria-labelledby="by-month" class="rounded-lg bg-white p-3">
                         <h3 id="by-month" class="mb-2 text-sm font-semibold text-slate-700">Evidencias publicadas por mes</h3>

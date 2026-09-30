@@ -98,10 +98,17 @@ Plataforma Open Source y Mobile-First de veeduría ciudadana, multi-tenant (B2B2
 | US-052-RPT | Como **Verificador Público** quiero **descargar datos abiertos (CSV/JSON) de las evidencias publicadas y sus sellos** para **auditar y reutilizar la información de forma independiente** | EPIC-005 | analisis_completitud (💡 Mejora) | P3 |
 | US-053-RPT | Como **Super Administrador** quiero **ver un resumen de uso por organización: veedores activos y evidencias recibidas, publicadas, rechazadas y retiradas** para **seguir la adopción de la plataforma** | EPIC-009 | analisis_completitud (💡 Mejora) | P3 |
 | US-054-RPT | Como **Super Administrador** quiero **recibir una alerta cuando una organización lleve 30 días sin actividad** para **detectar a tiempo organizaciones que abandonan la plataforma** | EPIC-009 | analisis_completitud (💡 Mejora) | P3 |
+| US-055-LEG | Como **Verificador Público** quiero **saber que el estado de una obra es una alerta de GovTrace y tener a mano los canales oficiales de la Contraloría** para **no confundir "En riesgo" con una obra inconclusa y poder denunciar por mi cuenta** | EPIC-008 | proceso_actual | MVP v1 |
 
 **Totales:** P1 = 21 · P2 = 22 · P3 = 13 (US-016 adelantada de P2 a P1 en `/plan` por dependencia funcional con US-008) · Total = 56.
 
 **Épicas:** EPIC-001 Sincronización SECOP II · EPIC-002 Recolección de evidencia · EPIC-003 Sellado criptográfico · EPIC-004 Visualización geoespacial y publicación · EPIC-005 Verificación de integridad · EPIC-006 Cuentas y roles · EPIC-009 Gestión de organizaciones. Quedan **fuera del MVP**: EPIC-007 Moderación de reportes (reemplazada por la publicación manual de US-036/037) y EPIC-008 Radicación de denuncias ante la Contraloría. Detalle y puntajes VUIFED en `specs/epicas/`.
+
+**Alineación con el proceso actual (2026-09-30).** La revisión del control social de hoy (`docs/proceso-actual.md`) trae al MVP v1 lo mínimo de **EPIC-008**, por decisión del usuario:
+- US-055-LEG: el estado de una obra es una alerta, y los canales de la Contraloría;
+- el expediente con sus plantillas (it. 44b).
+
+Suma los impedimentos del veedor (it. 44c) y los datos de inscripción de una veeduría sin NIT (it. 44d). Plan en `specs/PLAN.md`, iteración 44.
 
 ## Reglas de negocio
 
@@ -202,6 +209,11 @@ Plataforma Open Source y Mobile-First de veeduría ciudadana, multi-tenant (B2B2
 - **R-MNT-02** — Las pruebas de inclusión se conservan para siempre, aunque se borren los archivos — US-003b, US-026
 - **R-MNT-03** — El log de auditoría se conserva para siempre; la tabla seudónimo→veedor, 5 años — US-043-MON
 - **R-MNT-04** — Contratos sin evidencias y cerrados hace más de 5 años se archivan fuera de la base principal — US-048-MNT
+
+### Alineación legal (it. 44, `docs/proceso-actual.md`)
+
+- **R-LEG-01** — Un estado de GovTrace (Normal, Alerta, En riesgo) es una alerta: nunca se presenta como decisión de una autoridad ni como "obra inconclusa" (Ley 2020 de 2020) — US-055-LEG
+- **R-LEG-02** — Los canales para denunciar son los oficiales de la Contraloría; GovTrace no recibe ni reenvía la denuncia — US-055-LEG
 
 ### Backup y recuperación
 
