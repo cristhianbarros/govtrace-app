@@ -106,7 +106,9 @@ it('has contracts and worksites to show: one without location, one grouping two 
     });
 
     expect(Contract::query()->where('secop_contract_id', 'like', 'CO1.PCCNTR.91%')->count())->toBe(7)
-        ->and(Contract::query()->where('secop_contract_id', 'like', 'CO1.PCCNTR.91%')->distinct('municipality_code')->count('municipality_code'))->toBe(3);
+        ->and(Contract::query()->where('secop_contract_id', 'like', 'CO1.PCCNTR.91%')->distinct('municipality_code')->count('municipality_code'))->toBe(3)
+        // Con su valor, como lo publica SECOP II: la ficha de la obra no muestra "—" y el filtro de valor mínimo tiene qué filtrar.
+        ->and(Contract::query()->where('secop_contract_id', 'like', 'CO1.PCCNTR.91%')->whereNull('value')->count())->toBe(0);
 });
 
 it('sends its reports through CreateReport, with photos that are all different and carry no metadata', function () {

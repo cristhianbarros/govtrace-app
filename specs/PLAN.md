@@ -1939,6 +1939,36 @@ Esta iteración estaba reservada para ese recorrido. El recorrido se hizo para e
 
 **Done-when de las dos:** los `fixme` de sus vacíos, en verde.
 
+**43c — El ensayo de la demostración.** El usuario pidió "lo mínimo para mostrar". Se ensayó el guion de `docs/local-environment-setup.md` de punta a punta sobre `make demo`, en un Chromium de verdad, con el sellado y el validador reales. Los seis momentos pasaron; se corrigió lo que se veía mal en vivo.
+
+✅ **43c cumplida (2026-09-30)**, sin revisión del usuario.
+- **US-026, "Descargar archivo original":** la tarjeta de una evidencia publicada solo ofrecía descargar los PDF. Las fotos no tenían botón, aunque el backend (it. 23) ya entregaba su `download_url` y su `proof_url`, y el E2E del ciudadano los pedía por el API. Ahora:
+  - cada archivo tiene **Descargar archivo original** y **Descargar su prueba**;
+  - numerados ("1 de 2") cuando son varios;
+  - una lápida no tiene ninguno de los dos.
+
+  Con eso, el validador se muestra entero con clics: la foto original da ✅; alterada, da ⚠️ "no encontrado" con **Un archivo** y ❌ "Alterado" con **Archivo y su prueba**.
+- **La cuenta de la Bandeja** en la navegación (it. 40c) no bajaba al publicar o rechazar: se quedaba en 3 hasta cambiar de pantalla. Ahora, cada decisión de "Por revisar" vuelve a pedir `inboxPending` al servidor (una recarga parcial de Inertia).
+- **`make demo`:** los contratos de demostración no tenían valor. La ficha de la obra mostraba "Valor: —" y el filtro de valor mínimo del mapa no tenía qué filtrar. Ahora cada contrato lleva uno.
+- ❓ **Decisión por defecto:** "Descargar su prueba" es el nombre del JSON de la prueba de inclusión, igual que el modo "Archivo y su prueba" del validador.
+
+**Prueba:**
+- Vitest: 398 de 398:
+  - la foto con sus dos descargas;
+  - la numeración;
+  - la lápida sin descargas;
+  - la Bandeja pide su cuenta otra vez.
+- Pest: el test de `make demo` exige el valor de cada contrato.
+- `make e2e`: 38 pasan y 9 siguen pendientes; el ciudadano ahora descarga con los botones.
+- `make ux-check`: sin retroceso frente a la línea base.
+- `make trace-check`: 264 de 264.
+- El ensayo mismo, fuera del repositorio (`storage/framework/testing/ux/demo/`):
+  - el Inicio, el mapa y la lista;
+  - el validador con la foto descargada, alterada y con su prueba;
+  - el Administrador publica, rechaza e invita;
+  - el veedor invitado activa su cuenta, reporta y llega a "Sellado" (unos 10 s en la red local);
+  - el Super Administrador crea una organización y reenvía la invitación, y sincroniza SECOP.
+
 ## Pivote a Stellar (2026-09-28)
 
 El proyecto participa en **Stellar Apex**, así que la blockchain pasa de EVM/Polygon a **Stellar**, con Smart Contracts en **Soroban (Rust)**:

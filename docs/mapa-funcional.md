@@ -295,7 +295,7 @@ flowchart TB
 | 1 | Llegar a una veeduría | ⬜ 🟠 | **V5.** Desde el dominio central no hay forma: solo sirve el enlace directo de cada veeduría. |
 | 2 | Ver el mapa y filtrarlo | ✅ | Por estado, municipio, fechas y presupuesto (US-027, US-028). No se puede buscar una obra por nombre (V12). |
 | 3 | Ver una obra | ✅ | Datos del contrato con el enlace a SECOP (si SECOP lo trae), línea de tiempo y fotos (US-017, US-029). No dice el estado de la obra ni por qué (`docs/ux-analisis.md`). |
-| 4 | Comprobar una evidencia | ✅ | Validador, recibo y descarga con prueba (US-024 a US-026). El validador no enlaza el script independiente del repositorio (US-046-INT, V14). |
+| 4 | Comprobar una evidencia | ✅ | Validador, recibo y descarga con prueba (US-024 a US-026). El validador no enlaza el script independiente del repositorio (US-046-INT, V14). Las fotos no tenían botón de descarga; se encontró en el ensayo de la demostración y se cerró en la it. 43c. |
 | 5 | Estadísticas y datos abiertos | ✅ | US-051-RPT y US-052-RPT. |
 | 6 | Contactar a la veeduría | ⬜ 🟡 | **V13 ❓.** Su página no tiene datos de contacto. |
 | 7 | Leer la política de datos y los términos | ⬜ | ❓ Ley 1581 (ya estaba en `docs/estado-mvp.md`). |
@@ -439,6 +439,8 @@ La sospecha era que buena parte del código sirve para asegurar la calidad, y qu
 - **Reportar en nombre de una organización:** la regla del Super Administrador está probada, pero le falta la pantalla.
 - **La Bandeja:** recibe el número de la obra, pero no muestra cuál es.
 - **La invitación del administrador:** funciona, pero nadie puede reenviarla.
+
+**Uno más, encontrado en el ensayo de la demostración (it. 43c):** el backend entregaba la descarga y la prueba de cada foto, pero la tarjeta solo tenía el botón para los PDF, y el test de extremo a extremo las pedía por el API. US-026 pide "Descargar archivo original" en la tarjeta. Ya lo tiene.
 
 **La respuesta no es tener menos tests, sino sumar ese nivel:** los flujos de la sección 2, como tests de extremo a extremo. Eso es el checkpoint base (it. 40a).
 

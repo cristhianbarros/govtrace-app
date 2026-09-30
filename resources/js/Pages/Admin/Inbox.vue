@@ -2,6 +2,7 @@
 // US-036 / US-037: la bandeja de entrada. "Por revisar": las evidencias
 // selladas y ocultas, para publicarlas o rechazarlas de a una (no hay
 // publicación masiva). "Publicadas": para retirarlas dejando una lápida.
+import { router } from '@inertiajs/vue3';
 import { onMounted, ref } from 'vue';
 import EvidenceCard from '@/Components/Admin/EvidenceCard.vue';
 import LoadState from '@/Components/LoadState.vue';
@@ -27,6 +28,10 @@ function open(chosen) {
 function decided(id, message) {
     evidences.value = evidences.value.filter((evidence) => evidence.id !== id);
     notice.value = message;
+    // La cuenta de "Bandeja" en la navegación (it. 40c) baja con cada decisión.
+    if (tab.value.status === 'hidden') {
+        router.reload({ only: ['inboxPending'] });
+    }
 }
 
 onMounted(() => open(tabs[0]));
