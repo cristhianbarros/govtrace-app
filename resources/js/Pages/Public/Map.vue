@@ -104,6 +104,15 @@ onMounted(async () => {
         <OrganizationNotice />
         <h1 class="text-xl font-semibold">Obras vigiladas</h1>
         <p class="mb-3 text-base text-slate-700">Toque un punto para ver la obra y sus fotos.</p>
+        <!-- It. 40d: para quien llega por primera vez, cómo llega cada evidencia al mapa. -->
+        <details data-test="how" class="mb-3 rounded-lg bg-white p-3">
+            <summary class="min-h-11 cursor-pointer py-2 text-base font-semibold">¿Cómo funciona?</summary>
+            <ol class="mt-1 flex list-decimal flex-col gap-2 pl-6 text-base text-slate-800">
+                <li>Los veedores de la veeduría visitan las obras y toman fotos con su celular.</li>
+                <li>Cada foto recibe un sello digital en el momento: nadie puede borrarla ni cambiarla.</li>
+                <li>La veeduría los revisa y publica aquí. En cada foto, "Comprobar que es original" lo demuestra.</li>
+            </ol>
+        </details>
 
         <div role="group" aria-label="Estado de las obras" class="mb-3 flex flex-wrap gap-2">
             <button
@@ -118,10 +127,6 @@ onMounted(async () => {
             ><span aria-hidden="true" class="grid size-6 place-items-center rounded-full font-bold" :class="state.css">{{ state.icon }}</span> {{ state.label }} <span class="rounded-full bg-slate-100 px-2 text-sm text-slate-900">{{ counts[state.value] }}</span></button>
         </div>
 
-        <div class="mb-3 flex flex-wrap gap-2">
-            <Link href="/verify" class="inline-flex min-h-11 items-center rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold">Validar un archivo</Link>
-            <Link href="/stats" class="inline-flex min-h-11 items-center rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold">Estadísticas del territorio</Link>
-        </div>
 
         <details class="mb-3 rounded-lg border border-slate-200 bg-white p-3 text-sm">
             <summary class="min-h-11 cursor-pointer py-2 text-base font-semibold">Más filtros</summary>
@@ -186,5 +191,10 @@ onMounted(async () => {
         >
             <PinsMap :pins="pins ?? []" @select="(id) => router.visit(`/worksite/${id}`)" />
         </LoadState>
+        <!-- It. 40d: debajo del mapa, para que el mapa quede arriba. -->
+        <div class="mt-4 flex flex-wrap gap-2">
+            <Link href="/verify" class="inline-flex min-h-11 items-center rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold">Validar un archivo</Link>
+            <Link href="/stats" class="inline-flex min-h-11 items-center rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold">Estadísticas del territorio</Link>
+        </div>
     </AppLayout>
 </template>

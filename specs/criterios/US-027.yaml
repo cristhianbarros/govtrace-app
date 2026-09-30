@@ -16,6 +16,7 @@ criterios_aceptacion:
   manejo_errores: []
   requisitos_ux:
     - "(It. 40b, 2026-09-29) Los estados se explican junto al mapa, arriba y sin desplazarse, con un signo además del color (✓ Normal, ! Alerta, ✕ En riesgo) y cuántas obras hay de cada uno; tocar un estado filtra el mapa"
+    - "(It. 40d, 2026-09-30, decisión por defecto) El Inicio de GovTrace lista cada veeduría activa o suspendida con su territorio y el enlace a su mapa; no es un mapa global (R-MAP-01); las dadas de baja no aparecen"
   casos_edge: []
 validacion_smart:
   specific: true

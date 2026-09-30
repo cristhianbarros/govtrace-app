@@ -37,7 +37,7 @@ describe('Restablecer la contraseña', () => {
 
         expect(wrapper.get('[role="alert"]').text()).toBe(EXPIRED);
         expect(wrapper.find('form').exists()).toBe(false);
-        expect(wrapper.get('a').attributes('href')).toBe('/forgot-password');
+        expect(wrapper.get('main a').attributes('href')).toBe('/forgot-password');
     });
 
     it('La nueva contraseña cumple las reglas mínimas: "corta1#" is not sent', async () => {

@@ -17,6 +17,7 @@ criterios_aceptacion:
     - {caso: "El hash recalculado por el servidor no coincide con el del teléfono", mensaje: "Alerta de seguridad: El archivo fue alterado o corrompido durante la transmisión (el hash del servidor no coincide con el de su celular). Por favor, intente de nuevo."}
   requisitos_ux:
     - "La app no permite mezclar fotos y PDF en un mismo reporte"
+    - "(It. 40d, 2026-09-30) Dos botones: 'Tomar foto' abre la cámara trasera; 'Elegir de la galería o un PDF', el selector"
   casos_edge: []
 validacion_smart:
   specific: true

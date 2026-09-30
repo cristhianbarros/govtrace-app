@@ -25,7 +25,7 @@ test('Guardado sin conexión y envío automático al recuperar la señal', async
     await page.locator('[data-test="contract-result"]').first().click();
     await expect(page.getByText(/Precisión del GPS/)).toBeVisible();
     await page.getByLabel('Retraso').check();
-    await page.locator('input[type="file"]').setInputFiles(PHOTO);
+    await page.locator('input[type="file"]').first().setInputFiles(PHOTO);
     await expect(page.getByRole('button', { name: 'Enviar Reporte' })).toBeEnabled();
 
     // Se pierde la señal justo al enviar.

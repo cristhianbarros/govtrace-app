@@ -236,3 +236,13 @@ describe('El mapa, también como lista (it. 40c)', () => {
     });
 });
 
+describe('Cómo funciona (it. 40d)', () => {
+    it('explains, next to the map, how the evidence gets there, for whoever arrives for the first time', async () => {
+        const wrapper = await openMap();
+        const how = wrapper.get('details[data-test="how"]');
+
+        expect(how.get('summary').text()).toBe('¿Cómo funciona?');
+        expect(how.findAll('li')).toHaveLength(3);
+        expect(how.text()).toContain('La veeduría los revisa y publica aquí');
+    });
+});

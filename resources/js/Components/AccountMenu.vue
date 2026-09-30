@@ -15,6 +15,10 @@ const page = usePage();
 const account = computed(() => page.props.account ?? null);
 const isVeedor = computed(() => account.value?.role === 'Veedor de Campo');
 const inOrganization = computed(() => Boolean(page.props.organization));
+// It. 40d: en las pantallas públicas de una veeduría, "Entrar" para su gente
+// (menos en las de acceso, que ya son para eso).
+const ACCESS = ['/login', '/set-password', '/forgot-password', '/reset-password'];
+const offersLogin = computed(() => !account.value && inOrganization.value && !ACCESS.some((path) => (page.url ?? '').startsWith(path)));
 
 const open = ref(false);
 const confirming = ref(false);
@@ -52,7 +56,8 @@ async function leave() {
 </script>
 
 <template>
-    <div v-if="account" ref="root" class="relative ml-auto">
+    <Link v-if="offersLogin" href="/login" class="ml-auto inline-flex min-h-11 items-center rounded-lg border-2 border-white px-4 text-base font-semibold hover:bg-slate-800">Entrar</Link>
+    <div v-else-if="account" ref="root" class="relative ml-auto">
         <button
             type="button"
             aria-haspopup="menu"

@@ -80,36 +80,36 @@
     "axe": {},
     "textUnder16": 12,
     "textUnder14": 0,
-    "smallTargets": 33,
-    "targets": 3
+    "smallTargets": 25,
+    "targets": 4
   },
   "escritorio/publico-inicio": {
     "axe": {},
     "textUnder16": 0,
     "textUnder14": 0,
     "smallTargets": 0,
-    "targets": 1
+    "targets": 3
   },
   "escritorio/publico-mapa": {
     "axe": {},
-    "textUnder16": 28,
+    "textUnder16": 14,
     "textUnder14": 0,
-    "smallTargets": 25,
-    "targets": 20
+    "smallTargets": 23,
+    "targets": 22
   },
   "escritorio/publico-obra": {
     "axe": {},
     "textUnder16": 27,
     "textUnder14": 0,
     "smallTargets": 0,
-    "targets": 5
+    "targets": 6
   },
   "escritorio/publico-validador": {
     "axe": {},
     "textUnder16": 8,
     "textUnder14": 0,
     "smallTargets": 0,
-    "targets": 3
+    "targets": 4
   },
   "escritorio/superadmin-auditoria": {
     "axe": {},
@@ -262,36 +262,36 @@
     "axe": {},
     "textUnder16": 12,
     "textUnder14": 0,
-    "smallTargets": 33,
-    "targets": 3
+    "smallTargets": 25,
+    "targets": 4
   },
   "movil/publico-inicio": {
     "axe": {},
     "textUnder16": 0,
     "textUnder14": 0,
     "smallTargets": 0,
-    "targets": 1
+    "targets": 3
   },
   "movil/publico-mapa": {
     "axe": {},
-    "textUnder16": 28,
+    "textUnder16": 14,
     "textUnder14": 0,
-    "smallTargets": 25,
-    "targets": 20
+    "smallTargets": 23,
+    "targets": 22
   },
   "movil/publico-obra": {
     "axe": {},
     "textUnder16": 27,
     "textUnder14": 0,
     "smallTargets": 0,
-    "targets": 5
+    "targets": 6
   },
   "movil/publico-validador": {
     "axe": {},
     "textUnder16": 8,
     "textUnder14": 0,
     "smallTargets": 0,
-    "targets": 3
+    "targets": 4
   },
   "movil/superadmin-auditoria": {
     "axe": {},

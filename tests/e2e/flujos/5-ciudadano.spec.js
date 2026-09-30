@@ -1,7 +1,7 @@
 // It. 40a — el flujo del ciudadano (docs/mapa-funcional.md, sección 2): sin
 // cuenta, el mapa de la veeduría del fixture, una obra y sus evidencias.
 import { expect, test } from '@playwright/test';
-import { ORG, WORKSITE } from './support.js';
+import { CENTRAL, ORG, WORKSITE, onThisPort } from './support.js';
 
 test.describe.configure({ mode: 'serial' });
 
@@ -11,7 +11,16 @@ async function openTheWorksite(page) {
     await page.waitForURL('**/worksite/*');
 }
 
-test.fixme('V5: llega al mapa de la veeduría desde el Inicio de GovTrace', async () => {});
+test('Llega al mapa de la veeduría desde el Inicio de GovTrace (V5)', async ({ page }) => {
+    await page.goto(CENTRAL);
+    await expect(page.getByRole('heading', { name: '¿Cómo funciona?' })).toBeVisible();
+
+    const listed = page.locator('[data-test="organization"]').filter({ hasText: 'Veeduría de Pruebas E2E' });
+    await expect(listed).toContainText('Magdalena');
+    await page.goto(onThisPort(await listed.getByRole('link', { name: 'Ver su mapa de obras' }).getAttribute('href')));
+    await expect(page.getByRole('heading', { name: 'Obras vigiladas', exact: true })).toBeVisible();
+    await expect(page.locator('header').getByRole('link', { name: 'Entrar' })).toBeVisible();
+});
 
 test('Ve el mapa de obras de la veeduría y sus filtros', async ({ page }) => {
     await page.goto(ORG);

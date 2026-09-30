@@ -118,10 +118,28 @@ describe('Menú de cuenta', () => {
         wrapper.unmount();
     });
 
-    it('shows nothing on a public screen, where nobody is logged in', async () => {
+    it('shows no menu on a public screen, where nobody is logged in', async () => {
         const { wrapper } = await menuOf(null);
 
         expect(wrapper.find('button').exists()).toBe(false);
         wrapper.unmount();
+    });
+
+    it('offers "Entrar" on the public screens of a veeduría, for its veedores and its Administrador (it. 40d)', async () => {
+        page.url = '/worksite/7';
+        const { wrapper } = await menuOf(null);
+        expect(wrapper.get('a[href="/login"]').text()).toBe('Entrar');
+        wrapper.unmount();
+
+        page.url = '/login';
+        const { wrapper: onLogin } = await menuOf(null);
+        expect(onLogin.find('a[href="/login"]').exists()).toBe(false);
+        onLogin.unmount();
+
+        page.url = '/';
+        const { wrapper: central } = await menuOf(null, { organization: null });
+        expect(central.find('a[href="/login"]').exists()).toBe(false);
+        central.unmount();
+        page.url = '/admin/inbox';
     });
 });

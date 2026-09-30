@@ -1,5 +1,6 @@
 <?php
 
+use App\Application\Organization\PublicDirectory;
 use App\Http\Controllers\Auth\ChangePasswordController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Central\AuditController;
@@ -17,7 +18,8 @@ use Inertia\Inertia;
 // Central routes: restricted to the central domains so they don't collide with tenant routes.
 foreach (config('tenancy.central_domains') as $domain) {
     Route::domain($domain)->group(function () {
-        Route::get('/', fn () => Inertia::render('Home'))->name('home');
+        // It. 40d (V5): el Inicio lleva al mapa de cada veeduría (R-MAP-01: no hay un mapa global).
+        Route::get('/', fn () => Inertia::render('Home', ['organizations' => (new PublicDirectory)->handle()]))->name('home');
 
         // US-031: Super Administrator only (the screen, it. 17).
         Route::get('/login', fn () => Inertia::render('Auth/Login', ['context' => 'Panel global']))->name('login.show');

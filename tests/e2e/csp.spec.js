@@ -50,7 +50,7 @@ test('La CSP no bloquea nada en las pantallas públicas ni en las del veedor', a
     await page.getByLabel('Buscar Obra').fill('Parque de pruebas');
     await page.locator('[data-test="contract-result"]').first().click();
     await expect(page.getByText(/Precisión del GPS/)).toBeVisible();
-    await page.locator('input[type="file"]').setInputFiles(PHOTO);
+    await page.locator('input[type="file"]').first().setInputFiles(PHOTO);
     await expect(page.getByRole('button', { name: 'Enviar Reporte' })).toBeVisible();
     await page.goto('/my-reports');
 

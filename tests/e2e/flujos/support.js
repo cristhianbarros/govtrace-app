@@ -51,6 +51,13 @@ export function latestLinkTo(email) {
     throw new Error(`No hay un correo con enlace para ${email} en storage/logs/mail.log`);
 }
 
+/** A link of this environment, on this run's port (the one of APP_URL can differ in CI). */
+export function onThisPort(link) {
+    const url = new URL(link);
+    url.port = organization.port;
+    return url.toString();
+}
+
 /** It. 40b: "Salir" vive en el menú de cuenta de la cabecera, y siempre pregunta antes. */
 export async function logOut(page) {
     await page.locator('header button[aria-haspopup="menu"]').click();

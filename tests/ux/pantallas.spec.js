@@ -121,7 +121,7 @@ for (const [viewport, options] of Object.entries(VIEWPORTS)) {
 
             await page.getByLabel('Buscar Obra').fill('Parque de pruebas');
             await page.locator('[data-test="contract-result"]').first().click();
-            await page.locator('input[type="file"]').setInputFiles(PHOTO);
+            await page.locator('input[type="file"]').first().setInputFiles(PHOTO);
             await visit(page, viewport, 'veedor-reporte-armado');
 
             await visit(page, viewport, 'veedor-mis-reportes', `${ORG}/my-reports`);

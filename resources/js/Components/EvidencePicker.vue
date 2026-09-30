@@ -61,13 +61,23 @@ const kilobytes = (bytes) => `${Math.max(1, Math.round(bytes / 1024))} KB`;
     <div class="flex flex-col gap-2">
         <span class="text-sm font-semibold text-slate-700">Evidencia: de 1 a 5 fotos o un PDF</span>
 
-        <label
-            class="flex items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-white px-3 py-4 text-base font-semibold text-slate-700"
-            :class="{ 'opacity-50': !accept || processing }"
-        >
-            {{ processing ? 'Preparando archivos…' : 'Adjuntar fotos o PDF' }}
-            <input type="file" multiple class="sr-only" :accept="accept" :disabled="!accept || processing" @change="onChoose" />
-        </label>
+        <!-- It. 40d: elegir es claro, y la cámara, a un toque (capture: abre la trasera). -->
+        <div class="grid grid-cols-1 gap-2 md:grid-cols-2">
+            <label
+                class="flex min-h-14 items-center justify-center gap-2 rounded-lg border-2 border-dashed border-slate-300 bg-white px-3 py-3 text-base font-semibold text-slate-800"
+                :class="{ 'opacity-50': !accept || processing }"
+            >
+                {{ processing ? 'Preparando archivos…' : 'Elegir de la galería o un PDF' }}
+                <input type="file" multiple class="sr-only" :accept="accept" :disabled="!accept || processing" @change="onChoose" />
+            </label>
+            <label
+                class="flex min-h-14 items-center justify-center gap-2 rounded-lg bg-slate-900 px-3 py-3 text-base font-semibold text-white"
+                :class="{ 'opacity-50': !accept.startsWith('image') || processing }"
+            >
+                <span aria-hidden="true">📷</span> Tomar foto
+                <input type="file" data-test="camera" class="sr-only" accept="image/*" capture="environment" :disabled="!accept.startsWith('image') || processing" @change="onChoose" />
+            </label>
+        </div>
 
         <ul v-if="errors.length" role="alert" class="flex flex-col gap-1 text-sm text-red-700">
             <li v-for="error in errors" :key="error">{{ error }}</li>
