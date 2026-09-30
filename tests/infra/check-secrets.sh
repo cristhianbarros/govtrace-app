@@ -26,7 +26,7 @@ else
   echo "PASS  el historial de git no contiene llaves secretas de Stellar"
 fi
 
-for example in .env.example .env.testnet.example .env.production.example; do
+for example in .env.example .env.testnet.example .env.production.example .env.staging.example; do
   if [ ! -f "$example" ]; then
     echo "FAIL  falta $example"; fail=1
   elif grep -qE '^STELLAR_(SEALER|SPONSOR|TREASURY)_SECRET=.+' "$example"; then

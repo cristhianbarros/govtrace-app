@@ -21,7 +21,7 @@ HTTP_PORT ?= $(shell sed -n 's/^HTTP_PORT=\([0-9]*\).*/\1/p' .env.docker 2>/dev/
         stellar-up contract-test contract-deploy contract-smoke doctor test-stellar \
         contract-extend testnet-setup testnet-extend smoke-testnet secrets-check monitoring-check verify-check e2e \
         backup-now backup-list restore-drill backup-check trace-check network-deploy network-extend network-deploy-check \
-        admin invites demo audit
+        admin invites demo audit staging-check
 
 help: ## List available commands
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -137,6 +137,8 @@ smoke-testnet: ## Smoke test on the Stellar testnet: a report up to "Sellada", f
 audit: .env.docker ## It. 41: known vulnerabilities in the dependencies (composer audit, and npm audit of production at high or above)
 	@$(EXEC) composer audit --no-interaction
 	@$(NODE) npm audit --omit=dev --audit-level=high
+staging-check: .env.docker ## It. 42a: the production stack (docker-compose.prod.yml) end to end, locally, with TLS from a test CA
+	@bash tests/infra/check-staging.sh
 trace-check: ## Traceability: every Gherkin scenario has a test named after it (CLAUDE.md, R-TST-04)
 	@$(EXEC) php tests/infra/check-traceability.php
 secrets-check: ## R-BLK-04: no Stellar secret key in the repository, its history or the env examples

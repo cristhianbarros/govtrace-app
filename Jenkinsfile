@@ -2,6 +2,7 @@
 // -> Test Contract (Soroban: rustfmt, clippy, cargo test and the exact WASM interface)
 // -> Test Stellar (sealing against a local standalone network with the contract deployed)
 // -> Backup & Restore (hourly backups and the restore drill, R-BCK)
+// -> Production Stack (the immutable image behind TLS, as deploy/deploy.sh ships it)
 // -> Secrets Check (no Stellar secret key in the repo or its history)
 // -> Smoke Testnet (only when building a release tag; keys injected from Jenkins credentials, D11).
 // It drives the same Makefile targets developers use, so CI and local runs cannot drift.
@@ -101,6 +102,16 @@ pipeline {
                 // days, and the restore drill restores everything into an empty
                 // PostgreSQL and a test bucket, checking each evidence's SHA-256.
                 sh 'make backup-check'
+            }
+        }
+
+        stage('Production Stack') {
+            steps {
+                // It. 42a: the immutable image and the production stack
+                // (docker-compose.prod.yml) end to end, with TLS from a test CA:
+                // over HTTPS the app knows it is HTTPS (no mixed content), the
+                // tenants answer on their subdomains, and a redeploy breaks nothing.
+                sh 'make staging-check'
             }
         }
 

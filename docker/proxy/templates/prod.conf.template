@@ -1,0 +1,65 @@
+# Producción y staging (it. 42a): nginx es el borde. El TLS termina aquí, con un
+# certificado comodín: ${DOMAIN} y *.${DOMAIN}, porque cada organización es un
+# subdominio. Plantilla de la imagen oficial de nginx: al arrancar se completa
+# con las variables del entorno (DOMAIN, y PUBLIC_PORT_SUFFIX: vacío con el 443
+# de producción; ":18443" en make staging-check).
+
+# Sin esto, nginx guarda la IP del contenedor al arrancar y falla si Docker le da otra.
+resolver 127.0.0.11 ipv6=off valid=10s;
+
+# El mismo límite que post_max_size en docker/app/php-prod.ini.
+client_max_body_size 64M;
+server_tokens off;
+
+# HTTP: solo lleva a HTTPS, con el mismo host (el subdominio de la organización).
+server {
+    listen 80 default_server;
+    server_name ${DOMAIN} *.${DOMAIN};
+
+    location = /healthz {
+        access_log off;
+        return 200 "ok\n";
+    }
+
+    location / {
+        return 301 https://$host${PUBLIC_PORT_SUFFIX}$request_uri;
+    }
+}
+
+server {
+    listen 443 ssl default_server;
+    http2 on;
+    server_name ${DOMAIN} *.${DOMAIN};
+
+    ssl_certificate     /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
+
+    # La configuración "intermediate" de Mozilla: TLS 1.2 y 1.3, y cifrados con
+    # secreto hacia adelante (ECDHE).
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305;
+    ssl_prefer_server_ciphers off;
+    ssl_session_cache shared:TLS:10m;
+    ssl_session_timeout 1d;
+    ssl_session_tickets off;
+
+    location / {
+        set $upstream_app app:80;
+        proxy_pass http://$upstream_app;
+
+        # El Host con que la aplicación reconoce a cada organización: el que nginx
+        # ya validó contra server_name, y el puerto público si no es el 443.
+        proxy_set_header Host              $host${PUBLIC_PORT_SUFFIX};
+        proxy_set_header X-Real-IP         $remote_addr;
+        # El borde: cualquier X-Forwarded-For del visitante se descarta.
+        proxy_set_header X-Forwarded-For   $remote_addr;
+        proxy_set_header X-Forwarded-Proto https;
+        # It. 41: nadie les cree, y además se borran.
+        proxy_set_header X-Forwarded-Host  "";
+        proxy_set_header X-Forwarded-Port  "";
+
+        proxy_read_timeout      120s;
+        proxy_send_timeout      120s;
+        proxy_request_buffering off;
+    }
+}

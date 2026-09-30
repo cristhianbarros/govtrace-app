@@ -64,7 +64,8 @@ services:
     security_opt: [no-new-privileges:true]
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/robots.txt"]
+      # nginx mismo (/healthz), no la app detrás: la app tiene su propio chequeo.
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/healthz"]
       interval: 15s
       timeout: 5s
       retries: 3
