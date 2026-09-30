@@ -100,3 +100,16 @@ describe('EvidencePicker', () => {
         expect(wrapper.props('modelValue').map((evidence) => evidence.file.name)).toEqual(['foto2.jpg']);
     });
 });
+
+describe('Tomar la foto o elegirla (it. 40d)', () => {
+    it('Tomar la foto con la cámara o elegirla de la galería: two big buttons, the camera one opens the rear camera', async () => {
+        const wrapper = mount(EvidencePicker, { props: { modelValue: [] } });
+
+        const camera = wrapper.get('input[data-test="camera"]');
+        expect(camera.attributes('capture')).toBe('environment');
+        expect(camera.attributes('accept')).toBe('image/*');
+        expect(wrapper.text()).toContain('Tomar foto');
+        expect(wrapper.text()).toContain('Elegir de la galería o un PDF');
+        expect(wrapper.get('input[type="file"]').attributes('capture')).toBeUndefined();
+    });
+});

@@ -83,4 +83,8 @@ test('El veedor activa su cuenta y encuentra la obra para reportar', async ({ pa
 
 test.fixme('V9: al Administrador le llega un aviso de que hay evidencias por revisar', async () => {});
 
-test.fixme('V5: el ciudadano llega al mapa de la veeduría desde el Inicio de GovTrace', async () => {});
+test('El ciudadano encuentra la veeduría nueva en el Inicio de GovTrace (V5)', async ({ page }) => {
+    await page.goto(CENTRAL);
+
+    await expect(page.locator('[data-test="organization"]').filter({ hasText: ALTA.name })).toContainText('Magdalena');
+});

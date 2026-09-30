@@ -64,3 +64,11 @@ Característica: Pines del mapa por color de estado
     Entonces arriba del mapa veo "✓ Normal", "! Alerta" y "✕ En riesgo", cada uno con cuántas obras tiene
     Y cada pin lleva el mismo signo que su estado, además de su color
     Y al tocar un estado, el mapa muestra solo sus obras
+
+  @complexity:low
+  Escenario: Llegar al mapa de una veeduría desde el Inicio
+    Dado que "Veeduría Ciudadana Santa Marta" vigila Magdalena
+    Cuando abro el Inicio de GovTrace
+    Entonces veo "¿Cómo funciona?" en tres pasos
+    Y veo "Veeduría Ciudadana Santa Marta", que vigila Magdalena, con el enlace "Ver su mapa de obras"
+    Y una veeduría dada de baja no aparece

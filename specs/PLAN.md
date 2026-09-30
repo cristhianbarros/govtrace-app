@@ -1745,6 +1745,34 @@ Esta iteración estaba reservada para ese recorrido. El recorrido se hizo para e
 
 **Done-when de la 40d:** en la prueba con personas, al menos 4 de 5 terminan cada una de las 6 tareas sin ayuda.
 
+⚠️ **40d, primera parte cumplida (2026-09-30).** Es lo que la demo necesita, hecho sin revisión del usuario. El resto espera decisiones o personas.
+- **El Inicio central** (V5): "Veeduría ciudadana de obras públicas", "¿Cómo funciona?" en tres pasos con ícono, y el directorio de veedurías.
+  - El directorio (`PublicDirectory`) trae el nombre elegido, el territorio ("Vigila: Magdalena") y "Ver su mapa de obras".
+  - Las suspendidas siguen, con su aviso; las dadas de baja, no.
+  - El acceso de administradores de GovTrace va al pie.
+- **"Entrar"** en la cabecera de las pantallas públicas de cada veeduría, para su gente (no en las de acceso ni en el dominio central).
+- **El mapa:** "¿Cómo funciona?" plegado junto al título; "Validar un archivo" y "Estadísticas" debajo del mapa.
+- **Nuevo reporte:** "Tomar foto" (cámara trasera, `capture="environment"`) y "Elegir de la galería o un PDF".
+- **Spec:** escenarios nuevos en US-027 (el directorio) y US-009 (la cámara). `make trace-check`: 260 de 260.
+
+**Prueba:**
+- Pest: el directorio, con activas, suspendidas y dadas de baja, el nombre elegido y el directorio vacío.
+- Vitest: 387 de 387.
+- `make e2e`: 34 pasan y 13 siguen pendientes. Se cerró V5, en el flujo del ciudadano y en el de alta: la veeduría nueva aparece en el Inicio.
+- `make ux-check`: sin regresiones, con la línea base reescrita.
+
+**Decisiones de esta parte (❓):**
+1. **El directorio de veedurías, publicado** (la decisión 2 de `docs/ux-analisis.md`). R-MAP-01 no lo impide: no mezcla mapas.
+2. **El texto de "¿Cómo funciona?"**, en lenguaje claro.
+
+**Queda de la 40d:**
+- la guía de primer uso del veedor;
+- los pasos a la vista en Nuevo reporte;
+- la auditoría en frases;
+- el nombre corto de la ficha de obra (❓ decisión 3);
+- unir contratos eligiéndolos de una lista;
+- la prueba con 5 personas (❓ decisión 6).
+
 **Cubre:** las reglas R-UX-01 a R-UX-09 propuestas en `docs/ux-analisis.md` (sección 2), que entran a la SPEC si el usuario las aprueba · US-031 (iniciar sesión, y ahora salir), US-008, US-010, US-015, US-017, US-024, US-027, US-028, US-029, US-036, US-045-INT, US-049-RPT, US-051-RPT.
 
 **Decisiones por confirmar (❓), en la sección 9 del análisis:**

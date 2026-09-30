@@ -28,7 +28,7 @@ test('Arma un reporte: la obra, lo que vio y la foto', async ({ page }) => {
     await page.locator('[data-test="contract-result"]').first().click();
     await expect(page.getByText(/Precisión del GPS/)).toBeVisible();
     await page.getByLabel('Avance').check();
-    await page.locator('input[type="file"]').setInputFiles(PHOTO);
+    await page.locator('input[type="file"]').first().setInputFiles(PHOTO);
 
     await expect(page.getByRole('button', { name: 'Enviar Reporte' })).toBeEnabled();
 });

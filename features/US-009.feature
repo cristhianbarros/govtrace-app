@@ -75,3 +75,9 @@ Característica: Adjuntar fotos o PDF con privacidad y hash en el teléfono
     Cuando el archivo llega al servidor alterado en un solo byte
     Entonces la evidencia no se encola para el sellado
     Y veo el mensaje "Alerta de seguridad: El archivo fue alterado o corrompido durante la transmisión (el hash del servidor no coincide con el de su celular). Por favor, intente de nuevo."
+
+  @complexity:low
+  Escenario: Tomar la foto con la cámara o elegirla de la galería
+    Cuando voy a adjuntar la evidencia de un reporte
+    Entonces veo "Tomar foto", que abre la cámara trasera del teléfono
+    Y veo "Elegir de la galería o un PDF"
