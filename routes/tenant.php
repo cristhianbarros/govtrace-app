@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Application\Privacy\DataPolicy;
 use App\Application\Publication\PublicStats;
 use App\Application\Publication\StellarForBrowser;
 use App\Domain\Organization\Roles;
@@ -94,6 +95,8 @@ Route::middleware([
 
     // US-031: Administrador de Organización y Veedor (la pantalla, it. 17).
     Route::get('/login', fn () => Inertia::render('Auth/Login', ['context' => tenant()->displayName()]))->name('tenant.login.show');
+    // US-058-LEG (it. 44e): la política de tratamiento de datos, también en cada veeduría.
+    Route::get('/privacidad', fn () => Inertia::render('Public/Privacy', ['policy' => (new DataPolicy)->props()]))->name('tenant.privacy');
 
     // It. 43b (V6): el manifiesto de la app del veedor, con el nombre de su veeduría, para instalarla.
     Route::get('/manifest.webmanifest', WebManifestController::class)->name('tenant.manifest');

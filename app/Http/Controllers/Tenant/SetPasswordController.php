@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Tenant;
 
 use App\Application\Organization\AcceptInvitation;
 use App\Application\Organization\DeclareImpediments;
+use App\Application\Privacy\DataPolicy;
 use App\Domain\Auth\Rules\StrongPassword;
 use App\Domain\Organization\Exceptions\InvitationRejected;
 use App\Domain\Organization\RoleBasedDashboard;
@@ -47,6 +48,8 @@ class SetPasswordController extends Controller
             'action' => "/set-password/{$account->id}",
             // US-057-LEG: un veedor declara, al activar su cuenta, que no tiene impedimentos para serlo.
             'declaration' => DeclareImpediments::isAskedOf($account),
+            // US-058-LEG: la política que autoriza al crear su cuenta (Ley 1581 de 2012).
+            'dataPolicyUrl' => '/privacidad',
         ]);
     }
 
@@ -67,11 +70,16 @@ class SetPasswordController extends Controller
             }
             // Solo con un enlace válido se dice qué falta: la pantalla nunca revela si una cuenta existe.
             $declares = DeclareImpediments::isAskedOf($account);
-            if ($declares && ! $request->boolean('declaration')) {
-                throw ValidationException::withMessages(['declaration' => DeclareImpediments::REQUIRED]);
+            $missing = array_filter([
+                'data_authorization' => $request->boolean('data_authorization') ? null : DataPolicy::AUTHORIZATION_REQUIRED,
+                'declaration' => $declares && ! $request->boolean('declaration') ? DeclareImpediments::REQUIRED : null,
+            ]);
+            if ($missing) {
+                throw ValidationException::withMessages($missing);
             }
 
             $accept->handle($account, $data['token'], $data['password']);
+            (new DataPolicy)->authorize($account);
             if ($declares) {
                 (new DeclareImpediments)->handle($account);
             }

@@ -1,6 +1,7 @@
 <?php
 
 use App\Application\Organization\PublicDirectory;
+use App\Application\Privacy\DataPolicy;
 use App\Http\Controllers\Auth\ChangePasswordController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Central\AuditController;
@@ -25,6 +26,8 @@ foreach (config('tenancy.central_domains') as $domain) {
 
         // US-031: Super Administrator only (the screen, it. 17).
         Route::get('/login', fn () => Inertia::render('Auth/Login', ['context' => 'Panel global']))->name('login.show');
+        // US-058-LEG (it. 44e): la política de tratamiento de datos (Ley 1581 de 2012).
+        Route::get('/privacidad', fn () => Inertia::render('Public/Privacy', ['policy' => (new DataPolicy)->props()]))->name('privacy');
         Route::post('/login', [LoginController::class, 'store'])->name('login');
 
         // US-039-USR: el Super Administrador también restablece su contraseña.

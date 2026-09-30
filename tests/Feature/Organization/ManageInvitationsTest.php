@@ -78,6 +78,7 @@ function setPasswordWith(string $url): TestResponse
         'password' => 'Veeduria#2026',
         'password_confirmation' => 'Veeduria#2026',
         'declaration' => true, // US-057-LEG: un veedor declara que no tiene impedimentos para serlo
+        'data_authorization' => true, // US-058-LEG: y autoriza el tratamiento de sus datos
     ]);
 }
 

@@ -73,7 +73,8 @@ function invited(Closure $invite): array
 /** @param  array<string, mixed>  $extra */
 function activate(User $member, string $token, array $extra = []): TestResponse
 {
-    return test()->post(DECLARATION_HOST."/set-password/{$member->id}", ['token' => $token, 'password' => 'Veeduria#2026', 'password_confirmation' => 'Veeduria#2026', ...$extra]);
+    // US-058-LEG (it. 44e): quien activa su cuenta autoriza además el tratamiento de sus datos.
+    return test()->post(DECLARATION_HOST."/set-password/{$member->id}", ['token' => $token, 'password' => 'Veeduria#2026', 'password_confirmation' => 'Veeduria#2026', 'data_authorization' => true, ...$extra]);
 }
 
 /** A veedor whose account predates the declaration: active, and never asked. */

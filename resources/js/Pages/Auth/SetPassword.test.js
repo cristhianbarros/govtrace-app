@@ -14,7 +14,11 @@ const EXPIRED = 'El enlace de invitación ha expirado o no es válido. Solicite 
 
 const validLink = { valid: true, email: 'carlos@correo.co', token: 'token-del-correo', action: '/set-password/7' };
 
-async function definePassword(wrapper, password, confirmation = password) {
+// It. 44e: quien activa su cuenta autoriza también el tratamiento de sus datos, salvo que el test diga lo contrario.
+async function definePassword(wrapper, password, confirmation = password, { authorize = true } = {}) {
+    if (authorize) {
+        await wrapper.get('input#data-authorization').setValue(true);
+    }
     await wrapper.get('input#password').setValue(password);
     await wrapper.get('input#password_confirmation').setValue(confirmation);
     await wrapper.get('form').trigger('submit');
@@ -30,7 +34,7 @@ describe('Crear la contraseña', () => {
         await definePassword(wrapper, 'Veeduria#2026');
 
         expect(submissions).toEqual([
-            { url: '/set-password/7', data: { token: 'token-del-correo', password: 'Veeduria#2026', password_confirmation: 'Veeduria#2026' } },
+            { url: '/set-password/7', data: { token: 'token-del-correo', password: 'Veeduria#2026', password_confirmation: 'Veeduria#2026', data_authorization: true } },
         ]);
         expect(wrapper.get('input#password').attributes('autocomplete')).toBe('new-password');
     });
@@ -92,7 +96,7 @@ describe('La declaración de impedimentos del veedor (it. 44c)', () => {
         await definePassword(wrapper, 'Veeduria#2026');
 
         expect(submissions).toEqual([
-            { url: '/set-password/7', data: { token: 'token-del-correo', password: 'Veeduria#2026', password_confirmation: 'Veeduria#2026', declaration: true } },
+            { url: '/set-password/7', data: { token: 'token-del-correo', password: 'Veeduria#2026', password_confirmation: 'Veeduria#2026', data_authorization: true, declaration: true } },
         ]);
     });
 
@@ -125,3 +129,28 @@ describe('La declaración de impedimentos del veedor (it. 44c)', () => {
     });
 });
 
+// It. 44e — US-058-LEG: al activar su cuenta, cada persona autoriza el tratamiento de sus datos.
+describe('La autorización del tratamiento de datos (it. 44e)', () => {
+    const AUTHORIZATION_REQUIRED = 'Para crear su cuenta, autorice el tratamiento de sus datos personales.';
+    const link = { ...validLink, dataPolicyUrl: '/privacidad' };
+
+    it('Autorizo el tratamiento de mis datos al activar mi cuenta: the link to the policy, the checkbox, and it goes with the password', async () => {
+        const wrapper = mount(SetPassword, { props: link });
+        const policy = wrapper.get('[data-test="data-policy"]');
+
+        expect(policy.attributes()).toMatchObject({ href: '/privacidad', target: '_blank' });
+        await wrapper.get('input#data-authorization').setValue(true);
+        await definePassword(wrapper, 'Veeduria#2026');
+
+        expect(submissions[0].data).toMatchObject({ data_authorization: true });
+    });
+
+    it('Sin la autorización no se activa la cuenta: nothing is sent, and the screen says what is missing', async () => {
+        const wrapper = mount(SetPassword, { props: link });
+
+        await definePassword(wrapper, 'Veeduria#2026', 'Veeduria#2026', { authorize: false });
+
+        expect(submissions).toEqual([]);
+        expect(wrapper.text()).toContain(AUTHORIZATION_REQUIRED);
+    });
+});

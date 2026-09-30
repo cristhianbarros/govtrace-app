@@ -67,14 +67,14 @@
     "textUnder16": 0,
     "textUnder14": 0,
     "smallTargets": 0,
-    "targets": 5
+    "targets": 6
   },
   "escritorio/publico-entrar-veeduria": {
     "axe": {},
     "textUnder16": 0,
     "textUnder14": 0,
     "smallTargets": 0,
-    "targets": 6
+    "targets": 7
   },
   "escritorio/publico-estadisticas": {
     "axe": {},
@@ -88,14 +88,14 @@
     "textUnder16": 0,
     "textUnder14": 0,
     "smallTargets": 0,
-    "targets": 3
+    "targets": 4
   },
   "escritorio/publico-mapa": {
     "axe": {},
-    "textUnder16": 11,
+    "textUnder16": 10,
     "textUnder14": 0,
-    "smallTargets": 23,
-    "targets": 22
+    "smallTargets": 22,
+    "targets": 23
   },
   "escritorio/publico-obra": {
     "axe": {},
@@ -103,6 +103,13 @@
     "textUnder14": 0,
     "smallTargets": 0,
     "targets": 14
+  },
+  "escritorio/publico-privacidad": {
+    "axe": {},
+    "textUnder16": 0,
+    "textUnder14": 0,
+    "smallTargets": 0,
+    "targets": 2
   },
   "escritorio/publico-validador": {
     "axe": {},
@@ -122,8 +129,8 @@
     "axe": {},
     "textUnder16": 0,
     "textUnder14": 0,
-    "smallTargets": 7,
-    "targets": 14
+    "smallTargets": 6,
+    "targets": 16
   },
   "escritorio/superadmin-organizaciones": {
     "axe": {},
@@ -256,14 +263,14 @@
     "textUnder16": 0,
     "textUnder14": 0,
     "smallTargets": 0,
-    "targets": 5
+    "targets": 6
   },
   "movil/publico-entrar-veeduria": {
     "axe": {},
     "textUnder16": 0,
     "textUnder14": 0,
     "smallTargets": 0,
-    "targets": 6
+    "targets": 7
   },
   "movil/publico-estadisticas": {
     "axe": {},
@@ -277,14 +284,14 @@
     "textUnder16": 0,
     "textUnder14": 0,
     "smallTargets": 0,
-    "targets": 3
+    "targets": 4
   },
   "movil/publico-mapa": {
     "axe": {},
-    "textUnder16": 11,
+    "textUnder16": 10,
     "textUnder14": 0,
-    "smallTargets": 23,
-    "targets": 22
+    "smallTargets": 22,
+    "targets": 23
   },
   "movil/publico-obra": {
     "axe": {},
@@ -292,6 +299,13 @@
     "textUnder14": 0,
     "smallTargets": 0,
     "targets": 14
+  },
+  "movil/publico-privacidad": {
+    "axe": {},
+    "textUnder16": 0,
+    "textUnder14": 0,
+    "smallTargets": 0,
+    "targets": 2
   },
   "movil/publico-validador": {
     "axe": {},
@@ -311,12 +325,12 @@
     "axe": {},
     "textUnder16": 0,
     "textUnder14": 0,
-    "smallTargets": 8,
-    "targets": 12
+    "smallTargets": 7,
+    "targets": 14
   },
   "movil/superadmin-organizaciones": {
     "axe": {},
-    "textUnder16": 6,
+    "textUnder16": 5,
     "textUnder14": 0,
     "smallTargets": 0,
     "targets": 12

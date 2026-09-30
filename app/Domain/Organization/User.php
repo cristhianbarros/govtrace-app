@@ -79,6 +79,7 @@ class User extends Model implements AuthenticatableContract, CanResetPasswordCon
         'email_verified_at' => 'datetime',
         'invitation_expires_at' => 'datetime',
         'impediments_declared_at' => 'datetime', // US-057-LEG
+        'data_authorized_at' => 'datetime', // US-058-LEG
         'is_active' => 'boolean',
         'password' => 'hashed',
     ];

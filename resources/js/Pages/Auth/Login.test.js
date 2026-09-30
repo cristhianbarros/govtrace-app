@@ -78,3 +78,11 @@ describe('Iniciar sesión', () => {
         expect(wrapper.get('[role="status"]').text()).toBe('Su contraseña fue cambiada. Ya puede iniciar sesión.');
     });
 });
+
+describe('La política de datos (it. 44e)', () => {
+    it('La política está enlazada donde se entra: the login screen', () => {
+        const wrapper = mount(Login, { props: { context: 'Panel global' } });
+
+        expect(wrapper.findAll('a').find((link) => link.text() === 'Política de tratamiento de datos').attributes('href')).toBe('/privacidad');
+    });
+});

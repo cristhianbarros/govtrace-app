@@ -9,6 +9,7 @@ import ImpedimentsDeclaration from '@/Components/ImpedimentsDeclaration.vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { PASSWORD_RULES_MESSAGE, isStrongPassword } from '@/lib/credentials.js';
 import { DECLARATION_REQUIRED } from '@/lib/impediments.js';
+import { AUTHORIZATION_REQUIRED } from '@/lib/privacy.js';
 
 const props = defineProps({
     valid: { type: Boolean, required: true },
@@ -17,11 +18,12 @@ const props = defineProps({
     action: { type: String, default: '' },
     message: { type: String, default: '' },
     declaration: { type: Boolean, default: false }, // un veedor la hace; el Administrador, no
+    dataPolicyUrl: { type: String, default: '/privacidad' }, // US-058-LEG: la política que autoriza
 });
 
-const form = useForm({ token: props.token, password: '', password_confirmation: '', ...(props.declaration ? { declaration: false } : {}) });
+const form = useForm({ token: props.token, password: '', password_confirmation: '', data_authorization: false, ...(props.declaration ? { declaration: false } : {}) });
 const hints = ref({});
-const serverError = computed(() => form.errors.token ?? form.errors.declaration ?? form.errors.password ?? form.errors.password_confirmation);
+const serverError = computed(() => form.errors.token ?? form.errors.data_authorization ?? form.errors.declaration ?? form.errors.password ?? form.errors.password_confirmation);
 
 function submit() {
     hints.value = {};
@@ -32,6 +34,9 @@ function submit() {
     }
     if (props.declaration && !form.declaration) {
         hints.value.declaration = DECLARATION_REQUIRED;
+    }
+    if (!form.data_authorization) {
+        hints.value.data_authorization = AUTHORIZATION_REQUIRED;
     }
     if (Object.keys(hints.value).length > 0) {
         return;
@@ -83,6 +88,18 @@ function submit() {
                 </div>
 
                 <ImpedimentsDeclaration v-if="declaration" v-model="form.declaration" :error="hints.declaration ?? null" />
+
+                <!-- US-058-LEG (it. 44e): la autorización del tratamiento de datos, previa, expresa e informada (Ley 1581, art. 9). -->
+                <section aria-labelledby="data-title" class="flex flex-col gap-2 rounded-lg border border-slate-300 bg-white p-3 text-base">
+                    <h2 id="data-title" class="font-semibold">Sus datos personales</h2>
+                    <p>GovTrace guarda su nombre, su correo y, si reporta, sus fotos con su ubicación, para el control social de las obras públicas. Puede conocerlos, corregirlos o pedir que se borren.</p>
+                    <a data-test="data-policy" :href="dataPolicyUrl" target="_blank" rel="noopener" class="inline-flex min-h-11 items-center self-start font-semibold underline">Lea la política de tratamiento de datos</a>
+                    <label for="data-authorization" class="flex min-h-11 items-start gap-3 font-semibold">
+                        <input id="data-authorization" v-model="form.data_authorization" type="checkbox" class="mt-0.5 size-6 shrink-0" />
+                        Autorizo el tratamiento de mis datos personales según esta política.
+                    </label>
+                    <p v-if="hints.data_authorization" role="alert" class="text-sm text-red-700">{{ hints.data_authorization }}</p>
+                </section>
 
                 <button
                     type="submit"

@@ -76,6 +76,8 @@ function submit() {
             </button>
 
             <Link href="/forgot-password" class="inline-flex min-h-11 items-center justify-center text-center text-base font-semibold text-slate-700 underline">¿Olvidó su contraseña?</Link>
+            <!-- US-058-LEG (it. 44e). -->
+            <Link href="/privacidad" class="inline-flex min-h-11 items-center justify-center text-center text-sm font-semibold text-slate-700 underline">Política de tratamiento de datos</Link>
         </form>
     </AppLayout>
 </template>
