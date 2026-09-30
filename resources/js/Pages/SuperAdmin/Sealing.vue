@@ -40,7 +40,7 @@ const lifetimes = (contract) => [
                 {{ sealing.network_error }}
             </p>
 
-            <section v-if="sealing.sponsor" data-test="sponsor" class="flex flex-col gap-2 rounded-lg bg-white p-3 text-sm">
+            <section v-if="sealing.sponsor" data-test="sponsor" class="flex flex-col gap-2 rounded-2xl bg-white p-3 text-sm shadow-soft ring-1 ring-slate-900/5">
                 <h3 class="text-base font-semibold">Cuenta patrocinadora</h3>
                 <p class="text-lg font-semibold" :class="sealing.sponsor.low ? 'text-red-700' : 'text-slate-900'">Saldo: {{ formatXlm(sealing.sponsor.balance_xlm) }} XLM</p>
                 <p class="text-slate-600">Umbral de alerta: {{ formatXlm(sealing.sponsor.threshold_xlm) }} XLM</p>
@@ -50,7 +50,7 @@ const lifetimes = (contract) => [
                 <p class="break-all font-mono text-xs text-slate-600">{{ sealing.sponsor.address }}</p>
             </section>
 
-            <section v-if="sealing.contract" data-test="contract" class="flex flex-col gap-1 rounded-lg bg-white p-3 text-sm">
+            <section v-if="sealing.contract" data-test="contract" class="flex flex-col gap-1 rounded-2xl bg-white p-3 text-sm shadow-soft ring-1 ring-slate-900/5">
                 <h3 class="text-base font-semibold">Vigencia del contrato</h3>
                 <p
                     v-for="entry in lifetimes(sealing.contract)"

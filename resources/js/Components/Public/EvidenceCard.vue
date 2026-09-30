@@ -28,7 +28,7 @@ const original = (index) => (files().length > 1 ? `Descargar archivo original ($
 </script>
 
 <template>
-    <article data-test="evidence" class="rounded-lg border border-slate-200 bg-white p-4">
+    <article data-test="evidence" class="rounded-2xl bg-white shadow-soft ring-1 ring-slate-900/5 p-4">
         <header class="flex flex-wrap items-center gap-2">
             <time :datetime="evidence.captured_at" class="text-sm text-slate-600">{{ formatDateTime(evidence.captured_at) }}</time>
             <span class="rounded-full px-2 py-0.5 text-xs font-semibold" :class="CLASSIFICATION[evidence.classification]">{{ evidence.classification }}</span>
@@ -55,7 +55,7 @@ const original = (index) => (files().length > 1 ? `Descargar archivo original ($
                     <a
                         data-test="download"
                         :href="file.download_url"
-                        class="inline-flex min-h-11 items-center rounded-lg border border-slate-300 px-3 text-sm font-semibold"
+                        class="inline-flex min-h-11 items-center rounded-xl border border-brand-200 text-brand-800 hover:bg-brand-50 px-3 text-sm font-semibold"
                     >{{ original(index) }}</a>
                     <a
                         data-test="proof"
@@ -71,7 +71,7 @@ const original = (index) => (files().length > 1 ? `Descargar archivo original ($
 
         <button
             type="button"
-            class="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border-2 border-slate-900 bg-white px-3 text-sm font-semibold text-slate-900 md:w-auto"
+            class="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border-2 border-brand-700 bg-white px-3 text-sm font-semibold text-brand-800 md:w-auto hover:bg-brand-50"
             :aria-expanded="showingSeal"
             @click="showingSeal = !showingSeal"
         >Comprobar que es original</button>

@@ -30,22 +30,23 @@ onMounted(load);
 
 <template>
     <Head :title="worksite?.name ?? 'Obra'" />
-    <AppLayout :title="page.props.organization ?? 'GovTrace'" :logo="page.props.organizationLogo">
+    <AppLayout :title="page.props.organization ?? 'GovTrace'" :logo="page.props.organizationLogo" sections>
         <Link href="/" class="mb-3 inline-flex min-h-11 items-center text-base font-semibold text-slate-700">← Volver al mapa</Link>
         <OrganizationNotice />
         <LoadState :loading="loading" :error="error" loading-text="Cargando la obra…" empty-text="" @retry="load">
             <template v-if="worksite">
-                <h1 class="mb-3 text-xl font-semibold">{{ worksite.name }}</h1>
+                <!-- Los objetos de SECOP II pueden ser largos y en mayúsculas: entonces, un punto más pequeño. -->
+                <h1 class="mb-3" :class="worksite.name.length > 70 ? 'text-xl md:text-2xl' : 'text-2xl md:text-3xl'">{{ worksite.name }}</h1>
                 <!-- It. 40b: el estado de la obra (el color de su pin) y por qué, en palabras. -->
                 <section
                     v-if="worksite.condition"
                     data-test="condition"
                     :data-color="worksite.condition.color"
                     aria-label="Estado de la obra"
-                    class="mb-4 flex items-start gap-3 rounded-lg border-2 bg-white p-3"
+                    class="mb-4 flex items-start gap-3 rounded-2xl border-2 bg-white p-4 shadow-soft"
                     :class="CONDITION[worksite.condition.color].border"
                 >
-                    <span aria-hidden="true" class="grid size-9 shrink-0 place-items-center rounded-full text-lg font-bold" :class="CONDITION[worksite.condition.color].css">{{ CONDITION[worksite.condition.color].sign }}</span>
+                    <span aria-hidden="true" class="grid size-11 shrink-0 place-items-center rounded-full text-xl font-bold" :class="CONDITION[worksite.condition.color].css">{{ CONDITION[worksite.condition.color].sign }}</span>
                     <div class="text-base">
                         <p>
                             <span class="block text-lg font-semibold">{{ worksite.condition.label }}</span>
@@ -64,7 +65,7 @@ onMounted(load);
                 </section>
 
                 <h2 class="mb-3 mt-6 text-lg font-semibold">Evidencias publicadas</h2>
-                <p v-if="worksite.timeline.length === 0" class="rounded-lg bg-white p-4 text-sm text-slate-600">Aún no hay evidencias publicadas de esta obra.</p>
+                <p v-if="worksite.timeline.length === 0" class="rounded-2xl bg-white p-4 text-sm text-slate-600 shadow-soft ring-1 ring-slate-900/5">Aún no hay evidencias publicadas de esta obra.</p>
                 <ol v-else class="flex flex-col gap-3">
                     <li v-for="evidence in worksite.timeline" :key="evidence.report_id">
                         <EvidenceCard :evidence="evidence" />

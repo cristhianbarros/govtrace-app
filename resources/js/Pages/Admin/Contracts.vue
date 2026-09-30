@@ -66,7 +66,7 @@ const statusOf = (contract) => (contract.status === 'cancelled' ? 'Anulado/Retir
                 placeholder="Buscar por obra, contratista o número de proceso"
                 class="min-h-12 flex-1 rounded-lg border border-slate-300 bg-white px-3 text-base"
             />
-            <button type="submit" class="min-h-12 rounded-lg bg-slate-900 px-4 text-base font-semibold text-white">Buscar</button>
+            <button type="submit" class="min-h-12 rounded-xl bg-brand-700 px-4 text-base font-semibold text-white hover:bg-brand-800">Buscar</button>
         </form>
 
         <div class="flex flex-wrap gap-2 text-sm">
@@ -88,7 +88,7 @@ const statusOf = (contract) => (contract.status === 'cancelled' ? 'Anulado/Retir
             @retry="reload"
         >
             <ul class="flex flex-col gap-2">
-                <li v-for="contract in contracts.data" :key="contract.secop_contract_id" data-test="contract-row" class="rounded-lg bg-white p-3 text-sm">
+                <li v-for="contract in contracts.data" :key="contract.secop_contract_id" data-test="contract-row" class="rounded-2xl bg-white p-3 text-sm shadow-soft ring-1 ring-slate-900/5">
                     <p class="font-semibold" data-test="contract-object" :title="contract.object">{{ preview(contract.object) }}</p>
                     <dl class="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 md:grid-cols-5">
                         <div><dt class="text-xs text-slate-500">Número de proceso</dt><dd>{{ contract.process_number ?? '—' }}</dd></div>

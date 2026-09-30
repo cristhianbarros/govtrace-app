@@ -24,10 +24,10 @@ onMounted(load);
 <template>
     <AdminLayout title="Resumen del territorio">
         <!-- US-050-RPT: una descarga del navegador, con su sesión: no pasa por el API en JSON. -->
-        <a href="/export.csv" class="inline-flex min-h-11 items-center self-start rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold">Exportar obras y evidencias (CSV)</a>
+        <a href="/export.csv" class="inline-flex min-h-11 items-center self-start rounded-xl border border-brand-200 text-brand-800 hover:bg-brand-50 bg-white px-3 text-sm font-semibold">Exportar obras y evidencias (CSV)</a>
         <LoadState :loading="loading" :error="error" loading-text="Cargando el resumen…" empty-text="" @retry="load">
             <template v-if="summary">
-                <section aria-labelledby="worksites" class="rounded-lg bg-white p-3">
+                <section aria-labelledby="worksites" class="rounded-2xl bg-white p-3 shadow-soft ring-1 ring-slate-900/5">
                     <h3 id="worksites" class="mb-2 text-sm font-semibold text-slate-700">Obras en el mapa</h3>
                     <ul class="grid grid-cols-3 gap-2 text-center">
                         <li v-for="color in COLORS" :key="color.key" :data-test="color.key" class="rounded-lg bg-slate-50 p-2">
@@ -38,7 +38,7 @@ onMounted(load);
                     </ul>
                 </section>
 
-                <section aria-labelledby="evidences" class="rounded-lg bg-white p-3">
+                <section aria-labelledby="evidences" class="rounded-2xl bg-white p-3 shadow-soft ring-1 ring-slate-900/5">
                     <h3 id="evidences" class="mb-2 text-sm font-semibold text-slate-700">Evidencias recibidas</h3>
                     <ul class="grid grid-cols-3 gap-2 text-center">
                         <li v-for="classification in CLASSIFICATIONS" :key="classification" :data-test="classification" class="rounded-lg bg-slate-50 p-2">
@@ -66,7 +66,7 @@ onMounted(load);
                     </div>
                 </section>
 
-                <p data-test="observers" class="rounded-lg bg-white p-3"><span class="text-2xl font-semibold">{{ summary.active_observers }}</span> veedores activos</p>
+                <p data-test="observers" class="rounded-2xl bg-white p-3 shadow-soft ring-1 ring-slate-900/5"><span class="text-2xl font-semibold">{{ summary.active_observers }}</span> veedores activos</p>
             </template>
         </LoadState>
     </AdminLayout>

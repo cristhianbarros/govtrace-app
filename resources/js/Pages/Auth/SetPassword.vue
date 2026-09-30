@@ -104,7 +104,7 @@ function submit() {
                 <button
                     type="submit"
                     :disabled="form.processing"
-                    class="rounded-lg bg-slate-900 px-3 py-4 text-base font-semibold text-white disabled:opacity-40"
+                    class="rounded-xl bg-brand-700 px-3 py-4 text-base font-semibold text-white disabled:opacity-40 hover:bg-brand-800"
                 >
                     {{ form.processing ? 'Activando…' : 'Activar mi cuenta' }}
                 </button>

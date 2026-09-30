@@ -19,7 +19,7 @@ const { keyword, results, searching, failed } = useDebouncedSearch(searchContrac
             type="search"
             autocomplete="off"
             placeholder="Obra, contratista o número de proceso"
-            class="w-full rounded-lg border border-slate-300 bg-white px-3 py-3 text-base focus:border-slate-900 focus:outline-none"
+            class="w-full rounded-lg border border-slate-300 bg-white px-3 py-3 text-base focus:border-brand-700 focus:outline-none"
         />
         <p class="text-xs text-slate-500">Escriba al menos 3 caracteres.</p>
 
@@ -34,7 +34,7 @@ const { keyword, results, searching, failed } = useDebouncedSearch(searchContrac
                 <button
                     type="button"
                     data-test="contract-result"
-                    class="w-full rounded-lg border border-slate-200 bg-white p-3 text-left active:bg-slate-100"
+                    class="w-full rounded-2xl bg-white shadow-soft ring-1 ring-slate-900/5 p-3 text-left active:bg-slate-100"
                     @click="emit('select', contract)"
                 >
                     <span class="block font-semibold">{{ contract.object }}</span>

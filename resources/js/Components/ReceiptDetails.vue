@@ -21,7 +21,7 @@ defineProps({
             :href="receipt.explorer.url"
             target="_blank"
             rel="noopener noreferrer"
-            class="inline-flex min-h-11 items-center self-start rounded-lg border border-slate-300 bg-white px-3 font-semibold"
+            class="inline-flex min-h-11 items-center self-start rounded-xl border border-brand-200 text-brand-800 hover:bg-brand-50 bg-white px-3 font-semibold"
         >{{ receipt.explorer.label }}</a>
     </dl>
 </template>

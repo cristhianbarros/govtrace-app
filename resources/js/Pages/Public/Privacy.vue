@@ -25,7 +25,7 @@ const missingText = computed(() => {
 
 <template>
     <Head title="Política de tratamiento de datos" />
-    <AppLayout :title="page.props.organization ?? 'GovTrace'" :logo="page.props.organizationLogo">
+    <AppLayout :title="page.props.organization ?? 'GovTrace'" :logo="page.props.organizationLogo" :sections="Boolean(page.props.organization)">
         <article class="mx-auto flex max-w-2xl flex-col gap-4 text-base leading-relaxed">
             <Link href="/" class="inline-flex min-h-11 items-center self-start text-base font-semibold text-slate-700 underline">← Volver</Link>
             <h1 class="text-xl font-semibold">Política de tratamiento de datos personales</h1>
@@ -37,7 +37,7 @@ const missingText = computed(() => {
             <section aria-labelledby="controller" class="flex flex-col gap-2">
                 <h2 id="controller" class="text-lg font-semibold">Quién responde por sus datos</h2>
                 <p>El responsable del tratamiento de sus datos es:</p>
-                <dl class="grid grid-cols-1 gap-1 rounded-lg bg-white p-3 md:grid-cols-[auto_1fr] md:gap-x-4">
+                <dl class="grid grid-cols-1 gap-1 rounded-2xl bg-white p-3 md:grid-cols-[auto_1fr] md:gap-x-4 shadow-soft ring-1 ring-slate-900/5">
                     <dt class="font-semibold">Nombre</dt><dd>{{ controller.name ?? PENDING }}</dd>
                     <dt class="font-semibold">Identificación</dt><dd>{{ controller.identification ?? PENDING }}</dd>
                     <dt class="font-semibold">Domicilio y dirección</dt><dd>{{ controller.address ?? PENDING }}</dd>

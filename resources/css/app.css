@@ -1,4 +1,12 @@
 @import 'tailwindcss';
+/*
+ * It. 40e: las letras, servidas desde el propio sitio (la CSP solo acepta fuentes de 'self').
+ * Atkinson Hyperlegible, del Braille Institute, está hecha para leerse bien con baja visión;
+ * Fraunces, una serif suave, les da calidez a los títulos.
+ */
+@import '@fontsource/atkinson-hyperlegible/400.css';
+@import '@fontsource/atkinson-hyperlegible/700.css';
+@import '@fontsource-variable/fraunces';
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
@@ -13,8 +21,9 @@
     --breakpoint-xl: initial;
     --breakpoint-2xl: initial;
 
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+    --font-sans: 'Atkinson Hyperlegible', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-display: 'Fraunces Variable', Georgia, 'Times New Roman', serif;
 
     /*
      * It. 40c (R-UX-01, docs/ux-analisis.md): letra legible para cualquiera,
@@ -26,6 +35,85 @@
     --text-xs--line-height: 1.375rem;
     --text-sm: 1rem;
     --text-sm--line-height: 1.5rem;
+
+    /*
+     * It. 40e: una identidad propia, simple y acogedora, con contraste (WCAG 2.2
+     * AA, lo mide make ux-check).
+     * - Verde pino, la marca: la transparencia, la confianza. El blanco sobre
+     *   brand-700 da 6,8:1.
+     * - Sol, el acento: lo que se toca en la cabecera, la pestaña actual y el
+     *   foco sobre fondos oscuros.
+     * - Terracota, lo cálido: la invitación a informar a la veeduría.
+     * - Grises cálidos en vez de fríos: la escala "slate" de toda la app pasa a
+     *   ser la de la piedra, con un fondo crema; el 500, un punto más oscuro
+     *   para que su texto siga en AA sobre la crema.
+     */
+    --color-brand-50: #edf7f4;
+    --color-brand-100: #d3ece5;
+    --color-brand-200: #a7d8cb;
+    --color-brand-600: #1f7a6c;
+    --color-brand-700: #15665a;
+    --color-brand-800: #0f5047;
+    --color-brand-900: #0b3a34;
+    --color-accent-300: #facf72;
+    --color-accent-400: #f4b640;
+    --color-warm-50: #fdf3ee;
+    --color-warm-500: #d1603d;
+    --color-warm-700: #a4432a;
+    --color-slate-50: #faf7f2;
+    --color-slate-100: var(--color-stone-100);
+    --color-slate-200: var(--color-stone-200);
+    --color-slate-300: var(--color-stone-300);
+    --color-slate-400: var(--color-stone-400);
+    --color-slate-500: #716963;
+    --color-slate-600: var(--color-stone-600);
+    --color-slate-700: var(--color-stone-700);
+    --color-slate-800: var(--color-stone-800);
+    --color-slate-900: var(--color-stone-900);
+    --color-slate-950: var(--color-stone-950);
+
+    /* Una sombra suave, para que las tarjetas se separen del fondo sin bordes duros. */
+    --shadow-soft: 0 1px 2px rgb(28 25 23 / 0.05), 0 12px 32px -16px rgb(28 25 23 / 0.22);
+}
+
+/*
+ * It. 40e: lo de base va en su capa, para que una utilidad (text-white en la
+ * banda del Inicio) pueda cambiarlo: fuera de una capa, una regla le gana a
+ * cualquier utilidad de Tailwind.
+ */
+@layer base {
+    /*
+     * It. 40e: el foco se ve siempre, al moverse con el teclado (WCAG 2.2, 2.4.7):
+     * verde pino sobre fondo claro; ámbar sobre la cabecera oscura (3:1 o más con lo que
+     * lo rodea, 1.4.11).
+     */
+    :focus-visible {
+        outline: 3px solid var(--color-brand-700);
+        outline-offset: 2px;
+    }
+
+    header :focus-visible {
+        outline-color: var(--color-accent-400);
+    }
+
+    /*
+     * It. 40e: los títulos de cada pantalla (h1) y de cada sección (h2), en la
+     * serif cálida y el verde oscuro de la marca.
+     */
+    main h1,
+    main h2 {
+        font-family: var(--font-display);
+        color: var(--color-brand-900);
+        letter-spacing: -0.01em;
+    }
+
+    main h1 {
+        font-weight: 650;
+    }
+
+    main h2 {
+        font-weight: 600;
+    }
 }
 
 /*

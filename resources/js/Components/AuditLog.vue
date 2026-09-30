@@ -30,7 +30,7 @@ onMounted(() => load(1));
 <template>
     <LoadState :loading="loading" :error="error" :empty="log?.meta.total === 0" loading-text="Cargando el registro…" empty-text="Aún no hay nada registrado." @retry="load(pageNumber)">
         <ul class="flex flex-col gap-2">
-            <li v-for="entry in log.data" :key="entry.id" data-test="audit-entry" class="rounded-lg bg-white p-3 text-sm">
+            <li v-for="entry in log.data" :key="entry.id" data-test="audit-entry" class="rounded-2xl bg-white p-3 text-sm shadow-soft ring-1 ring-slate-900/5">
                 <p class="font-semibold">{{ entry.action }}</p>
                 <p class="text-xs text-slate-600">
                     {{ entry.actor }} · {{ formatDateTime(entry.created_at) }}<template v-if="showOrganization && entry.organization"> · {{ entry.organization }}</template>

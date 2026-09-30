@@ -86,16 +86,15 @@ describe('Mapa público', () => {
         expect(router.visit).toHaveBeenCalledWith('/worksite/7');
     });
 
-    it('leads to the statistics of the territory (US-051-RPT)', async () => {
+    it('leads to the statistics of the territory and to the public validator, by its tabs (US-051-RPT, US-024, it. 40e)', async () => {
         const wrapper = await openMap();
+        const sections = wrapper.get('nav[aria-label="Secciones de la veeduría"]');
 
-        expect(wrapper.get('a[href="/stats"]').text()).toBe('Estadísticas del territorio');
-    });
-
-    it('leads to the public validator (US-024)', async () => {
-        const wrapper = await openMap();
-
-        expect(wrapper.get('a[href="/verify"]').text()).toBe('Validar un archivo');
+        expect(sections.get('a[href="/stats"]').text()).toBe('Estadísticas');
+        expect(sections.get('a[href="/verify"]').text()).toBe('Validar');
+        // Ya no hay botones sueltos al pie del mapa.
+        expect(wrapper.get('main').find('a[href="/stats"]').exists()).toBe(false);
+        expect(wrapper.get('main').find('a[href="/verify"]').exists()).toBe(false);
     });
 
     it('warns that the organization is suspended, and still shows its map', async () => {

@@ -71,7 +71,7 @@ const kilobytes = (bytes) => `${Math.max(1, Math.round(bytes / 1024))} KB`;
                 <input type="file" multiple class="sr-only" :accept="accept" :disabled="!accept || processing" @change="onChoose" />
             </label>
             <label
-                class="flex min-h-14 items-center justify-center gap-2 rounded-lg bg-slate-900 px-3 py-3 text-base font-semibold text-white"
+                class="flex min-h-14 items-center justify-center gap-2 rounded-xl bg-brand-700 px-3 py-3 text-base font-semibold text-white hover:bg-brand-800"
                 :class="{ 'opacity-50': !accept.startsWith('image') || processing }"
             >
                 <span aria-hidden="true">📷</span> Tomar foto

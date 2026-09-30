@@ -11,7 +11,7 @@ const term = (months) => (months === 1 ? '1 mes' : `${months} meses`);
 </script>
 
 <template>
-    <article data-test="contract" class="rounded-lg border border-slate-200 bg-white p-4">
+    <article data-test="contract" class="rounded-2xl bg-white shadow-soft ring-1 ring-slate-900/5 p-4">
         <p v-if="contract.cancelled" class="mb-3 rounded bg-amber-100 px-2 py-1 text-sm font-semibold text-amber-900">
             {{ contract.cancelled_notice }}
         </p>
@@ -28,7 +28,7 @@ const term = (months) => (months === 1 ? '1 mes' : `${months} meses`);
             :href="contract.secop_url"
             target="_blank"
             rel="noopener noreferrer"
-            class="mt-3 inline-flex min-h-11 items-center rounded-lg border border-slate-300 px-3 text-sm font-semibold"
+            class="mt-3 inline-flex min-h-11 items-center rounded-xl border border-brand-200 text-brand-800 hover:bg-brand-50 px-3 text-sm font-semibold"
         >Ver original en SECOP</a>
     </article>
 </template>

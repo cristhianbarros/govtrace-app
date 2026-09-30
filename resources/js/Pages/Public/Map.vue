@@ -5,6 +5,7 @@
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 import LoadState from '@/Components/LoadState.vue';
+import WorksIllustration from '@/Components/Brand/WorksIllustration.vue';
 import OrganizationNotice from '@/Components/Public/OrganizationNotice.vue';
 import PinsMap from '@/Components/Public/PinsMap.vue';
 import { useLoader } from '@/composables/useLoader.js';
@@ -100,12 +101,18 @@ onMounted(async () => {
 
 <template>
     <Head title="Mapa de obras" />
-    <AppLayout :title="page.props.organization ?? 'GovTrace'" :logo="page.props.organizationLogo">
+    <AppLayout :title="page.props.organization ?? 'GovTrace'" :logo="page.props.organizationLogo" sections>
         <OrganizationNotice />
-        <h1 class="text-xl font-semibold">Obras vigiladas</h1>
-        <p class="mb-3 text-base text-slate-700">Toque un punto para ver la obra y sus fotos.</p>
+        <!-- It. 40e: la bienvenida — qué es esta página, en dos líneas, con una ilustración. -->
+        <section class="mb-3 flex items-center gap-3 rounded-3xl bg-white p-4 shadow-soft ring-1 ring-slate-900/5">
+            <div class="min-w-0 flex-1">
+                <h1 class="text-2xl md:text-3xl">Obras vigiladas</h1>
+                <p class="mt-1 text-base text-slate-700">Toque un punto para ver la obra y sus fotos. Cada foto lleva un sello digital: nadie puede cambiarla.</p>
+            </div>
+            <div class="w-24 shrink-0 md:w-36"><WorksIllustration /></div>
+        </section>
         <!-- It. 40d: para quien llega por primera vez, cómo llega cada evidencia al mapa. -->
-        <details data-test="how" class="mb-3 rounded-lg bg-white p-3">
+        <details data-test="how" class="mb-3 rounded-2xl bg-white p-3 shadow-soft ring-1 ring-slate-900/5">
             <summary class="min-h-11 cursor-pointer py-2 text-base font-semibold">¿Cómo funciona?</summary>
             <ol class="mt-1 flex list-decimal flex-col gap-2 pl-6 text-base text-slate-800">
                 <li>Los veedores de la veeduría visitan las obras y toman fotos con su celular.</li>
@@ -115,21 +122,22 @@ onMounted(async () => {
             <p class="mt-2 text-base text-slate-800">Los colores (Normal, Alerta y En riesgo) son alertas de GovTrace, no decisiones de una autoridad. Cada obra explica por qué tiene el suyo.</p>
         </details>
 
-        <div role="group" aria-label="Estado de las obras" class="mb-3 flex flex-wrap gap-2">
+        <!-- It. 40e: los estados, como fichas grandes que también filtran: el número se ve de lejos. -->
+        <div role="group" aria-label="Estado de las obras" class="mb-3 grid grid-cols-3 gap-2">
             <button
                 v-for="state in STATES"
                 :key="state.value"
                 type="button"
                 data-test="state"
                 :aria-pressed="filters.status === state.value && active.status === state.value ? 'true' : 'false'"
-                class="inline-flex min-h-11 items-center gap-2 rounded-full border-2 px-3 text-base font-semibold"
-                :class="active.status === state.value ? `${state.css} border-transparent` : `bg-white ${state.idle}`"
+                class="flex min-h-11 flex-col items-center gap-0.5 rounded-2xl border-2 px-2 py-2 text-center font-semibold shadow-soft transition"
+                :class="active.status === state.value ? `${state.css} border-transparent` : `bg-white ${state.idle} hover:-translate-y-0.5`"
                 @click="toggleState(state.value)"
-            ><span aria-hidden="true" class="grid size-6 place-items-center rounded-full font-bold" :class="state.css">{{ state.icon }}</span> {{ state.label }} <span class="rounded-full bg-slate-100 px-2 text-sm text-slate-900">{{ counts[state.value] }}</span></button>
+            ><span aria-hidden="true" class="grid size-7 place-items-center rounded-full font-bold" :class="state.css">{{ state.icon }}</span> <span class="order-3 text-sm">{{ state.label }}</span> <span class="order-2 font-display text-2xl leading-tight">{{ counts[state.value] }}</span></button>
         </div>
 
 
-        <details class="mb-3 rounded-lg border border-slate-200 bg-white p-3 text-sm">
+        <details class="mb-3 rounded-2xl bg-white shadow-soft ring-1 ring-slate-900/5 p-3 text-sm">
             <summary class="min-h-11 cursor-pointer py-2 text-base font-semibold">Más filtros</summary>
             <div class="mt-2 grid grid-cols-1 gap-3 md:grid-cols-2">
                 <label for="filter-status" class="flex flex-col gap-1">
@@ -160,12 +168,12 @@ onMounted(async () => {
                 </label>
             </div>
             <div class="mt-3 flex gap-2">
-                <button type="button" :disabled="Object.keys(chosen).length === 0" class="min-h-11 flex-1 rounded-lg bg-slate-900 px-3 font-semibold text-white disabled:opacity-40" @click="apply">Aplicar</button>
-                <button type="button" class="min-h-11 rounded-lg border border-slate-300 px-3 font-semibold" @click="clear">Limpiar</button>
+                <button type="button" :disabled="Object.keys(chosen).length === 0" class="min-h-11 flex-1 rounded-xl bg-brand-700 px-3 font-semibold text-white disabled:opacity-40 hover:bg-brand-800" @click="apply">Aplicar</button>
+                <button type="button" class="min-h-11 rounded-xl border border-brand-200 text-brand-800 hover:bg-brand-50 px-3 font-semibold" @click="clear">Limpiar</button>
             </div>
         </details>
         <div role="group" aria-label="Cómo ver las obras" class="mb-3 grid grid-cols-2 gap-2 md:inline-grid md:w-72">
-            <button v-for="[value, name] in [['map', 'Mapa'], ['list', 'Lista']]" :key="value" type="button" :aria-pressed="view === value ? 'true' : 'false'" class="min-h-11 rounded-lg border-2 px-3 text-base font-semibold" :class="view === value ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-300 bg-white'" @click="show(value)">{{ name }}</button>
+            <button v-for="[value, name] in [['map', 'Mapa'], ['list', 'Lista']]" :key="value" type="button" :aria-pressed="view === value ? 'true' : 'false'" class="min-h-11 rounded-lg border-2 px-3 text-base font-semibold" :class="view === value ? 'border-brand-700 bg-brand-700 text-white' : 'border-slate-300 bg-white'" @click="show(value)">{{ name }}</button>
         </div>
 
         <section v-if="view === 'list'" aria-label="Lista de obras" class="flex flex-col gap-3">
@@ -173,10 +181,10 @@ onMounted(async () => {
             <input id="worksite-words" v-model="words" type="search" placeholder="Por ejemplo: parque, colegio, Calle 30" class="min-h-12 rounded-lg border border-slate-300 bg-white px-3 text-base" />
             <p v-if="listError" role="alert" class="rounded-lg bg-red-50 p-3 text-base text-red-800">{{ listError }}</p>
             <p v-else-if="listed === null" class="text-base text-slate-700">Cargando obras…</p>
-            <p v-else-if="shown.length === 0" class="rounded-lg bg-white p-3 text-base text-slate-700">{{ words.trim() ? 'Ninguna obra se llama así. Pruebe con otra palabra.' : 'No hay obras que coincidan con estos filtros.' }}</p>
+            <p v-else-if="shown.length === 0" class="rounded-2xl bg-white p-3 text-base text-slate-700 shadow-soft ring-1 ring-slate-900/5">{{ words.trim() ? 'Ninguna obra se llama así. Pruebe con otra palabra.' : 'No hay obras que coincidan con estos filtros.' }}</p>
             <ul v-else class="flex flex-col gap-2">
                 <li v-for="worksite in shown" :key="worksite.id" data-test="listed">
-                    <Link :href="`/worksite/${worksite.id}`" class="flex min-h-16 items-center gap-3 rounded-lg border border-slate-200 bg-white p-3 hover:bg-slate-50"><span aria-hidden="true" class="grid size-9 shrink-0 place-items-center rounded-full text-lg font-bold" :class="LOOK[worksite.color_pin].css">{{ LOOK[worksite.color_pin].icon }}</span> <span class="flex flex-col"><span class="text-sm font-semibold">{{ LOOK[worksite.color_pin].label }}</span> <span class="text-base font-semibold">{{ worksite.name }}</span> <span class="text-sm text-slate-700">{{ worksite.municipality }}</span></span></Link>
+                    <Link :href="`/worksite/${worksite.id}`" class="flex min-h-16 items-center gap-3 rounded-2xl bg-white shadow-soft ring-1 ring-slate-900/5 p-3 hover:bg-slate-50"><span aria-hidden="true" class="grid size-9 shrink-0 place-items-center rounded-full text-lg font-bold" :class="LOOK[worksite.color_pin].css">{{ LOOK[worksite.color_pin].icon }}</span> <span class="flex flex-col"><span class="text-sm font-semibold">{{ LOOK[worksite.color_pin].label }}</span> <span class="text-base font-semibold">{{ worksite.name }}</span> <span class="text-sm text-slate-700">{{ worksite.municipality }}</span></span></Link>
                 </li>
             </ul>
         </section>
@@ -192,12 +200,9 @@ onMounted(async () => {
         >
             <PinsMap :pins="pins ?? []" @select="(id) => router.visit(`/worksite/${id}`)" />
         </LoadState>
-        <!-- It. 40d: debajo del mapa, para que el mapa quede arriba. -->
-        <div class="mt-4 flex flex-wrap gap-2">
-            <Link href="/verify" class="inline-flex min-h-11 items-center rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold">Validar un archivo</Link>
-            <Link href="/stats" class="inline-flex min-h-11 items-center rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold">Estadísticas del territorio</Link>
-            <!-- US-058-LEG (it. 44e). -->
+        <!-- It. 40e: Estadísticas y Validar son pestañas de la cabecera; al pie queda la política (US-058-LEG). -->
+        <footer class="mt-4">
             <Link href="/privacidad" class="inline-flex min-h-11 items-center px-1 text-sm font-semibold text-slate-700 underline">Política de tratamiento de datos</Link>
-        </div>
+        </footer>
     </AppLayout>
 </template>

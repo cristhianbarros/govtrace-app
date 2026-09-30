@@ -40,14 +40,14 @@ onMounted(load);
         <p v-if="refused" role="alert" class="rounded-lg bg-red-50 p-3 text-sm text-red-800">{{ refused }}</p>
 
         <LoadState :loading="loading" :error="error" loading-text="Cargando la autorización…" empty-text="" @retry="load">
-            <div v-if="authorization" class="flex flex-col gap-3 rounded-lg bg-white p-3 text-sm">
+            <div v-if="authorization" class="flex flex-col gap-3 rounded-2xl bg-white p-3 text-sm shadow-soft ring-1 ring-slate-900/5">
                 <template v-if="authorization.active">
                     <p class="font-semibold">Vigente hasta el {{ untilDate(authorization.expires_at) }}, otorgada por {{ authorization.granted_by }}.</p>
                     <button type="button" :disabled="busy" class="min-h-11 self-start rounded-lg border border-red-300 px-3 font-semibold text-red-800 disabled:opacity-40" @click="change(revokeSuperAdmin)">Revocar autorización</button>
                 </template>
                 <template v-else>
                     <p>No hay una autorización vigente.</p>
-                    <button type="button" :disabled="busy" class="min-h-11 self-start rounded-lg bg-slate-900 px-3 font-semibold text-white disabled:opacity-40" @click="change(authorizeSuperAdmin)">Autorizar por 30 días</button>
+                    <button type="button" :disabled="busy" class="min-h-11 self-start rounded-xl bg-brand-700 px-3 font-semibold text-white disabled:opacity-40 hover:bg-brand-800" @click="change(authorizeSuperAdmin)">Autorizar por 30 días</button>
                 </template>
             </div>
         </LoadState>

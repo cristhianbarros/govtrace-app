@@ -15,6 +15,7 @@ criterios_aceptacion:
     - "El color refleja la última verdad conocida: lo dicta la evidencia publicada más reciente (ej. si tras un 'Abandono' se publica un 'Avance', el pin deja de ser rojo por abandono)"
   manejo_errores: []
   requisitos_ux:
+    - "It. 40e: el sitio de la veeduría se recorre con pestañas — Obras, Estadísticas y Validar —, con la actual marcada (aria-current), de 44 px o más"
     - "(It. 40b, 2026-09-29) Los estados se explican junto al mapa, arriba y sin desplazarse, con un signo además del color (✓ Normal, ! Alerta, ✕ En riesgo) y cuántas obras hay de cada uno; tocar un estado filtra el mapa"
     - "(It. 40d, 2026-09-30, decisión por defecto) El Inicio de GovTrace lista cada veeduría activa o suspendida con su territorio y el enlace a su mapa; no es un mapa global (R-MAP-01); las dadas de baja no aparecen"
   casos_edge: []

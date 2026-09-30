@@ -58,7 +58,7 @@ onMounted(load);
 
 <template>
     <AdminLayout title="Veedores">
-        <form class="flex flex-col gap-2 rounded-lg bg-white p-3" novalidate @submit.prevent="invite">
+        <form class="flex flex-col gap-2 rounded-2xl bg-white p-3 shadow-soft ring-1 ring-slate-900/5" novalidate @submit.prevent="invite">
             <label for="invite-email" class="text-sm font-semibold text-slate-700">Invitar un veedor de campo</label>
             <input
                 id="invite-email"
@@ -70,7 +70,7 @@ onMounted(load);
                 class="w-full rounded-lg border border-slate-300 px-3 py-3 text-base"
             />
             <p v-if="refused" role="alert" class="text-sm text-red-700">{{ refused }}</p>
-            <button type="submit" :disabled="sending" class="rounded-lg bg-slate-900 px-3 py-3 font-semibold text-white disabled:opacity-40">
+            <button type="submit" :disabled="sending" class="rounded-xl bg-brand-700 px-3 py-3 font-semibold text-white disabled:opacity-40 hover:bg-brand-800">
                 {{ sending ? 'Enviando…' : 'Enviar invitación' }}
             </button>
         </form>

@@ -281,7 +281,7 @@ describe('Vista de obra — estados', () => {
         const wrapper = await openWorksite();
 
         expect(wrapper.get('[role="status"]').text()).toContain('suspendida temporalmente');
-        expect(wrapper.get('a[href="/"]').text()).toBe('← Volver al mapa');
+        expect(wrapper.get('main a[href="/"]').text()).toBe('← Volver al mapa');
         wrapper.unmount();
     });
 });

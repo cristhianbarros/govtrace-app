@@ -27,7 +27,7 @@ const visible = ref(false);
                 :aria-describedby="hint ? `${id}-hint` : undefined"
                 class="min-h-12 w-full flex-1 rounded-lg border border-slate-300 bg-white px-3 text-base"
             />
-            <button type="button" :aria-controls="id" :aria-pressed="visible ? 'true' : 'false'" class="min-h-12 shrink-0 rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold" @click="visible = !visible">
+            <button type="button" :aria-controls="id" :aria-pressed="visible ? 'true' : 'false'" class="min-h-12 shrink-0 rounded-xl border border-brand-200 text-brand-800 hover:bg-brand-50 bg-white px-3 text-sm font-semibold" @click="visible = !visible">
                 {{ visible ? 'Ocultar' : 'Mostrar' }}
             </button>
         </div>
