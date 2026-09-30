@@ -17,8 +17,10 @@ use App\Domain\Organization\User;
  */
 class DataPolicy
 {
-    /** The date the text in force was published. Changing the text means a new version. */
-    public const VERSION = '2026-09-30';
+    /** The text in force. Changing it means a new version: it. 44f added the reports of citizens. */
+    public const VERSION = '2026-09-30.2';
+
+    public const EFFECTIVE_DATE = '2026-09-30';
 
     public const AUTHORIZATION_REQUIRED = 'Para crear su cuenta, autorice el tratamiento de sus datos personales.';
 
@@ -37,7 +39,7 @@ class DataPolicy
 
         return [
             'version' => self::VERSION,
-            'effective_date' => implode('/', array_reverse(explode('-', self::VERSION))),
+            'effective_date' => implode('/', array_reverse(explode('-', self::EFFECTIVE_DATE))),
             'controller' => $controller,
             // Lo que falta para que deje de ser un borrador.
             'missing' => array_values(array_map(

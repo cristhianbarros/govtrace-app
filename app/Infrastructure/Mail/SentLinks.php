@@ -14,6 +14,9 @@ final class SentLinks
     /** Where a link goes: a password to set or to recover. */
     private const LINK = '#https?://[^\s"\'<>\])]+/(?:set-password|reset-password)/[^\s"\'<>\])]+#';
 
+    /** It. 44f: or the code a citizen types to inform a veeduría (CitizenReportCode). */
+    private const CITIZEN_CODE = '/Su código para informar a .+? es: (\d{6})/u';
+
     private const ENTRY_START = '/^\[(\d{4}-\d\d-\d\d \d\d:\d\d:\d\d)\] /m';
 
     /**
@@ -82,10 +85,13 @@ final class SentLinks
         $to = preg_match('/<([^>]+)>/', $to, $email) ? $email[1] : $to;
 
         $text = html_entity_decode($body, ENT_QUOTES | ENT_HTML5);
-        if (! preg_match(self::LINK, $text, $url)) {
-            return null;
+        if (preg_match(self::LINK, $text, $url)) {
+            return new SentLink($to, $subject, $url[0], $sentAt);
+        }
+        if (preg_match(self::CITIZEN_CODE, $text, $code)) {
+            return new SentLink($to, $subject, "Código: {$code[1]}", $sentAt);
         }
 
-        return new SentLink($to, $subject, $url[0], $sentAt);
+        return null;
     }
 }

@@ -99,6 +99,7 @@ Plataforma Open Source y Mobile-First de veeduría ciudadana, multi-tenant (B2B2
 | US-053-RPT | Como **Super Administrador** quiero **ver un resumen de uso por organización: veedores activos y evidencias recibidas, publicadas, rechazadas y retiradas** para **seguir la adopción de la plataforma** | EPIC-009 | analisis_completitud (💡 Mejora) | P3 |
 | US-054-RPT | Como **Super Administrador** quiero **recibir una alerta cuando una organización lleve 30 días sin actividad** para **detectar a tiempo organizaciones que abandonan la plataforma** | EPIC-009 | analisis_completitud (💡 Mejora) | P3 |
 | US-055-LEG | Como **Verificador Público** quiero **saber que el estado de una obra es una alerta de GovTrace y tener a mano los canales oficiales de la Contraloría** para **no confundir "En riesgo" con una obra inconclusa y poder denunciar por mi cuenta** | EPIC-008 | proceso_actual | MVP v1 |
+| US-059-LEG | Como **ciudadano** quiero **informar a la veeduría lo que vi en una obra, con mi correo verificado y sin cuenta** para **que lo tenga en cuenta y me responda**; como **Administrador**, recibirlo sin ver ese correo, y responder o descartar | EPIC-008 | proceso_actual | MVP v1 |
 | US-058-LEG | Como **persona cuyos datos trata GovTrace** quiero **conocer la política de tratamiento y autorizar el tratamiento de los míos al crear mi cuenta** para **que el tratamiento cumpla la Ley 1581 de 2012** | EPIC-006 | proceso_actual | MVP v1 |
 | US-057-LEG | Como **Veedor de Campo** quiero **declarar, al activar mi cuenta, que no estoy en ninguno de los impedimentos que la ley fija para ser veedor** para **que mis reportes no queden viciados por un conflicto de interés** | EPIC-006 | proceso_actual | MVP v1 |
 | US-056-LEG | Como **Administrador de Organización** quiero **descargar desde una obra un expediente con sus evidencias publicadas, sus sellos y las plantillas pre-llenadas del derecho de petición y de la denuncia** para **llevar la evidencia de GovTrace al proceso formal del control social** | EPIC-008 | proceso_actual | MVP v1 |
@@ -219,6 +220,8 @@ Suma los impedimentos del veedor (it. 44c) y los datos de inscripción de una ve
 - **R-LEG-02** — Los canales para denunciar son los oficiales de la Contraloría; GovTrace no recibe ni reenvía la denuncia — US-055-LEG
 - **R-LEG-03** — El expediente de una obra solo lleva sus evidencias publicadas, cada archivo byte a byte con su prueba de inclusión; las plantillas no se radican desde GovTrace: las completa, las firma y las presenta la veeduría — US-056-LEG
 - **R-LEG-04** — Cada descarga del expediente queda en el log de auditoría (`dossier.downloaded`): es la medida de si se usa — US-056-LEG
+- **R-LEG-09** — Un informe ciudadano (Ley 850 de 2003, art. 18 a)) no se sella ni se publica, ni cambia el estado de una obra; llega solo con el correo verificado por un código de 6 dígitos (10 minutos, 5 intentos), con límites por correo (3 códigos por hora, 3 informes por día, 1 por obra) y por conexión — US-059-LEG
+- **R-LEG-10** — El correo de un ciudadano se guarda cifrado; la veeduría nunca lo ve y le responde desde GovTrace. El log de auditoría no lo registra — US-059-LEG
 - **R-LEG-07** — Nadie activa una cuenta sin autorizar el tratamiento de sus datos personales (Ley 1581 de 2012, art. 9); la autorización queda con su fecha, la versión de la política y en el log de auditoría — US-058-LEG
 - **R-LEG-08** — La política de tratamiento de datos (`/privacidad`) tiene el contenido mínimo del Decreto 1074 de 2015 (art. 2.2.2.25.3.1) y muestra al responsable que configura producción; si faltan sus datos, se ve como borrador — US-058-LEG
 - **R-LEG-06** — Una organización se identifica con su NIT, con su inscripción (el número de la resolución o el acta, y la personería o la cámara de comercio que la registró; Ley 850 de 2003, art. 3) o con los dos, nunca con ninguno; la base misma lo exige. Dos inscripciones son la misma aunque cambien mayúsculas, tildes o espacios — US-001, US-011
@@ -283,6 +286,8 @@ Suma los impedimentos del veedor (it. 44c) y los datos de inscripción de una ve
 | POST · DELETE | `/authorizations/super-admin` | Autorizar o revocar al Super Admin (30 días) | Admin Org | US-042-SEC |
 | GET | `/audit-log` | Log de auditoría de la organización | Admin Org | US-043-MON |
 | GET | `/summary` · `/export.csv` | Resumen del territorio y exportación CSV | Admin Org | US-049-RPT, US-050-RPT |
+| POST | `/citizen-reports/code` · `/citizen-reports` | El ciudadano pide el código a su correo y envía su informe a la veeduría, sin sesión | Público | US-059-LEG |
+| GET · POST | `/citizen-reports` · `/citizen-reports/{id}/photo` · `/citizen-reports/{id}/answer` · `/citizen-reports/{id}/discard` | Los informes ciudadanos, sin el correo: leer, ver la foto, responder o descartar | Admin Org | US-059-LEG |
 | GET | `/privacidad` | La política de tratamiento de datos personales (también en el dominio central), sin sesión | Público | US-058-LEG |
 | GET | `/worksites/{id}/dossier.zip` | El expediente de una obra: PDF del expediente, plantillas del derecho de petición y de la denuncia, y cada archivo publicado con su prueba | Admin Org | US-056-LEG |
 

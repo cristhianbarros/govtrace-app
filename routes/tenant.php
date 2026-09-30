@@ -9,6 +9,8 @@ use App\Domain\Organization\Roles;
 use App\Http\Controllers\Auth\ChangePasswordController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Tenant\AuditController;
+use App\Http\Controllers\Tenant\CitizenReportController;
+use App\Http\Controllers\Tenant\CitizenReportInboxController;
 use App\Http\Controllers\Tenant\ContractListController;
 use App\Http\Controllers\Tenant\ContractSearchController;
 use App\Http\Controllers\Tenant\DeclarationController;
@@ -87,6 +89,12 @@ Route::middleware([
         Route::get('/public/evidences/{evidence}/photo', [PublicEvidenceController::class, 'photo'])->whereNumber('evidence')->name('public.evidences.photo');
         Route::get('/public/stats', fn (PublicStats $stats) => response()->json($stats->handle()))->name('public.stats.data');
     });
+    // US-059-LEG (it. 44f): el ciudadano informa a la veeduría, con su correo verificado por un código.
+    Route::middleware(EnsureMapIsOnline::class)->group(function () {
+        Route::post('/citizen-reports/code', [CitizenReportController::class, 'code'])->middleware('throttle:citizen-codes')->name('citizen-reports.code');
+        Route::post('/citizen-reports', [CitizenReportController::class, 'store'])->middleware('throttle:citizen-reports')->name('citizen-reports.store');
+    });
+
     // US-052-RPT: los datos abiertos, en CSV o JSON.
     Route::get('/open-data.{format}', OpenDataController::class)->whereIn('format', ['csv', 'json'])->middleware('throttle:open-data')->name('public.open-data');
     // US-024: el validador público — el navegador lee el sello en la red por su cuenta.
@@ -150,6 +158,11 @@ Route::middleware([
             Route::post('/worksites/group', [WorksiteGroupController::class, 'store'])->name('worksites.group');
             // US-056-LEG (it. 44b): el expediente de una obra, para el derecho de petición y la denuncia.
             Route::get('/worksites/{worksite}/dossier.zip', WorksiteDossierController::class)->whereNumber('worksite')->name('worksites.dossier');
+            // US-059-LEG (it. 44f): los informes de los ciudadanos, sin su correo.
+            Route::get('/citizen-reports', [CitizenReportInboxController::class, 'index'])->name('citizen-reports.index');
+            Route::get('/citizen-reports/{report}/photo', [CitizenReportInboxController::class, 'photo'])->whereNumber('report')->name('citizen-reports.photo');
+            Route::post('/citizen-reports/{report}/answer', [CitizenReportInboxController::class, 'answer'])->whereNumber('report')->name('citizen-reports.answer');
+            Route::post('/citizen-reports/{report}/discard', [CitizenReportInboxController::class, 'discard'])->whereNumber('report')->name('citizen-reports.discard');
 
             // US-042-SEC: autorizar al Super Administrador a reportar en nombre de la organización (30 días).
             Route::get('/authorizations/super-admin', [SuperAdminAuthorizationController::class, 'show'])->name('authorizations.super-admin.show');
@@ -172,7 +185,7 @@ Route::middleware([
             // El panel del Administrador (it. 18): cada pantalla pide sus datos al JSON de abajo.
             foreach ([
                 'inbox' => 'Admin/Inbox', 'observers' => 'Admin/Observers', 'territory' => 'Admin/Territory', 'contracts' => 'Admin/Contracts',
-                'worksites' => 'Admin/Worksites', 'organization' => 'Admin/Organization', 'audit' => 'Admin/Audit',
+                'worksites' => 'Admin/Worksites', 'organization' => 'Admin/Organization', 'audit' => 'Admin/Audit', 'citizen-reports' => 'Admin/CitizenReports',
                 'summary' => 'Admin/Summary', 'authorization' => 'Admin/SuperAdminAuthorization',
             ] as $screen => $component) {
                 Route::get("/admin/{$screen}", fn () => Inertia::render($component))->name("admin.{$screen}");

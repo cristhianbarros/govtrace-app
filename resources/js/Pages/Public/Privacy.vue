@@ -44,6 +44,8 @@ const missingText = computed(() => {
                     <dt class="font-semibold">Correo</dt><dd>{{ controller.email ?? PENDING }}</dd>
                     <dt class="font-semibold">Teléfono</dt><dd>{{ controller.phone ?? PENDING }}</dd>
                 </dl>
+                <!-- Decisión del usuario (it. 44f): el operador responde; las veedurías, usuarias autorizadas. -->
+                <p>Es el operador central de GovTrace. Las veedurías usan la plataforma como usuarios autorizados.</p>
             </section>
 
             <section aria-labelledby="purposes" class="flex flex-col gap-2">
@@ -51,6 +53,7 @@ const missingText = computed(() => {
                 <ul class="flex list-disc flex-col gap-2 pl-5">
                     <li><strong>De quien tiene cuenta</strong> (Administradores y veedores): su nombre, su correo y su contraseña, guardada cifrada. Sirven para darle acceso, invitarlo y dejar constancia de lo que hace en el registro de auditoría.</li>
                     <li><strong>De los reportes de un veedor:</strong> las fotos o el PDF, el comentario, la fecha y la hora, y la ubicación exacta de su celular. Son evidencia del control social de las obras públicas (Ley 850 de 2003). En el mapa se publica una ubicación aproximada, a unos 100 metros, nunca la exacta. Tampoco se publica el nombre del veedor: sus reportes llevan un seudónimo.</li>
+                    <li><strong>De quien informa a una veeduría</strong> desde el mapa, sin cuenta: su correo, su mensaje y, si la envía, una foto sin metadatos. El correo sirve para comprobar que es suyo, con un código, y para responderle; se guarda cifrado y la veeduría no lo ve. El informe no se publica.</li>
                     <li><strong>De quien visita el sitio:</strong> la dirección IP y el navegador, por seguridad y para frenar abusos. No hay publicidad ni rastreo de terceros. El mapa se dibuja con OpenStreetMap: su navegador le pide los mapas a sus servidores.</li>
                     <li><strong>Las fotos pueden mostrar a otras personas</strong> o placas de vehículos. La veeduría revisa cada evidencia antes de publicarla y puede retirarla.</li>
                     <li><strong>Datos sensibles y de menores de edad:</strong> GovTrace no los pide. Si una foto los muestra, la veeduría la retira (Ley 1581 de 2012, artículos 5 a 7).</li>
@@ -94,6 +97,7 @@ const missingText = computed(() => {
                     <li>El registro de auditoría, para siempre.</li>
                     <li>La relación entre un seudónimo y su veedor, 5 años desde su último reporte.</li>
                     <li>Los archivos de una organización dada de baja, 5 años.</li>
+                    <li>Los informes de los ciudadanos, con su correo cifrado, mientras la veeduría esté en GovTrace.</li>
                 </ul>
             </section>
         </article>

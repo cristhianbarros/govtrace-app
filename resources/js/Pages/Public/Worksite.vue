@@ -4,6 +4,7 @@
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import { onMounted } from 'vue';
 import LoadState from '@/Components/LoadState.vue';
+import CitizenReportForm from '@/Components/Public/CitizenReportForm.vue';
 import ContractCard from '@/Components/Public/ContractCard.vue';
 import EvidenceCard from '@/Components/Public/EvidenceCard.vue';
 import OrganizationNotice from '@/Components/Public/OrganizationNotice.vue';
@@ -70,6 +71,8 @@ onMounted(load);
                     </li>
                 </ol>
 
+                <!-- It. 44f (US-059-LEG): primero, a la veeduría que la vigila; después, a la Contraloría. -->
+                <CitizenReportForm :worksite-id="worksite.id" />
                 <OversightChannels />
             </template>
         </LoadState>

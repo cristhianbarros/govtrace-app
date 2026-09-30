@@ -1,10 +1,12 @@
 <?php
 
 use App\Domain\Auth\Notifications\ResetPasswordLink;
+use App\Domain\CitizenReports\Notifications\CitizenReportCode;
 use App\Domain\Organization\Notifications\WelcomeNotification;
 use App\Domain\Organization\User;
 use App\Infrastructure\Mail\SentLinks;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Notification;
 
 /*
  * Iteración 38 — en local el correo sale a un archivo (MAIL_MAILER=log), no a
@@ -103,4 +105,14 @@ it('make invites: lists them, or says there are none', function () {
         ->expectsOutputToContain('carlos@correo.co')
         ->expectsOutputToContain('http://veeduria-smr.govtrace.localhost:8080/set-password/2?token=bbb222')
         ->assertSuccessful();
+});
+
+it('make invites: shows the code a citizen got to inform a veeduría, for a live demonstration (it. 44f)', function () {
+    Notification::route('mail', 'vecina@correo.co')->notify(new CitizenReportCode('042917', 'Veeduría Ciudadana Comuna 13 (demo)', 10));
+
+    [$code] = SentLinks::fromFile($this->mailLog);
+
+    expect($code->to)->toBe('vecina@correo.co')
+        ->and($code->url)->toBe('Código: 042917')
+        ->and($code->subject)->toBe('Su código para informar a Veeduría Ciudadana Comuna 13 (demo): 042917');
 });

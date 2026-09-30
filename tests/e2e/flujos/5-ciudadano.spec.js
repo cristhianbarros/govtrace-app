@@ -1,7 +1,7 @@
 // It. 40a — el flujo del ciudadano (docs/mapa-funcional.md, sección 2): sin
 // cuenta, el mapa de la veeduría del fixture, una obra y sus evidencias.
 import { expect, test } from '@playwright/test';
-import { CENTRAL, ORG, WORKSITE, onThisPort } from './support.js';
+import { CENTRAL, ORG, PEOPLE, WORKSITE, latestCodeTo, latestMailTo, logIn, onThisPort } from './support.js';
 
 test.describe.configure({ mode: 'serial' });
 
@@ -77,6 +77,35 @@ test('Comprueba una evidencia: su recibo, su descarga y su prueba', async ({ pag
     const proof = page.waitForEvent('download');
     await page.getByRole('link', { name: 'Descargar su prueba' }).first().click();
     expect((await proof).suggestedFilename()).toMatch(/\.prueba\.json$/);
+});
+
+test('Informa a la veeduría con su correo verificado, y la veeduría le responde sin ver su correo (it. 44f)', async ({ page }) => {
+    const citizen = `e2e.vecina.${Date.now()}@correo.co`;
+    await openTheWorksite(page);
+
+    await page.getByLabel('Su correo').fill(citizen);
+    await page.getByLabel('Autorizo el tratamiento de mis datos personales según la política.').check();
+    await page.getByRole('button', { name: 'Enviarme el código' }).click();
+    await expect(page.getByRole('status')).toContainText('Le enviamos un código de 6 dígitos');
+
+    await page.getByLabel('El código que le llegó al correo').fill(latestCodeTo(citizen));
+    await page.getByLabel('¿Qué vio en la obra?').fill('Desde el lunes no hay nadie trabajando y la valla está en el piso.');
+    await page.getByRole('button', { name: 'Enviar a la veeduría' }).click();
+    await expect(page.getByRole('status')).toContainText('Su informe llegó a la veeduría.');
+    expect(latestMailTo(citizen)).toContain('Recibimos su informe');
+
+    // La Administradora lo recibe sin el correo, y le responde desde GovTrace.
+    await logIn(page, ORG, PEOPLE.admin);
+    await page.waitForURL('**/admin/inbox');
+    await page.goto(`${ORG}/admin/citizen-reports`);
+    const report = page.locator('[data-test="citizen-report"]').filter({ hasText: 'la valla está en el piso' });
+    await expect(report).toContainText(WORKSITE);
+    await expect(page.locator('main')).not.toContainText(citizen);
+    await report.getByRole('button', { name: 'Responder' }).click();
+    await report.getByLabel('Respuesta para el ciudadano').fill('Gracias. Esta semana va un veedor a documentarlo.');
+    await report.getByRole('button', { name: 'Enviar respuesta' }).click();
+    await expect(page.getByRole('status')).toHaveText('Respuesta enviada al ciudadano.');
+    expect(latestMailTo(citizen)).toContain('Respuesta a su informe');
 });
 
 test('Lee la política de tratamiento de datos desde el mapa (it. 44e)', async ({ page }) => {

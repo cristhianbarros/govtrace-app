@@ -1,0 +1,29 @@
+story_id: "US-059-LEG"
+titulo_historia: "Como ciudadano quiero informar a la veeduría lo que vi en una obra, con mi correo verificado y sin cuenta, para que lo tenga en cuenta y me responda; como Administrador quiero recibirlo sin ver ese correo, y responder o descartar"
+bloque: "Alineación con el proceso actual — A2"
+criterios_aceptacion:
+  escenarios_exito:
+    - "En cada obra, 'Informar a esta veeduría': el ciudadano escribe su correo, autoriza el tratamiento de sus datos y recibe un código de 6 dígitos"
+    - "Con el código, su mensaje (20 a 2000 caracteres) y una foto opcional, el informe llega a la veeduría; le llega un correo con el número de su informe"
+    - "El Administrador ve en 'Informes ciudadanos' la obra, la fecha, el mensaje y la foto, sin el correo de quien lo envió"
+    - "El Administrador responde desde GovTrace (al ciudadano le llega la respuesta por correo) o lo descarta; los dos quedan en el log de auditoría"
+  validaciones_reglas:
+    - "R-LEG-09: un informe ciudadano no se sella ni se publica; no cambia el estado de la obra"
+    - "R-LEG-10: el correo se guarda cifrado y la veeduría nunca lo ve"
+    - "R-LEG-07: sin autorizar el tratamiento de datos no se pide el código"
+    - "Una veeduría suspendida no recibe informes"
+    - "Solo el Administrador ve los informes"
+  manejo_errores:
+    - "Código equivocado o vencido: 'El código no es válido o ya venció. Pida uno nuevo.'; 5 intentos fallidos lo anulan"
+    - "Más de 3 informes del mismo correo en un día, o 2 de la misma obra: 429 con el motivo"
+    - "Una foto con metadatos, de otro formato o de más de 10 MB se rechaza con el motivo"
+  requisitos_ux:
+    - "Dos pasos en la misma obra: el correo, y después el código y el mensaje; botones de 44 px y letra de 16 px"
+  casos_edge:
+    - "Pedir un código nuevo anula el anterior"
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true

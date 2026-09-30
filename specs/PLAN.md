@@ -2148,6 +2148,30 @@ La revisión documental del control social de hoy (`docs/proceso-actual.md`, PR 
   - `make ux-check`: la página nueva, sin letra pequeña ni botones chicos.
 
 **44f — A2: "Informar a esta veeduría"** (US-059-LEG). Va después de 44e.
+
+✅ **44f cumplida (2026-09-30).** El usuario dio luz verde ("la política de privacidad era el bloqueante final") y decidió que el operador central es el responsable del tratamiento, con las veedurías como usuarios autorizados.
+- **En cada obra, "Informar a esta veeduría",** antes de los canales de la Contraloría, en dos pasos:
+  - el correo, con la autorización del tratamiento de datos y el enlace a la política; le llega un código de 6 dígitos;
+  - el código, el mensaje (20 a 2000 caracteres) y una foto opcional, que el navegador limpia como la del veedor.
+
+  Al ciudadano le llega el número de su informe.
+- **El código:** HMAC con la llave de la app, 10 minutos, 5 intentos. Pedir otro anula el anterior.
+- **Los límites:** por correo, 3 códigos por hora, 3 informes por día y 1 por obra; por conexión, 10 códigos y 20 informes por hora (`config/limits.php`). Una veeduría suspendida no recibe informes.
+- **No se sella ni se publica** (R-LEG-09): no gasta XLM ni cambia el estado de la obra.
+- **El correo se guarda cifrado** (cast `encrypted`), con su huella HMAC para los límites (R-LEG-10). La veeduría no lo ve, y el log tampoco.
+- **"Informes ciudadanos"** en el panel del Administrador (grupo Revisar): la obra, la fecha, el mensaje y la foto. "Responder" le envía la respuesta al ciudadano por correo; "Descartar" pide confirmación. Los dos van al log de auditoría.
+- **La política (44e)** dice ahora quién es el responsable y qué pasa con los datos de quien informa. Es la versión `2026-09-30.2`.
+- **`make invites`** muestra también los códigos de los ciudadanos: en la demostración el código sale a `storage/logs/mail.log`.
+- ❓ **Decisiones por defecto:**
+  - los informes y su correo cifrado se guardan mientras la veeduría esté en GovTrace: no hay todavía borrado de lo descartado (D-V2-09);
+  - la veeduría no ve ni la foto original ni el correo, solo la foto limpia.
+  - **Los datos del operador** (`PRIVACY_CONTROLLER_*`) los tiene que dar el usuario: sin ellos, `/privacidad` sigue como borrador.
+- **Prueba:**
+  - Pest: 15 casos del canal y 1 de `make invites`;
+  - Vitest: 437 de 437; el formulario del ciudadano, la pantalla del Administrador, la obra, la política y la navegación;
+  - `make e2e`: 42 pasan. Un ciudadano pide el código, lo lee del correo de desarrollo y envía su informe; la Administradora lo recibe sin el correo y le responde;
+  - `make ux-check`: la pantalla nueva, limpia;
+  - `make trace-check`: en verde.
 - El ciudadano, con su correo verificado por un código, informa a la veeduría (Ley 850, art. 18 a)).
 - No se sella ni se publica.
 - **Modelo:** Opus xhigh. Es un endpoint público, con verificación de correo, spam y datos personales.

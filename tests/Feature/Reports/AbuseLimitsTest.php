@@ -116,5 +116,8 @@ it('allows by default 30 reports per veedor per hour, 120 public requests per vi
         'reports_per_veedor_per_hour' => 30,
         'public_requests_per_minute' => 120,
         'open_data_per_minute' => 10,
+        // It. 44f: el canal del ciudadano, por conexión y por hora.
+        'citizen_codes_per_hour' => 10,
+        'citizen_reports_per_hour' => 20,
     ]);
 });
