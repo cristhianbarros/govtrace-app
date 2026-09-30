@@ -19,6 +19,23 @@ El usuario pidió avanzar sin su revisión hasta el día siguiente, con la inter
 | 43c | El ensayo de la demostración, de punta a punta: descargar el original de una foto, la cuenta de la Bandeja que baja, el valor de los contratos de `make demo` | #57 |
 | 43d | `make demo LUGAR="lat,lng"`: la obra de la Calle 30 en el lugar de la presentación, para reportarla en vivo dentro de la geocerca | #58 |
 
+**Alinear la v1 con el proceso actual (2026-09-30).** La revisión del control social de hoy (`docs/proceso-actual.md`, #60) encontró que GovTrace terminaba en el mapa, un paso antes del proceso formal. El usuario metió en el MVP v1 cuatro correcciones:
+
+| Iteración | Qué | PR |
+|---|---|---|
+| 44a (A1) | El estado de una obra es una alerta de GovTrace, no una "obra inconclusa" (Ley 2020 de 2020); los canales oficiales de la Contraloría en cada obra | #61 |
+| 44b (A3) | El expediente de una obra: un ZIP con el expediente y las plantillas del derecho de petición y de la denuncia en PDF, pre-llenadas y con la "Prueba Pericial Criptográfica", más los originales con su prueba. Cada descarga queda en el log (telemetría) | #62 |
+| 44c (A4) | El veedor declara que no tiene impedimentos para serlo (Ley 850 de 2003, art. 19); sin la declaración no reporta | #63 |
+| 44d (A5) | Una veeduría sin NIT se identifica con su inscripción en la personería o la cámara de comercio | #64 |
+
+- **Queda A2, "Informar a esta veeduría".** Es el canal del ciudadano con correo verificado. El usuario lo ordenó después de A4, pero su última instrucción cubrió A1, A3, A4 y A5.
+- **Decisiones por defecto que conviene revisar con un abogado:**
+  - la etiqueta "Prueba Pericial Criptográfica";
+  - los cinco impedimentos en lenguaje claro;
+  - la entidad de registro como texto libre (personería o cámara de comercio).
+
+  Cada una está en su iteración de `specs/PLAN.md`.
+
 **Frente al checkpoint base:**
 
 | Qué | Antes | Ahora |
@@ -29,7 +46,7 @@ El usuario pidió avanzar sin su revisión hasta el día siguiente, con la inter
 | Texto de menos de 16 px, en la pantalla típica | 73 % | **12,5 %** |
 | Texto de menos de 14 px, en la pantalla típica | 25,5 % | **0 %** |
 | Botones de menos de 44 px, en la pantalla típica | 66 % | **0 %** |
-| Tests | Pest 785, Vitest 351 | Pest 820, Vitest 398, E2E 47 (38 + 9 pendientes), trace-check 264 de 264 |
+| Tests | Pest 785, Vitest 351 | Pest 858, Vitest 418, E2E 49 (40 + 9 pendientes), trace-check 295 de 295 |
 
 **Para probar el flujo visual completo:** `make demo`, y el guion de `docs/local-environment-setup.md` (sección "Un guion para la demostración").
 
