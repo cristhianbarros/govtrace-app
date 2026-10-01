@@ -1,12 +1,15 @@
 // Iteración 36, it. 40d — la página del dominio central. No hay un mapa global
 // (R-MAP-01): es la puerta de entrada — qué es GovTrace, cómo funciona, y el
 // directorio de veedurías, cada una con el enlace a su mapa (V5).
-import { mount } from '@vue/test-utils';
-import { describe, expect, it, vi } from 'vitest';
+import { flushPromises, mount } from '@vue/test-utils';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import Home from './Home.vue';
+import { requestOrganization } from '@/services/api.js';
 
 vi.mock('@inertiajs/vue3', async () => await import('@/testing/inertia.js'));
 vi.mock('@/services/api.js');
+
+beforeEach(() => vi.clearAllMocks());
 
 const ORGANIZATIONS = [
     { name: 'Ojo Ciudadano Ciénaga', territory: 'Ciénaga', url: 'http://ojo-cienaga.govtrace.localhost:8080/', suspended: true },
@@ -66,3 +69,55 @@ describe('Más imágenes en el Inicio (it. 40f)', () => {
         expect(wrapper.get('#veedurias [data-test="empty"] svg').attributes('data-illustration')).toBe('team');
     });
 });
+
+describe('Una veeduría pide su alta (it. 43k, V10)', () => {
+    async function fillRequest(wrapper, { authorize = true } = {}) {
+        const form = wrapper.get('form[data-test="organization-request"]');
+        await form.get('input#request-name').setValue('Veeduría Ciudadana de La Pradera');
+        await form.get('input#request-email').setValue('contacto@lapradera.org');
+        await form.get('input#request-resolution').setValue('Resolución 045 de 2026');
+        await form.get('input#request-authority').setValue('Personería de Medellín');
+        if (authorize) {
+            await form.get('input#request-authorization').setValue(true);
+        }
+        await form.trigger('submit');
+        await flushPromises();
+        return form;
+    }
+
+    it('Una veeduría pide su alta desde el Inicio: sends the four data and its authorization, and says what follows', async () => {
+        requestOrganization.mockResolvedValue({ message: 'Recibimos su solicitud. El equipo de GovTrace la revisará y le escribirá a contacto@lapradera.org.' });
+        const wrapper = mount(Home, { props: { organizations: ORGANIZATIONS } });
+
+        await fillRequest(wrapper);
+
+        expect(requestOrganization).toHaveBeenCalledWith({
+            name: 'Veeduría Ciudadana de La Pradera',
+            contact_email: 'contacto@lapradera.org',
+            registration_number: 'Resolución 045 de 2026',
+            registration_authority: 'Personería de Medellín',
+            data_authorization: true,
+            website: '',
+        });
+        expect(wrapper.get('[data-test="request-sent"]').text()).toBe('Recibimos su solicitud. El equipo de GovTrace la revisará y le escribirá a contacto@lapradera.org.');
+    });
+
+    it('Sin autorizar el tratamiento de datos no se envía la solicitud', async () => {
+        const wrapper = mount(Home, { props: { organizations: [] } });
+
+        const form = await fillRequest(wrapper, { authorize: false });
+
+        expect(requestOrganization).not.toHaveBeenCalled();
+        expect(form.get('[role="alert"]').text()).toBe('Para enviar la solicitud, autorice el tratamiento de sus datos personales.');
+    });
+
+    it('links the data policy beside the checkbox, and hides from people the field only robots fill', () => {
+        const form = mount(Home, { props: { organizations: [] } }).get('form[data-test="organization-request"]');
+
+        expect(form.get('a[href="/privacidad"]').text()).toBe('Lea la política de tratamiento de datos');
+        const trap = form.get('input[name="website"]');
+        expect(trap.attributes('tabindex')).toBe('-1');
+        expect(trap.element.closest('[aria-hidden="true"]')).not.toBeNull();
+    });
+});
+

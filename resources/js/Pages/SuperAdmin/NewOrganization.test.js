@@ -118,3 +118,29 @@ describe('Una veeduría sin NIT (it. 44d)', () => {
     });
 });
 
+
+describe('Desde una solicitud de alta (it. 43k, V10)', () => {
+    const request = { id: 1, name: 'Veeduría Ciudadana de La Pradera', contact_email: 'contacto@lapradera.org', registration_number: 'Resolución 045 de 2026', registration_authority: 'Personería de Medellín' };
+
+    it('El Super Administrador aprueba una solicitud: the form comes with its name, registration and contact as the initial Administrador', () => {
+        const wrapper = mount(NewOrganization, { props: { request } });
+
+        expect(wrapper.get('[data-test="from-request"]').text()).toContain('Viene de la solicitud de alta de Veeduría Ciudadana de La Pradera.');
+        expect(wrapper.get('input#name').element.value).toBe('Veeduría Ciudadana de La Pradera');
+        expect(wrapper.get('input#registration-number').element.value).toBe('Resolución 045 de 2026');
+        expect(wrapper.get('input#registration-authority').element.value).toBe('Personería de Medellín');
+        expect(wrapper.get('input#administrator-email').element.value).toBe('contacto@lapradera.org');
+    });
+
+    it('registers it with the request, so the request is approved', async () => {
+        registerOrganization.mockResolvedValue({ message: SUCCESS });
+        const wrapper = mount(NewOrganization, { props: { request } });
+
+        await wrapper.get('input#subdomain').setValue('la-pradera');
+        await wrapper.get('input#administrator-name').setValue('Contacto de La Pradera');
+        await wrapper.get('form').trigger('submit');
+        await flushPromises();
+
+        expect(registerOrganization).toHaveBeenCalledWith(expect.objectContaining({ name: 'Veeduría Ciudadana de La Pradera', subdomain: 'la-pradera', administrator_email: 'contacto@lapradera.org', request_id: 1 }));
+    });
+});

@@ -173,3 +173,9 @@ export async function findProof(sha256, reportId) {
         throw error;
     }
 }
+
+// It. 43k (V10, US-062-ALT): una veeduría pide su alta desde el Inicio; el Super Administrador la decide.
+export const requestOrganization = (data) => dataOf(http.post('/organization-requests', data));
+export const fetchOrganizationRequests = async () => (await dataOf(http.get('/admin/organization-requests/data'))).data;
+export const rejectOrganizationRequest = (id, reason) => dataOf(http.post(`/admin/organization-requests/${id}/reject`, { reason }));
+

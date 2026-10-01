@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Central;
 
 use App\Application\Organization\DecommissionOrganization;
 use App\Application\Organization\OrganizationAdministrators;
+use App\Application\Organization\OrganizationRequests;
 use App\Application\Organization\ReactivateOrganization;
 use App\Application\Organization\RegisterOrganizationWithAdministrator;
 use App\Application\Organization\SuspendOrganization;
@@ -59,6 +60,7 @@ class OrganizationController extends Controller
             'subdomain' => ['required', 'string'],
             'administrator_name' => ['nullable', 'string', 'required_with:administrator_email'],
             'administrator_email' => ['nullable', 'string', 'required_with:administrator_name'],
+            'request_id' => ['nullable', 'integer'], // it. 43k: la solicitud de alta de la que sale
         ]);
 
         try {
@@ -73,6 +75,11 @@ class OrganizationController extends Controller
             );
         } catch (OrganizationValidationException $e) {
             throw ValidationException::withMessages([$this->fieldFor($e) => $e->getMessage()]);
+        }
+
+        // It. 43k (V10): registrarla aprueba la solicitud de alta de la que salió.
+        if (isset($data['request_id'])) {
+            (new OrganizationRequests)->approve((int) $data['request_id'], $tenant, $request->user('web'));
         }
 
         $domain = $tenant->domains()->first()->domain;

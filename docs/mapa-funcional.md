@@ -256,12 +256,12 @@ flowchart TB
 | 1 | Obtener acceso | ✅ | Por consola (`make admin`). No hay pantalla para crear otros Super Administradores, a propósito. |
 | 2 | Entrar | ✅ | Dominio central, "¿Olvidó su contraseña?" incluido. El doble factor, ❓ (ya estaba en `docs/estado-mvp.md`). |
 | 3 | Dar de alta una organización | ✅ | Nueva organización: NIT con dígito de verificación, subdominio y, si quiere, el Administrador inicial (US-001, US-002). |
-| 4 | Acompañar al administrador hasta que active su cuenta | ⬜ 🔴 | **V2.** No ve si activó su cuenta ni puede reenviarle la invitación, que vence a las 48 h. Si el correo estaba mal escrito, o la organización se creó sin administrador, no hay cómo asignar uno después. La organización queda sin nadie que la gestione. |
-| 5 | Reemplazar a un administrador que se va o actúa mal | ⬜ 🔴 | **V3.** No puede asignar otro ni desactivarlo: solo puede suspender la organización entera. |
+| 4 | Acompañar al administrador hasta que active su cuenta | ✅ | Ve si activó su cuenta y en qué va su invitación; la reenvía o la revoca (it. 43a, V2 y V16). |
+| 5 | Reemplazar a un administrador que se va o actúa mal | ✅ | Agrega otro administrador, y desactiva o reactiva al que se fue, sin dejar nunca la organización sin uno activo (it. 43j, V3). |
 | 6 | Gobernar | ✅ | Editar el NIT, la razón social (it. 43f, V8) y la inscripción, suspender, reactivar y dar de baja (con doble confirmación): ✅. |
-| 7 | Operar | ✅ | Parámetros, auditoría, salud de SECOP, sellado (con reencolar las fallas), uso y alertas por correo. Sincronizar SECOP a mano no se puede (V15). |
+| 7 | Operar | ✅ | Parámetros, auditoría, salud de SECOP con "Sincronizar ahora" (it. 43b, V15), sellado con reencolar las fallas, uso, solicitudes de alta (it. 43k, V10) y alertas por correo. |
 | 8 | Reportar en nombre de una organización que lo autorizó | ✅ | Desde el listado, la que lo autorizó dice hasta cuándo y lleva a su pantalla de reporte (it. 43g, V7). |
-| 9 | Salir | ⬜ 🔴 | **V1.** Ni botón ni ruta de salida en el dominio central. |
+| 9 | Salir | ✅ | "Salir" en el menú de su cuenta, con confirmación (it. 40b, V1). |
 
 ### Administrador de Organización
 
@@ -275,7 +275,7 @@ flowchart TB
 | 6 | Revisar y publicar | ✅ | Publicar, rechazar con motivo y retirar con lápida. La tarjeta dice de qué obra es y qué veedor la envió (it. 40b, V4), y cada mañana le llega un resumen de las evidencias por revisar (it. 43i, V9). |
 | 7 | Hacer seguimiento | ✅ | Resumen, CSV, auditoría y el aviso de fallas de sellado. |
 | 8 | Autorizar al Super Administrador | ✅ | 30 días, revocable (US-042-SEC). |
-| 9 | Salir | ⬜ 🔴 | **V1.** |
+| 9 | Salir | ✅ | "Salir" en el menú de su cuenta, con confirmación (it. 40b, V1). |
 
 ### Veedor de Campo
 
@@ -292,13 +292,13 @@ flowchart TB
 
 | # | Paso | Estado | Nota |
 |---|---|---|---|
-| 1 | Llegar a una veeduría | ⬜ 🟠 | **V5.** Desde el dominio central no hay forma: solo sirve el enlace directo de cada veeduría. |
+| 1 | Llegar a una veeduría | ✅ | Desde el Inicio de GovTrace, el directorio de veedurías con el enlace a cada mapa (it. 40d, V5). |
 | 2 | Ver el mapa y filtrarlo | ✅ | Por estado, municipio, fechas y presupuesto (US-027, US-028). No se puede buscar una obra por nombre (V12). |
 | 3 | Ver una obra | ✅ | Datos del contrato con el enlace a SECOP (si SECOP lo trae), línea de tiempo y fotos (US-017, US-029). No dice el estado de la obra ni por qué (`docs/ux-analisis.md`). |
 | 4 | Comprobar una evidencia | ✅ | Validador, recibo y descarga con prueba (US-024 a US-026). El validador no enlaza el script independiente del repositorio (US-046-INT, V14). Las fotos no tenían botón de descarga; se encontró en el ensayo de la demostración y se cerró en la it. 43c. |
 | 5 | Estadísticas y datos abiertos | ✅ | US-051-RPT y US-052-RPT. |
 | 6 | Contactar a la veeduría | ✅ | El pie de su sitio muestra su correo y, si lo tiene, su teléfono (it. 43h, V13). También puede informarle algo de una obra (it. 44f). |
-| 7 | Leer la política de datos y los términos | ⬜ | ❓ Ley 1581 (ya estaba en `docs/estado-mvp.md`). |
+| 7 | Leer la política de datos | ✅ | `/privacidad`, enlazada en el Inicio, el pie del sitio de cada veeduría, el ingreso y cada formulario que pide datos (it. 44e). Sigue como borrador hasta que estén los datos del operador. |
 
 ## 3. Los flujos entre roles
 
@@ -370,7 +370,7 @@ También está completo:
 | V7 | ✅ **Cerrado en la it. 43g.** Reportar en nombre de una organización (US-042-SEC): la regla está en el backend y probada, pero no hay pantalla. | Super Admin | 🟠 | Se hizo la API, no la pantalla. | Desde la organización autorizada, en el panel global, un formulario de reporte. |
 | V8 | ✅ **Cerrado en la it. 43f.** La razón social no se puede cambiar: solo el NIT (`UpdateOrganizationLegalData`). | Super Admin | 🟠 | US-011 a medias. | Editar también el nombre legal, con la misma auditoría. |
 | V9 | ✅ **Cerrado en la it. 43i** (un resumen diario). Ningún aviso al administrador cuando hay evidencias por revisar: quedan ocultas hasta que alguien entra. | Admin | 🟠 | No estaba en la SPEC. | ❓ Un correo diario con cuántas hay por revisar. |
-| V10 | Una veeduría no tiene cómo pedir el alta: no hay formulario ni contacto. | Veeduría interesada | 🟠 | El alta controlada es a propósito (US-001). El canal para pedirla, no se definió. | ❓ Un formulario de solicitud en el Inicio que llega al Super Administrador. Él aprueba (la Nueva organización sale precargada) o rechaza con un motivo. No es autorregistro: se conserva el control. |
+| V10 | ✅ **Cerrado en la it. 43k.** Una veeduría no tiene cómo pedir el alta: no hay formulario ni contacto. | Veeduría interesada | 🟠 | El alta controlada es a propósito (US-001). El canal para pedirla, no se definió. | ❓ Un formulario de solicitud en el Inicio que llega al Super Administrador. Él aprueba (la Nueva organización sale precargada) o rechaza con un motivo. No es autorregistro: se conserva el control. |
 | V11 | ✅ **Cerrado en la it. 40c.** No se puede cambiar la contraseña con la sesión abierta: solo con "¿Olvidó su contraseña?". | Todos | 🟡 | No estaba en la SPEC. | "Cambiar contraseña" en "Mi cuenta" (el menú de la it. 40c). |
 | V12 | ✅ **Cerrado en la it. 40c.** En el mapa público no se puede buscar una obra por su nombre. | Ciudadano | 🟡 | US-028 pide estado, presupuesto y municipio. | Un buscador junto a la lista de obras (it. 40c). |
 | V13 | ✅ **Cerrado en la it. 43h.** La página de la veeduría no tiene datos de contacto. | Ciudadano | 🟡 | US-007 solo pide nombre y logo. | ❓ Correo, teléfono o web en el perfil de la organización. |

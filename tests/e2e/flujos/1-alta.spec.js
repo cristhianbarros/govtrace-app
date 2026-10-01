@@ -4,7 +4,7 @@
 // vuelve un test de verdad. El sello no entra aquí: la red Stellar lo prueba
 // make test-stellar, y la evidencia sellada llega con el fixture.
 import { expect, test } from '@playwright/test';
-import { CENTRAL, PEOPLE, WORKSITE, latestLinkTo, logIn, orgUrl } from './support.js';
+import { CENTRAL, PEOPLE, WORKSITE, latestLinkTo, latestMailAbout, logIn, logOut, orgUrl } from './support.js';
 
 const ALTA = {
     name: 'Veeduría de Alta E2E',
@@ -17,7 +17,37 @@ const ALTA = {
 
 test.describe.configure({ mode: 'serial' });
 
-test.fixme('V10: una veeduría pide su alta desde el Inicio de GovTrace', async () => {});
+test('V10: una veeduría pide su alta desde el Inicio de GovTrace, y el Super Administrador la decide (it. 43k)', async ({ page }) => {
+    const contact = `e2e.solicitud.${Date.now()}@correo.co`;
+    const name = `Veeduría Solicitante ${Date.now()}`;
+    await page.goto(CENTRAL);
+    const form = page.locator('form[data-test="organization-request"]');
+    await form.getByLabel('Nombre de la veeduría').fill(name);
+    await form.getByLabel('Correo de contacto').fill(contact);
+    await form.getByLabel('Número de la resolución de la Personería').fill('Resolución 045 de 2026');
+    await form.getByLabel('Personería que la expidió').fill('Personería de Medellín');
+    await form.getByLabel('Autorizo el tratamiento de mis datos personales según la política.').check();
+    await form.getByRole('button', { name: 'Enviar solicitud' }).click();
+    await expect(page.getByRole('status')).toHaveText(`Recibimos su solicitud. El equipo de GovTrace la revisará y le escribirá a ${contact}.`);
+
+    // El Super Administrador la ve; aprobarla precarga la Nueva organización. Aquí la rechaza con un motivo.
+    await logIn(page, CENTRAL, PEOPLE.superAdmin);
+    await page.waitForURL('**/admin/organizations');
+    await page.goto(`${CENTRAL}/admin/organization-requests`);
+    const request = page.locator('[data-test="organization-request"]').filter({ hasText: name });
+    await request.getByRole('link', { name: 'Aprobar y dar de alta' }).click();
+    await page.waitForURL('**/admin/organizations/new?request=*');
+    await expect(page.locator('input#name')).toHaveValue(name);
+    await expect(page.locator('input#administrator-email')).toHaveValue(contact);
+
+    await page.goto(`${CENTRAL}/admin/organization-requests`);
+    await request.getByRole('button', { name: 'Rechazar' }).click();
+    await request.getByLabel('Motivo del rechazo (le llega por correo)').fill('Es una prueba de extremo a extremo.');
+    await request.getByRole('button', { name: 'Confirmar rechazo' }).click();
+    await expect(page.getByRole('status')).toHaveText(`Solicitud rechazada. Le escribimos a ${contact} con el motivo.`);
+    expect(latestMailAbout(contact, 'Motivo: Es una prueba de extremo a extremo.')).toContain('no fue aprobada');
+    await logOut(page);
+});
 
 test('El Super Administrador da de alta la organización con su Administrador inicial', async ({ page }) => {
     await logIn(page, CENTRAL, PEOPLE.superAdmin);

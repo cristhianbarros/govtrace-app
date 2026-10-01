@@ -18,4 +18,6 @@ return [
     // Los límites por correo (3 códigos por hora, 3 informes por día) van aparte, en CitizenReportDesk.
     'citizen_codes_per_hour' => (int) env('CITIZEN_CODES_PER_HOUR', 10),
     'citizen_reports_per_hour' => (int) env('CITIZEN_REPORTS_PER_HOUR', 20),
+    // It. 43k: las solicitudes de alta desde el Inicio, por conexión y por hora.
+    'organization_requests_per_hour' => (int) env('ORGANIZATION_REQUESTS_PER_HOUR', 5),
 ];

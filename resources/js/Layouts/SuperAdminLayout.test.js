@@ -15,6 +15,7 @@ describe('SuperAdminLayout', () => {
         expect(wrapper.get('h1').text()).toBe('Parámetros');
         expect(wrapper.findAll('[data-test="sidebar"] a').map((link) => [link.text(), link.attributes('href')])).toEqual([
             ['Organizaciones', '/admin/organizations'],
+            ['Solicitudes de alta', '/admin/organization-requests'], // it. 43k (V10)
             ['Sellado', '/admin/sealing'],
             ['SECOP', '/admin/secop-health'],
             ['Uso', '/admin/usage'],
@@ -33,8 +34,17 @@ describe('SuperAdminLayout', () => {
         expect(tabs.findAll('a').map((tab) => tab.text())).toEqual(['Organizaciones', 'Sellado', 'SECOP']);
         expect(tabs.get('a[aria-current="page"]').text()).toBe('Organizaciones');
         await tabs.get('button[aria-haspopup="menu"]').trigger('click');
-        expect(wrapper.get('[data-test="more"]').findAll('a').map((link) => link.text())).toEqual(['Uso', 'Parámetros', 'Auditoría']);
+        expect(wrapper.get('[data-test="more"]').findAll('a').map((link) => link.text())).toEqual(['Solicitudes de alta', 'Uso', 'Parámetros', 'Auditoría']);
         wrapper.unmount();
         page.url = '/admin/inbox';
     });
+
+    it('says in the menu how many requests for an alta wait (it. 43k, V10)', () => {
+        page.props.organizationRequestsPending = 2;
+        const wrapper = mount(SuperAdminLayout, { props: { title: 'Organizaciones' } });
+
+        expect(wrapper.get('[data-test="sidebar"] a[href="/admin/organization-requests"]').attributes('aria-label')).toBe('Solicitudes de alta, 2 pendientes');
+        page.props.organizationRequestsPending = null;
+    });
 });
+

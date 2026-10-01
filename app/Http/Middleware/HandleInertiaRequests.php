@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Application\Organization\OrganizationRequests;
 use App\Domain\Organization\Roles;
 use App\Domain\Reports\PendingReview;
 use App\Domain\Sealing\ReportSeal;
@@ -66,6 +67,8 @@ class HandleInertiaRequests extends Middleware
             // It. 40c: cuántas evidencias esperan en la Bandeja, para su pestaña.
             // Solo al Administrador: al veedor no le toca revisar.
             'inboxPending' => fn () => $this->inboxPending($request),
+            // It. 43k (V10): cuántas solicitudes de alta esperan al Super Administrador, para su menú.
+            'organizationRequestsPending' => fn () => ! tenancy()->initialized && $request->user('web') ? OrganizationRequests::pendingCount() : null,
         ];
     }
 

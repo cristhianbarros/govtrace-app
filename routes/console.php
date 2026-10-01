@@ -8,6 +8,7 @@ use App\Jobs\CheckSealingQueue;
 use App\Jobs\CheckSponsorBalance;
 use App\Jobs\PurgeCitizenReports;
 use App\Jobs\PurgeDecommissionedEvidence;
+use App\Jobs\PurgeOrganizationRequests;
 use App\Jobs\PurgeVeedorPseudonyms;
 use App\Jobs\SendReviewDigests;
 use Illuminate\Console\Scheduling\Schedule;
@@ -89,4 +90,11 @@ app(Schedule::class)->job(new PurgeCitizenReports)
 app(Schedule::class)->job(new SendReviewDigests)
     ->dailyAt('07:00')
     ->name('review-digest')
+    ->onOneServer();
+
+// US-062-ALT (it. 43k): las solicitudes de alta decididas, 30 días después; cada
+// día a la 01:20.
+app(Schedule::class)->job(new PurgeOrganizationRequests)
+    ->dailyAt('01:20')
+    ->name('organization-requests-purge')
     ->onOneServer();
