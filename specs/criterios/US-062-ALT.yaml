@@ -1,0 +1,27 @@
+story_id: "US-062-ALT"
+titulo_historia: "Como veeduría quiero pedir mi alta desde el Inicio, sin cuenta; como Super Administrador quiero aprobarla o rechazarla con un motivo"
+bloque: "Flujos completos — V10"
+criterios_aceptacion:
+  escenarios_exito:
+    - "En el Inicio, una veeduría escribe su nombre, su correo de contacto, el número de la resolución de la Personería y qué Personería la expidió; autoriza el tratamiento de sus datos y envía. Ve: 'Recibimos su solicitud. El equipo de GovTrace la revisará y le escribirá a [correo].'"
+    - "El Super Administrador ve las solicitudes pendientes en 'Solicitudes de alta', con cuántas hay en el menú"
+    - "Aprobar lleva a la Nueva organización precargada; al registrarla, la solicitud queda aprobada"
+    - "Rechazar pide un motivo; al contacto le llega un correo con el motivo"
+  validaciones_reglas:
+    - "R-LEG-07: sin la autorización del tratamiento de datos no se envía"
+    - "El nombre, con las reglas del alta (3 a 150 caracteres); el correo, válido; la resolución y la Personería, con las reglas de la inscripción (R-LEG-06)"
+    - "No es autorregistro: solo el Super Administrador da el alta (US-001)"
+    - "Una solicitud decidida se borra a los 30 días"
+  manejo_errores:
+    - {caso: "Sin autorización", mensaje: "Para enviar la solicitud, autorice el tratamiento de sus datos personales."}
+    - {caso: "Demasiadas solicitudes desde la misma conexión", resultado: "429 con el motivo"}
+  requisitos_ux:
+    - "Cuatro campos, letra de 16 px y botones de 44 px; la política de datos enlazada junto a la casilla"
+  casos_edge:
+    - "Un robot que llena el campo oculto recibe la misma respuesta, pero su solicitud no se guarda"
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true

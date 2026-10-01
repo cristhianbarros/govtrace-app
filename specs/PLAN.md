@@ -1956,7 +1956,7 @@ Esta iteración estaba reservada para ese recorrido. El recorrido se hizo para e
 
 **Queda de la 43b:**
 - V9 (❓ el aviso diario); → **Cerrado en la 43i.**
-- V10 (❓ la solicitud de alta);
+- V10 (❓ la solicitud de alta); → **Cerrado en la 43k.**
 - V13 (❓ el contacto). → **Cerrado en la 43h.**
 
 **Done-when de las dos:** los `fixme` de sus vacíos, en verde.
@@ -2094,6 +2094,26 @@ Esta iteración estaba reservada para ese recorrido. El recorrido se hizo para e
   - Vitest: el panel global y "Veedores";
   - `make e2e`: los dos `fixme` de V3 pasan a verde.
 - **Modelo:** Opus. Es control de acceso.
+
+**43k — V10: una veeduría pide su alta** (US-062-ALT, historia nueva). El usuario, el 2026-10-01: "Implement a simple public intake form (Veeduría Name, Contact Email, Personería Resolution Number). This will go to a 'Pending Approvals' queue for the Super Admin."
+
+✅ **43k cumplida (2026-10-01).**
+- **En el Inicio, "¿Su veeduría quiere publicar en GovTrace?":** el nombre, el correo de contacto, el número de la resolución y **la Personería que la expidió**. La Personería se agregó porque la inscripción se identifica con el número y la entidad (R-LEG-06).
+  - Pide la autorización del tratamiento de datos, con la política enlazada (R-LEG-07).
+  - Con las mismas reglas del alta y del contacto, dice todo lo que hay que corregir a la vez.
+- **Contra el spam:**
+  - 5 por hora por conexión (`ORGANIZATION_REQUESTS_PER_HOUR`);
+  - un campo oculto que solo llena un robot, que recibe la misma respuesta sin que se guarde nada;
+  - **ningún correo a quien la pide** hasta que se decide, para que el formulario no sirva para enviarle correos a terceros.
+- **"Solicitudes de alta" en el panel global**, con cuántas hay en el menú.
+  - **Aprobar y dar de alta** lleva a la Nueva organización precargada: el nombre, la inscripción y el correo como Administrador inicial. Al registrarla, la solicitud queda aprobada. No es autorregistro.
+  - **Rechazar** pide un motivo, que le llega por correo al contacto.
+  - Las dos decisiones van al log de auditoría.
+- **Retención:** una solicitud decidida se borra a los 30 días (`PurgeOrganizationRequests`, a la 01:20), como los informes ciudadanos. La política lo dice; versión `2026-10-01.1`.
+- **Prueba:**
+  - Pest, 12 casos (los 8 escenarios, decidir una sola vez, el motivo obligatorio, el límite y solo el Super Administrador);
+  - Vitest: el formulario del Inicio, la página, la Nueva organización precargada, el menú y la política;
+  - `make e2e`: 50 pasan y ya no queda ningún `fixme`: todos los vacíos de `docs/mapa-funcional.md` quedaron cerrados. El de V10 pasó a verde. Una veeduría la pide, el Super Administrador ve la Nueva organización precargada y la rechaza con un motivo, que le llega por correo. Así no se crea una organización en cada corrida.
 
 **40e — Pestañas y una identidad simple y acogedora** (US-027, R-UX-10). El usuario pidió pestañas en vez de botones sueltos, un estilo con contraste y, sobre todo, una interfaz que impresione: "es como muy común… simple pero acogedora".
 

@@ -5,13 +5,48 @@
 // una con el enlace a su mapa. El acceso del Super Administrador, al pie.
 import { BuildingOffice2Icon } from '@heroicons/vue/24/outline';
 import { Head, Link } from '@inertiajs/vue3';
+import { reactive, ref } from 'vue';
 import Illustration from '@/Components/Brand/Illustration.vue';
 import WorksIllustration from '@/Components/Brand/WorksIllustration.vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import { requestOrganization } from '@/services/api.js';
+import { errorMessage } from '@/services/errors.js';
 
 defineProps({
     organizations: { type: Array, default: () => [] }, // [{ name, territory, url, suspended }]
 });
+
+// It. 43k (V10, US-062-ALT): una veeduría pide su alta; el Super Administrador la decide.
+const AUTHORIZATION_REQUIRED = 'Para enviar la solicitud, autorice el tratamiento de sus datos personales.';
+const request = reactive({ name: '', email: '', resolution: '', authority: '', authorized: false, website: '' });
+const requestSent = ref(null);
+const requestRefused = ref(null);
+const requesting = ref(false);
+
+async function sendRequest() {
+    requestRefused.value = null;
+    if (!request.authorized) {
+        requestRefused.value = AUTHORIZATION_REQUIRED;
+        return;
+    }
+    requesting.value = true;
+    try {
+        requestSent.value = (
+            await requestOrganization({
+                name: request.name.trim(),
+                contact_email: request.email.trim(),
+                registration_number: request.resolution.trim(),
+                registration_authority: request.authority.trim(),
+                data_authorization: true,
+                website: request.website,
+            })
+        ).message;
+    } catch (failure) {
+        requestRefused.value = errorMessage(failure);
+    } finally {
+        requesting.value = false;
+    }
+}
 
 const STEPS = [
     { art: 'evidence', text: 'Los veedores de cada veeduría ciudadana visitan las obras públicas y toman fotos con su celular.' },
@@ -71,6 +106,37 @@ const STEPS = [
                     </li>
                 </ul>
                 <p class="text-base text-slate-700">¿Es veedor? Entre desde el mapa de su veeduría, con el botón "Entrar".</p>
+            </section>
+
+            <!-- It. 43k (V10, US-062-ALT): una veeduría pide su alta. No es autorregistro: la decide el Super Administrador. -->
+            <section id="pedir-alta" aria-labelledby="request-title" class="flex scroll-mt-20 flex-col gap-3 rounded-2xl border-l-8 border-accent-400 bg-white p-5 shadow-soft">
+                <h2 id="request-title" class="text-2xl">¿Su veeduría quiere publicar en GovTrace?</h2>
+                <p class="text-base text-slate-700">Pida su alta. El equipo de GovTrace revisa cada solicitud y le escribe con la respuesta.</p>
+                <p v-if="requestSent" role="status" data-test="request-sent" class="rounded-lg bg-emerald-50 p-3 text-base font-semibold text-emerald-900">{{ requestSent }}</p>
+                <form v-else data-test="organization-request" class="flex flex-col gap-3" novalidate @submit.prevent="sendRequest">
+                    <label for="request-name" class="text-base font-semibold">Nombre de la veeduría</label>
+                    <input id="request-name" v-model="request.name" type="text" maxlength="150" autocomplete="organization" class="min-h-12 rounded-lg border border-slate-300 bg-white px-3 text-base" />
+                    <label for="request-email" class="text-base font-semibold">Correo de contacto</label>
+                    <input id="request-email" v-model="request.email" type="email" inputmode="email" autocomplete="email" maxlength="150" class="min-h-12 rounded-lg border border-slate-300 bg-white px-3 text-base" />
+                    <label for="request-resolution" class="text-base font-semibold">Número de la resolución de la Personería</label>
+                    <input id="request-resolution" v-model="request.resolution" type="text" maxlength="100" placeholder="Resolución 045 de 2026" class="min-h-12 rounded-lg border border-slate-300 bg-white px-3 text-base" />
+                    <label for="request-authority" class="text-base font-semibold">Personería que la expidió</label>
+                    <input id="request-authority" v-model="request.authority" type="text" maxlength="150" placeholder="Personería de Medellín" class="min-h-12 rounded-lg border border-slate-300 bg-white px-3 text-base" />
+                    <!-- Solo un robot llena este campo: la solicitud no se guarda. -->
+                    <div aria-hidden="true" class="absolute -left-[10000px] size-px overflow-hidden">
+                        <label for="request-website">No llene este campo</label>
+                        <input id="request-website" v-model="request.website" name="website" type="text" tabindex="-1" autocomplete="off" />
+                    </div>
+                    <a href="/privacidad" class="inline-flex min-h-11 items-center self-start font-semibold underline">Lea la política de tratamiento de datos</a>
+                    <label for="request-authorization" class="flex min-h-11 items-start gap-3 font-semibold">
+                        <input id="request-authorization" v-model="request.authorized" type="checkbox" class="mt-0.5 size-6 shrink-0" />
+                        Autorizo el tratamiento de mis datos personales según la política.
+                    </label>
+                    <p v-if="requestRefused" role="alert" class="rounded-lg bg-red-50 p-3 text-base text-red-800">{{ requestRefused }}</p>
+                    <button type="submit" :disabled="requesting" class="min-h-12 self-start rounded-xl bg-brand-700 px-5 text-base font-semibold text-white shadow-sm hover:bg-brand-800 disabled:opacity-40">
+                        {{ requesting ? 'Enviando…' : 'Enviar solicitud' }}
+                    </button>
+                </form>
             </section>
 
             <footer class="flex flex-wrap gap-x-6 border-t border-slate-200 pt-4">

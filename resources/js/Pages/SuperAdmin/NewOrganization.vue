@@ -1,14 +1,29 @@
 <script setup>
 // US-001 y US-002: dar de alta una organización, y en el mismo paso
-// asignar su Administrador inicial si ya se conoce (nombre y correo).
+// asignar su Administrador inicial si ya se conoce (nombre y correo). It. 43k
+// (V10): desde una solicitud de alta, precargada; registrarla la aprueba.
 import { Link } from '@inertiajs/vue3';
 import { reactive, ref } from 'vue';
 import SuperAdminLayout from '@/Layouts/SuperAdminLayout.vue';
 import { registerOrganization } from '@/services/api.js';
 import { errorMessage } from '@/services/errors.js';
 
+const props = defineProps({
+    request: { type: Object, default: null }, // { id, name, contact_email, registration_number, registration_authority }
+});
+
 const empty = { name: '', nit: '', registrationNumber: '', registrationAuthority: '', subdomain: '', administratorName: '', administratorEmail: '' };
-const form = reactive({ ...empty });
+const form = reactive({
+    ...empty,
+    ...(props.request
+        ? {
+              name: props.request.name,
+              registrationNumber: props.request.registration_number,
+              registrationAuthority: props.request.registration_authority,
+              administratorEmail: props.request.contact_email,
+          }
+        : {}),
+});
 
 const sending = ref(false);
 const sent = ref(null);
@@ -35,6 +50,7 @@ async function submit() {
                 subdomain: form.subdomain,
                 administrator_name: form.administratorName.trim() || null,
                 administrator_email: form.administratorEmail.trim() || null,
+                ...(props.request ? { request_id: props.request.id } : {}),
             })
         ).message;
         Object.assign(form, empty);
@@ -51,6 +67,9 @@ async function submit() {
         <div class="flex flex-col gap-4">
             <Link href="/admin/organizations" class="text-sm font-semibold text-slate-700 underline">← Organizaciones</Link>
 
+            <p v-if="request" data-test="from-request" class="rounded-lg bg-brand-50 p-3 text-sm text-brand-900">
+                Viene de la solicitud de alta de {{ request.name }}. Elija su subdominio y escriba el nombre de quien la administrará; al registrarla, la solicitud queda aprobada.
+            </p>
             <p v-if="sent" role="status" class="rounded-lg bg-emerald-50 p-3 text-sm font-semibold text-emerald-800">{{ sent }}</p>
             <p v-if="refused" role="alert" class="rounded-lg bg-red-50 p-3 text-sm text-red-800">{{ refused }}</p>
 

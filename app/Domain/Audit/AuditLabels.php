@@ -12,6 +12,8 @@ final class AuditLabels
     private const ACTIONS = [
         'organization.registered' => 'Dio de alta la organización',
         'organization.administrator_assigned' => 'Asignó el Administrador inicial',
+        'organization_request.approved' => 'Aprobó una solicitud de alta',
+        'organization_request.rejected' => 'Rechazó una solicitud de alta',
         'organization.legal_data_updated' => 'Cambió los datos legales (NIT o inscripción)',
         'organization.territory_configured' => 'Configuró el territorio',
         'organization.suspended' => 'Suspendió la organización',

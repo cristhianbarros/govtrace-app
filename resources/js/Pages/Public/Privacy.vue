@@ -55,6 +55,7 @@ const missingText = computed(() => {
                     <li><strong>De quien tiene cuenta</strong> (Administradores y veedores): su nombre, su correo y su contraseña, guardada cifrada. Sirven para darle acceso, invitarlo y dejar constancia de lo que hace en el registro de auditoría.</li>
                     <li><strong>De los reportes de un veedor:</strong> las fotos o el PDF, el comentario, la fecha y la hora, y la ubicación exacta de su celular. Son evidencia del control social de las obras públicas (Ley 850 de 2003). En el mapa se publica una ubicación aproximada, a unos 100 metros, nunca la exacta. Tampoco se publica el nombre del veedor: sus reportes llevan un seudónimo.</li>
                     <li><strong>De quien informa a una veeduría</strong> desde el mapa, sin cuenta: su correo, su mensaje y, si la envía, una foto sin metadatos. El correo sirve para comprobar que es suyo, con un código, y para responderle; se guarda cifrado y la veeduría no lo ve. El informe no se publica.</li>
+                    <li><strong>De quien pide el alta de una veeduría</strong> desde el Inicio: el nombre de la veeduría, un correo de contacto y la resolución de la Personería que la inscribió. Sirven para decidir el alta y responderle.</li>
                     <li><strong>De quien visita el sitio:</strong> la dirección IP y el navegador, por seguridad y para frenar abusos. No hay publicidad ni rastreo de terceros. El mapa se dibuja con OpenStreetMap: su navegador le pide los mapas a sus servidores.</li>
                     <li><strong>Las fotos pueden mostrar a otras personas</strong> o placas de vehículos. La veeduría revisa cada evidencia antes de publicarla y puede retirarla.</li>
                     <li><strong>Datos sensibles y de menores de edad:</strong> GovTrace no los pide. Si una foto los muestra, la veeduría la retira (Ley 1581 de 2012, artículos 5 a 7).</li>
@@ -99,6 +100,7 @@ const missingText = computed(() => {
                     <li>La relación entre un seudónimo y su veedor, 5 años desde su último reporte.</li>
                     <li>Los archivos de una organización dada de baja, 5 años.</li>
                     <li>El correo de quien informa a una veeduría, hasta 30 días después de que la veeduría atiende su informe. El informe atendido queda, sin el correo; el descartado se borra entero.</li>
+                    <li>Las solicitudes de alta de una veeduría, hasta 30 días después de decididas.</li>
                 </ul>
             </section>
         </article>

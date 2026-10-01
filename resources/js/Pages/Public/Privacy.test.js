@@ -75,3 +75,13 @@ describe('La retención de los informes de los ciudadanos (it. 45c)', () => {
         expect(retention.join(' ')).not.toContain('mientras la veeduría esté en GovTrace');
     });
 });
+
+describe('Las solicitudes de alta (it. 43k)', () => {
+    it('says what a veeduría that asks for its alta gives, what for, and for how long', () => {
+        const text = open().text();
+
+        expect(text).toContain('De quien pide el alta de una veeduría desde el Inicio: el nombre de la veeduría, un correo de contacto y la resolución de la Personería que la inscribió. Sirven para decidir el alta y responderle.');
+        expect(text).toContain('Las solicitudes de alta de una veeduría, hasta 30 días después de decididas.');
+    });
+});
+

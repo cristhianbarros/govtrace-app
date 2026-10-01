@@ -1,7 +1,9 @@
 <?php
 
+use App\Application\Organization\OrganizationRequests;
 use App\Application\Organization\PublicDirectory;
 use App\Application\Privacy\DataPolicy;
+use App\Domain\Organization\OrganizationRequest;
 use App\Http\Controllers\Auth\ChangePasswordController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Central\AuditController;
@@ -9,12 +11,14 @@ use App\Http\Controllers\Central\LoginController;
 use App\Http\Controllers\Central\OrganizationAdministratorController;
 use App\Http\Controllers\Central\OrganizationController;
 use App\Http\Controllers\Central\OrganizationReportController;
+use App\Http\Controllers\Central\OrganizationRequestController;
 use App\Http\Controllers\Central\ParameterController;
 use App\Http\Controllers\Central\SealingController;
 use App\Http\Controllers\Central\SealingCostsController;
 use App\Http\Controllers\Central\SecopHealthController;
 use App\Http\Controllers\Central\SecopSyncNowController;
 use App\Http\Controllers\Central\UsageController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -23,6 +27,8 @@ foreach (config('tenancy.central_domains') as $domain) {
     Route::domain($domain)->group(function () {
         // It. 40d (V5): el Inicio lleva al mapa de cada veeduría (R-MAP-01: no hay un mapa global).
         Route::get('/', fn () => Inertia::render('Home', ['organizations' => (new PublicDirectory)->handle()]))->name('home');
+        // It. 43k (V10, US-062-ALT): una veeduría pide su alta, sin cuenta; la decide el Super Administrador.
+        Route::post('/organization-requests', [OrganizationRequestController::class, 'store'])->middleware('throttle:organization-requests')->name('organization-requests.store');
 
         // US-031: Super Administrator only (the screen, it. 17).
         Route::get('/login', fn () => Inertia::render('Auth/Login', ['context' => 'Panel global']))->name('login.show');
@@ -48,7 +54,15 @@ foreach (config('tenancy.central_domains') as $domain) {
             Route::get('/dashboard', fn () => redirect('/admin/organizations'))->name('super-admin.dashboard');
 
             Route::get('/admin/organizations', fn () => Inertia::render('SuperAdmin/Organizations'))->name('admin.organizations.show');
-            Route::get('/admin/organizations/new', fn () => Inertia::render('SuperAdmin/NewOrganization'))->name('admin.organizations.new');
+            // It. 43k (V10): con ?request=, precargada con una solicitud de alta.
+            Route::get('/admin/organizations/new', fn (Request $request) => Inertia::render('SuperAdmin/NewOrganization', [
+                'request' => $request->filled('request')
+                    ? (new OrganizationRequests)->prefill(OrganizationRequest::query()->where('status', 'pending')->findOrFail($request->integer('request')))
+                    : null,
+            ]))->name('admin.organizations.new');
+            Route::get('/admin/organization-requests', [OrganizationRequestController::class, 'show'])->name('admin.organization-requests.show');
+            Route::get('/admin/organization-requests/data', [OrganizationRequestController::class, 'index'])->name('admin.organization-requests.index');
+            Route::post('/admin/organization-requests/{organizationRequest}/reject', [OrganizationRequestController::class, 'reject'])->whereNumber('organizationRequest')->name('admin.organization-requests.reject');
             Route::get('/admin/organizations/data', [OrganizationController::class, 'index'])->name('admin.organizations.index');
             Route::post('/admin/organizations', [OrganizationController::class, 'store'])->name('admin.organizations.store');
             Route::get('/admin/organizations/{tenant}', [OrganizationController::class, 'show'])->name('admin.organizations.detail');

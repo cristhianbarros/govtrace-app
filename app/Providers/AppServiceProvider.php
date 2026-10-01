@@ -87,5 +87,7 @@ class AppServiceProvider extends ServiceProvider
         $tooManyToday = fn (Request $request, array $headers) => response()->json(['message' => 'Demasiados intentos desde esta conexión. Intente de nuevo en una hora.'], 429, $headers);
         RateLimiter::for('citizen-codes', fn (Request $request) => Limit::perHour((int) config('limits.citizen_codes_per_hour'))->by(tenant()?->getTenantKey().':'.$request->ip())->response($tooManyToday));
         RateLimiter::for('citizen-reports', fn (Request $request) => Limit::perHour((int) config('limits.citizen_reports_per_hour'))->by(tenant()?->getTenantKey().':'.$request->ip())->response($tooManyToday));
+        // It. 43k (V10): las solicitudes de alta, desde el Inicio.
+        RateLimiter::for('organization-requests', fn (Request $request) => Limit::perHour((int) config('limits.organization_requests_per_hour'))->by($request->ip())->response($tooManyToday));
     }
 }
