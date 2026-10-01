@@ -66,8 +66,8 @@ describe('AdminLayout', () => {
     });
 
     it.each([
-        [3, 'Alerta: 3 evidencias no pudieron ser selladas en blockchain. Se requiere intervención del soporte técnico.'],
-        [1, 'Alerta: 1 evidencia no pudo ser sellada en blockchain. Se requiere intervención del soporte técnico.'],
+        [3, 'Alerta: 3 evidencias no se pudieron certificar de forma segura. El soporte técnico de GovTrace tiene que revisarlas.'],
+        [1, 'Alerta: 1 evidencia no se pudo certificar de forma segura. El soporte técnico de GovTrace tiene que revisarla.'],
     ])('Banner para el Administrador de Organización: %i in "Falla de Sellado" (US-021)', (failures, message) => {
         page.props.sealingFailures = failures;
         const wrapper = mount(AdminLayout, { props: { title: 'Bandeja de entrada' } });

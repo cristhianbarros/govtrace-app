@@ -19,11 +19,13 @@ Característica: Reintentos del sellado con retraso exponencial
     Y no se hace un sexto intento automático
     Y el veedor no ve ningún error
 
+  # It. 45e (enmienda aprobada por el usuario el 2026-10-01): las alertas, de usted y sin jerga
+  # técnica (R-UX-06): "certificar de forma segura" en vez de "sellar en blockchain" o "proveedor RPC".
   @complexity:low @negative
   Escenario: Banner para el Administrador de Organización
     Dado que "Veeduría Ciudadana Santa Marta" tiene 3 evidencias en "Falla de Sellado"
     Cuando su Administrador abre su panel
-    Entonces ve un banner rojo con "Alerta: 3 evidencias no pudieron ser selladas en blockchain. Se requiere intervención del soporte técnico."
+    Entonces ve un banner rojo con "Alerta: 3 evidencias no se pudieron certificar de forma segura. El soporte técnico de GovTrace tiene que revisarlas."
 
   @complexity:medium @edge
   Escenario: La red de Stellar no confirma la transacción
@@ -44,4 +46,4 @@ Característica: Reintentos del sellado con retraso exponencial
   Escenario: Evidencia estancada más de 2 horas en cola
     Dado que una evidencia de "Veeduría Ciudadana Santa Marta" lleva 2 horas y 5 minutos "En Cola"
     Cuando se revisa la cola de sellado
-    Entonces el Super Administrador y el Administrador de "Veeduría Ciudadana Santa Marta" reciben "⚠️ Alerta de Sistema: Hay evidencias con más de 2 horas estancadas en la cola de sellado. Revisa el estado de la red o del proveedor RPC."
+    Entonces el Super Administrador y el Administrador de "Veeduría Ciudadana Santa Marta" reciben "⚠️ Aviso: hay evidencias que llevan más de 2 horas en fila para ser certificadas de forma segura. GovTrace sigue intentándolo solo; ninguna se pierde."

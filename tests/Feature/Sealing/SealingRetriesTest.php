@@ -33,7 +33,7 @@ use Tests\Support\FakeSealingNetwork;
  * Sin RefreshDatabase — registrar la organización ejecuta CREATE DATABASE.
  */
 
-const STALLED_ALERT = '⚠️ Alerta de Sistema: Hay evidencias con más de 2 horas estancadas en la cola de sellado. Revisa el estado de la red o del proveedor RPC.';
+const STALLED_ALERT = '⚠️ Aviso: hay evidencias que llevan más de 2 horas en fila para ser certificadas de forma segura. GovTrace sigue intentándolo solo; ninguna se pierde.';
 
 beforeEach(function () {
     $this->artisan('migrate');
