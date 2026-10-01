@@ -1,8 +1,26 @@
 # Estado del MVP: lo que falta, por área
 
-Al 2026-09-29. Empezó sobre `77e6030` (iteración 39) y se actualizó en las it. 41 y 42a y con los análisis de UX y de flujos. Para ir abordándolo: cada punto dice qué falta y, cuando depende de ti, qué hay que decidir.
+Al 2026-10-01. Empezó sobre `77e6030` (iteración 39) y se actualizó en las it. 41 y 42a y con los análisis de UX y de flujos. Para ir abordándolo: cada punto dice qué falta y, cuando depende de ti, qué hay que decidir.
 
 ✅ hecho y probado · ⚠️ a medias · ⬜ falta · 🔒 espera algo externo · ❓ decisión tuya
+
+## Dónde quedó (2026-10-01)
+
+**Las decisiones del usuario, aplicadas.** Aprobó la retención de 30 días y la enmienda de US-021, pidió que el S3 de desarrollo no perdiera las fotos y decidió los 4 vacíos de flujo que quedaban.
+
+| Iteración | Qué | PR |
+|---|---|---|
+| 45d | El S3 de desarrollo con versitygw: las evidencias quedan en disco y sobreviven a un reinicio (`make storage-check`, `make storage-restore`) | #78 |
+| 45e | US-021 enmendada: la alerta de la cola de sellado, de usted y sin jerga técnica | #79 |
+| 43h | V13: el correo y el teléfono de contacto de la veeduría, en el pie de su sitio | #80 |
+| 43i | V9: el resumen diario de las evidencias por revisar (US-060-MON) | #81 |
+| 43j | V3: varios administradores por organización, sin dejarla nunca sin uno activo (US-061-USR) | #82 |
+| 43k | V10: la solicitud de alta desde el Inicio y la bandeja del Super Administrador (US-062-ALT) | #83 |
+
+- **Vacíos de flujo que quedan: 0.** Del V1 al V16, todos cerrados.
+- **Tests:** Pest 972, Vitest 485, `make e2e` 50 de 50 (ningún `fixme`), trace-check 339 de 339, y `make ux-check` sin retroceso.
+- **Las funciones de cada rol**, con lo que convendría agregar, están en `docs/funciones-por-rol.md`. Lo de más peso: sellar también lo que dice el SECOP II y alertar sus cambios retroactivos.
+- **Pendiente de tu parte:** lo mismo de la noche anterior, menos las dos decisiones por defecto, que ya aprobaste.
 
 ## Dónde quedó (2026-09-30, noche)
 
