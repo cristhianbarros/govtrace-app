@@ -137,5 +137,11 @@ test('Encuentra el verificador independiente desde el validador (V14)', async ({
     await expect(page.locator('a[data-test="verifier"]')).toHaveAttribute('href', /tools\/verify$/);
 });
 
-test.fixme('V13: contacta a la veeduría desde su página', async () => {});
+test('V13: contacta a la veeduría desde su página (it. 43h)', async ({ page }) => {
+    await page.goto(ORG);
+    const contact = page.locator('footer [data-test="contact"]');
+
+    await expect(contact.getByRole('link', { name: 'contacto@veeduria-e2e.org' })).toHaveAttribute('href', 'mailto:contacto@veeduria-e2e.org');
+    await expect(contact.getByRole('link', { name: '+57 300 123 4567' })).toHaveAttribute('href', 'tel:+573001234567');
+});
 

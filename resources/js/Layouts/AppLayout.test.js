@@ -51,4 +51,17 @@ describe('AppLayout', () => {
         expect(footer.get('svg[data-illustration="skyline"]').attributes('aria-hidden')).toBe('true');
         expect(mount(AppLayout).find('footer').exists()).toBe(false);
     });
+
+    it('shows the contact of the veeduría in its footer, when it has one (it. 43h, V13)', () => {
+        page.props = { organization: 'Veeduría Ciudadana Santa Marta', account: null, organizationContact: { email: 'contacto@veeduria-smr.org', phone: '+57 300 123 4567' } };
+        const contact = mount(AppLayout, { props: { sections: true } }).get('footer [data-test="contact"]');
+
+        expect(contact.text()).toContain('Contacto de la veeduría');
+        expect(contact.get('a[href="mailto:contacto@veeduria-smr.org"]').text()).toBe('contacto@veeduria-smr.org');
+        expect(contact.get('a[href="tel:+573001234567"]').text()).toBe('+57 300 123 4567');
+
+        page.props = { organization: 'Veeduría Ciudadana Santa Marta', account: null, organizationContact: null };
+        expect(mount(AppLayout, { props: { sections: true } }).find('[data-test="contact"]').exists()).toBe(false);
+    });
 });
+

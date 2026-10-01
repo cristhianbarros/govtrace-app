@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Tenant;
 
 use App\Application\Organization\UpdateOrganizationProfile;
+use App\Domain\Organization\Exceptions\ContactRejected;
 use App\Domain\Organization\Exceptions\LogoRejected;
 use App\Domain\Organization\Exceptions\OrganizationValidationException;
+use App\Domain\Organization\OrganizationContact;
 use App\Domain\Organization\OrganizationLogo;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
@@ -30,6 +32,9 @@ class OrganizationProfileController extends Controller
             'registration_authority' => $tenant->registration_authority,
             'subdomain' => $tenant->domains()->first()?->domain,
             'logo_url' => $tenant->logoUrl(),
+            // It. 43h (V13): su contacto público.
+            'contact_email' => $tenant->contact_email,
+            'contact_phone' => $tenant->contact_phone,
         ]]);
     }
 
@@ -38,7 +43,18 @@ class OrganizationProfileController extends Controller
         $request->validate([
             'display_name' => ['nullable', 'string'],
             'logo' => ['nullable', 'file'],
+            'contact_email' => ['nullable', 'string'],
+            'contact_phone' => ['nullable', 'string'],
         ]);
+
+        try {
+            // It. 43h (V13): sin los campos, el contacto no cambia; vacíos, se quita.
+            $contact = $request->hasAny(['contact_email', 'contact_phone'])
+                ? OrganizationContact::from($request->input('contact_email'), $request->input('contact_phone'))
+                : null;
+        } catch (ContactRejected $e) {
+            throw ValidationException::withMessages([$e->field => $e->getMessage()]);
+        }
 
         try {
             $logo = $request->hasFile('logo') ? OrganizationLogo::fromFile($request->file('logo')->getRealPath()) : null;
@@ -47,7 +63,7 @@ class OrganizationProfileController extends Controller
         }
 
         try {
-            (new UpdateOrganizationProfile)->handle($request->user('tenant'), $request->input('display_name'), $logo);
+            (new UpdateOrganizationProfile)->handle($request->user('tenant'), $request->input('display_name'), $logo, $contact);
         } catch (OrganizationValidationException $e) {
             throw ValidationException::withMessages(['display_name' => $e->getMessage()]);
         }

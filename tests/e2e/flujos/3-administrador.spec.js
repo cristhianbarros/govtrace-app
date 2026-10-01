@@ -95,6 +95,15 @@ test('Cuida la identidad de la organización y sigue el resumen y la auditoría'
     await expect(page.getByText('Publicó una evidencia').first()).toBeVisible();
 });
 
+test('Publica el contacto de la veeduría en su sitio (V13, it. 43h)', async ({ page }) => {
+    await enter(page, 'organization');
+
+    await page.getByLabel('Correo de contacto').fill('contacto@veeduria-e2e.org');
+    await page.getByLabel('Teléfono de contacto (opcional)').fill('+57 300 123 4567');
+    await page.getByRole('button', { name: 'Guardar cambios' }).click();
+    await expect(page.getByRole('status')).toContainText('Los cambios fueron guardados');
+});
+
 test('Autoriza al Super Administrador por 30 días y revoca la autorización', async ({ page }) => {
     await enter(page, 'authorization');
 

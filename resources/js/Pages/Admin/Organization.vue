@@ -1,7 +1,8 @@
 <script setup>
 // US-007: el nombre de fantasía y el logo de la veeduría — lo que sus
 // veedores y su mapa público ven. El NIT y el nombre legal se muestran, sin
-// editar: solo el Super Administrador los cambia (US-011, R-TA-03).
+// editar: solo el Super Administrador los cambia (US-011, R-TA-03). It. 43h
+// (V13): y su contacto público, que se ve en el pie de su sitio.
 import { Link } from '@inertiajs/vue3';
 import { onMounted, ref, watch } from 'vue';
 import LoadState from '@/Components/LoadState.vue';
@@ -17,12 +18,18 @@ const LOGO_MAX_BYTES = 2 * 1024 * 1024;
 const { data: profile, loading, error, load } = useLoader(fetchProfile);
 
 const displayName = ref('');
+const contactEmail = ref('');
+const contactPhone = ref('');
 const logo = ref(null);
 const saving = ref(false);
 const saved = ref(null);
 const refused = ref(null);
 
-watch(profile, (current) => (displayName.value = current?.display_name ?? ''));
+watch(profile, (current) => {
+    displayName.value = current?.display_name ?? '';
+    contactEmail.value = current?.contact_email ?? '';
+    contactPhone.value = current?.contact_phone ?? '';
+});
 
 function chooseLogo(event) {
     refused.value = null;
@@ -46,6 +53,8 @@ async function save() {
 
     const form = new FormData();
     form.append('display_name', displayName.value);
+    form.append('contact_email', contactEmail.value.trim());
+    form.append('contact_phone', contactPhone.value.trim());
     if (logo.value) {
         form.append('logo', logo.value);
     }
@@ -75,6 +84,15 @@ onMounted(load);
                     <label for="display-name" class="text-sm font-semibold text-slate-700">Nombre de fantasía</label>
                     <input id="display-name" v-model="displayName" type="text" maxlength="100" class="w-full rounded-lg border border-slate-300 px-3 py-3 text-base" />
                 </div>
+
+                <fieldset class="flex flex-col gap-2">
+                    <legend class="text-sm font-semibold text-slate-700">Contacto público</legend>
+                    <p class="text-sm text-slate-700">Se ven en el sitio público de la veeduría, para que cualquiera la contacte.</p>
+                    <label for="contact-email" class="text-sm font-semibold text-slate-700">Correo de contacto</label>
+                    <input id="contact-email" v-model="contactEmail" type="email" autocomplete="email" maxlength="150" placeholder="contacto@veeduria.org" class="w-full rounded-lg border border-slate-300 px-3 py-3 text-base" />
+                    <label for="contact-phone" class="text-sm font-semibold text-slate-700">Teléfono de contacto (opcional)</label>
+                    <input id="contact-phone" v-model="contactPhone" type="tel" autocomplete="tel" maxlength="30" placeholder="+57 300 123 4567" class="w-full rounded-lg border border-slate-300 px-3 py-3 text-base" />
+                </fieldset>
 
                 <div class="flex flex-col gap-2">
                     <span class="text-sm font-semibold text-slate-700">Logo</span>

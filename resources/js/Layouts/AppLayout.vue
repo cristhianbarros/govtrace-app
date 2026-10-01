@@ -1,9 +1,15 @@
 <script setup>
-import { Link } from '@inertiajs/vue3';
+import { Link, usePage } from '@inertiajs/vue3';
+import { computed } from 'vue';
 import AccountMenu from '@/Components/AccountMenu.vue';
 import Logo from '@/Components/Brand/Logo.vue';
 import Skyline from '@/Components/Brand/Skyline.vue';
 import SectionTabs from '@/Components/Public/SectionTabs.vue';
+
+const page = usePage();
+// It. 43h (V13): el contacto público de la veeduría, en el pie de su sitio.
+const contact = computed(() => page.props.organizationContact ?? null);
+const telephone = (phone) => `tel:${phone.replace(/[^\d+]/g, '')}`;
 
 defineProps({
     title: {
@@ -62,6 +68,11 @@ defineProps({
                     <p class="flex items-center gap-3 text-base">
                         <Logo />
                         <span><span class="font-display text-lg font-semibold text-white">GovTrace</span> · Evidencia ciudadana que nadie puede cambiar.</span>
+                    </p>
+                    <p v-if="contact" data-test="contact" class="flex flex-wrap items-center gap-x-4 text-base">
+                        <span class="font-semibold text-white">Contacto de la veeduría:</span>
+                        <a v-if="contact.email" :href="`mailto:${contact.email}`" class="inline-flex min-h-11 items-center text-white underline">{{ contact.email }}</a>
+                        <a v-if="contact.phone" :href="telephone(contact.phone)" class="inline-flex min-h-11 items-center text-white underline">{{ contact.phone }}</a>
                     </p>
                     <Link href="/privacidad" class="inline-flex min-h-11 items-center self-start text-base font-semibold text-white underline md:self-auto">Política de tratamiento de datos</Link>
                 </div>
