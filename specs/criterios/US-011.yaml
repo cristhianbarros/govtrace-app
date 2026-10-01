@@ -14,6 +14,7 @@ criterios_aceptacion:
   requisitos_ux: []
   casos_edge:
     - "It. 44d (A5): el Super Administrador agrega, cambia o quita la inscripción, con las mismas reglas del alta; la organización nunca queda sin NIT ni inscripción, y el cambio va al log de auditoría"
+    - "It. 43f (V8): el Super Administrador corrige la razón social, con las reglas del alta (3 a 150 caracteres); el log guarda la anterior y la nueva. El nombre que la organización muestra en su sitio (US-007) es otro campo: si lo tiene, no cambia"
 validacion_smart:
   specific: true
   measurable: true

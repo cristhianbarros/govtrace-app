@@ -46,7 +46,17 @@ test('Corrige los datos legales de una organización a solicitud formal: su NIT 
     await expect(row).toContainText('NIT 901555999-2 · Acta 45 de 2025, Cámara de Comercio de Santa Marta');
 });
 
-test.fixme('V8: cambia la razón social de una organización a solicitud formal', async () => {});
+test('V8: cambia la razón social de una organización a solicitud formal (it. 43f)', async ({ page }) => {
+    await enterThePanel(page);
+    const row = rowOf(page, ALTA);
+
+    await row.getByRole('button', { name: 'Editar datos legales' }).click();
+    await row.getByLabel('Razón social').fill(`${ALTA} del Magdalena`);
+    await row.getByRole('button', { name: 'Guardar datos legales' }).click();
+
+    await expect(page.getByText('Los datos legales han sido actualizados.')).toBeVisible();
+    await expect(row).toContainText(`${ALTA} del Magdalena`);
+});
 
 test('Suspende una organización y la reactiva', async ({ page }) => {
     await enterThePanel(page);

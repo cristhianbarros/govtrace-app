@@ -91,7 +91,7 @@ describe('Organizaciones', () => {
         await wrapper.get('form').trigger('submit');
         await flushPromises();
 
-        expect(updateOrganizationLegalData).toHaveBeenCalledWith('tenant-smr', { nit: '901234567-7', registration_number: null, registration_authority: null });
+        expect(updateOrganizationLegalData).toHaveBeenCalledWith('tenant-smr', { name: 'Veeduría Ciudadana Santa Marta', nit: '901234567-7', registration_number: null, registration_authority: null });
         expect(wrapper.get('[role="status"]').text()).toBe('Los datos legales han sido actualizados.');
     });
 
@@ -312,7 +312,26 @@ describe('Los datos legales de una veeduría sin NIT (it. 44d)', () => {
         await wrapper.get('form').trigger('submit');
         await flushPromises();
 
-        expect(updateOrganizationLegalData).toHaveBeenCalledWith('tenant-smr', { nit: '900123456-8', registration_number: 'Acta 45 de 2025', registration_authority: 'Cámara de Comercio de Santa Marta' });
+        expect(updateOrganizationLegalData).toHaveBeenCalledWith('tenant-smr', { name: 'Veeduría Ciudadana Santa Marta', nit: '900123456-8', registration_number: 'Acta 45 de 2025', registration_authority: 'Cámara de Comercio de Santa Marta' });
+    });
+});
+
+describe('La razón social (it. 43f, V8)', () => {
+    it('Actualización de la razón social con registro de auditoría: corrects the legal name with the other legal data', async () => {
+        fetchOrganizationDetail.mockResolvedValue(smrDetail);
+        updateOrganizationLegalData.mockResolvedValue({ message: 'Los datos legales han sido actualizados.' });
+        const wrapper = await openOrganizations([smr]);
+
+        await button(wrapper, 'Editar datos legales').trigger('click');
+        await flushPromises();
+        expect(wrapper.get('label[for="legal-name"]').text()).toBe('Razón social');
+        expect(wrapper.get('input#legal-name').element.value).toBe('Veeduría Ciudadana Santa Marta');
+
+        await wrapper.get('input#legal-name').setValue('Veeduría Ciudadana del Distrito de Santa Marta');
+        await wrapper.get('form').trigger('submit');
+        await flushPromises();
+
+        expect(updateOrganizationLegalData).toHaveBeenCalledWith('tenant-smr', { name: 'Veeduría Ciudadana del Distrito de Santa Marta', nit: '900123456-8', registration_number: null, registration_authority: null });
     });
 });
 
