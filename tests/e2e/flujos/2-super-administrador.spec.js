@@ -74,7 +74,19 @@ test('Suspende una organización y la reactiva', async ({ page }) => {
     await expect(row).toContainText('Activa');
 });
 
-test.fixme('V3: asigna otro Administrador a una organización, o reemplaza al que tiene', async () => {});
+test('V3: agrega otro Administrador a una organización que ya tiene uno (it. 43j)', async ({ page }) => {
+    await enterThePanel(page);
+    const administrators = rowOf(page, ALTA).locator('[data-test="administrators"]');
+
+    await administrators.getByRole('button', { name: 'Agregar otro Administrador' }).click();
+    await administrators.getByLabel('Nombre').fill('Ana Pérez');
+    await administrators.getByLabel('Correo electrónico').fill(`e2e.alta.admin2.${Date.now()}@correo.co`);
+    await administrators.getByRole('button', { name: 'Enviar invitación' }).click();
+
+    await expect(page.getByText(/Invitación enviada a e2e\.alta\.admin2\./)).toBeVisible();
+    await expect(administrators).toContainText('Ana Pérez');
+    await expect(administrators).toContainText('Invitación pendiente');
+});
 
 test('Opera la plataforma: parámetros, auditoría, SECOP, sellado y uso', async ({ page }) => {
     await enterThePanel(page);

@@ -57,7 +57,18 @@ test('Arma su equipo: invita a un veedor, que queda pendiente', async ({ page })
     await expect(page.getByText('Invitación pendiente')).toBeVisible();
 });
 
-test.fixme('V3: suma a otro Administrador a su organización', async () => {});
+test('V3: invita a otro Administrador a su organización (it. 43j)', async ({ page }) => {
+    await enter(page, 'observers');
+    const administrators = page.locator('[data-test="administrators"]');
+    const email = `e2e.coadmin.${Date.now()}@correo.co`;
+
+    await administrators.getByLabel('Nombre').fill('Ana Pérez');
+    await administrators.getByLabel('Correo electrónico').fill(email);
+    await administrators.getByRole('button', { name: 'Invitar administrador' }).click();
+
+    await expect(page.getByRole('status')).toHaveText(`Invitación enviada a ${email}. El enlace vence en 48 horas.`);
+    await expect(administrators).toContainText('Ana Pérez');
+});
 
 test('Ve su territorio, sus contratos y sus obras', async ({ page }) => {
     await enter(page, 'territory');

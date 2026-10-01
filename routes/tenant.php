@@ -8,6 +8,7 @@ use App\Application\Publication\StellarForBrowser;
 use App\Domain\Organization\Roles;
 use App\Http\Controllers\Auth\ChangePasswordController;
 use App\Http\Controllers\Auth\PasswordResetController;
+use App\Http\Controllers\Tenant\AdministratorController;
 use App\Http\Controllers\Tenant\AuditController;
 use App\Http\Controllers\Tenant\CitizenReportController;
 use App\Http\Controllers\Tenant\CitizenReportInboxController;
@@ -153,6 +154,9 @@ Route::middleware([
         // US-005: solo el Administrador de Organización invita veedores.
         Route::middleware('role:'.Roles::Administrator->value.',tenant')->group(function () {
             Route::post('/observers/invite', [InviteObserverController::class, 'store'])->name('observers.invite');
+            // It. 43j (V3, US-061-USR): los administradores de la organización, e invitar a otro.
+            Route::get('/administrators', [AdministratorController::class, 'index'])->name('administrators.index');
+            Route::post('/administrators/invite', [AdministratorController::class, 'invite'])->name('administrators.invite');
 
             // US-035: corregir la ubicación oficial de una obra de la organización.
             Route::patch('/worksites/{worksite}/location', [WorksiteLocationController::class, 'update'])->name('worksites.location.update');

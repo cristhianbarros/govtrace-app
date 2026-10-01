@@ -3,7 +3,7 @@
 import { flushPromises, mount } from '@vue/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import Observers from './Observers.vue';
-import { deactivateObserver, fetchObservers, inviteObserver, reactivateObserver, resendInvitation, revokeInvitation } from '@/services/api.js';
+import { deactivateObserver, fetchAdministrators, fetchObservers, inviteAdministrator, inviteObserver, reactivateObserver, resendInvitation, revokeInvitation } from '@/services/api.js';
 
 vi.mock('@inertiajs/vue3', async () => await import('@/testing/inertia.js'));
 vi.mock('@/services/api.js');
@@ -209,6 +209,47 @@ describe('La declaración de impedimentos de cada veedor (it. 44c)', () => {
         expect(rows[1]).toContain('Aún no declara sus impedimentos');
         // Quien no ha activado su cuenta la declara al activarla: todavía no es una falta.
         expect(rows[2]).not.toContain('impedimentos');
+    });
+});
+
+describe('Los administradores (it. 43j, V3)', () => {
+    const marta = { id: 1, name: 'Marta Ospina', email: 'marta@veeduria.org', status: 'active', label: 'Activo' };
+
+    it('shows the administrators of the organization, with how each one is going', async () => {
+        fetchAdministrators.mockResolvedValue([marta, { id: 2, name: 'Ana Pérez', email: 'ana@veeduria.org', status: 'pending', label: 'Invitación pendiente' }]);
+        const section = (await openObservers()).get('[data-test="administrators"]');
+
+        expect(section.get('h2').text()).toBe('Administradores');
+        expect(section.findAll('li').map((item) => item.text())).toEqual([
+            expect.stringContaining('Marta Ospina'),
+            expect.stringContaining('Invitación pendiente'),
+        ]);
+    });
+
+    it('Un Administrador invita a otro administrador: with a name and an email, and says so', async () => {
+        fetchAdministrators.mockResolvedValue([marta]);
+        inviteAdministrator.mockResolvedValue({ message: 'Invitación enviada a ana@veeduria.org. El enlace vence en 48 horas.' });
+        const wrapper = await openObservers();
+        const section = wrapper.get('[data-test="administrators"]');
+
+        await section.get('input#administrator-name').setValue('Ana Pérez');
+        await section.get('input#administrator-email').setValue('ana@veeduria.org');
+        await section.get('form').trigger('submit');
+        await flushPromises();
+
+        expect(inviteAdministrator).toHaveBeenCalledWith({ name: 'Ana Pérez', email: 'ana@veeduria.org' });
+        expect(wrapper.get('[role="status"]').text()).toBe('Invitación enviada a ana@veeduria.org. El enlace vence en 48 horas.');
+    });
+
+    it('does not send an invitation without a name and a valid email', async () => {
+        fetchAdministrators.mockResolvedValue([marta]);
+        const section = (await openObservers()).get('[data-test="administrators"]');
+
+        await section.get('input#administrator-email').setValue('ana@');
+        await section.get('form').trigger('submit');
+
+        expect(inviteAdministrator).not.toHaveBeenCalled();
+        expect(section.get('[role="alert"]').text()).toBe('Escriba el nombre y un correo electrónico válido.');
     });
 });
 

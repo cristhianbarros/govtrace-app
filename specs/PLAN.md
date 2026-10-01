@@ -1924,7 +1924,7 @@ Esta iteración estaba reservada para ese recorrido. El recorrido se hizo para e
 - `make e2e`: 35 pasan y 12 siguen pendientes. En el flujo de alta, el Super Administrador reenvía la invitación antes de que el Administrador la use. Se comprueba que el primer enlace ya no deja activar la cuenta y que la activación funciona con el nuevo.
 
 **Queda de la 43a:**
-- V3 (❓ varios administradores o reemplazarlo);
+- V3 (❓ varios administradores o reemplazarlo); → **Cerrado en la 43j.**
 - V7 (la pantalla para reportar en nombre de una organización); → **Cerrado en la 43g.**
 - V8 (la razón social). → **Cerrado en la 43f.**
 
@@ -2079,6 +2079,21 @@ Esta iteración estaba reservada para ese recorrido. El recorrido se hizo para e
 - **Prueba:**
   - Pest, 8 casos (los 5 escenarios, una sola organización, la hora y de usted);
   - `make e2e`: el `fixme` de V9 pasa a verde. El fixture de `make e2e` envía el resumen de su organización, y el flujo de la Administradora lo lee del correo de desarrollo, por su cuerpo: el asunto va codificado (MIME) en el log. El `fixme` repetido de V9 en el flujo de alta se quitó.
+
+**43j — V3: varios administradores por organización** (US-061-USR, historia nueva; enmienda de US-002). El usuario, el 2026-10-01: "Allow multiple administrators. A single admin is a single point of failure."
+
+✅ **43j cumplida (2026-10-01).**
+- **El Super Administrador agrega administradores** en cualquier momento, desde el panel global ("Agregar otro Administrador"), con la misma invitación de US-002.
+- **Los desactiva y los reactiva.** No se desactiva al único Administrador activo, porque una invitación pendiente no cuenta; primero se agrega otro. La sesión del desactivado se cierra en su siguiente petición (`EnsureAccountIsUsable`).
+- **Un Administrador invita a otro desde "Veedores"** y ve la lista de los administradores. Desactivar es del Super Administrador: es gobierno de la organización.
+- **El mismo correo no se repite en la organización** (R-USR-01).
+- **Todo va al log de auditoría:** `administrator_invited`, `_deactivated` y `_reactivated`.
+- **US-002 ya no dice que no se asigna un segundo.** Su escenario lleva una nota que apunta a US-061-USR.
+- **Prueba:**
+  - Pest, 9 casos de US-061-USR; el test de 43a que impedía un segundo ahora lo permite;
+  - Vitest: el panel global y "Veedores";
+  - `make e2e`: los dos `fixme` de V3 pasan a verde.
+- **Modelo:** Opus. Es control de acceso.
 
 **40e — Pestañas y una identidad simple y acogedora** (US-027, R-UX-10). El usuario pidió pestañas en vez de botones sueltos, un estilo con contraste y, sobre todo, una interfaz que impresione: "es como muy común… simple pero acogedora".
 

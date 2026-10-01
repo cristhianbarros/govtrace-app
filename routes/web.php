@@ -57,6 +57,9 @@ foreach (config('tenancy.central_domains') as $domain) {
             Route::post('/admin/organizations/{tenant}/administrators', [OrganizationAdministratorController::class, 'store'])->name('admin.organizations.administrators.store');
             Route::post('/admin/organizations/{tenant}/administrators/{user}/invitation/resend', [OrganizationAdministratorController::class, 'resend'])->whereNumber('user')->name('admin.organizations.administrators.resend');
             Route::post('/admin/organizations/{tenant}/administrators/{user}/invitation/revoke', [OrganizationAdministratorController::class, 'revoke'])->whereNumber('user')->name('admin.organizations.administrators.revoke');
+            // It. 43j (V3): varios administradores; el que se fue, desactivado, sin dejar la organización sin uno activo.
+            Route::post('/admin/organizations/{tenant}/administrators/{user}/deactivate', [OrganizationAdministratorController::class, 'deactivate'])->whereNumber('user')->name('admin.organizations.administrators.deactivate');
+            Route::post('/admin/organizations/{tenant}/administrators/{user}/reactivate', [OrganizationAdministratorController::class, 'reactivate'])->whereNumber('user')->name('admin.organizations.administrators.reactivate');
             Route::post('/admin/organizations/{tenant}/suspend', [OrganizationController::class, 'suspend'])->name('admin.organizations.suspend');
             Route::post('/admin/organizations/{tenant}/reactivate', [OrganizationController::class, 'reactivate'])->name('admin.organizations.reactivate');
             // US-003b: la baja definitiva, con doble confirmación.
