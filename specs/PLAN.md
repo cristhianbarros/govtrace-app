@@ -2022,6 +2022,32 @@ Esta iteración estaba reservada para ese recorrido. El recorrido se hizo para e
   - `make audit`: sin vulnerabilidades, con las dos tipografías nuevas;
   - capturas del Inicio, el mapa, una obra, el Administrador y el veedor, revisadas en celular y en computador.
 
+**40f — Ilustraciones en las pantallas vacías y más imágenes** (US-027, R-UX-10). El usuario: "sigue con las ilustraciones en las pantallas vacías, trata de añadir más imágenes que enriquezcan la interfaz. me gusta la interfaz pero podrías mejorarla".
+
+✅ **40f cumplida (2026-09-30).**
+- **Un juego de 16 ilustraciones** (`Components/Brand/Illustration.vue`): planas, redondeadas y en la paleta de 40e, dibujadas a mano en SVG dentro del código. No hay archivos que descargar ni licencias de terceros.
+  - Son decorativas: llevan `aria-hidden` y nunca dicen algo que el texto no diga.
+  - Un nombre desconocido dibuja la genérica, la caja abierta.
+- **Las pantallas vacías, ilustradas:** `LoadState` dibuja el vacío que pide cada pantalla, y el error trae su enchufe suelto junto a "Reintentar". "Cargando" gira, salvo con movimiento reducido.
+  - Admin: la bandeja al día, las obras, los contratos, los veedores, los informes ciudadanos y el registro.
+  - Veedor: "Mis Reportes" sin reportes.
+  - Público: el mapa y la lista sin resultados, la obra sin evidencias, las estadísticas sin meses, el Inicio sin veedurías y el mapa dado de baja.
+  - Super Administrador: las organizaciones, el uso, los sellos y SECOP.
+- **Más imágenes:**
+  - encabezados ilustrados (`PageHero`) en las estadísticas, el validador y la política;
+  - el ingreso y las pantallas de contraseña, como tarjetas con su dibujo;
+  - los tres pasos del Inicio, cada uno con su dibujo: la foto, el sello y el mapa;
+  - el pie del sitio de cada veeduría, con el barrio en silueta (`Skyline`, un patrón que se repite sin estirarse), GovTrace y la política. Este pie reemplaza el enlace suelto al pie del mapa.
+- **Mejoras de paso:**
+  - las evidencias por mes en barras proporcionales al mes con más evidencias;
+  - las fichas de las estadísticas con su número grande;
+  - los estados de "Mis Reportes" como etiquetas de color (bien, en espera, mal), que siempre llevan su palabra (R-UX-05).
+- **Prueba:**
+  - Vitest: 455 de 455 (16 casos nuevos, vistos en rojo antes de implementar);
+  - `make e2e`: 42 pasan;
+  - `make ux-check`: sin retroceso y sin problemas de axe. La línea base se reescribió: bajan los textos chicos de las estadísticas (10 → 0), el mapa, la obra y el validador. La auditoría del Super Administrador sube 1 porque su registro crece con cada corrida;
+  - capturas en celular y en computador del Inicio, el mapa, una obra, las estadísticas, el validador, la política, el ingreso, los informes ciudadanos vacíos y "Mis Reportes".
+
 ## Fase v1 — Alinear con el proceso actual (2026-09-30)
 
 La revisión documental del control social de hoy (`docs/proceso-actual.md`, PR #60) comparó GovTrace con la ley. Encontró que GovTrace termina en el mapa, un paso antes del proceso formal, y que nuestro "En riesgo" se confunde con la "obra inconclusa" de la ley.

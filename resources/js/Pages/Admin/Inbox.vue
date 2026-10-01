@@ -11,8 +11,8 @@ import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { fetchInbox } from '@/services/api.js';
 
 const tabs = [
-    { status: 'hidden', label: 'Por revisar', empty: 'No hay evidencias por revisar.' },
-    { status: 'published', label: 'Publicadas', empty: 'No hay evidencias publicadas.' },
+    { status: 'hidden', label: 'Por revisar', empty: 'No hay evidencias por revisar.', illustration: 'inbox-done' },
+    { status: 'published', label: 'Publicadas', empty: 'No hay evidencias publicadas.', illustration: 'evidence' },
 ];
 
 const tab = ref(tabs[0]);
@@ -60,6 +60,7 @@ onMounted(() => open(tabs[0]));
             :empty="evidences?.length === 0"
             loading-text="Cargando evidencias…"
             :empty-text="tab.empty"
+            :illustration="tab.illustration"
             @retry="load(tab.status)"
         >
             <div class="flex flex-col gap-4">

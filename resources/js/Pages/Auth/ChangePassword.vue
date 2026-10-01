@@ -4,6 +4,7 @@
 // reglas que al crearla (US-030); el servidor lo vuelve a comprobar.
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import { ref } from 'vue';
+import Illustration from '@/Components/Brand/Illustration.vue';
 import PasswordField from '@/Components/PasswordField.vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { PASSWORD_RULES_MESSAGE, isStrongPassword } from '@/lib/credentials.js';
@@ -52,9 +53,12 @@ async function submit() {
 <template>
     <Head title="Cambiar contraseña" />
     <AppLayout :title="page.props.organization ?? 'GovTrace'" :logo="page.props.organizationLogo ?? null">
-        <div class="mx-auto flex w-full max-w-md flex-col gap-5 pt-2">
+        <div class="mx-auto mt-2 flex w-full max-w-md flex-col gap-5 rounded-3xl bg-white p-5 shadow-soft ring-1 ring-slate-900/5 md:p-7">
             <Link :href="home" class="inline-flex min-h-11 items-center self-start text-base font-semibold text-slate-700">Volver a mi panel</Link>
-            <h1 class="text-xl font-semibold">Cambiar contraseña</h1>
+            <div class="flex flex-col items-center gap-2 text-center">
+                <Illustration name="privacy" size="w-28" />
+                <h1 class="text-2xl">Cambiar contraseña</h1>
+            </div>
             <p v-if="done" role="status" class="rounded-lg bg-emerald-50 p-3 text-base font-semibold text-emerald-900">{{ done }}</p>
 
             <form class="flex flex-col gap-4" novalidate @submit.prevent="submit">

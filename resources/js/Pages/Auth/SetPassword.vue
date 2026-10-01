@@ -5,6 +5,7 @@
 // US-057-LEG (it. 44c): el veedor declara además que no tiene impedimentos para serlo.
 import { Head, useForm } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
+import Illustration from '@/Components/Brand/Illustration.vue';
 import ImpedimentsDeclaration from '@/Components/ImpedimentsDeclaration.vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { PASSWORD_RULES_MESSAGE, isStrongPassword } from '@/lib/credentials.js';
@@ -49,8 +50,11 @@ function submit() {
 <template>
     <Head title="Crear contraseña" />
     <AppLayout title="GovTrace">
-        <div class="mx-auto flex w-full max-w-sm flex-col gap-5 pt-4">
-            <h1 class="text-xl font-semibold">Crear contraseña</h1>
+        <div class="mx-auto mt-2 flex w-full max-w-sm flex-col gap-5 rounded-3xl bg-white p-5 shadow-soft ring-1 ring-slate-900/5 md:p-7">
+            <div class="flex flex-col items-center gap-2 text-center">
+                <Illustration name="welcome" size="w-28" />
+                <h1 class="text-2xl">Crear contraseña</h1>
+            </div>
 
             <p v-if="!valid" role="alert" class="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">{{ message }}</p>
 

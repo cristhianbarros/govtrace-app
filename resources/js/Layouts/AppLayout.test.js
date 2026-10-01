@@ -41,4 +41,14 @@ describe('AppLayout', () => {
         page.props = { organization: 'Veeduría Ciudadana Santa Marta', account: null };
         expect(mount(AppLayout).find('header button[aria-haspopup="menu"]').exists()).toBe(false);
     });
+
+    it('ends the site of a veeduría with the GovTrace footer, its neighborhood and the data policy (it. 40f)', () => {
+        page.props = { organization: 'Veeduría Ciudadana Santa Marta', account: null };
+        const footer = mount(AppLayout, { props: { sections: true } }).get('footer');
+
+        expect(footer.text()).toContain('GovTrace');
+        expect(footer.get('a[href="/privacidad"]').text()).toBe('Política de tratamiento de datos');
+        expect(footer.get('svg[data-illustration="skyline"]').attributes('aria-hidden')).toBe('true');
+        expect(mount(AppLayout).find('footer').exists()).toBe(false);
+    });
 });

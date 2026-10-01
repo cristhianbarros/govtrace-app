@@ -77,3 +77,22 @@ describe('Estadísticas del territorio', () => {
         expect(wrapper.text()).toContain('Las obras en riesgo son alertas de GovTrace, no obras inconclusas en el sentido de la Ley 2020 de 2020.');
     });
 });
+
+describe('Las evidencias por mes, como barras (it. 40f)', () => {
+    it('draws each month as a bar as long as its share of the busiest month', async () => {
+        const wrapper = await openStats({ ...stats, published_by_month: [{ month: '2026-08', total: 2 }, { month: '2026-09', total: 8 }] });
+        const bars = wrapper.findAll('[data-test="month"] [data-test="bar"]');
+
+        expect(bars.map((bar) => bar.attributes('style'))).toEqual(['width: 25%;', 'width: 100%;']);
+        expect(wrapper.findAll('[data-test="month"]').map((row) => row.text())).toEqual([expect.stringContaining('2'), expect.stringContaining('8')]);
+    });
+});
+
+describe('Los encabezados, ilustrados (it. 40f)', () => {
+    it('names the statistics next to their growing bars', async () => {
+        const hero = (await openStats()).get('[data-test="hero"]');
+
+        expect(hero.get('h1').text()).toBe('Estadísticas del territorio');
+        expect(hero.get('svg').attributes('data-illustration')).toBe('stats');
+    });
+});

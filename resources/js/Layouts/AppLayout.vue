@@ -1,6 +1,8 @@
 <script setup>
+import { Link } from '@inertiajs/vue3';
 import AccountMenu from '@/Components/AccountMenu.vue';
 import Logo from '@/Components/Brand/Logo.vue';
+import Skyline from '@/Components/Brand/Skyline.vue';
 import SectionTabs from '@/Components/Public/SectionTabs.vue';
 
 defineProps({
@@ -51,6 +53,20 @@ defineProps({
         <main v-else class="mx-auto w-full flex-1 p-4 md:max-w-3xl lg:max-w-5xl">
             <slot />
         </main>
+
+        <!-- It. 40f: el sitio de una veeduría termina con su barrio en silueta, GovTrace y la política (US-058-LEG). -->
+        <footer v-if="sections" class="mt-8 text-brand-900">
+            <Skyline />
+            <div class="bg-brand-900 px-4 py-6 text-brand-50">
+                <div class="mx-auto flex w-full flex-col gap-3 md:max-w-3xl md:flex-row md:items-center md:justify-between lg:max-w-5xl">
+                    <p class="flex items-center gap-3 text-base">
+                        <Logo />
+                        <span><span class="font-display text-lg font-semibold text-white">GovTrace</span> · Evidencia ciudadana que nadie puede cambiar.</span>
+                    </p>
+                    <Link href="/privacidad" class="inline-flex min-h-11 items-center self-start text-base font-semibold text-white underline md:self-auto">Política de tratamiento de datos</Link>
+                </div>
+            </div>
+        </footer>
 
         <!-- Optional bottom navigation: fixed and thumb-reachable on phones. On a computer it is not needed
              there (with a sidebar, it goes; without one, it stays at the end instead of covering content). -->

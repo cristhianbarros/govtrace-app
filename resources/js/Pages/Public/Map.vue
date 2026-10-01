@@ -4,8 +4,9 @@
 // sus datos en ese momento.
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { computed, onMounted, reactive, ref, watch } from 'vue';
-import LoadState from '@/Components/LoadState.vue';
+import Illustration from '@/Components/Brand/Illustration.vue';
 import WorksIllustration from '@/Components/Brand/WorksIllustration.vue';
+import LoadState from '@/Components/LoadState.vue';
 import OrganizationNotice from '@/Components/Public/OrganizationNotice.vue';
 import PinsMap from '@/Components/Public/PinsMap.vue';
 import { useLoader } from '@/composables/useLoader.js';
@@ -181,7 +182,10 @@ onMounted(async () => {
             <input id="worksite-words" v-model="words" type="search" placeholder="Por ejemplo: parque, colegio, Calle 30" class="min-h-12 rounded-lg border border-slate-300 bg-white px-3 text-base" />
             <p v-if="listError" role="alert" class="rounded-lg bg-red-50 p-3 text-base text-red-800">{{ listError }}</p>
             <p v-else-if="listed === null" class="text-base text-slate-700">Cargando obras…</p>
-            <p v-else-if="shown.length === 0" class="rounded-2xl bg-white p-3 text-base text-slate-700 shadow-soft ring-1 ring-slate-900/5">{{ words.trim() ? 'Ninguna obra se llama así. Pruebe con otra palabra.' : 'No hay obras que coincidan con estos filtros.' }}</p>
+            <div v-else-if="shown.length === 0" data-test="empty" class="flex flex-col items-center gap-2 rounded-2xl bg-white px-4 py-6 text-center shadow-soft ring-1 ring-slate-900/5">
+                <Illustration name="search" size="w-32" />
+                <p class="text-base text-slate-700">{{ words.trim() ? 'Ninguna obra se llama así. Pruebe con otra palabra.' : 'No hay obras que coincidan con estos filtros.' }}</p>
+            </div>
             <ul v-else class="flex flex-col gap-2">
                 <li v-for="worksite in shown" :key="worksite.id" data-test="listed">
                     <Link :href="`/worksite/${worksite.id}`" class="flex min-h-16 items-center gap-3 rounded-2xl bg-white shadow-soft ring-1 ring-slate-900/5 p-3 hover:bg-slate-50"><span aria-hidden="true" class="grid size-9 shrink-0 place-items-center rounded-full text-lg font-bold" :class="LOOK[worksite.color_pin].css">{{ LOOK[worksite.color_pin].icon }}</span> <span class="flex flex-col"><span class="text-sm font-semibold">{{ LOOK[worksite.color_pin].label }}</span> <span class="text-base font-semibold">{{ worksite.name }}</span> <span class="text-sm text-slate-700">{{ worksite.municipality }}</span></span></Link>
@@ -196,13 +200,10 @@ onMounted(async () => {
             :empty="pins !== null && pins.length === 0"
             loading-text="Cargando obras…"
             empty-text="No se encontraron obras o evidencias que coincidan con estos filtros en este territorio."
+            illustration="search"
             @retry="load(active)"
         >
             <PinsMap :pins="pins ?? []" @select="(id) => router.visit(`/worksite/${id}`)" />
         </LoadState>
-        <!-- It. 40e: Estadísticas y Validar son pestañas de la cabecera; al pie queda la política (US-058-LEG). -->
-        <footer class="mt-4">
-            <Link href="/privacidad" class="inline-flex min-h-11 items-center px-1 text-sm font-semibold text-slate-700 underline">Política de tratamiento de datos</Link>
-        </footer>
     </AppLayout>
 </template>

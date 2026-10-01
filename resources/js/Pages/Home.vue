@@ -3,8 +3,9 @@
 // (R-MAP-01): cada una publica el suyo. It. 40d (V5): es la puerta de entrada
 // para cualquiera — qué es, cómo funciona y el directorio de veedurías, cada
 // una con el enlace a su mapa. El acceso del Super Administrador, al pie.
-import { BuildingOffice2Icon, CameraIcon, CheckBadgeIcon, MapIcon } from '@heroicons/vue/24/outline';
+import { BuildingOffice2Icon } from '@heroicons/vue/24/outline';
 import { Head, Link } from '@inertiajs/vue3';
+import Illustration from '@/Components/Brand/Illustration.vue';
 import WorksIllustration from '@/Components/Brand/WorksIllustration.vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 
@@ -13,9 +14,9 @@ defineProps({
 });
 
 const STEPS = [
-    { icon: CameraIcon, text: 'Los veedores de cada veeduría ciudadana visitan las obras públicas y toman fotos con su celular.' },
-    { icon: CheckBadgeIcon, text: 'Cada foto recibe un sello digital en el momento: nadie puede borrarla ni cambiarla después.' },
-    { icon: MapIcon, text: 'La veeduría las revisa y las publica en su mapa, donde cualquiera las ve y comprueba que son originales.' },
+    { art: 'evidence', text: 'Los veedores de cada veeduría ciudadana visitan las obras públicas y toman fotos con su celular.' },
+    { art: 'validator', text: 'Cada foto recibe un sello digital en el momento: nadie puede borrarla ni cambiarla después.' },
+    { art: 'map', text: 'La veeduría las revisa y las publica en su mapa, donde cualquiera las ve y comprueba que son originales.' },
 ];
 </script>
 
@@ -40,11 +41,10 @@ const STEPS = [
                 <h2 id="how-title" class="text-2xl">¿Cómo funciona?</h2>
                 <ol data-test="how" class="mt-4 grid gap-3 md:grid-cols-3">
                     <li v-for="(step, index) in STEPS" :key="index" class="flex flex-col gap-3 rounded-2xl bg-white p-5 shadow-soft ring-1 ring-slate-900/5">
-                        <div class="flex items-center gap-3">
-                            <span class="grid size-12 place-items-center rounded-2xl bg-brand-50 text-brand-700">
-                                <component :is="step.icon" aria-hidden="true" class="size-7" />
-                            </span>
-                            <span aria-hidden="true" class="font-display text-3xl font-semibold text-warm-500">{{ index + 1 }}</span>
+                        <!-- It. 40f: cada paso, con su dibujo y su número. -->
+                        <div class="flex items-end justify-between gap-3">
+                            <span aria-hidden="true" class="font-display text-4xl font-semibold text-warm-500">{{ index + 1 }}</span>
+                            <Illustration :name="step.art" size="w-32" />
                         </div>
                         <p class="text-base"><span class="sr-only">{{ index + 1 }}.</span> {{ step.text }}</p>
                     </li>
@@ -53,7 +53,10 @@ const STEPS = [
 
             <section id="veedurias" aria-labelledby="directory-title" class="flex scroll-mt-20 flex-col gap-3">
                 <h2 id="directory-title" class="text-2xl">Veedurías en GovTrace</h2>
-                <p v-if="organizations.length === 0" class="rounded-2xl bg-white p-5 text-base text-slate-700 shadow-soft ring-1 ring-slate-900/5">Aún no hay veedurías publicando en GovTrace.</p>
+                <div v-if="organizations.length === 0" data-test="empty" class="flex flex-col items-center gap-2 rounded-2xl bg-white px-4 py-6 text-center shadow-soft ring-1 ring-slate-900/5">
+                    <Illustration name="team" size="w-36" />
+                    <p class="text-base text-slate-700">Aún no hay veedurías publicando en GovTrace.</p>
+                </div>
                 <ul v-else class="grid gap-3 md:grid-cols-2">
                     <li v-for="organization in organizations" :key="organization.url" data-test="organization" class="flex flex-col justify-between gap-4 rounded-2xl border-l-8 border-brand-600 bg-white p-5 shadow-soft">
                         <div class="flex items-start gap-3">

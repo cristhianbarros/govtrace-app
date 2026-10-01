@@ -86,3 +86,12 @@ describe('La política de datos (it. 44e)', () => {
         expect(wrapper.findAll('a').find((link) => link.text() === 'Política de tratamiento de datos').attributes('href')).toBe('/privacidad');
     });
 });
+
+describe('La bienvenida, ilustrada (it. 40f)', () => {
+    it('welcomes with the open door, above the title', () => {
+        const { wrapper } = loginAs('', '');
+
+        expect(wrapper.get('form svg').attributes('data-illustration')).toBe('welcome');
+        expect(wrapper.get('h1').text()).toBe('Iniciar sesión');
+    });
+});

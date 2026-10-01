@@ -32,6 +32,7 @@ function priceNote(price) {
             :empty="report?.rows.length === 0"
             loading-text="Calculando las comisiones…"
             empty-text="Aún no hay sellos en la red de Stellar."
+            illustration="stats"
             @retry="load"
         >
             <p data-test="price" class="text-sm" :class="report.price?.live ? 'text-slate-600' : 'rounded-lg bg-amber-50 p-3 text-amber-900'">

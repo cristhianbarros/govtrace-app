@@ -110,6 +110,7 @@ onMounted(load);
                 :empty="organizations?.length === 0"
                 loading-text="Cargando organizaciones…"
                 empty-text="Aún no hay organizaciones registradas."
+                illustration="team"
                 @retry="load"
             >
                 <ul class="flex flex-col gap-2">

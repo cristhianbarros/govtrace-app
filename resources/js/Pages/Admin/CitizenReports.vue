@@ -58,7 +58,7 @@ onMounted(load);
         <p class="text-base text-slate-700">Lo que los ciudadanos le informan a la veeduría desde el mapa. La ley la obliga a recibirlo (Ley 850 de 2003, art. 18). No se publica ni se sella; su correo no se muestra: la respuesta le llega desde GovTrace.</p>
         <p v-if="notice" role="status" class="rounded-lg bg-emerald-50 p-3 text-sm font-semibold text-emerald-800">{{ notice }}</p>
 
-        <LoadState :loading="loading" :error="error" :empty="reports?.length === 0" loading-text="Cargando informes…" empty-text="Aún no hay informes de ciudadanos." @retry="load">
+        <LoadState :loading="loading" :error="error" :empty="reports?.length === 0" loading-text="Cargando informes…" empty-text="Aún no hay informes de ciudadanos." illustration="messages" @retry="load">
             <div class="flex flex-col gap-3">
                 <article v-for="report in reports" :key="report.id" data-test="citizen-report" class="flex flex-col gap-2 rounded-2xl bg-white p-3 text-base shadow-soft ring-1 ring-slate-900/5">
                     <header class="flex flex-wrap items-center justify-between gap-2">

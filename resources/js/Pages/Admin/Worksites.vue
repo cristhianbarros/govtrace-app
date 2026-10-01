@@ -101,6 +101,7 @@ onMounted(load);
             :empty="worksites?.length === 0"
             loading-text="Cargando obras…"
             empty-text="Aún no hay obras. Una obra aparece aquí con el primer reporte de uno de sus contratos."
+            illustration="works"
             @retry="load"
         >
             <p class="text-sm text-slate-700"><strong>Descargar expediente:</strong> Un ZIP con las evidencias publicadas, sus pruebas y las plantillas del derecho de petición y de la denuncia ante la Contraloría.</p>

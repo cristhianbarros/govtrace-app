@@ -18,6 +18,10 @@ import { errorMessage } from '@/services/errors.js';
 import { fetchMyReports, fetchReceipt } from '@/services/api.js';
 
 const page = usePage();
+// It. 40f: cada estado, una etiqueta de color — bien, en espera o mal.
+const TONE = { Sellado: 'good', Publicado: 'good', 'En Cola': 'waiting', Sellando: 'waiting', 'En Revisión': 'waiting', Rechazada: 'bad' };
+const TONE_CSS = { good: 'bg-green-100 text-green-900', waiting: 'bg-amber-100 text-amber-900', bad: 'bg-red-100 text-red-900', neutral: 'bg-slate-100 text-slate-800' };
+const tone = (status) => TONE[status] ?? 'neutral';
 const { data: reports, loading, error, load } = useLoader(fetchMyReports);
 
 // El recibo abierto de cada reporte: { loading, receipt, error }.
@@ -77,6 +81,7 @@ onBeforeUnmount(() => window.removeEventListener('online', onOnline));
             :empty="reports !== null && reports.length === 0"
             loading-text="Cargando sus reportes…"
             empty-text="Aún no ha enviado reportes. Los que envíe aparecerán aquí, con su estado."
+            illustration="reports"
             @retry="load"
         >
             <ol class="flex flex-col gap-3">
@@ -84,8 +89,8 @@ onBeforeUnmount(() => window.removeEventListener('online', onOnline));
                     <p class="text-sm text-slate-600">{{ formatDateTime(report.captured_at) }} · {{ report.classification }}</p>
                     <p class="font-semibold">{{ report.worksite }}</p>
                     <dl class="mt-2 grid grid-cols-2 gap-2 text-sm">
-                        <div><dt class="text-xs text-slate-600">Sello digital</dt><dd data-test="technical" class="font-semibold">{{ report.technical_status }}</dd></div>
-                        <div><dt class="text-xs text-slate-600">Publicación</dt><dd data-test="editorial" class="font-semibold">{{ report.editorial_status }}</dd></div>
+                        <div class="flex flex-col items-start gap-1"><dt class="text-xs text-slate-600">Sello digital</dt><dd data-test="technical" :data-tone="tone(report.technical_status)" class="rounded-full px-3 py-0.5 font-semibold" :class="TONE_CSS[tone(report.technical_status)]">{{ report.technical_status }}</dd></div>
+                        <div class="flex flex-col items-start gap-1"><dt class="text-xs text-slate-600">Publicación</dt><dd data-test="editorial" :data-tone="tone(report.editorial_status)" class="rounded-full px-3 py-0.5 font-semibold" :class="TONE_CSS[tone(report.editorial_status)]">{{ report.editorial_status }}</dd></div>
                     </dl>
                     <p v-if="report.rejection_reason" class="mt-2 rounded bg-red-50 p-2 text-sm text-red-800">Motivo: {{ report.rejection_reason }}</p>
                     <button type="button" class="mt-3 min-h-11 rounded-xl border border-brand-200 text-brand-800 hover:bg-brand-50 px-3 text-sm font-semibold" :aria-expanded="Boolean(receipts[report.id])" @click="toggleReceipt(report)">Ver recibo</button>

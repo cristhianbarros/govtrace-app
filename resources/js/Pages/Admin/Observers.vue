@@ -77,7 +77,7 @@ onMounted(load);
 
         <p v-if="notice" role="status" class="rounded-lg bg-emerald-50 p-3 text-sm font-semibold text-emerald-800">{{ notice }}</p>
 
-        <LoadState :loading="loading" :error="error" :empty="team?.length === 0" loading-text="Cargando veedores…" empty-text="Aún no ha invitado veedores." @retry="load">
+        <LoadState :loading="loading" :error="error" :empty="team?.length === 0" loading-text="Cargando veedores…" empty-text="Aún no ha invitado veedores." illustration="team" @retry="load">
             <ul class="flex flex-col divide-y divide-slate-100 rounded-lg bg-white">
                 <li v-for="member in team" :key="member.id" class="flex flex-col gap-2 px-3 py-3 text-sm">
                     <div class="flex items-center justify-between gap-2">

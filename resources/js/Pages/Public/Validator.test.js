@@ -125,3 +125,12 @@ describe('El verificador independiente (it. 43b, V14)', () => {
         expect(link.text()).toBe('Compruébelo por su cuenta con el programa independiente');
     });
 });
+
+describe('Los encabezados, ilustrados (it. 40f)', () => {
+    it('names the validator next to the file and its seal', () => {
+        const hero = mount(Validator).get('[data-test="hero"]');
+
+        expect(hero.get('h1').text()).toBe('Validador de evidencias');
+        expect(hero.get('svg').attributes('data-illustration')).toBe('validator');
+    });
+});

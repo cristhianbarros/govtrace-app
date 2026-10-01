@@ -217,3 +217,14 @@ describe('El Recibo de Inmutabilidad en la app (US-023)', () => {
         expect(receipt.find('a').exists()).toBe(false); // la red local no tiene explorador
     });
 });
+
+describe('Los estados, de un vistazo (it. 40f)', () => {
+    it('shows each state as a tag whose color says if it went well, is waiting or went wrong', async () => {
+        const wrapper = await openMyReports();
+        const tones = (item) => ['technical', 'editorial'].map((field) => item.get(`[data-test="${field}"]`).attributes('data-tone'));
+
+        expect(tones(items(wrapper)[0])).toEqual(['good', 'good']);
+        expect(tones(items(wrapper)[1])).toEqual(['good', 'bad']);
+        expect(tones(items(wrapper)[2])).toEqual(['waiting', 'waiting']);
+    });
+});

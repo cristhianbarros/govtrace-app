@@ -85,10 +85,10 @@
   },
   "escritorio/publico-estadisticas": {
     "axe": {},
-    "textUnder16": 10,
+    "textUnder16": 0,
     "textUnder14": 0,
     "smallTargets": 0,
-    "targets": 6
+    "targets": 7
   },
   "escritorio/publico-inicio": {
     "axe": {},
@@ -99,35 +99,35 @@
   },
   "escritorio/publico-mapa": {
     "axe": {},
-    "textUnder16": 10,
+    "textUnder16": 9,
     "textUnder14": 0,
     "smallTargets": 21,
     "targets": 24
   },
   "escritorio/publico-obra": {
     "axe": {},
-    "textUnder16": 9,
+    "textUnder16": 8,
     "textUnder14": 0,
     "smallTargets": 0,
-    "targets": 21
+    "targets": 22
   },
   "escritorio/publico-privacidad": {
     "axe": {},
     "textUnder16": 0,
     "textUnder14": 0,
     "smallTargets": 0,
-    "targets": 5
+    "targets": 6
   },
   "escritorio/publico-validador": {
     "axe": {},
-    "textUnder16": 6,
+    "textUnder16": 5,
     "textUnder14": 0,
     "smallTargets": 0,
-    "targets": 7
+    "targets": 8
   },
   "escritorio/superadmin-auditoria": {
     "axe": {},
-    "textUnder16": 81,
+    "textUnder16": 82,
     "textUnder14": 0,
     "smallTargets": 0,
     "targets": 9
@@ -288,10 +288,10 @@
   },
   "movil/publico-estadisticas": {
     "axe": {},
-    "textUnder16": 10,
+    "textUnder16": 0,
     "textUnder14": 0,
     "smallTargets": 0,
-    "targets": 6
+    "targets": 7
   },
   "movil/publico-inicio": {
     "axe": {},
@@ -302,35 +302,35 @@
   },
   "movil/publico-mapa": {
     "axe": {},
-    "textUnder16": 10,
+    "textUnder16": 9,
     "textUnder14": 0,
     "smallTargets": 21,
     "targets": 24
   },
   "movil/publico-obra": {
     "axe": {},
-    "textUnder16": 9,
+    "textUnder16": 8,
     "textUnder14": 0,
     "smallTargets": 0,
-    "targets": 21
+    "targets": 22
   },
   "movil/publico-privacidad": {
     "axe": {},
     "textUnder16": 0,
     "textUnder14": 0,
     "smallTargets": 0,
-    "targets": 5
+    "targets": 6
   },
   "movil/publico-validador": {
     "axe": {},
-    "textUnder16": 6,
+    "textUnder16": 5,
     "textUnder14": 0,
     "smallTargets": 0,
-    "targets": 7
+    "targets": 8
   },
   "movil/superadmin-auditoria": {
     "axe": {},
-    "textUnder16": 82,
+    "textUnder16": 83,
     "textUnder14": 0,
     "smallTargets": 0,
     "targets": 7
