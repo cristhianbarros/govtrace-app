@@ -144,7 +144,7 @@ it('a worksite grouping several contracts is at risk when any of them expired wh
 });
 
 it('is scheduled to run once a day, after the SECOP sync it depends on', function () {
-    Artisan::call('schedule:list');
+    Artisan::call('schedule:list', ['--timezone' => 'America/Bogota']); // it. 45a: la hora de Colombia
 
     // 03:00, una hora después de la sincronización de las 02:00
     // (routes/console.php) — calcular el riesgo con contratos viejos no

@@ -36,7 +36,8 @@ foreach (config('tenancy.central_domains') as $domain) {
         Route::get('/reset-password/{token}', [PasswordResetController::class, 'resetForm'])->name('password.reset');
         Route::post('/reset-password', [PasswordResetController::class, 'reset'])->name('password.update');
 
-        Route::middleware('auth:web')->group(function () {
+        // It. 45a: 'auth.session' cierra la sesión si la contraseña cambió desde que se abrió.
+        Route::middleware(['auth:web', 'auth.session'])->group(function () {
             // It. 40b (V1): cerrar sesión, como en cada organización.
             Route::post('/logout', [LoginController::class, 'destroy'])->name('logout');
             // It. 40c (V11): cambiar la contraseña con la sesión abierta.

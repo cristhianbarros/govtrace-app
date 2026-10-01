@@ -26,7 +26,7 @@ enum ConfigurableParameter: string
             self::ClosedContractWindow => 'Ventana de Terminados y Liquidados',
             self::InvitationValidity => 'Vigencia de invitaciones',
             self::SponsorBalanceThreshold => 'Umbral de saldo de la patrocinadora',
-            self::SecopSyncHour => 'Hora de sincronización SECOP',
+            self::SecopSyncHour => 'Hora de sincronización SECOP (hora de Colombia)',
         };
     }
 

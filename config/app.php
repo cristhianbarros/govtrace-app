@@ -67,6 +67,10 @@ return [
 
     'timezone' => 'UTC',
 
+    // It. 45a: el calendario (routes/console.php) corre en la hora de Colombia: la
+    // hora de cada tarea y la del parámetro de la sincronización SECOP son las de aquí.
+    'schedule_timezone' => 'America/Bogota',
+
     /*
     |--------------------------------------------------------------------------
     | Application Locale Configuration

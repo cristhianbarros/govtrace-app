@@ -137,7 +137,7 @@ it('does not bring the link back when the organization exports or publishes its 
 });
 
 it('purges every day', function () {
-    Artisan::call('schedule:list');
+    Artisan::call('schedule:list', ['--timezone' => 'America/Bogota']); // it. 45a: la hora de Colombia
 
-    expect(Artisan::output())->toMatch('/30\s+6\s+\*\s+\*\s+\*\s+veedor-pseudonyms-purge/');
+    expect(Artisan::output())->toMatch('/30\s+1\s+\*\s+\*\s+\*\s+veedor-pseudonyms-purge/');
 });

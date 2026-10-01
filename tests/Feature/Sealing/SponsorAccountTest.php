@@ -94,7 +94,7 @@ function assertAlerted(string $class, string $message, int $times = 1): void
 // US-022 ---------------------------------------------------------------------
 
 it('Consulta periódica del saldo: every 15 minutes, through the Stellar RPC', function () {
-    Artisan::call('schedule:list');
+    Artisan::call('schedule:list', ['--timezone' => 'America/Bogota']); // it. 45a: la hora de Colombia
     expect(Artisan::output())->toMatch('/\*\/15\s+\*\s+\*\s+\*\s+\*\s+sponsor-balance-check/');
 
     checkSponsorBalance();
@@ -209,9 +209,9 @@ it('neither alerts nor forgets a low balance when the Stellar RPC does not answe
 });
 
 it('checks the lifetime of the contract every day', function () {
-    Artisan::call('schedule:list');
+    Artisan::call('schedule:list', ['--timezone' => 'America/Bogota']); // it. 45a: la hora de Colombia
 
-    expect(Artisan::output())->toMatch('/0\s+12\s+\*\s+\*\s+\*\s+contract-lifetime-check/');
+    expect(Artisan::output())->toMatch('/0\s+7\s+\*\s+\*\s+\*\s+contract-lifetime-check/');
 });
 
 it('warns under 30 days of lifetime, not at 30', function (int $codeDays, bool $warned) {

@@ -11,7 +11,7 @@ vi.mock('@/services/api.js');
 const panel = {
     configurable: [
         { key: 'geofence_radius_meters', label: 'Radio de geocerca', unit: 'm', value: '500' },
-        { key: 'secop_sync_hour', label: 'Hora de sincronización SECOP', unit: 'HH:MM', value: '02:00' },
+        { key: 'secop_sync_hour', label: 'Hora de sincronización SECOP (hora de Colombia)', unit: 'HH:MM', value: '02:00' },
     ],
     fixed: [{ key: 'gps_max_accuracy_meters', label: 'Precisión mínima del GPS', value: '50 m' }],
 };

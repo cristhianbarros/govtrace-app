@@ -45,6 +45,34 @@ else
     flunk "de $files archivos, $shared se enlazan con la copia anterior"
 fi
 
+# It. 45a: una base que desaparece entre la lista y su volcado (en desarrollo,
+# las organizaciones que crean y borran los tests) se omite, y la copia termina.
+# Un error de pg_dump con la base todavía ahí sigue siendo una falla. Un
+# pg_dump de mentira, delante en el PATH, borra la base justo antes de volcarla.
+real_pg_dump=$(in_backup 'command -v pg_dump' | tr -d '\r')
+in_backup 'dropdb --if-exists backup_check_vanishing; dropdb --if-exists backup_check_broken; createdb backup_check_vanishing && mkdir -p /tmp/shim'
+printf '%s\n' '#!/usr/bin/env bash' \
+    'for arg; do' \
+    '    [ "$arg" = backup_check_vanishing ] && dropdb backup_check_vanishing' \
+    '    [ "$arg" = backup_check_broken ] && { echo "pg_dump: error de prueba" >&2; exit 1; }' \
+    'done' \
+    "exec $real_pg_dump \"\$@\"" | in_backup 'cat > /tmp/shim/pg_dump && chmod +x /tmp/shim/pg_dump'
+if out=$(in_backup 'PATH=/tmp/shim:$PATH backup.sh' 2>&1) && grep -q "backup_check_vanishing: se borró durante la copia" <<< "$out" \
+    && in_backup 'last=$(ls -1d /backups/2*Z | tail -1) && ! grep -q backup_check_vanishing $last/manifest.json && test ! -e $last/postgres/backup_check_vanishing.dump'; then
+    pass "una base que se borra durante la copia se omite, y la copia termina"
+else
+    flunk "una base que se borra durante la copia la hace fallar"; echo "$out" | tail -3
+fi
+in_backup 'createdb backup_check_broken'
+count=$(in_backup 'ls -1d /backups/2*Z | wc -l')
+if ! in_backup 'PATH=/tmp/shim:$PATH backup.sh' >/dev/null 2>&1 && [ "$(in_backup 'ls -1d /backups/2*Z | wc -l')" = "$count" ]; then
+    pass "un error de pg_dump con la base todavía ahí sigue fallando, sin dejar una copia a medias"
+else
+    flunk "un error de pg_dump con la base todavía ahí no hizo fallar la copia"
+fi
+in_backup 'dropdb --if-exists backup_check_broken; dropdb --if-exists backup_check_vanishing; rm -rf /tmp/shim'
+read -r first second < <(in_backup 'ls -1d /backups/2*Z | tail -2 | xargs')
+
 # La restauración de prueba, sobre copias alteradas: tiene que fallar.
 $COMPOSE --profile restore up -d --wait restore-pg >/dev/null || { echo "FAIL  el PostgreSQL de prueba no arrancó"; exit 1; }
 drill_on() { # $1: la copia; limpia la base de prueba antes

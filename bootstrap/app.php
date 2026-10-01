@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\SecurityHeaders;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -45,4 +46,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
+
+        // It. 45a: sin sesión (venció, o la contraseña cambió desde otro equipo), la app
+        // lo dice en español; guarda sus reportes pendientes, que solo descarta ante un 422.
+        $exceptions->render(fn (AuthenticationException $exception, Request $request) => $request->expectsJson()
+            ? response()->json(['message' => 'Su sesión terminó. Vuelva a entrar con su correo y su contraseña.'], 401)
+            : null);
     })->create();

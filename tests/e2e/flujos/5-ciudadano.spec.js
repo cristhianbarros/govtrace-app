@@ -139,4 +139,3 @@ test('Encuentra el verificador independiente desde el validador (V14)', async ({
 
 test.fixme('V13: contacta a la veeduría desde su página', async () => {});
 
-test.fixme('Ley 1581: lee la política de tratamiento de datos personales (decisión pendiente)', async () => {});

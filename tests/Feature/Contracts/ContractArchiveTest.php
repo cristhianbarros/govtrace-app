@@ -194,7 +194,7 @@ it('archives only closed contracts: one SECOP still shows running or annulled st
 });
 
 it('runs once a month, the first day, after the nightly sync', function () {
-    Artisan::call('schedule:list');
+    Artisan::call('schedule:list', ['--timezone' => 'America/Bogota']); // it. 45a: la hora de Colombia
 
     expect(Artisan::output())->toMatch('/0\s+5\s+1\s+\*\s+\*\s+contracts-archive/');
 });

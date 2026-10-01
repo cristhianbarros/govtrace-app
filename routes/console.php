@@ -16,6 +16,9 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
+// It. 45a: todas las horas de este archivo son de Colombia
+// (config/app.php, schedule_timezone).
+
 // US-013 y US-034: la sincronización SECOP de la madrugada y, una hora
 // después, el cálculo de obras en riesgo. La hora sale del parámetro
 // (US-038-CFG) cada vez que se arma el calendario: ver NightlySchedule.
@@ -35,8 +38,7 @@ app(Schedule::class)->job(new CheckSealingQueue)
     ->onOneServer();
 
 // US-022: el saldo de la cuenta patrocinadora, cada 15 minutos, y la
-// vigencia del contrato de sellado, cada día a las 12:00 UTC (07:00 en
-// Colombia). Sin contrato configurado (un entorno sin make contract-deploy)
+// vigencia del contrato de sellado, cada día a las 07:00. Sin contrato configurado (un entorno sin make contract-deploy)
 // no hay nada que vigilar.
 $sealingConfigured = fn () => filled(config('stellar.sealing_contract_id'));
 
@@ -47,28 +49,27 @@ app(Schedule::class)->job(new CheckSponsorBalance)
     ->onOneServer();
 
 app(Schedule::class)->job(new CheckContractLifetime)
-    ->dailyAt('12:00')
+    ->dailyAt('07:00')
     ->when($sealingConfigured)
     ->name('contract-lifetime-check')
     ->onOneServer();
 
 // US-003b: la retención de los archivos de una organización dada de baja,
-// cada día a las 06:00 UTC (01:00 en Colombia).
+// cada día a la 01:00.
 app(Schedule::class)->job(new PurgeDecommissionedEvidence)
-    ->dailyAt('06:00')
+    ->dailyAt('01:00')
     ->name('decommissioned-evidence-purge')
     ->onOneServer();
 
-// US-054-RPT: organizaciones con 30 días sin actividad, cada día a las
-// 13:00 UTC (08:00 en Colombia).
+// US-054-RPT: organizaciones con 30 días sin actividad, cada día a las 08:00.
 app(Schedule::class)->job(new CheckOrganizationActivity)
-    ->dailyAt('13:00')
+    ->dailyAt('08:00')
     ->name('organization-activity-check')
     ->onOneServer();
 
 // R-MNT-03: la tabla seudónimo→veedor, 5 años desde su último reporte; cada
-// día a las 06:30 UTC.
+// día a la 01:30.
 app(Schedule::class)->job(new PurgeVeedorPseudonyms)
-    ->dailyAt('06:30')
+    ->dailyAt('01:30')
     ->name('veedor-pseudonyms-purge')
     ->onOneServer();

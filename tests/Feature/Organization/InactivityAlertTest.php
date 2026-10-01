@@ -138,7 +138,7 @@ it('leaves out a suspended or decommissioned organization: it is not expected to
 })->with(['suspended', 'decommissioned']);
 
 it('reviews the activity every day', function () {
-    Artisan::call('schedule:list');
+    Artisan::call('schedule:list', ['--timezone' => 'America/Bogota']); // it. 45a: la hora de Colombia
 
-    expect(Artisan::output())->toMatch('/0\s+13\s+\*\s+\*\s+\*\s+organization-activity-check/');
+    expect(Artisan::output())->toMatch('/0\s+8\s+\*\s+\*\s+\*\s+organization-activity-check/');
 });

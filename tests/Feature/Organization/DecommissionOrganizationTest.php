@@ -378,7 +378,7 @@ it('never purges the files of an active or suspended organization', function () 
 });
 
 it('applies the retention policy every day', function () {
-    Artisan::call('schedule:list');
+    Artisan::call('schedule:list', ['--timezone' => 'America/Bogota']); // it. 45a: la hora de Colombia
 
-    expect(Artisan::output())->toMatch('/0\s+6\s+\*\s+\*\s+\*\s+decommissioned-evidence-purge/');
+    expect(Artisan::output())->toMatch('/0\s+1\s+\*\s+\*\s+\*\s+decommissioned-evidence-purge/');
 });

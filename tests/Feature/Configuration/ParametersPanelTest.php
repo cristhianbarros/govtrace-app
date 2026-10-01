@@ -174,7 +174,7 @@ it('shows each configurable parameter with its label, unit and current value', f
         ['key' => 'closed_contract_report_window_months', 'label' => 'Ventana de Terminados y Liquidados', 'unit' => 'meses', 'value' => '12'],
         ['key' => 'invitation_validity_hours', 'label' => 'Vigencia de invitaciones', 'unit' => 'h', 'value' => '48'],
         ['key' => 'sponsor_balance_alert_threshold_xlm', 'label' => 'Umbral de saldo de la patrocinadora', 'unit' => 'XLM', 'value' => '50'],
-        ['key' => 'secop_sync_hour', 'label' => 'Hora de sincronización SECOP', 'unit' => 'HH:MM', 'value' => '02:00'],
+        ['key' => 'secop_sync_hour', 'label' => 'Hora de sincronización SECOP (hora de Colombia)', 'unit' => 'HH:MM', 'value' => '02:00'],
     ]);
 });
 
