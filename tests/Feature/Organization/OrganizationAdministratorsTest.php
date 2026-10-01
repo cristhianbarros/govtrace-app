@@ -17,8 +17,8 @@ use Illuminate\Testing\TestResponse;
  * quién administra cada organización y en qué va su invitación; la reenvía
  * si no la respondieron (vence a las 48 h), la revoca si el correo estaba mal
  * y asigna uno si la organización no tiene (US-002: "tras el alta, o en un
- * paso consecutivo"). Reemplazar a un Administrador activo, o tener varios, es
- * una decisión pendiente (V3): aquí no se permite. Todo queda en el log de
+ * paso consecutivo"). Tener varios, y desactivar al que se fue, llegó con la
+ * it. 43j (V3): MultipleAdministratorsTest. Todo queda en el log de
  * auditoría (R-AUD-04). Sin RefreshDatabase: la organización ejecuta CREATE DATABASE.
  */
 
@@ -101,12 +101,13 @@ it('Asignar el Administrador inicial después del alta: to an organization that 
         ->and($this->tenant->run(fn () => User::query()->where('email', 'ana@veeduria.org')->firstOrFail()->hasRole(Roles::Administrator->value)))->toBeTrue();
 });
 
-it('does not assign a second Administrador, nor replace one: that is decision V3', function () {
+it('assigns a second Administrador too, since it. 43j (V3): an organization can have several', function () {
     (new AssignInitialAdministrator)->handle($this->tenant, 'Marta Ospina', 'marta@veeduria.org');
 
     asTheSuperAdmin('POST', "/admin/organizations/{$this->tenant->id}/administrators", ['name' => 'Ana Pérez', 'email' => 'ana@veeduria.org'])
-        ->assertStatus(409)
-        ->assertJson(['message' => 'La organización ya tiene un Administrador. Si su invitación quedó con un correo equivocado, revóquela primero.']);
+        ->assertCreated();
+
+    expect(listedOrganization()['administrators'])->toHaveCount(2);
 });
 
 it('does not resend nor revoke the account of an active Administrador, nor of a veedor', function () {

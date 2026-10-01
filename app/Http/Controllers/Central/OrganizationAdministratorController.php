@@ -51,6 +51,25 @@ class OrganizationAdministratorController extends Controller
         });
     }
 
+    /** It. 43j (V3): an Administrador who left can no longer enter; never the only active one. */
+    public function deactivate(Request $request, string $tenant, int $user): JsonResponse
+    {
+        return $this->answer(function () use ($request, $tenant, $user) {
+            (new OrganizationAdministrators)->deactivate(Tenant::query()->findOrFail($tenant), $user, $request->user('web'));
+
+            return response()->json(['message' => 'Administrador desactivado. Su sesión quedó cerrada y ya no puede entrar.']);
+        });
+    }
+
+    public function reactivate(Request $request, string $tenant, int $user): JsonResponse
+    {
+        return $this->answer(function () use ($request, $tenant, $user) {
+            (new OrganizationAdministrators)->reactivate(Tenant::query()->findOrFail($tenant), $user, $request->user('web'));
+
+            return response()->json(['message' => 'Administrador reactivado. Ya puede entrar otra vez.']);
+        });
+    }
+
     private function answer(callable $work): JsonResponse
     {
         try {

@@ -12,8 +12,10 @@ import SuperAdminLayout from '@/Layouts/SuperAdminLayout.vue';
 import { useLoader } from '@/composables/useLoader.js';
 import {
     assignAdministrator,
+    deactivateAdministrator,
     fetchOrganizationDetail,
     fetchOrganizations,
+    reactivateAdministrator,
     reactivateOrganization,
     resendAdministratorInvitation,
     revokeAdministratorInvitation,
@@ -70,7 +72,7 @@ async function changed(message) {
     await load();
 }
 
-// It. 43a (V2): asignar el Administrador a una organización que no tiene.
+// It. 43a (V2): asignar el Administrador a una organización que no tiene; it. 43j (V3): u otro más.
 const assigning = ref(null); // el id de la organización
 const newAdministrator = ref({ name: '', email: '' });
 const assignError = ref(null);
@@ -137,9 +139,9 @@ onMounted(load);
                             <Link :href="`/admin/organizations/${organization.id}/report`" class="inline-flex min-h-11 items-center font-semibold underline">Reportar en su nombre</Link>
                         </p>
 
-                        <!-- It. 43a (V2): quién la administra y el estado de su invitación. -->
-                        <section v-if="organization.status !== 'Dada de baja'" data-test="administrators" class="mt-3 rounded-lg bg-slate-50 p-3" :aria-label="`Administrador de ${organization.name}`">
-                            <p class="text-sm font-semibold text-slate-700">Administrador</p>
+                        <!-- It. 43a (V2): quién la administra y el estado de su invitación. It. 43j (V3): pueden ser varios. -->
+                        <section v-if="organization.status !== 'Dada de baja'" data-test="administrators" class="mt-3 rounded-lg bg-slate-50 p-3" :aria-label="`Administradores de ${organization.name}`">
+                            <p class="text-sm font-semibold text-slate-700">Administradores</p>
                             <ul v-if="organization.administrators?.length" class="mt-1 flex flex-col gap-2">
                                 <li v-for="administrator in organization.administrators" :key="administrator.id" class="flex flex-col gap-2">
                                     <p class="flex flex-wrap items-center gap-2">
@@ -157,23 +159,32 @@ onMounted(load);
                                             @done="changed"
                                         />
                                     </div>
+                                    <RowAction
+                                        v-else-if="administrator.status === 'active'"
+                                        label="Desactivar"
+                                        confirm-label="Confirmar desactivación"
+                                        warning="Ya no podrá entrar al panel de la organización. Lo que hizo queda en el registro de auditoría."
+                                        :run="() => deactivateAdministrator(organization.id, administrator.id)"
+                                        @done="changed"
+                                    />
+                                    <RowAction v-else-if="administrator.status === 'inactive'" label="Reactivar" :run="() => reactivateAdministrator(organization.id, administrator.id)" @done="changed" />
                                 </li>
                             </ul>
-                            <template v-else>
-                                <p class="mt-1 text-sm text-slate-700">Sin Administrador: nadie puede gestionar sus veedores.</p>
-                                <form v-if="assigning === organization.id" class="mt-2 flex flex-col gap-2" novalidate @submit.prevent="assign(organization)">
-                                    <label :for="`administrator-name-${organization.id}`" class="text-sm font-semibold text-slate-700">Nombre</label>
-                                    <input :id="`administrator-name-${organization.id}`" v-model="newAdministrator.name" name="administrator-name" type="text" class="min-h-11 rounded-lg border border-slate-300 bg-white px-3 text-base" />
-                                    <label :for="`administrator-email-${organization.id}`" class="text-sm font-semibold text-slate-700">Correo electrónico</label>
-                                    <input :id="`administrator-email-${organization.id}`" v-model="newAdministrator.email" name="administrator-email" type="email" class="min-h-11 rounded-lg border border-slate-300 bg-white px-3 text-base" />
-                                    <p v-if="assignError" role="alert" class="text-sm text-red-700">{{ assignError }}</p>
-                                    <div class="flex gap-2">
-                                        <button type="submit" class="min-h-11 rounded-xl bg-brand-700 px-3 text-sm font-semibold text-white hover:bg-brand-800">Enviar invitación</button>
-                                        <button type="button" class="min-h-11 rounded-lg border bg-white px-3 text-sm font-semibold" @click="assigning = null">Cancelar</button>
-                                    </div>
-                                </form>
-                                <button v-else type="button" class="mt-2 min-h-11 rounded-lg border bg-white px-3 text-sm font-semibold" @click="startAssigning(organization)">Asignar Administrador</button>
-                            </template>
+                            <p v-else class="mt-1 text-sm text-slate-700">Sin Administrador: nadie puede gestionar sus veedores.</p>
+                            <form v-if="assigning === organization.id" class="mt-2 flex flex-col gap-2" novalidate @submit.prevent="assign(organization)">
+                                <label :for="`administrator-name-${organization.id}`" class="text-sm font-semibold text-slate-700">Nombre</label>
+                                <input :id="`administrator-name-${organization.id}`" v-model="newAdministrator.name" name="administrator-name" type="text" class="min-h-11 rounded-lg border border-slate-300 bg-white px-3 text-base" />
+                                <label :for="`administrator-email-${organization.id}`" class="text-sm font-semibold text-slate-700">Correo electrónico</label>
+                                <input :id="`administrator-email-${organization.id}`" v-model="newAdministrator.email" name="administrator-email" type="email" class="min-h-11 rounded-lg border border-slate-300 bg-white px-3 text-base" />
+                                <p v-if="assignError" role="alert" class="text-sm text-red-700">{{ assignError }}</p>
+                                <div class="flex gap-2">
+                                    <button type="submit" class="min-h-11 rounded-xl bg-brand-700 px-3 text-sm font-semibold text-white hover:bg-brand-800">Enviar invitación</button>
+                                    <button type="button" class="min-h-11 rounded-lg border bg-white px-3 text-sm font-semibold" @click="assigning = null">Cancelar</button>
+                                </div>
+                            </form>
+                            <button v-else type="button" class="mt-2 min-h-11 rounded-lg border bg-white px-3 text-sm font-semibold" @click="startAssigning(organization)">
+                                {{ organization.administrators?.length ? 'Agregar otro Administrador' : 'Asignar Administrador' }}
+                            </button>
                         </section>
 
                         <!-- Dada de baja es definitivo: ni suspender, ni reactivar, ni otra baja. -->

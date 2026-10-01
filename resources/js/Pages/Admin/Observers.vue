@@ -3,6 +3,7 @@
 // el equipo con el estado de cada invitación. US-006 y US-041-USR:
 // desactivar a un veedor (su sesión se cierra de inmediato) y reactivarlo.
 // US-040-USR: reenviar o revocar una invitación que no se ha aceptado.
+// It. 43j (V3, US-061-USR): los administradores de la organización, e invitar a otro.
 import { onMounted, ref } from 'vue';
 import LoadState from '@/Components/LoadState.vue';
 import RowAction from '@/Components/RowAction.vue';
@@ -10,10 +11,37 @@ import { useLoader } from '@/composables/useLoader.js';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { isEmail } from '@/lib/credentials.js';
 import { formatDay } from '@/lib/format.js';
-import { deactivateObserver, fetchObservers, inviteObserver, reactivateObserver, resendInvitation, revokeInvitation } from '@/services/api.js';
+import { deactivateObserver, fetchAdministrators, fetchObservers, inviteAdministrator, inviteObserver, reactivateObserver, resendInvitation, revokeInvitation } from '@/services/api.js';
 import { errorMessage } from '@/services/errors.js';
 
 const { data: team, loading, error, load } = useLoader(fetchObservers);
+const { data: administrators, load: loadAdministrators } = useLoader(fetchAdministrators);
+
+// It. 43j (V3): otro administrador, por si uno pierde el acceso o se va.
+const newAdministrator = ref({ name: '', email: '' });
+const invitingAdministrator = ref(false);
+const administratorRefused = ref(null);
+
+async function inviteAnotherAdministrator() {
+    notice.value = null;
+    administratorRefused.value = null;
+    const { name, email: address } = newAdministrator.value;
+    if (name.trim() === '' || !isEmail(address)) {
+        administratorRefused.value = 'Escriba el nombre y un correo electrónico válido.';
+        return;
+    }
+
+    invitingAdministrator.value = true;
+    try {
+        notice.value = (await inviteAdministrator({ name: name.trim(), email: address.trim() })).message;
+        newAdministrator.value = { name: '', email: '' };
+        await loadAdministrators();
+    } catch (failure) {
+        administratorRefused.value = errorMessage(failure);
+    } finally {
+        invitingAdministrator.value = false;
+    }
+}
 
 const email = ref('');
 const sending = ref(false);
@@ -53,7 +81,10 @@ const statusStyle = {
     'Invitación pendiente': 'bg-amber-100 text-amber-900',
 };
 
-onMounted(load);
+onMounted(() => {
+    load();
+    loadAdministrators();
+});
 </script>
 
 <template>
@@ -115,5 +146,27 @@ onMounted(load);
                 </li>
             </ul>
         </LoadState>
+
+        <section data-test="administrators" aria-labelledby="administrators-title" class="flex flex-col gap-3 rounded-2xl bg-white p-3 shadow-soft ring-1 ring-slate-900/5">
+            <h2 id="administrators-title" class="text-lg">Administradores</h2>
+            <p class="text-sm text-slate-700">Con más de uno, la veeduría no queda sin quién la gestione si alguien pierde el acceso o se va. Desactivar a un administrador lo hace el Super Administrador.</p>
+            <ul v-if="administrators?.length" class="flex flex-col divide-y divide-slate-100">
+                <li v-for="administrator in administrators" :key="administrator.id" class="flex flex-wrap items-center justify-between gap-2 py-2 text-sm">
+                    <span><span class="font-semibold">{{ administrator.name }}</span> · {{ administrator.email }}</span>
+                    <span class="rounded px-2 py-0.5 text-xs font-semibold" :class="administrator.status === 'active' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-900'">{{ administrator.label }}</span>
+                </li>
+            </ul>
+            <form class="flex flex-col gap-2" novalidate @submit.prevent="inviteAnotherAdministrator">
+                <p class="text-sm font-semibold text-slate-700">Invitar a otro administrador</p>
+                <label for="administrator-name" class="text-sm text-slate-700">Nombre</label>
+                <input id="administrator-name" v-model="newAdministrator.name" type="text" autocomplete="off" class="w-full rounded-lg border border-slate-300 px-3 py-3 text-base" />
+                <label for="administrator-email" class="text-sm text-slate-700">Correo electrónico</label>
+                <input id="administrator-email" v-model="newAdministrator.email" type="email" inputmode="email" autocomplete="off" class="w-full rounded-lg border border-slate-300 px-3 py-3 text-base" />
+                <p v-if="administratorRefused" role="alert" class="text-sm text-red-700">{{ administratorRefused }}</p>
+                <button type="submit" :disabled="invitingAdministrator" class="rounded-xl border border-brand-200 bg-white px-3 py-3 font-semibold text-brand-800 hover:bg-brand-50 disabled:opacity-40">
+                    {{ invitingAdministrator ? 'Enviando…' : 'Invitar administrador' }}
+                </button>
+            </form>
+        </section>
     </AdminLayout>
 </template>

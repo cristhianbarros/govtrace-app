@@ -5,9 +5,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import Organizations from './Organizations.vue';
 import {
     assignAdministrator,
+    deactivateAdministrator,
     confirmDecommission,
     fetchOrganizationDetail,
     fetchOrganizations,
+    reactivateAdministrator,
     reactivateOrganization,
     resendAdministratorInvitation,
     revokeAdministratorInvitation,
@@ -282,11 +284,41 @@ describe('Administradores de cada organización (it. 43a, V2)', () => {
         expect(block(wrapper).text()).toContain('Ana Pérez');
     });
 
-    it('offers nothing to an active Administrador: replacing one is a pending decision (V3)', async () => {
+    // It. 43j (V3, US-061-USR): varios administradores.
+    it('El Super Administrador agrega otro Administrador: to an organization that already has one', async () => {
         const wrapper = await openOrganizations([{ ...smr, administrators: [active] }]);
+        assignAdministrator.mockResolvedValue({ message: 'Invitación enviada a ana@veeduria.org.' });
 
-        expect(block(wrapper).text()).toContain('Activo');
-        expect(block(wrapper).findAll('button')).toHaveLength(0);
+        await button(block(wrapper), 'Agregar otro Administrador').trigger('click');
+        await block(wrapper).get('input[name="administrator-name"]').setValue('Ana Pérez');
+        await block(wrapper).get('input[name="administrator-email"]').setValue('ana@veeduria.org');
+        await block(wrapper).get('form').trigger('submit');
+        await flushPromises();
+
+        expect(assignAdministrator).toHaveBeenCalledWith('tenant-smr', { name: 'Ana Pérez', email: 'ana@veeduria.org' });
+    });
+
+    it('El Super Administrador desactiva a un Administrador que se fue: after asking', async () => {
+        const wrapper = await openOrganizations([{ ...smr, administrators: [active, { ...active, id: 8, name: 'Ana Pérez', email: 'ana@veeduria.org' }] }]);
+        deactivateAdministrator.mockResolvedValue({ message: 'Administrador desactivado. Su sesión quedó cerrada y ya no puede entrar.' });
+
+        await button(block(wrapper), 'Desactivar').trigger('click');
+        expect(deactivateAdministrator).not.toHaveBeenCalled();
+        expect(block(wrapper).text()).toContain('Ya no podrá entrar al panel de la organización.');
+        await button(block(wrapper), 'Confirmar desactivación').trigger('click');
+        await flushPromises();
+
+        expect(deactivateAdministrator).toHaveBeenCalledWith('tenant-smr', 7);
+    });
+
+    it('El Super Administrador reactiva a un Administrador', async () => {
+        const wrapper = await openOrganizations([{ ...smr, administrators: [{ ...active, status: 'inactive', label: 'Inactivo' }, { ...active, id: 8 }] }]);
+        reactivateAdministrator.mockResolvedValue({ message: 'Administrador reactivado. Ya puede entrar otra vez.' });
+
+        await button(block(wrapper), 'Reactivar').trigger('click');
+        await flushPromises();
+
+        expect(reactivateAdministrator).toHaveBeenCalledWith('tenant-smr', 7);
     });
 });
 

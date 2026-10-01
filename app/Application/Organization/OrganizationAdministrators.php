@@ -17,11 +17,11 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
  * It. 43a (V2 y V16 de docs/mapa-funcional.md): el Administrador de una
  * organización, desde el panel global. El Super Administrador ve quién la
  * administra y en qué va su invitación; la reenvía si no la respondieron,
- * la revoca si el correo estaba mal, y asigna uno si no hay ninguno (US-002:
- * "tras el alta, o en un paso consecutivo"). Reemplazar a un Administrador
- * activo, o sumar otro, es una decisión pendiente (V3), y aquí no se permite.
- * Cada cambio va al log de auditoría (R-AUD-04), como los del Administrador
- * con sus veedores (US-040-USR).
+ * la revoca si el correo estaba mal, y asigna uno (US-002: "tras el alta, o
+ * en un paso consecutivo"). It. 43j (V3, US-061-USR): puede asignar varios, y
+ * desactivar o reactivar a cada uno, sin dejar nunca la organización sin un
+ * Administrador activo. Cada cambio va al log de auditoría (R-AUD-04), como
+ * los del Administrador con sus veedores (US-040-USR).
  */
 class OrganizationAdministrators
 {
@@ -49,18 +49,12 @@ class OrganizationAdministrators
     }
 
     /**
-     * Only when the organization has no Administrador at all — active, or
-     * invited (V3 decides whether there can be more than one).
+     * The first one, or one more (it. 43j, V3): an organization can have several.
      *
      * @return int the hours the invitation is valid
      */
     public function assign(Tenant $tenant, string $name, string $email): int
     {
-        $hasOne = $this->inside($tenant, fn () => User::role(Roles::Administrator->value, 'tenant')->exists());
-        if ($hasOne) {
-            throw new DomainException('La organización ya tiene un Administrador. Si su invitación quedó con un correo equivocado, revóquela primero.');
-        }
-
         (new AssignInitialAdministrator)->handle($tenant, $name, $email);
 
         // La vigencia con la que AssignInitialAdministrator emitió el enlace (US-038-CFG).
@@ -91,6 +85,46 @@ class OrganizationAdministrators
 
             return $before['email'];
         });
+    }
+
+    /**
+     * It. 43j (V3): an Administrador who left, or lost access, can no longer
+     * enter — never the only active one: first another one is added and
+     * activates the account. EnsureAccountIsUsable ends the session on its
+     * next request.
+     */
+    public function deactivate(Tenant $tenant, int $userId, SuperAdmin $actor): void
+    {
+        $this->inside($tenant, function () use ($tenant, $userId, $actor) {
+            $administrator = $this->administrator($userId);
+            $othersActive = User::role(Roles::Administrator->value, 'tenant')
+                ->whereKeyNot($administrator->id)
+                ->where('is_active', true)
+                ->whereNull('invitation_token_hash')
+                ->exists();
+            if (! $othersActive) {
+                throw new DomainException('No se puede desactivar al único Administrador activo de la organización. Agregue otro y espere a que active su cuenta.');
+            }
+            $this->changeAccess('organization.administrator_deactivated', $tenant, $actor, $administrator, false);
+        });
+    }
+
+    public function reactivate(Tenant $tenant, int $userId, SuperAdmin $actor): void
+    {
+        $this->inside($tenant, fn () => $this->changeAccess('organization.administrator_reactivated', $tenant, $actor, $this->administrator($userId), true));
+    }
+
+    private function changeAccess(string $action, Tenant $tenant, SuperAdmin $actor, User $administrator, bool $active): void
+    {
+        $before = ['user_id' => $administrator->id, 'email' => $administrator->email, 'is_active' => (bool) $administrator->is_active];
+        $administrator->forceFill(['is_active' => $active])->save();
+        $this->audit($action, $tenant, $actor, $before, [...$before, 'is_active' => $active]);
+    }
+
+    /** An Administrador of the organization, with an activated account; anything else is not found. */
+    private function administrator(int $userId): User
+    {
+        return User::role(Roles::Administrator->value, 'tenant')->whereKey($userId)->whereNull('invitation_token_hash')->firstOrFail();
     }
 
     /** An Administrador whose invitation is still unanswered (pending or expired); anything else is not found. */

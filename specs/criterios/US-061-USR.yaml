@@ -1,0 +1,28 @@
+story_id: "US-061-USR"
+titulo_historia: "Como veeduría quiero tener más de un Administrador, para no quedar sin quién la gestione si uno pierde el acceso o se va"
+bloque: "Flujos completos — V3"
+criterios_aceptacion:
+  escenarios_exito:
+    - "El Super Administrador agrega un Administrador a una organización que ya tiene uno: le llega la invitación para crear su contraseña"
+    - "Un Administrador invita a otro administrador desde 'Veedores': le llega la invitación"
+    - "El Super Administrador desactiva a un Administrador que se fue (su sesión se cierra en la siguiente petición) y lo reactiva si vuelve"
+    - "Cada cambio queda en el log de auditoría: quién, a quién y cuándo (R-AUD-04)"
+  validaciones_reglas:
+    - "No se desactiva al único Administrador activo: primero se agrega otro y activa su cuenta"
+    - "Solo el Super Administrador desactiva o reactiva administradores; un Administrador invita, pero no desactiva"
+    - "Un veedor no invita administradores"
+    - "El correo no puede estar ya en la organización (R-USR-01)"
+  manejo_errores:
+    - {caso: "Desactivar al único Administrador activo", mensaje: "No se puede desactivar al único Administrador activo de la organización. Agregue otro y espere a que active su cuenta."}
+    - {caso: "El correo ya está en la organización", mensaje: "El correo electrónico ya se encuentra registrado en el sistema."}
+  requisitos_ux:
+    - "En el panel global, la lista de administradores de cada organización, con 'Agregar Administrador' siempre a mano"
+    - "Desactivar pide confirmar"
+  casos_edge:
+    - "Un Administrador con la invitación pendiente no cuenta como activo para la regla"
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true

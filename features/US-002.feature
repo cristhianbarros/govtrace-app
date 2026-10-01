@@ -48,5 +48,5 @@ Característica: Asignación del Administrador inicial de una organización
     Dado que "Veeduría Ciudadana Santa Marta" no tiene Administrador
     Cuando en el panel global le asigno a "Ana Pérez" con el correo "ana@veeduria.org"
     Entonces "Ana Pérez" recibe la invitación para crear su contraseña
-    Y si la organización ya tiene un Administrador, no se asigna otro
+    # It. 43j (V3, US-061-USR): una organización puede tener varios administradores.
 

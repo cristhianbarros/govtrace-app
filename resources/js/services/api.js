@@ -50,6 +50,9 @@ export const decideOnEvidence = (reportId, decision, reason) => dataOf(http.post
 /** US-005 */
 export const fetchObservers = async () => (await dataOf(http.get('/observers'))).data;
 export const inviteObserver = (email) => dataOf(http.post('/observers/invite', { email }));
+// It. 43j (V3, US-061-USR): los administradores de la organización, e invitar a otro.
+export const fetchAdministrators = async () => (await dataOf(http.get('/administrators'))).data;
+export const inviteAdministrator = (data) => dataOf(http.post('/administrators/invite', data));
 
 /** US-006 / US-041-USR */
 export const deactivateObserver = (id) => dataOf(http.post(`/observers/${id}/deactivate`));
@@ -104,6 +107,9 @@ export const updateOrganizationLegalData = (id, data) => dataOf(http.put(`/admin
 export const assignAdministrator = (id, data) => dataOf(http.post(`/admin/organizations/${id}/administrators`, data));
 export const resendAdministratorInvitation = (id, userId) => dataOf(http.post(`/admin/organizations/${id}/administrators/${userId}/invitation/resend`));
 export const revokeAdministratorInvitation = (id, userId) => dataOf(http.post(`/admin/organizations/${id}/administrators/${userId}/invitation/revoke`));
+// It. 43j (V3): el que se fue, desactivado; nunca el único activo.
+export const deactivateAdministrator = (id, userId) => dataOf(http.post(`/admin/organizations/${id}/administrators/${userId}/deactivate`));
+export const reactivateAdministrator = (id, userId) => dataOf(http.post(`/admin/organizations/${id}/administrators/${userId}/reactivate`));
 
 /** US-038-CFG: { configurable, fixed } */
 export const fetchParameters = () => dataOf(http.get('/admin/parameters/data'));
