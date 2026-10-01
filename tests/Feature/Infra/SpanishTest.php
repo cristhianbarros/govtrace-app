@@ -29,7 +29,7 @@ it('writes the emails of GovTrace in Spanish, without the English lines of the t
     }
     expect($mail)->toContain('Saludos,')
         ->toContain("Si el botón «{$button}» no funciona, copie y pegue esta dirección en su navegador:")
-        ->toContain('Todos los derechos reservados.');
+        ->toContain('Evidencia ciudadana que nadie puede cambiar.'); // it. 45b: el pie de GovTrace
 })->with([
     'la bienvenida y la invitación' => [fn () => new WelcomeNotification('https://veeduria-smr.govtrace.example/set-password/1?token=abc', 48), 'Establecer mi contraseña'],
     'la recuperación de contraseña' => [fn () => new ResetPasswordLink('https://veeduria-smr.govtrace.example/reset-password/abc?email=ana%40correo.co', 'abc'), 'Elegir una nueva contraseña'],

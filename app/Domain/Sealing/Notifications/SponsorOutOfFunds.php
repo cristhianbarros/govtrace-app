@@ -26,6 +26,6 @@ class SponsorOutOfFunds extends Notification
             ->subject('[Crítico] GovTrace: la cuenta patrocinadora se quedó sin XLM')
             ->line('El sellado de evidencias en Stellar está en pausa: la cuenta patrocinadora no tiene XLM para pagar las comisiones.')
             ->line("Cuenta patrocinadora: {$this->sponsorAddress}")
-            ->line('Fondéala y el sellado se reanuda solo. Ninguna evidencia se pierde: esperan "En Cola".');
+            ->line('Fondéela y el sellado se reanuda solo. Ninguna evidencia se pierde: esperan "En Cola".');
     }
 }
