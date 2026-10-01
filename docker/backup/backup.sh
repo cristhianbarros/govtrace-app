@@ -27,7 +27,16 @@ mkdir -p "$work/postgres" "$work/evidencias"
 databases=()
 for db in $(psql -d postgres -Atc "select datname from pg_database where not datistemplate and datname <> 'postgres' order by 1"); do
     [[ "$exclude" == *" $db "* ]] && continue
-    pg_dump --format=custom --file="$work/postgres/$db.dump" "$db"
+    if ! pg_dump --format=custom --file="$work/postgres/$db.dump" "$db"; then
+        # It. 45a: una base que se borró entre la lista y su volcado (en desarrollo, las
+        # organizaciones que crean y borran los tests) no es una falla. Si sigue ahí, sí.
+        if [ -n "$(psql -d postgres -At -v db="$db" <<< "select 1 from pg_database where datname = :'db'")" ]; then
+            exit 1
+        fi
+        rm -f "$work/postgres/$db.dump"
+        echo "[backup] $db: se borró durante la copia, se omite"
+        continue
+    fi
     databases+=("$db")
 done
 

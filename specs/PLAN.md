@@ -694,7 +694,7 @@ Vitest: 158 en verde (18 nuevos). Suite: 355 en verde, estable en dos corridas, 
   - un dataset de Pest con un parámetro tipado `Closure` se entrega tal cual, sin evaluarlo. El "estropear el enlace" no hacía nada hasta quitar la capa extra; se encontró porque el caso nunca había estado en rojo por la razón correcta;
   - `->map->only()` no sirve sobre arreglos.
 - `RowAction.vue`: una acción por fila con confirmación opcional y el motivo del servidor en la fila; la usan los dos paneles.
-- **Pendiente para después:** restablecer la contraseña no cierra otras sesiones abiertas de esa cuenta; no lo pide US-039.
+- **Pendiente para después:** restablecer la contraseña no cierra otras sesiones abiertas de esa cuenta; no lo pide US-039. → **Resuelto en la it. 45a.**
 
 ### Iteración 21 — Perfil, parámetros y consulta de auditoría
 **Entregable:**
@@ -995,7 +995,7 @@ Suite: 529 en verde. Vitest: 267 en verde. Cada regla nueva se comprobó rompié
 4. **El modo contextual compara contra los archivos de ESA evidencia.** Funciona también en una lápida, cuyo sello sigue disponible.
 5. **Formato y tamaño se revisan antes de calcular el hash.** El mensaje para un formato no admitido (un .mp4) es propio, porque la historia no lo fija: "Formato no admitido: el validador acepta fotos JPG o PNG y documentos PDF."
 6. **Si GovTrace no responde en el modo libre, el mensaje sugiere la prueba descargada:** con ella basta la red Stellar.
-7. **El validador comprueba los archivos, no la hoja de metadatos,** porque el JSON de metadatos no se publica (decisión 7 de la it. 23). Sigue pendiente que resuelvas la inconsistencia entre R-PRIV-03 y R-PRIV-02 (it. 24, decisión 9).
+7. **El validador comprueba los archivos, no la hoja de metadatos,** porque el JSON de metadatos no se publica (decisión 7 de la it. 23). La inconsistencia entre R-PRIV-03 y R-PRIV-02 (it. 24, decisión 9) quedó resuelta el 2026-09-29: se enmendó R-PRIV-03.
 
 ### Iteración 28 — Veedor: Mis Reportes y recibo
 **Entregable:** lista con estado técnico y editorial por separado, rechazo con motivo y recibo en la app.
@@ -1316,7 +1316,7 @@ Suite: 677 en verde. Vitest: 350. Cada regla nueva se comprobó rompiéndola a p
 3. **Datos abiertos: un registro por evidencia publicada** (un reporte), con dos campos que la SPEC no pedía:
    - `reporte`, que lleva a su recibo público;
    - `contrato_de_sellado`, que con `raiz_merkle` basta para leer el sello en Stellar sin GovTrace.
-   No incluye el JSON sellado, que tiene la ubicación exacta: es la inconsistencia R-PRIV-03 vs R-PRIV-02 pendiente de la it. 24.
+   No incluye el JSON sellado, que tiene la ubicación exacta: es la inconsistencia R-PRIV-03 vs R-PRIV-02 de la it. 24, resuelta el 2026-09-29 al enmendar R-PRIV-03.
 4. **Tras una baja, los datos abiertos siguen y las estadísticas salen de línea con el mapa.**
 5. **La actividad** es recibir (según la base de la organización) o publicar (según el log de auditoría). Así, una publicación que después se retira también cuenta. Sin actividad nunca, se cuenta desde el registro.
 6. **Una alerta de inactividad por período,** y solo por Email, como dicen los criterios; no va al webhook de la it. 32. Solo organizaciones activas: una suspendida o dada de baja no se espera que trabaje.
@@ -2018,7 +2018,7 @@ Esta iteración estaba reservada para ese recorrido. El recorrido se hizo para e
 - **Ficticio:** cinco obras "de ejemplo" con entidad y contratista "de ejemplo (ficticio)" y códigos `EJEMPLO-C13-…`, que SECOP no puede tener.
 - **Los lugares salen de OpenStreetMap** (Nominatim). El pin de la escuela está cerca de la estación San Javier y es aproximado: SECOP no trae coordenadas.
 - ❓ **Fuera a propósito:** La Escombrera. Sus contratos de estabilización del talud, por el fallo de la JEP, son reales y de la Comuna 13, pero es el sitio de búsqueda de personas desaparecidas. No es para una demostración.
-- **Encontrado de paso: el respaldo de cada hora falla** si una base desaparece entre la lista y el `pg_dump`. En desarrollo pasa porque Pest crea y borra bases de organizaciones. En producción las organizaciones se dan de baja sin borrar su base, así que el riesgo es bajo. Pendiente como mejora de `docker/backup/backup.sh`: omitir la base que ya no existe, con su test en `make backup-check`. Mientras tanto, `make backup-now` devuelve el contenedor a sano.
+- **Encontrado de paso (→ resuelto en la it. 45a): el respaldo de cada hora falla** si una base desaparece entre la lista y el `pg_dump`. En desarrollo pasa porque Pest crea y borra bases de organizaciones. En producción las organizaciones se dan de baja sin borrar su base, así que el riesgo es bajo. Pendiente como mejora de `docker/backup/backup.sh`: omitir la base que ya no existe, con su test en `make backup-check`. Mientras tanto, `make backup-now` devuelve el contenedor a sano.
 - **Prueba:**
   - Pest, 5 casos: la organización y los contratos reales, solo "Avance" en lo real, lo negativo solo en lo ficticio, la obra que mueve `LUGAR` y el territorio que no conoce. Los 17 de Magdalena siguen en verde.
   - El ensayo en un navegador, con el GPS en La Pradera: el mapa, la obra real "Normal" con sus contratistas, una obra de ejemplo "En riesgo", y la veedora que reporta en la obra de ejemplo desde "Obras cercanas".
@@ -2247,6 +2247,37 @@ La revisión documental del control social de hoy (`docs/proceso-actual.md`, PR 
 
 **Done-when de la 44:** cada sub-iteración, con sus escenarios en verde y su PR.
 
+### Iteración 45 — Lo que quedó de las iteraciones pasadas
+
+El usuario pidió seguir con lo que no espera a nadie: la deuda técnica y los hallazgos, la limpieza de la documentación, y V7 y V8 (2026-09-30, "continúa con lo sugerido").
+
+**45a — Operación: la hora, las sesiones y los respaldos.**
+
+✅ **45a cumplida (2026-09-30).**
+- **El calendario, en la hora de Colombia** (`schedule_timezone` en `config/app.php`). Cierra la deuda aceptada: la sincronización "de las 02:00" corría a las 21:00 del día anterior.
+  - Las horas de `routes/console.php` ahora son las de Colombia y mantienen el mismo momento real: la vigencia del contrato a las 07:00, la purga de archivos a la 01:00, la de seudónimos a la 01:30 y la actividad a las 08:00.
+  - El parámetro dice "Hora de sincronización SECOP (hora de Colombia)".
+  - `schedule:list` muestra la hora de la aplicación (UTC); `--timezone=America/Bogota` muestra la de aquí. Así la piden ahora los 9 tests que leen el calendario.
+- **Cambiar o restablecer la contraseña cierra las otras sesiones** (pendiente desde la it. 20).
+  - `auth.session` de Laravel guarda en cada sesión la huella de la contraseña con que entró. Si la contraseña cambió desde otro equipo, la próxima petición vuelve al inicio de sesión. La sesión que la cambió sigue abierta.
+  - En los dos dominios: la organización y el panel global.
+  - En los tests, `actingAs` guarda también la huella, como un inicio de sesión de verdad (`tests/TestCase.php`). Sin eso, un test que actuaba como el veedor y luego como el Administrador cargaba la huella del primero: 125 fallaron en la primera corrida completa.
+  - La app del veedor recibe un 401 en español ("Su sesión terminó. Vuelva a entrar con su correo y su contraseña.") y guarda sus reportes pendientes: solo descarta ante un 422. Antes decía "Unauthenticated.".
+- **El respaldo ya no falla si una base desaparece a mitad de la copia** (hallazgo de la 43e): se omite y lo anota. Si `pg_dump` falla con la base todavía ahí, la copia sigue fallando sin dejar nada a medias.
+- **Limpieza:**
+  - se quitó el `fixme` "Ley 1581" de `make e2e`, cerrado en la 44e;
+  - las notas de la it. 23 y la 34 decían pendiente la inconsistencia R-PRIV-03/R-PRIV-02, que se resolvió el 2026-09-29.
+- ❓ **Hallazgo: LocalStack pierde los archivos al reiniciarse.** Su versión gratuita no guarda nada en disco.
+  - El 2026-09-30 el stack de Docker se reinició solo y se borraron las 455 fotos del bucket de desarrollo, mientras las bases seguían apuntándoles.
+  - Se recuperaron desde la copia de las 00:00, y la organización de `make e2e` se rehízo con su fixture.
+  - En producción no pasa: es S3 de verdad.
+  - En desarrollo, cualquier reinicio vuelve a borrarlas. Antes de una demostración, `make demo` las crea de nuevo.
+  - Para arreglarlo de fondo hace falta otro S3 local que guarde en disco: MinIO ya no se descarga sin cuenta (D2). Queda para decidir.
+- **Prueba:**
+  - Pest: 4 casos de sesiones y 2 del calendario, vistos en rojo antes de implementar;
+  - `make backup-check`: 2 casos nuevos, la base que desaparece y el error de verdad, vistos en rojo; todo en verde, con la restauración de prueba.
+
+
 ## Pivote a Stellar (2026-09-28)
 
 El proyecto participa en **Stellar Apex**, así que la blockchain pasa de EVM/Polygon a **Stellar**, con Smart Contracts en **Soroban (Rust)**:
@@ -2327,7 +2358,7 @@ No bloquean ningún criterio de aceptación. **Aceptada por el usuario el 2026-0
 | Deuda | Por qué se acepta | Qué haría falta |
 |---|---|---|
 | ✅ *Cerrada en la it. 41:* `APP_LOCALE=en`: los mensajes por defecto de Laravel (`required`, `email`) salen en inglés si alguien se salta la pantalla | Las pantallas validan antes, en español (aceptada el 2026-09-28) | Traducir `lang/es` |
-| El calendario corre en UTC: la sincronización de las 02:00 son las 21:00 en Colombia | Cada tarea dice su hora en Colombia en `routes/console.php` | `->timezone('America/Bogota')` en cada tarea, o `schedule_timezone` |
+| ✅ *Cerrada en la it. 45a:* el calendario corre en UTC: la sincronización de las 02:00 son las 21:00 en Colombia | Cada tarea dice su hora en Colombia en `routes/console.php` | `->timezone('America/Bogota')` en cada tarea, o `schedule_timezone` |
 | ✅ *Cerrada en la it. 42a:* repetir `make setup` sobre un stack que ya corre puede fallar en `up --wait`: el proxy se marca enfermo mientras la app reinicia | Jenkins parte de cero; para un stack existente basta `make up` | Más paciencia en el healthcheck del proxy |
 | El nombre de un veedor invitado es la parte local de su correo | Ninguna historia pide el nombre; todo lo público usa el seudónimo | Una historia de perfil del veedor |
 | ✅ *Cerrada en la it. 38:* `make setup` no siembra la DIVIPOLA en desarrollo (la E2E la siembra sola) | Solo afecta a configurar territorios en una base de desarrollo nueva | `db:seed --class=DivipolaSeeder` en `make setup`; para producción entra en la it. 37 |

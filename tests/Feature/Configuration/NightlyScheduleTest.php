@@ -24,7 +24,8 @@ afterEach(function () {
 });
 
 it('still lists the nightly sync at the configured hour', function () {
-    Artisan::call('schedule:list');
+    // It. 45a: la hora es de Colombia; schedule:list muestra la de la aplicación (UTC) si no se le pide otra.
+    Artisan::call('schedule:list', ['--timezone' => 'America/Bogota']);
 
     expect(Artisan::output())->toMatch('/0\s+2\s+\*\s+\*\s+\*\s+secop-sync-nightly/')
         ->and(Parameters::current('secop_sync_hour'))->toBe('02:00');

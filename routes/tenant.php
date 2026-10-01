@@ -136,7 +136,9 @@ Route::middleware([
     // Con sesión, dentro de la organización. EnsureAccountIsUsable: una
     // organización suspendida o dada de baja, o una cuenta desactivada,
     // cierran la sesión en su siguiente petición (US-003a, US-003b, US-006).
-    Route::middleware(['auth:tenant', EnsureAccountIsUsable::class])->group(function () {
+    // It. 45a: 'auth.session' cierra la sesión si la contraseña cambió desde que se abrió
+    // (se restableció o se cambió desde otro equipo).
+    Route::middleware(['auth:tenant', 'auth.session', EnsureAccountIsUsable::class])->group(function () {
         // US-018: cerrar sesión (la app del veedor avisa antes si tiene reportes sin enviar).
         Route::post('/logout', [LoginController::class, 'destroy'])->name('tenant.logout');
         // It. 40c (V11): cambiar la contraseña con la sesión abierta, desde "Mi cuenta".
