@@ -20,7 +20,7 @@ HTTP_PORT ?= $(shell sed -n 's/^HTTP_PORT=\([0-9]*\).*/\1/p' .env.docker 2>/dev/
         npm-install npm-build npm-watch xdebug-on xdebug-off hosts image-qa teardown \
         stellar-up contract-test contract-deploy contract-smoke doctor test-stellar \
         contract-extend testnet-setup testnet-extend smoke-testnet secrets-check monitoring-check verify-check e2e \
-        backup-now backup-list restore-drill backup-check trace-check network-deploy network-extend network-deploy-check \
+        backup-now backup-list restore-drill backup-check storage-check storage-restore trace-check network-deploy network-extend network-deploy-check \
         admin invites demo audit staging-check
 
 help: ## List available commands
@@ -160,6 +160,13 @@ restore-drill: ## R-BCK-05: restore the latest backup into an empty database and
 	@bash tests/infra/restore-drill.sh
 backup-check: ## R-BCK: backups link unchanged files, expire at 30 days, and the restore drill catches a bad file or a missing database
 	@bash tests/infra/check-backup.sh
+storage-check: .env.docker ## It. 45d: the development S3 keeps the evidence files on disk, across a restart and a new container
+	@bash tests/infra/check-storage.sh
+storage-restore: .env.docker ## It. 45d: copy the evidence files of the newest backup that has them into the development S3 (adds, never deletes)
+	@$(COMPOSE) exec -T backup bash -c 'src=$$(for d in $$(ls -1d /backups/2*Z | sort -r); do [ -n "$$(find $$d/evidencias -type f -print -quit)" ] && echo $$d && break; done); \
+		[ -n "$$src" ] || { echo "No hay una copia con archivos de evidencia."; exit 1; }; \
+		aws $${BACKUP_S3_ENDPOINT:+--endpoint-url $$BACKUP_S3_ENDPOINT} s3 sync "$$src/evidencias" "s3://$$BACKUP_S3_BUCKET" --only-show-errors && \
+		echo "Archivos de evidencia copiados desde $$src: $$(find $$src/evidencias -type f | wc -l)"'
 
 npm-install: .env.docker ## Install frontend dependencies
 	@mkdir -p .cache/npm

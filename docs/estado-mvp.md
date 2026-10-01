@@ -26,7 +26,7 @@ Al 2026-09-29. Empezó sobre `77e6030` (iteración 39) y se actualizó en las it
   - V13: el contacto de la veeduría en su página.
 - **Tests:** Pest 935, Vitest 466, `make e2e` 50 (44 pasan y 6 `fixme`, uno por vacío), trace-check 315 de 315, y `make ux-check` sin retroceso.
 - **Hallazgos:**
-  - **LocalStack gratuito pierde los archivos al reiniciarse** (45a). En desarrollo, un reinicio de Docker borró las fotos del bucket; se recuperaron desde la copia de respaldo. En producción no pasa: es S3. ❓ Otro S3 local que guarde en disco.
+  - **LocalStack gratuito perdía los archivos al reiniciarse** (45a). En desarrollo, un reinicio de Docker borró las fotos del bucket; se recuperaron desde la copia de respaldo. En producción no pasa: es S3. → **Resuelto en la 45d:** versitygw guarda en disco.
   - **La sincronización incremental de SECOP no es posible** (45c): el conjunto se vuelve a publicar entero cada día y `:updated_at` es igual en todas las filas.
 - **Decisiones por defecto que esperan tu confirmación**, cada una en su iteración de `specs/PLAN.md`:
   - los 30 días de retención de los informes ciudadanos (45c);

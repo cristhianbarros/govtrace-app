@@ -24,7 +24,7 @@
 | # | Tema | Propuesta | Se necesita en |
 |---|---|---|---|
 | D1 | Cola de trabajos | Driver `database`, con un servicio `worker` en el docker-compose base. Sin Horizon ni Redis en el MVP. | it. 1 |
-| D2 | Archivos de evidencia | LocalStack (compatible con S3) en docker-compose para desarrollo y CI; S3 en producción. *Ajustada en it. 1: MinIO ya no se descarga sin login desde 2025.* | it. 1 |
+| D2 | Archivos de evidencia | S3 en producción. En desarrollo y CI, un S3 local en docker-compose: LocalStack desde la it. 1 (MinIO ya no se descarga sin login desde 2025), y **versitygw desde la it. 45d**, porque LocalStack gratuito perdía los archivos al reiniciarse. | it. 1, 45d |
 | D3 | Roles y permisos | `spatie/laravel-permission`, preferencia expresada en el discovery | it. 4 |
 | D4 | Smart Contract | **Soroban (Rust, `soroban-sdk`)** en `contracts/sealing/`, probado con el entorno de pruebas del SDK (`cargo test`, sin red). Red local *standalone* de Stellar en un perfil `stellar` de docker-compose: la imagen `stellar/quickstart` que levanta `stellar container start local`, con RPC y friendbot. Rust y Stellar CLI corren en un contenedor de herramientas, así que el host sigue necesitando solo Docker y `make` (R-TST-01). *Reemplaza Solidity/Foundry/Anvil (pivote a Stellar).* | it. 12 |
 | D5 | Comisiones de red (R-BLK-01, R-BLK-04) | ✅ **Resuelta: sin proveedores de terceros.** El backend patrocina cada transacción con *fee bump*, nativo de Stellar. La cuenta **selladora** firma la invocación (`require_auth`); la cuenta **patrocinadora** de GovTrace, que tiene los XLM, paga la comisión completa, incluida la de recursos de Soroban. | it. 13-14 |
@@ -2339,7 +2339,7 @@ El usuario pidió seguir con lo que no espera a nadie: la deuda técnica y los h
   - Uno sin atender guarda el correo: todavía hay que responderle.
   - `PurgeCitizenReports`, cada día a la 01:15 de Colombia. El log dice cuántos, nunca un correo.
   - La política lo dice; versión `2026-09-30.3`.
-  - ❓ Los 30 días son la propuesta por defecto.
+  - ✅ Los 30 días, aprobados por el usuario el 2026-10-01: "a perfect implementation of Data Minimization under Ley 1581".
 - **El nombre de cada quien, al activar su cuenta** (deuda aceptada: era la parte del correo antes de la @).
   - La pantalla lo pide, con al menos 2 letras. Dice quién lo ve: su veeduría; en el sitio público no aparece, porque los reportes llevan un seudónimo.
   - Si la cuenta ya tiene un nombre de verdad, viene escrito.
@@ -2351,6 +2351,27 @@ El usuario pidió seguir con lo que no espera a nadie: la deuda técnica y los h
   - Pest, 12 casos, vistos en rojo antes de implementar: lo que se guarda de SECOP y la migración; la retención (descartado, atendido, sin atender, el log y la hora); el nombre (lo pide, lo guarda, lo valida, conserva el anterior);
   - Vitest: 459 de 459; el campo del nombre, en la activación, y el texto nuevo de la política;
   - `make e2e`: 42 pasan; el Administrador y el veedor escriben su nombre al activar su cuenta.
+
+**45d — El S3 de desarrollo guarda en disco.** El usuario, el 2026-10-01: "Add a persistent volume mount… (or switch to MinIO if lighter). Re-downloading 455 photos on every container restart kills developer productivity."
+
+✅ **45d cumplida (2026-10-01).**
+- **Por qué no bastaba un volumen:** LocalStack gratuito guarda S3 en memoria aunque tenga un volumen; guardar en disco (`PERSISTENCE`) es de la versión de pago. MinIO ya no se descarga sin cuenta (D2). Se probaron:
+  - SeaweedFS: 724 MB;
+  - **versitygw** (Apache 2.0): 100 MB, frente a los 2 GB de LocalStack. Es una puerta S3 que guarda cada objeto como un archivo en su carpeta.
+- **versitygw, en el servicio `storage`.**
+  - Mismo puerto (4566) y mismas llaves que ya tenía el `.env` de Laravel, así que un entorno existente no cambia su `.env`.
+  - El volumen `evidence_files` guarda los archivos; el bucket es una carpeta y se crea al arrancar si falta. Sano por `/health`.
+  - Se probaron, antes de cambiar, crear el bucket, subir, listar, la URL firmada, sincronizar, borrar el bucket, las llaves incorrectas (rechazadas), y que el archivo sigue tras reiniciar y tras un contenedor nuevo.
+- **El respaldo usa las llaves del S3 de desarrollo por defecto** (antes `test`, que LocalStack aceptaba).
+- **`make staging-check` también usa versitygw:** el pipeline ya no baja 2 GB, y LocalStack sale del repositorio con su script de arranque.
+- **`make storage-check`**, en el pipeline: un archivo que la app escribe sigue ahí tras reiniciar el servicio y tras recrearlo.
+- **`make storage-restore`:** copia al S3 los archivos de la copia de respaldo más reciente que los tenga. Solo agrega, nunca borra. Sirve a quien venía de LocalStack.
+  - En este equipo, el stack se reinició otra vez durante la noche y el bucket amaneció vacío. Se recuperaron las 490 fotos desde la copia de las 09:00.
+  - El volumen viejo, `govtrace_storage_data`, ya no se usa; se puede borrar con `docker volume rm`.
+- **Prueba:**
+  - `make storage-check`: en rojo con LocalStack (el archivo se perdía al reiniciar y al recrear) y en verde con versitygw;
+  - `make backup-check`: 15 de 15, con la réplica fuera del sitio y la restauración de prueba;
+  - `make staging-check`, `make e2e` (44 pasan), `verify-stack.sh` y `ObjectStorageTest`.
 
 ## Pivote a Stellar (2026-09-28)
 

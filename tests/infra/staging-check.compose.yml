@@ -1,18 +1,22 @@
 # make staging-check (it. 42a): lo que solo existe en la prueba local del
-# stack de producción. LocalStack hace de S3, para las evidencias y para los
-# respaldos; en AWS, el S3 de verdad con el rol de la instancia.
+# stack de producción. versitygw hace de S3 (it. 45d, como en desarrollo),
+# para las evidencias y para los respaldos; en AWS, el S3 de verdad con el rol
+# de la instancia. El bucket es un directorio: se crea al arrancar.
 services:
   storage:
-    image: localstack/localstack:3.8
+    image: versity/versitygw:v1.8.0
+    entrypoint: ["sh", "-c", "mkdir -p \"/data/$${EVIDENCE_BUCKET}\" && exec /usr/local/bin/docker-entrypoint.sh"]
     environment:
-      SERVICES: s3
       EVIDENCE_BUCKET: "${EVIDENCE_AWS_BUCKET}"
-    volumes:
-      - ./docker/storage/init-bucket.sh:/etc/localstack/init/ready.d/init-bucket.sh:ro
+      ROOT_ACCESS_KEY_ID: "${EVIDENCE_AWS_ACCESS_KEY_ID}"
+      ROOT_SECRET_ACCESS_KEY: "${EVIDENCE_AWS_SECRET_ACCESS_KEY}"
+      VGW_PORT: ":4566"
+      VGW_HEALTH: /health
+      VGW_BACKEND: posix
+      VGW_BACKEND_ARG: /data
     networks: [govtrace]
     healthcheck:
-      # Sano cuando corrió el script que crea el bucket, no solo cuando arrancó.
-      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:4566/_localstack/init/ready | grep -q '\"completed\": true'"]
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:4566/health"]
       interval: 3s
       timeout: 5s
       retries: 60
