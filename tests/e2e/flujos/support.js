@@ -68,6 +68,21 @@ export function latestMailTo(email) {
     return entry;
 }
 
+/** It. 43i: the newest mail to $email that says $text — when that address gets other mails too. */
+export function latestMailAbout(email, text) {
+    const file = openSync(MAIL_LOG, 'r');
+    const size = fstatSync(file).size;
+    const buffer = Buffer.alloc(Math.min(size, TAIL_BYTES));
+    readSync(file, buffer, 0, buffer.length, size - buffer.length);
+    closeSync(file);
+
+    const entry = buffer.toString('utf8').split(/^(?=\[\d{4}-\d\d-\d\d \d\d:\d\d:\d\d\] )/m).reverse().find((candidate) => candidate.includes(email) && candidate.includes(text));
+    if (!entry) {
+        throw new Error(`No hay un correo para ${email} que diga "${text}" en storage/logs/mail.log`);
+    }
+    return entry;
+}
+
 /** It. 44f: the 6-digit code a citizen got to inform a veeduría. */
 export const latestCodeTo = (email) => latestMailTo(email).match(/es: (\d{6})/)[1];
 

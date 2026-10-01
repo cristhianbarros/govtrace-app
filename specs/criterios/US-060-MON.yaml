@@ -1,0 +1,21 @@
+story_id: "US-060-MON"
+titulo_historia: "Como Administrador de Organización quiero recibir una vez al día un correo con las evidencias que esperan mi revisión, para no tener que entrar a buscarlas"
+bloque: "Flujos completos — V9"
+criterios_aceptacion:
+  escenarios_exito:
+    - "Cada día a las 07:00 (hora de Colombia), cada Administrador activo de una organización activa con evidencias por revisar recibe un correo: cuántas son y un botón a su Bandeja"
+  validaciones_reglas:
+    - "Por revisar son las evidencias selladas que siguen ocultas: las mismas que cuenta la pestaña 'Bandeja'"
+    - "Sin evidencias por revisar, no hay correo"
+    - "No llega a una organización suspendida o dada de baja, ni a un Administrador desactivado o que no activó su cuenta, ni a los veedores"
+  manejo_errores: []
+  requisitos_ux:
+    - "De usted y sin jerga técnica (R-UX-06); dice que llega una vez al día y solo si hay algo que revisar"
+  casos_edge:
+    - "Una evidencia que todavía se está sellando no cuenta: aún no se puede publicar"
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true

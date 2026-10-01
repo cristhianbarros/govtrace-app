@@ -108,8 +108,6 @@ test('El veedor activa su cuenta y encuentra la obra para reportar', async ({ pa
     await expect(page.locator('[data-test="contract-result"]').first()).toContainText(WORKSITE);
 });
 
-test.fixme('V9: al Administrador le llega un aviso de que hay evidencias por revisar', async () => {});
-
 test('El ciudadano encuentra la veeduría nueva en el Inicio de GovTrace (V5)', async ({ page }) => {
     await page.goto(CENTRAL);
 

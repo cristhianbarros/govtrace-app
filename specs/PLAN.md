@@ -1955,7 +1955,7 @@ Esta iteración estaba reservada para ese recorrido. El recorrido se hizo para e
 - `make e2e`: 38 pasan y 9 siguen pendientes (V3, V7, V8, V9, V10, V13 y la Ley 1581).
 
 **Queda de la 43b:**
-- V9 (❓ el aviso diario);
+- V9 (❓ el aviso diario); → **Cerrado en la 43i.**
 - V10 (❓ la solicitud de alta);
 - V13 (❓ el contacto). → **Cerrado en la 43h.**
 
@@ -2068,6 +2068,17 @@ Esta iteración estaba reservada para ese recorrido. El recorrido se hizo para e
   - Pest, 7 casos;
   - Vitest: los campos y el pie;
   - `make e2e`: el `fixme` de V13 pasa a verde. La Administradora publica el contacto y el ciudadano lo ve en el pie.
+
+**43i — V9: el resumen diario de las evidencias por revisar** (US-060-MON, historia nueva). El usuario, el 2026-10-01: "Implement a daily digest email for pending evidence rather than alerting on every single submission to prevent alert fatigue."
+
+✅ **43i cumplida (2026-10-01).**
+- **A las 07:00 de Colombia**, cada Administrador activo de una organización activa con evidencias por revisar recibe un correo: cuántas son y un botón a su Bandeja (`SendReviewDigests`).
+- **Por revisar** son las selladas que siguen ocultas: las mismas que cuenta la pestaña "Bandeja". `PendingReview` las cuenta en los dos lugares.
+- **No llega:** sin evidencias por revisar; a una organización suspendida; a un Administrador desactivado o que no activó su cuenta; a los veedores.
+- **Historia, criterio y Gherkin nuevos:** `US-060-MON`, con 5 escenarios.
+- **Prueba:**
+  - Pest, 8 casos (los 5 escenarios, una sola organización, la hora y de usted);
+  - `make e2e`: el `fixme` de V9 pasa a verde. El fixture de `make e2e` envía el resumen de su organización, y el flujo de la Administradora lo lee del correo de desarrollo, por su cuerpo: el asunto va codificado (MIME) en el log. El `fixme` repetido de V9 en el flujo de alta se quitó.
 
 **40e — Pestañas y una identidad simple y acogedora** (US-027, R-UX-10). El usuario pidió pestañas en vez de botones sueltos, un estilo con contraste y, sobre todo, una interfaz que impresione: "es como muy común… simple pero acogedora".
 

@@ -31,6 +31,7 @@ use App\Domain\Worksites\Worksite;
 use App\Infrastructure\Tenancy\Tenant;
 use App\Jobs\ConfirmSeal;
 use App\Jobs\SealReport;
+use App\Jobs\SendReviewDigests;
 use App\Models\User as SuperAdministrator;
 use Database\Seeders\DivipolaSeeder;
 use Illuminate\Contracts\Console\Kernel;
@@ -143,6 +144,10 @@ foreach (E2E_REPORTS as $number => [$classification, $daysAgo, $metersNorth, $co
         });
     }
 }
+
+// It. 43i (US-060-MON): el resumen diario de lo que espera revisión, de esta organización;
+// make e2e lo lee del correo de desarrollo.
+app()->call([new SendReviewDigests($tenant->id), 'handle']);
 
 /**
  * A demo photo with a JPEG comment of its own after the JFIF header, so every

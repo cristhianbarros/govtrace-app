@@ -9,6 +9,7 @@ use App\Jobs\CheckSponsorBalance;
 use App\Jobs\PurgeCitizenReports;
 use App\Jobs\PurgeDecommissionedEvidence;
 use App\Jobs\PurgeVeedorPseudonyms;
+use App\Jobs\SendReviewDigests;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -81,4 +82,11 @@ app(Schedule::class)->job(new PurgeVeedorPseudonyms)
 app(Schedule::class)->job(new PurgeCitizenReports)
     ->dailyAt('01:15')
     ->name('citizen-reports-purge')
+    ->onOneServer();
+
+// US-060-MON (it. 43i, V9): a cada Administrador, cuántas evidencias esperan su
+// revisión; una vez al día, a las 07:00, y solo si hay.
+app(Schedule::class)->job(new SendReviewDigests)
+    ->dailyAt('07:00')
+    ->name('review-digest')
     ->onOneServer();
