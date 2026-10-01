@@ -50,8 +50,10 @@ const failuresBanner = computed(() => {
     if (count === 0) {
         return null;
     }
-    const evidences = count === 1 ? '1 evidencia no pudo ser sellada' : `${count} evidencias no pudieron ser selladas`;
-    return `Alerta: ${evidences} en blockchain. Se requiere intervención del soporte técnico.`;
+    // It. 45e (enmienda de US-021): sin jerga técnica.
+    return count === 1
+        ? 'Alerta: 1 evidencia no se pudo certificar de forma segura. El soporte técnico de GovTrace tiene que revisarla.'
+        : `Alerta: ${count} evidencias no se pudieron certificar de forma segura. El soporte técnico de GovTrace tiene que revisarlas.`;
 });
 </script>
 

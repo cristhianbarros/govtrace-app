@@ -9,8 +9,8 @@ criterios_aceptacion:
     - "Si la red de Stellar no confirma una transacción en 5 minutos, el sellado vuelve a la cola y reintenta con esta misma política (R-INT-01). La patrocinadora sin saldo pausa el sellado sin gastar intentos (US-020b)"
   manejo_errores:
     - {caso: "Falla el quinto intento", resultado: "La evidencia queda en estado 'Falla de Sellado'. El veedor no ve ningún error"}
-    - {caso: "Hay evidencias en 'Falla de Sellado' en la organización", mensaje: "Alerta: [N] evidencias no pudieron ser selladas en blockchain. Se requiere intervención del soporte técnico.", donde: "banner rojo en el panel del Administrador de Organización"}
-    - {caso: "Una evidencia lleva más de 2 horas 'En Cola'", resultado: "Se alerta al Super Administrador y al Administrador de la organización afectada", mensaje: "⚠️ Alerta de Sistema: Hay evidencias con más de 2 horas estancadas en la cola de sellado. Revisa el estado de la red o del proveedor RPC."}
+    - {caso: "Hay evidencias en 'Falla de Sellado' en la organización", mensaje: "Alerta: [N] evidencias no se pudieron certificar de forma segura. El soporte técnico de GovTrace tiene que revisarlas.", donde: "banner rojo en el panel del Administrador de Organización"}
+    - {caso: "Una evidencia lleva más de 2 horas 'En Cola'", resultado: "Se alerta al Super Administrador y al Administrador de la organización afectada", mensaje: "⚠️ Aviso: hay evidencias que llevan más de 2 horas en fila para ser certificadas de forma segura. GovTrace sigue intentándolo solo; ninguna se pierde."}
   requisitos_ux:
     - "El veedor no ve errores de sellado"
   casos_edge:

@@ -2320,7 +2320,7 @@ El usuario pidió seguir con lo que no espera a nadie: la deuda técnica y los h
   - la cabecera dice "GovTrace" y "Veeduría ciudadana de obras públicas";
   - el pie dice "GovTrace · Evidencia ciudadana que nadie puede cambiar." y enlaza la política de datos (Ley 1581), en las versiones HTML y texto. Antes decía "Todos los derechos reservados".
 - **El remitente de desarrollo:** `no-responder@govtrace.localhost`, con el nombre "GovTrace", en `.env.example`. En producción lo fija `.env.production.example`.
-- ❓ **Queda la alerta de la cola de sellado** (US-021): "Revisa el estado de la red o del proveedor RPC" tutea y habla técnico, pero el texto exacto está en el escenario de la spec. Cambiarlo es enmendar US-021.
+- ❓ **Queda la alerta de la cola de sellado** (US-021): "Revisa el estado de la red o del proveedor RPC" tutea y habla técnico, pero el texto exacto está en el escenario de la spec. Cambiarlo es enmendar US-021. → **Enmendada en la 45e**, con la aprobación del usuario.
 - **Prueba:**
   - Pest, 17 casos: de usted, la identidad en cada correo, el botón verde y el remitente, vistos en rojo antes de implementar;
   - `SpanishTest` ahora busca el pie de GovTrace;
@@ -2372,6 +2372,18 @@ El usuario pidió seguir con lo que no espera a nadie: la deuda técnica y los h
   - `make storage-check`: en rojo con LocalStack (el archivo se perdía al reiniciar y al recrear) y en verde con versitygw;
   - `make backup-check`: 15 de 15, con la réplica fuera del sitio y la restauración de prueba;
   - `make staging-check`, `make e2e` (44 pasan), `verify-stack.sh` y `ObjectStorageTest`.
+
+**45e — Las alertas de US-021, de usted y sin jerga** (enmienda de US-021). El usuario, el 2026-10-01: "Amend the story. Change the sealing-queue alert to 'usted' and strip the technical blockchain jargon. Use something citizen-friendly like 'Su evidencia está en fila para ser certificada de forma segura.'"
+
+✅ **45e cumplida (2026-10-01).**
+- **La alerta de la cola de sellado**, que reciben el Super Administrador y el Administrador:
+  - antes: "⚠️ Alerta de Sistema: Hay evidencias con más de 2 horas estancadas en la cola de sellado. Revisa el estado de la red o del proveedor RPC.";
+  - ahora: "⚠️ Aviso: hay evidencias que llevan más de 2 horas en fila para ser certificadas de forma segura. GovTrace sigue intentándolo solo; ninguna se pierde.";
+  - el asunto: "GovTrace: evidencias en fila para ser certificadas".
+  - La frase del usuario habla de "su evidencia". Se adaptó porque la alerta le llega a quien administra, no a quien reportó.
+- **El banner del Administrador por evidencias en "Falla de Sellado"**, de la misma historia, también tenía jerga ("selladas en blockchain"). Ahora dice: "Alerta: 3 evidencias no se pudieron certificar de forma segura. El soporte técnico de GovTrace tiene que revisarlas." Así aplica R-UX-06.
+- **La enmienda queda en `features/US-021.feature` y su criterio**, con los títulos de los escenarios intactos: la trazabilidad no cambia (315 de 315).
+- **Prueba:** Pest, la alerta en `SealingRetriesTest` y en los correos de usted (`MailIdentityTest`); Vitest, el banner. Vistos en rojo antes de implementar.
 
 ## Pivote a Stellar (2026-09-28)
 

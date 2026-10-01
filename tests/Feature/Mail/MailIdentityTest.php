@@ -7,6 +7,7 @@ use App\Domain\CitizenReports\Notifications\CitizenReportReceived;
 use App\Domain\Organization\Notifications\OrganizationInactive;
 use App\Domain\Organization\Notifications\WelcomeNotification;
 use App\Domain\Organization\User;
+use App\Domain\Sealing\Notifications\SealingQueueStalled;
 use App\Domain\Sealing\Notifications\SponsorOutOfFunds;
 use Carbon\CarbonImmutable;
 use Illuminate\Notifications\Notification;
@@ -31,6 +32,7 @@ dataset('mails to people', [
     'la respuesta de la veeduría' => [fn () => new CitizenReportAnswered(7, 'Veeduría Ciudadana Comuna 13', 'Gracias. Esta semana va un veedor.')],
     'la organización sin actividad' => [fn () => new OrganizationInactive('Veeduría Ciudadana Comuna 13', 30, CarbonImmutable::parse('2026-08-31'))],
     'la patrocinadora sin saldo' => [fn () => new SponsorOutOfFunds('GABC')],
+    'la cola de sellado (it. 45e, enmienda de US-021)' => [fn () => new SealingQueueStalled(['Veeduría Ciudadana Santa Marta'])],
 ]);
 
 it('speaks to the person as "usted", like the rest of GovTrace', function (Notification $notification) {
