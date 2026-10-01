@@ -44,7 +44,7 @@ s3://<bucket>/evidencias/             # un espejo de los archivos de evidencia
 - Los archivos van a un espejo, porque no cambian nunca: subirlos todos cada hora no tendría sentido.
 - **Ese bucket necesita versionado, y una regla que guarde 30 días las versiones anteriores.** Así, un archivo borrado por error se puede recuperar durante 30 días, aunque el espejo ya lo haya quitado.
 - Con la réplica configurada, el servicio `backup` deja de estar sano si la última tiene más de 2 horas.
-- `make backup-check` la prueba con un segundo bucket de LocalStack: replica, borra la de hace 30 días y restaura desde allá.
+- `make backup-check` la prueba con un segundo bucket del S3 de desarrollo: replica, borra la de hace 30 días y restaura desde allá.
 
 ## Comandos
 

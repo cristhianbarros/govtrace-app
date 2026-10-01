@@ -109,6 +109,7 @@ Las capturas de todas las pantallas, en celular y en computador: `make ux-check`
   - LUGAR tiene que ser el sitio exacto de la presentación, no el centro de la ciudad: por ejemplo, con clic derecho sobre el edificio en un mapa.
   - Además, el GPS tiene que dar 50 m o menos (US-008). Un portátil ubica por WiFi y a veces da más. Entonces, en Chrome, DevTools → *Sensores* → *Ubicación*, con las mismas coordenadas. Es una limitación del portátil, no del sistema: un celular da la ubicación por GPS.
 - **Cámara, ubicación e instalar la app.** El navegador solo las da en un contexto seguro. En el mismo equipo, `*.localhost` lo es; desde un celular en tu red (`http://<tu IP>:8080`), no. Sin cámara, puedes subir una imagen desde el equipo. Por la misma razón, "Instalar la app en este celular" solo aparece por HTTPS (staging) o en el mismo equipo.
+- **Las fotos de las evidencias** quedan en el volumen `evidence_files`, en el S3 de desarrollo (versitygw, it. 45d), y sobreviven a reiniciar Docker. Si vienes de una versión anterior, que usaba LocalStack y las perdía al reiniciarse, `make storage-restore` las trae de la copia de respaldo más reciente que las tenga.
 - **Los correos no se envían a nadie:**
   - salen al archivo `storage/logs/mail.log` (`MAIL_MAILER=log`);
   - y llega una copia al buzón de desarrollo, **Mailpit**: `http://mailpit.govtrace.localhost:8080` (`make mail`). Ahí se leen como los vería quien los recibe, con sus enlaces y botones. Se vacía al reiniciarlo (it. 38b).

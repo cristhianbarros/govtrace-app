@@ -112,6 +112,8 @@ pipeline {
                 // days, and the restore drill restores everything into an empty
                 // PostgreSQL and a test bucket, checking each evidence's SHA-256.
                 sh 'make backup-check'
+                // It. 45d: the development S3 keeps its files across a restart.
+                sh 'make storage-check'
             }
         }
 

@@ -116,32 +116,38 @@ services:
       start_period: 20s
 
   # ---------------------------------------------------------- storage -----
-  # S3-compatible object storage for evidence files (D2, specs/PLAN.md it.1).
-  # LocalStack, not MinIO: MinIO gated its images behind a login in 2025
-  # (docker.io/minio/minio and the Bitnami mirror both now refuse anonymous
-  # pulls), so it is no longer a "just docker compose up" dependency. A real
-  # S3 bucket is still the target in production (config/filesystems.php).
-  # The init script (mounted read-only) creates the bucket on first boot.
+  # S3-compatible object storage for evidence files (D2, specs/PLAN.md). A
+  # real S3 bucket is the target in production (config/filesystems.php).
+  # It. 45d: versitygw, an S3 gateway that keeps each object as a plain file
+  # in its volume, so the evidence survives a restart. LocalStack (free) kept
+  # S3 in memory and lost every photo on each restart; MinIO gated its images
+  # behind a login in 2025. 100 MB instead of LocalStack's 2 GB. The bucket is
+  # a directory: it is created on start if missing.
   storage:
-    image: localstack/localstack:3.8
+    image: versity/versitygw:v1.8.0
+    entrypoint: ["sh", "-c", "mkdir -p \"/data/$${EVIDENCE_BUCKET}\" && exec /usr/local/bin/docker-entrypoint.sh"]
     environment:
-      SERVICES: s3
-      DEFAULT_REGION: "${EVIDENCE_AWS_DEFAULT_REGION:-us-east-1}"
       EVIDENCE_BUCKET: "${MINIO_BUCKET:-evidencias}"
+      # The same keys as EVIDENCE_AWS_* in the Laravel .env and the backup service.
+      ROOT_ACCESS_KEY_ID: "${STORAGE_ACCESS_KEY_ID:-govtrace}"
+      ROOT_SECRET_ACCESS_KEY: "${STORAGE_SECRET_ACCESS_KEY:-secretsecret}"
+      VGW_PORT: ":4566"
+      VGW_HEALTH: /health
+      VGW_BACKEND: posix
+      VGW_BACKEND_ARG: /data
     volumes:
-      - storage_data:/var/lib/localstack
-      - ./docker/storage/init-bucket.sh:/etc/localstack/init/ready.d/init-bucket.sh:ro
+      - evidence_files:/data
     ports:
       - "${LOCAL_IP:-127.0.0.1}:${MINIO_PORT:-9000}:4566"
     networks: [govtrace]
     security_opt: [no-new-privileges:true]
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:4566/_localstack/health"]
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:4566/health"]
       interval: 5s
       timeout: 5s
       retries: 20
-      start_period: 10s
+      start_period: 5s
 
   # ------------------------------------------------------------ mailpit ----
   # It. 38b: el buzón de desarrollo. Cada correo que envía la app llega también
@@ -203,8 +209,9 @@ services:
       PGDATABASE: "${DB_DATABASE:-govtrace}"
       BACKUP_S3_ENDPOINT: "${BACKUP_S3_ENDPOINT-http://storage:4566}"
       BACKUP_S3_BUCKET: "${MINIO_BUCKET:-evidencias}"
-      AWS_ACCESS_KEY_ID: "${BACKUP_AWS_ACCESS_KEY_ID:-test}"
-      AWS_SECRET_ACCESS_KEY: "${BACKUP_AWS_SECRET_ACCESS_KEY:-test}"
+      # It. 45d: by default, the keys of the development S3 (the storage service).
+      AWS_ACCESS_KEY_ID: "${BACKUP_AWS_ACCESS_KEY_ID:-${STORAGE_ACCESS_KEY_ID:-govtrace}}"
+      AWS_SECRET_ACCESS_KEY: "${BACKUP_AWS_SECRET_ACCESS_KEY:-${STORAGE_SECRET_ACCESS_KEY:-secretsecret}}"
       AWS_DEFAULT_REGION: "${EVIDENCE_AWS_DEFAULT_REGION:-us-east-1}"
       BACKUP_RETENTION_DAYS: "${BACKUP_RETENTION_DAYS:-30}"
       BACKUP_INTERVAL_SECONDS: "${BACKUP_INTERVAL_SECONDS:-3600}"
@@ -357,7 +364,7 @@ networks:
 
 volumes:
   pgsql_data:
-  storage_data:
+  evidence_files: # it. 45d: the evidence files of development (S3, versitygw)
   backup_data:
   composer_cache:
   cargo_registry:

@@ -3,7 +3,7 @@ name: govtrace
 # Producción y staging (it. 42a). La imagen inmutable (etapa qa del Dockerfile:
 # el código, las dependencias sin las de desarrollo y el frontend, adentro),
 # nginx con el TLS, y S3, SES y Stellar de verdad. Sin montar el código, sin
-# LocalStack, sin la red Stellar local; la aplicación y PostgreSQL, sin puertos.
+# el S3 de desarrollo, sin la red Stellar local; la aplicación y PostgreSQL, sin puertos.
 #
 # Lo levanta deploy/deploy.sh. Los secretos llegan por el entorno de ese
 # proceso (en AWS, desde SSM Parameter Store): cada variable se nombra aquí sin

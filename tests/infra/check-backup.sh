@@ -101,7 +101,7 @@ if grep -q "no tiene su base en la copia" <<< "$out"; then pass "detecta una org
 in_backup "rm -rf $altered"
 
 # It. 37a — fuera del sitio: cada copia se replica a otro bucket (aquí, uno
-# de LocalStack), la réplica se borra allá a los 30 días, y desde allá se
+# del S3 de desarrollo), la réplica se borra allá a los 30 días, y desde allá se
 # restaura. Y la restauración de prueba falla si tarda más de 4 h (R-BCK-02).
 offsite=s3://evidencias-offsite
 off() { in_backup "aws --endpoint-url \$BACKUP_S3_ENDPOINT s3 $1"; }

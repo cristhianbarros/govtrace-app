@@ -5,7 +5,7 @@
 #   - la plantilla .env.staging.example, con secretos de un solo uso;
 #   - una CA de prueba y un certificado comodín para govtrace.localhost, donde
 #     Let's Encrypt los deja (live/<dominio>/);
-#   - LocalStack haciendo de S3 (tests/infra/staging-check.compose.yml).
+#   - versitygw haciendo de S3 (tests/infra/staging-check.compose.yml, it. 45d).
 # Comprueba lo que solo se ve con nginx, Apache y PHP juntos: que por HTTPS
 # la aplicación sabe que es HTTPS. Los tests de Pest no pasan por Apache.
 set -uo pipefail
@@ -55,7 +55,7 @@ MAIL_MAILER=log
 # llega con la suya, pública. Con esta lista, Laravel no le cree a nadie, y la
 # visita por HTTPS la tiene que reconocer el stack mismo (nginx y Apache).
 TRUSTED_PROXIES=10.255.255.0/24
-# S3: LocalStack, con credenciales de prueba (en AWS, el rol de la instancia).
+# S3: versitygw, con credenciales de prueba (en AWS, el rol de la instancia).
 EVIDENCE_AWS_ENDPOINT=http://storage:4566
 EVIDENCE_AWS_USE_PATH_STYLE_ENDPOINT=true
 EVIDENCE_AWS_ACCESS_KEY_ID=test
