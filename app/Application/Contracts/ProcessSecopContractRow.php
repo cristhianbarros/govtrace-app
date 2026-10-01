@@ -24,6 +24,18 @@ class ProcessSecopContractRow
      */
     private const CANCELLED_STATUSES = ['anulado', 'cancelado'];
 
+    /**
+     * It. 45c: of the row, only what GovTrace reads. SECOP also publishes the
+     * legal representative, the supervisor, their documents and the bank
+     * account of the contractor: public, but not needed here (Ley 1581,
+     * principio de finalidad).
+     */
+    public const KEPT_FIELDS = [
+        'id_contrato', 'referencia_del_contrato', 'nombre_entidad', 'proveedor_adjudicado', 'descripcion_del_proceso',
+        'tipo_de_contrato', 'estado_contrato', 'valor_del_contrato', 'fecha_de_firma', 'fecha_de_fin_del_contrato',
+        'ciudad', 'departamento', 'urlproceso',
+    ];
+
     public function __construct(
         private readonly MunicipalityMatcher $matcher = new MunicipalityMatcher,
     ) {}
@@ -87,7 +99,7 @@ class ProcessSecopContractRow
             'department_code' => $departmentCode,
             'municipality_code' => $municipalityCode,
             'secop_url' => $row['urlproceso']['url'] ?? null,
-            'raw_payload' => $row,
+            'raw_payload' => array_intersect_key($row, array_flip(self::KEPT_FIELDS)),
             'cancelled_at' => $status === 'cancelled' ? $this->cancelledSince($row['id_contrato']) : null,
         ];
 

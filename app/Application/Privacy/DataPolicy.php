@@ -17,8 +17,8 @@ use App\Domain\Organization\User;
  */
 class DataPolicy
 {
-    /** The text in force. Changing it means a new version: it. 44f added the reports of citizens. */
-    public const VERSION = '2026-09-30.2';
+    /** The text in force. Changing it means a new version: it. 44f added the reports of citizens, 45c their retention. */
+    public const VERSION = '2026-09-30.3';
 
     public const EFFECTIVE_DATE = '2026-09-30';
 

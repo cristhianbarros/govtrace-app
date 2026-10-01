@@ -15,7 +15,11 @@ const EXPIRED = 'El enlace de invitación ha expirado o no es válido. Solicite 
 const validLink = { valid: true, email: 'carlos@correo.co', token: 'token-del-correo', action: '/set-password/7' };
 
 // It. 44e: quien activa su cuenta autoriza también el tratamiento de sus datos, salvo que el test diga lo contrario.
-async function definePassword(wrapper, password, confirmation = password, { authorize = true } = {}) {
+// It. 45c: y escribe su nombre, salvo que el test diga otro.
+async function definePassword(wrapper, password, confirmation = password, { authorize = true, name = 'Carlos Rojas' } = {}) {
+    if (name !== null) {
+        await wrapper.get('input#name').setValue(name);
+    }
     if (authorize) {
         await wrapper.get('input#data-authorization').setValue(true);
     }
@@ -34,7 +38,7 @@ describe('Crear la contraseña', () => {
         await definePassword(wrapper, 'Veeduria#2026');
 
         expect(submissions).toEqual([
-            { url: '/set-password/7', data: { token: 'token-del-correo', password: 'Veeduria#2026', password_confirmation: 'Veeduria#2026', data_authorization: true } },
+            { url: '/set-password/7', data: { token: 'token-del-correo', name: 'Carlos Rojas', password: 'Veeduria#2026', password_confirmation: 'Veeduria#2026', data_authorization: true } },
         ]);
         expect(wrapper.get('input#password').attributes('autocomplete')).toBe('new-password');
     });
@@ -96,7 +100,7 @@ describe('La declaración de impedimentos del veedor (it. 44c)', () => {
         await definePassword(wrapper, 'Veeduria#2026');
 
         expect(submissions).toEqual([
-            { url: '/set-password/7', data: { token: 'token-del-correo', password: 'Veeduria#2026', password_confirmation: 'Veeduria#2026', data_authorization: true, declaration: true } },
+            { url: '/set-password/7', data: { token: 'token-del-correo', name: 'Carlos Rojas', password: 'Veeduria#2026', password_confirmation: 'Veeduria#2026', data_authorization: true, declaration: true } },
         ]);
     });
 
@@ -154,3 +158,27 @@ describe('La autorización del tratamiento de datos (it. 44e)', () => {
         expect(wrapper.text()).toContain(AUTHORIZATION_REQUIRED);
     });
 });
+
+describe('Su nombre (it. 45c)', () => {
+    it('asks for the name, and says who will see it', () => {
+        const wrapper = mount(SetPassword, { props: validLink });
+
+        expect(wrapper.get('label[for="name"]').text()).toBe('Su nombre');
+        expect(wrapper.get('input#name').attributes('autocomplete')).toBe('name');
+        expect(wrapper.text()).toContain('Lo ve su veeduría. En el sitio público no aparece su nombre: los reportes llevan un seudónimo.');
+    });
+
+    it('starts with the name the account already has', () => {
+        expect(mount(SetPassword, { props: { ...validLink, name: 'Carlos Rojas' } }).get('input#name').element.value).toBe('Carlos Rojas');
+    });
+
+    it('does not send without a name of at least 2 letters, and says it beside the field', async () => {
+        const wrapper = mount(SetPassword, { props: validLink });
+
+        await definePassword(wrapper, 'Veeduria#2026', 'Veeduria#2026', { name: ' C ' });
+
+        expect(submissions).toEqual([]);
+        expect(wrapper.text()).toContain('Escriba su nombre: al menos 2 letras.');
+    });
+});
+

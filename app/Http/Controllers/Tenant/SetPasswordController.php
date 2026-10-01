@@ -12,6 +12,7 @@ use App\Domain\Organization\User;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
@@ -24,6 +25,8 @@ use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
  */
 class SetPasswordController extends Controller
 {
+    private const NAME_REQUIRED = 'Escriba su nombre: al menos 2 letras.';
+
     /**
      * The screen the link opens (it. 17). An unknown user, a wrong token
      * and an expired link all look the same: the screen never tells
@@ -44,6 +47,8 @@ class SetPasswordController extends Controller
         return Inertia::render('Auth/SetPassword', [
             'valid' => true,
             'email' => $account->email,
+            // It. 45c: el nombre que ya tiene; vacío si es solo el comienzo de su correo (el de la invitación).
+            'name' => $account->name === Str::before($account->email, '@') ? '' : $account->name,
             'token' => $token,
             'action' => "/set-password/{$account->id}",
             // US-057-LEG: un veedor declara, al activar su cuenta, que no tiene impedimentos para serlo.
@@ -58,7 +63,13 @@ class SetPasswordController extends Controller
     {
         $data = $request->validate([
             'token' => ['required', 'string'],
+            // It. 45c: la pantalla lo pide; sin él, la cuenta conserva el que tenía.
+            'name' => ['sometimes', 'required', 'string', 'min:2', 'max:120'],
             'password' => ['required', 'confirmed', new StrongPassword],
+        ], [
+            'name.required' => self::NAME_REQUIRED,
+            'name.min' => self::NAME_REQUIRED,
+            'name.max' => 'Su nombre puede tener hasta 120 caracteres.',
         ]);
 
         $account = User::query()->find($user);
@@ -79,6 +90,9 @@ class SetPasswordController extends Controller
             }
 
             $accept->handle($account, $data['token'], $data['password']);
+            if (isset($data['name'])) {
+                $account->forceFill(['name' => $data['name']])->save();
+            }
             (new DataPolicy)->authorize($account);
             if ($declares) {
                 (new DeclareImpediments)->handle($account);

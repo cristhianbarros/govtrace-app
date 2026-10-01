@@ -6,6 +6,7 @@ use App\Jobs\CheckContractLifetime;
 use App\Jobs\CheckOrganizationActivity;
 use App\Jobs\CheckSealingQueue;
 use App\Jobs\CheckSponsorBalance;
+use App\Jobs\PurgeCitizenReports;
 use App\Jobs\PurgeDecommissionedEvidence;
 use App\Jobs\PurgeVeedorPseudonyms;
 use Illuminate\Console\Scheduling\Schedule;
@@ -72,4 +73,12 @@ app(Schedule::class)->job(new CheckOrganizationActivity)
 app(Schedule::class)->job(new PurgeVeedorPseudonyms)
     ->dailyAt('01:30')
     ->name('veedor-pseudonyms-purge')
+    ->onOneServer();
+
+// It. 45c (US-059-LEG): los informes de los ciudadanos, 30 días después de
+// atendidos (se borra el correo) o descartados (se borran enteros); cada día a
+// la 01:15.
+app(Schedule::class)->job(new PurgeCitizenReports)
+    ->dailyAt('01:15')
+    ->name('citizen-reports-purge')
     ->onOneServer();
