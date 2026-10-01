@@ -100,7 +100,7 @@ describe('Organización', () => {
         expect(wrapper.text()).toContain('900123456-8');
         expect(wrapper.text()).toContain('Solo el Super Administrador lo cambia, a solicitud formal.');
         expect(wrapper.find('input#nit').exists()).toBe(false);
-        expect(wrapper.findAll('input').map((input) => input.attributes('id'))).toEqual(['display-name', 'logo']);
+        expect(wrapper.findAll('input').map((input) => input.attributes('id'))).toEqual(['display-name', 'contact-email', 'contact-phone', 'logo']); // it. 43h: y el contacto público
     });
 
     it('leads to the audit log of the organization', async () => {
@@ -130,3 +130,23 @@ describe('Una veeduría sin NIT (it. 44d)', () => {
     });
 });
 
+
+describe('El contacto público (it. 43h, V13)', () => {
+    it('La veeduría publica su correo y su teléfono de contacto: edits them, and says where they show', async () => {
+        saveProfile.mockResolvedValue({ message: SAVED });
+        const wrapper = await openSettings({ ...profile, contact_email: 'contacto@veeduria-smr.org', contact_phone: null });
+
+        expect(wrapper.get('input#contact-email').element.value).toBe('contacto@veeduria-smr.org');
+        expect(wrapper.get('input#contact-email').attributes('type')).toBe('email');
+        expect(wrapper.get('input#contact-phone').attributes('type')).toBe('tel');
+        expect(wrapper.text()).toContain('Se ven en el sitio público de la veeduría, para que cualquiera la contacte.');
+
+        await wrapper.get('input#contact-phone').setValue('+57 300 123 4567');
+        await wrapper.get('form').trigger('submit');
+        await flushPromises();
+
+        const sent = saveProfile.mock.calls[0][0];
+        expect(sent.get('contact_email')).toBe('contacto@veeduria-smr.org');
+        expect(sent.get('contact_phone')).toBe('+57 300 123 4567');
+    });
+});

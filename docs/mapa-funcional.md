@@ -297,7 +297,7 @@ flowchart TB
 | 3 | Ver una obra | ✅ | Datos del contrato con el enlace a SECOP (si SECOP lo trae), línea de tiempo y fotos (US-017, US-029). No dice el estado de la obra ni por qué (`docs/ux-analisis.md`). |
 | 4 | Comprobar una evidencia | ✅ | Validador, recibo y descarga con prueba (US-024 a US-026). El validador no enlaza el script independiente del repositorio (US-046-INT, V14). Las fotos no tenían botón de descarga; se encontró en el ensayo de la demostración y se cerró en la it. 43c. |
 | 5 | Estadísticas y datos abiertos | ✅ | US-051-RPT y US-052-RPT. |
-| 6 | Contactar a la veeduría | ⬜ 🟡 | **V13 ❓.** Su página no tiene datos de contacto. |
+| 6 | Contactar a la veeduría | ✅ | El pie de su sitio muestra su correo y, si lo tiene, su teléfono (it. 43h, V13). También puede informarle algo de una obra (it. 44f). |
 | 7 | Leer la política de datos y los términos | ⬜ | ❓ Ley 1581 (ya estaba en `docs/estado-mvp.md`). |
 
 ## 3. Los flujos entre roles
@@ -373,7 +373,7 @@ También está completo:
 | V10 | Una veeduría no tiene cómo pedir el alta: no hay formulario ni contacto. | Veeduría interesada | 🟠 | El alta controlada es a propósito (US-001). El canal para pedirla, no se definió. | ❓ Un formulario de solicitud en el Inicio que llega al Super Administrador. Él aprueba (la Nueva organización sale precargada) o rechaza con un motivo. No es autorregistro: se conserva el control. |
 | V11 | ✅ **Cerrado en la it. 40c.** No se puede cambiar la contraseña con la sesión abierta: solo con "¿Olvidó su contraseña?". | Todos | 🟡 | No estaba en la SPEC. | "Cambiar contraseña" en "Mi cuenta" (el menú de la it. 40c). |
 | V12 | ✅ **Cerrado en la it. 40c.** En el mapa público no se puede buscar una obra por su nombre. | Ciudadano | 🟡 | US-028 pide estado, presupuesto y municipio. | Un buscador junto a la lista de obras (it. 40c). |
-| V13 | La página de la veeduría no tiene datos de contacto. | Ciudadano | 🟡 | US-007 solo pide nombre y logo. | ❓ Correo, teléfono o web en el perfil de la organización. |
+| V13 | ✅ **Cerrado en la it. 43h.** La página de la veeduría no tiene datos de contacto. | Ciudadano | 🟡 | US-007 solo pide nombre y logo. | ❓ Correo, teléfono o web en el perfil de la organización. |
 | V14 | ✅ **Cerrado en la it. 43b.** El validador no enlaza el script de verificación independiente. | Ciudadano experto | 🟡 | Omisión | Un enlace "Verificarlo por su cuenta" hacia `tools/verify`. |
 | V15 | ✅ **Cerrado en la it. 43b.** No se puede sincronizar SECOP a mano desde el panel global: corre cada noche y al cambiar un territorio. | Super Admin | 🟡 | US-014 solo pide ver la salud. | Un botón "Sincronizar ahora". |
 | V16 | ✅ **Cerrado en la it. 43a.** El Super Administrador no ve quién administra cada organización. | Super Admin | 🟡 | Omisión | Va con V2. |

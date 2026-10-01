@@ -52,6 +52,8 @@ class HandleInertiaRequests extends Middleware
             // y su logo (US-007); null en el panel global.
             'organization' => fn () => tenancy()->initialized ? $fresh()['name'] : null,
             'organizationLogo' => fn () => tenancy()->initialized ? $fresh()['logo'] : null,
+            // It. 43h (V13): su contacto público, en el pie de su sitio.
+            'organizationContact' => fn () => tenancy()->initialized ? $fresh()['contact'] : null,
             // US-003a: el aviso de organización suspendida, en cada pantalla pública.
             'organizationNotice' => fn () => tenancy()->initialized ? tenant()->freshStatus()->publicNotice() : null,
             // Un mensaje de una sola vez tras una redirección (p. ej. "Su contraseña fue cambiada").

@@ -19,7 +19,8 @@ criterios_aceptacion:
     - {caso: "Nombre fuera de rango", mensaje: "El nombre de fantasía debe tener entre 3 y 100 caracteres."}
   requisitos_ux:
     - "El nuevo branding se refleja de inmediato para los veedores de la organización"
-  casos_edge: []
+  casos_edge:
+    - "It. 43h (V13): el Administrador publica un correo de contacto y, si quiere, un teléfono; el sitio público de la veeduría los muestra en su pie. El correo debe ser válido; el teléfono, de 7 a 15 dígitos, con + al comienzo, espacios o guiones. Los dos son opcionales. El cambio va al log de auditoría"
 validacion_smart:
   specific: true
   measurable: true

@@ -213,3 +213,40 @@ it('keeps the current logo when only the name changes, and shows the legal name 
 it('answers 404 when the organization has no logo', function () {
     $this->get('http://veeduria-smr.govtrace.localhost/organization/logo')->assertNotFound();
 });
+
+// It. 43h (V13): el contacto público de la veeduría.
+
+it('La veeduría publica su correo y su teléfono de contacto: its public site shows them, and the log keeps the change', function () {
+    saveProfile(['display_name' => 'Veeduría Ciudadana Santa Marta', 'contact_email' => 'contacto@veeduria-smr.org', 'contact_phone' => '+57 300 123 4567'])->assertOk();
+
+    publicGet('/')->assertInertia(fn (Assert $page) => $page->where('organizationContact', ['email' => 'contacto@veeduria-smr.org', 'phone' => '+57 300 123 4567']));
+    $entry = AuditLog::query()->where('action', 'organization.profile_updated')->sole();
+    expect($entry->before['contact'])->toBe(['email' => null, 'phone' => null])
+        ->and($entry->after['contact'])->toBe(['email' => 'contacto@veeduria-smr.org', 'phone' => '+57 300 123 4567']);
+});
+
+it('Un correo de contacto que no es válido se rechaza', function () {
+    saveProfile(['display_name' => 'Veeduría Ciudadana Santa Marta', 'contact_email' => 'contacto@'])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['contact_email' => 'Escriba un correo de contacto válido, como contacto@veeduria.org.']);
+});
+
+it('Un teléfono de contacto que no es válido se rechaza', function (string $phone) {
+    saveProfile(['display_name' => 'Veeduría Ciudadana Santa Marta', 'contact_email' => 'contacto@veeduria-smr.org', 'contact_phone' => $phone])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['contact_phone' => 'Escriba un teléfono de 7 a 15 dígitos. Puede empezar con + y llevar espacios o guiones.']);
+})->with(['300-ABC', '12345', '+57 300 123 4567 8901 23']);
+
+it('shows no contact on the public site while the veeduría has none, and the phone is optional', function () {
+    publicGet('/')->assertInertia(fn (Assert $page) => $page->where('organizationContact', null));
+
+    saveProfile(['display_name' => 'Veeduría Ciudadana Santa Marta', 'contact_email' => 'contacto@veeduria-smr.org'])->assertOk();
+    publicGet('/')->assertInertia(fn (Assert $page) => $page->where('organizationContact', ['email' => 'contacto@veeduria-smr.org', 'phone' => null]));
+});
+
+it('gives the Administrador the contact it has, to edit it', function () {
+    saveProfile(['display_name' => 'Veeduría Ciudadana Santa Marta', 'contact_email' => 'contacto@veeduria-smr.org', 'contact_phone' => '605 431 0000'])->assertOk();
+
+    expect($this->actingAs($this->administrator, 'tenant')->getJson('http://veeduria-smr.govtrace.localhost/organization/profile')->json('data'))
+        ->toMatchArray(['contact_email' => 'contacto@veeduria-smr.org', 'contact_phone' => '605 431 0000']);
+});

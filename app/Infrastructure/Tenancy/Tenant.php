@@ -19,7 +19,7 @@ class Tenant extends BaseTenant implements TenantWithDatabase
 {
     use HasDatabase, HasDomains;
 
-    protected $fillable = ['id', 'nit', 'registration_number', 'registration_authority', 'registration_key', 'name', 'display_name', 'logo_path', 'status', 'decommissioned_at', 'evidence_files_purged_at'];
+    protected $fillable = ['id', 'nit', 'registration_number', 'registration_authority', 'registration_key', 'name', 'display_name', 'logo_path', 'contact_email', 'contact_phone', 'status', 'decommissioned_at', 'evidence_files_purged_at'];
 
     protected $casts = [
         'decommissioned_at' => 'datetime',
@@ -37,7 +37,7 @@ class Tenant extends BaseTenant implements TenantWithDatabase
      */
     public static function getCustomColumns(): array
     {
-        return ['id', 'nit', 'registration_number', 'registration_authority', 'registration_key', 'name', 'display_name', 'logo_path', 'status', 'decommissioned_at', 'evidence_files_purged_at'];
+        return ['id', 'nit', 'registration_number', 'registration_authority', 'registration_key', 'name', 'display_name', 'logo_path', 'contact_email', 'contact_phone', 'status', 'decommissioned_at', 'evidence_files_purged_at'];
     }
 
     /** R-LEG-06: how it is identified — "NIT 900123456-8 · Acta 45 de 2025, Cámara de Comercio de Santa Marta". */
@@ -66,13 +66,19 @@ class Tenant extends BaseTenant implements TenantWithDatabase
      * change on their next screen (US-007), even if this request loaded
      * the organization before it.
      *
-     * @return array{name: string, logo: ?string}
+     * @return array{name: string, logo: ?string, contact: ?array{email: ?string, phone: ?string}}
      */
     public function freshDisplay(): array
     {
         $fresh = self::query()->findOrFail($this->getTenantKey());
 
-        return ['name' => $fresh->displayName(), 'logo' => $fresh->logoUrl()];
+        return ['name' => $fresh->displayName(), 'logo' => $fresh->logoUrl(), 'contact' => $fresh->publicContact()];
+    }
+
+    /** It. 43h (V13): its public contact, or null while it has none. */
+    public function publicContact(): ?array
+    {
+        return $this->contact_email || $this->contact_phone ? ['email' => $this->contact_email, 'phone' => $this->contact_phone] : null;
     }
 
     /** The subdomain as the Super Administrador types it: "veeduria-smr". */

@@ -1957,7 +1957,7 @@ Esta iteración estaba reservada para ese recorrido. El recorrido se hizo para e
 **Queda de la 43b:**
 - V9 (❓ el aviso diario);
 - V10 (❓ la solicitud de alta);
-- V13 (❓ el contacto).
+- V13 (❓ el contacto). → **Cerrado en la 43h.**
 
 **Done-when de las dos:** los `fixme` de sus vacíos, en verde.
 
@@ -2052,6 +2052,22 @@ Esta iteración estaba reservada para ese recorrido. El recorrido se hizo para e
   - Vitest: la pantalla y el enlace del listado, vistos en rojo; "Nuevo Reporte", intacto;
   - `make e2e`: el `fixme` de V7 pasa a verde. La Administradora autoriza, el Super Administrador busca la obra, la reporta con foto y GPS, y la Administradora revoca.
 - **Modelo:** Opus. Toca quién puede reportar en una organización ajena.
+
+**43h — V13: el contacto público de la veeduría** (enmienda de US-007). El usuario, el 2026-10-01: "Add a public contact email and an optional phone number to the veeduría's public page."
+
+✅ **43h cumplida (2026-10-01).**
+- **El Administrador lo escribe en "Organización"**, en "Contacto público": un correo y, si quiere, un teléfono. Se ven en el pie del sitio de la veeduría, con su enlace `mailto:` y `tel:`, en todas sus páginas públicas.
+- **Las reglas** (`OrganizationContact`):
+  - el correo, válido y de hasta 150 caracteres;
+  - el teléfono, de 7 a 15 dígitos, con + al comienzo, espacios o guiones;
+  - los dos son opcionales: sin ellos, el sitio no muestra contacto.
+  - Si la pantalla no los envía, no cambian; si los envía vacíos, se quitan.
+- **El log de auditoría** guarda el contacto anterior y el nuevo, junto al nombre y el logo.
+- **Tres escenarios nuevos en `features/US-007.feature`**, con su criterio.
+- **Prueba:**
+  - Pest, 7 casos;
+  - Vitest: los campos y el pie;
+  - `make e2e`: el `fixme` de V13 pasa a verde. La Administradora publica el contacto y el ciudadano lo ve en el pie.
 
 **40e — Pestañas y una identidad simple y acogedora** (US-027, R-UX-10). El usuario pidió pestañas en vez de botones sueltos, un estilo con contraste y, sobre todo, una interfaz que impresione: "es como muy común… simple pero acogedora".
 

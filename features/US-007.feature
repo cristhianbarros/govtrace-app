@@ -79,3 +79,26 @@ Característica: Actualizar nombre de fantasía y logo de la veeduría
     Dado que estoy autenticado como el veedor "carlos@correo.co" de "Veeduría Ciudadana Santa Marta"
     Cuando intento abrir la configuración de la organización
     Entonces la acción es rechazada
+
+  # It. 43h (V13 de docs/mapa-funcional.md, aprobado por el usuario el 2026-10-01): el contacto
+  # público de la veeduría, un correo y, si quiere, un teléfono, en su sitio.
+
+  @complexity:low @origin:mapa_funcional
+  Escenario: La veeduría publica su correo y su teléfono de contacto
+    Cuando escribo el correo de contacto "contacto@veeduria-smr.org" y el teléfono "+57 300 123 4567"
+    Y guardo los cambios
+    Entonces el sitio público de la veeduría muestra su correo y su teléfono de contacto
+    Y el log de auditoría registra el contacto anterior y el nuevo
+
+  @complexity:low @negative @origin:mapa_funcional
+  Escenario: Un correo de contacto que no es válido se rechaza
+    Cuando escribo el correo de contacto "contacto@"
+    Y guardo los cambios
+    Entonces veo el mensaje "Escriba un correo de contacto válido, como contacto@veeduria.org."
+
+  @complexity:low @negative @origin:mapa_funcional
+  Escenario: Un teléfono de contacto que no es válido se rechaza
+    Cuando escribo el teléfono de contacto "300-ABC"
+    Y guardo los cambios
+    Entonces veo el mensaje "Escriba un teléfono de 7 a 15 dígitos. Puede empezar con + y llevar espacios o guiones."
+
