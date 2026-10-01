@@ -26,7 +26,7 @@ const { data: organizations, loading, error, load } = useLoader(fetchOrganizatio
 
 const editing = ref(null); // la organización cuyos datos legales se corrigen
 // It. 44d (R-LEG-06): su NIT, su inscripción o los dos.
-const legal = ref({ nit: '', registrationNumber: '', registrationAuthority: '' });
+const legal = ref({ name: '', nit: '', registrationNumber: '', registrationAuthority: '' }); // it. 43f (V8): y su razón social
 const saving = ref(false);
 const saved = ref(null);
 const refused = ref(null);
@@ -36,6 +36,7 @@ async function edit(organization) {
     refused.value = null;
     editing.value = await fetchOrganizationDetail(organization.id);
     legal.value = {
+        name: editing.value.name ?? '',
         nit: editing.value.nit ?? '',
         registrationNumber: editing.value.registration_number ?? '',
         registrationAuthority: editing.value.registration_authority ?? '',
@@ -48,6 +49,7 @@ async function save() {
     try {
         saved.value = (
             await updateOrganizationLegalData(editing.value.id, {
+                name: legal.value.name.trim(),
                 nit: legal.value.nit.trim() || null,
                 registration_number: legal.value.registrationNumber.trim() || null,
                 registration_authority: legal.value.registrationAuthority.trim() || null,
@@ -187,6 +189,8 @@ onMounted(load);
                         </div>
 
                         <form v-if="editing?.id === organization.id" class="mt-3 flex flex-col gap-2" novalidate @submit.prevent="save">
+                            <label for="legal-name" class="text-xs font-semibold text-slate-700">Razón social</label>
+                            <input id="legal-name" v-model="legal.name" type="text" maxlength="150" class="rounded-lg border border-slate-300 px-3 py-2 text-base" />
                             <p class="text-sm text-slate-700">Su NIT, su inscripción o los dos.</p>
                             <label for="nit" class="text-xs font-semibold text-slate-700">NIT</label>
                             <input id="nit" v-model="legal.nit" type="text" class="rounded-lg border border-slate-300 px-3 py-2 text-base" />

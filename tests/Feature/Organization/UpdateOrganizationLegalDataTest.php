@@ -66,3 +66,40 @@ it('El Administrador de Organización no puede editar el NIT ni los datos legale
 
     expect($tenant->fresh()->nit)->toBe('900123456-8');
 });
+
+// It. 43f (V8): la razón social, a solicitud formal, con las reglas del alta.
+
+it('Actualización de la razón social con registro de auditoría: changes the legal name, and the log keeps who, the one before and the new one', function () {
+    Auth::guard('web')->login(SuperAdmin::factory()->create(['name' => 'Root Admin']));
+
+    $updated = (new UpdateOrganizationLegalData)->handle($this->tenant, '900123456-8', legalName: '  Veeduría Ciudadana del Distrito de Santa Marta  ');
+
+    expect($updated->name)->toBe('Veeduría Ciudadana del Distrito de Santa Marta');
+    $entry = AuditLog::query()->where('organization_id', $this->tenant->id)->latest('id')->first();
+    expect($entry->action)->toBe('organization.legal_data_updated')
+        ->and($entry->actor_name)->toBe('Root Admin')
+        ->and($entry->before)->toBe(['nit' => '900123456-8', 'name' => 'Veeduría Ciudadana Santa Marta'])
+        ->and($entry->after)->toBe(['nit' => '900123456-8', 'name' => 'Veeduría Ciudadana del Distrito de Santa Marta']);
+});
+
+it('La razón social cumple las reglas del alta: rejects a legal name of less than 3 characters, and keeps the one it had', function () {
+    try {
+        (new UpdateOrganizationLegalData)->handle($this->tenant, '900123456-8', legalName: 'VC');
+    } finally {
+        expect($this->tenant->refresh()->name)->toBe('Veeduría Ciudadana Santa Marta');
+    }
+})->throws(OrganizationValidationException::class, 'El nombre de la organización debe tener entre 3 y 150 caracteres.');
+
+it('keeps the legal name when it does not change, and the log does not mention it', function () {
+    (new UpdateOrganizationLegalData)->handle($this->tenant, '901234567-7', legalName: 'Veeduría Ciudadana Santa Marta');
+
+    expect(AuditLog::query()->where('organization_id', $this->tenant->id)->latest('id')->first()->after)->toBe(['nit' => '901234567-7']);
+});
+
+it('keeps the name the organization shows on its site, if it has one: it is another field (US-007)', function () {
+    $this->tenant->update(['display_name' => 'Ojo Ciudadano SMR']);
+
+    $updated = (new UpdateOrganizationLegalData)->handle($this->tenant, '900123456-8', legalName: 'Veeduría Ciudadana del Distrito de Santa Marta');
+
+    expect($updated->displayName())->toBe('Ojo Ciudadano SMR');
+});

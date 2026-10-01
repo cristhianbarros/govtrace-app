@@ -1926,7 +1926,7 @@ Esta iteración estaba reservada para ese recorrido. El recorrido se hizo para e
 **Queda de la 43a:**
 - V3 (❓ varios administradores o reemplazarlo);
 - V7 (la pantalla para reportar en nombre de una organización);
-- V8 (la razón social).
+- V8 (la razón social). → **Cerrado en la 43f.**
 
 **43b — Llegar y volver.**
 - V6: la app del veedor, instalable, con un manifiesto por veeduría (su nombre y su logo) y los íconos.
@@ -2022,6 +2022,18 @@ Esta iteración estaba reservada para ese recorrido. El recorrido se hizo para e
 - **Prueba:**
   - Pest, 5 casos: la organización y los contratos reales, solo "Avance" en lo real, lo negativo solo en lo ficticio, la obra que mueve `LUGAR` y el territorio que no conoce. Los 17 de Magdalena siguen en verde.
   - El ensayo en un navegador, con el GPS en La Pradera: el mapa, la obra real "Normal" con sus contratistas, una obra de ejemplo "En riesgo", y la veedora que reporta en la obra de ejemplo desde "Obras cercanas".
+
+**43f — V8: la razón social** (US-011, enmienda). El criterio de éxito de US-011 ya decía "cambio de razón social o NIT", pero solo se podía cambiar el NIT.
+
+✅ **43f cumplida (2026-09-30).**
+- **El Super Administrador corrige la razón social**, desde "Editar datos legales", junto al NIT y la inscripción. Rigen las reglas del alta: de 3 a 150 caracteres.
+- **El log de auditoría guarda la anterior y la nueva**, solo si cambió: corregir el NIT solo no la menciona.
+- **El nombre que la organización muestra en su sitio (US-007) es otro campo:** si lo tiene, no cambia. Si no lo tiene, el sitio muestra la razón social nueva.
+- **Dos escenarios nuevos en `features/US-011.feature`**, con su criterio en `specs/criterios/US-011.yaml`.
+- **Prueba:**
+  - Pest, 5 casos (el cambio con su log, el rechazo, sin cambio, el nombre visible y la pantalla), vistos en rojo antes de implementar;
+  - Vitest: el campo "Razón social", lleno con la actual;
+  - `make e2e`: el `fixme` de V8 pasa a verde.
 
 **40e — Pestañas y una identidad simple y acogedora** (US-027, R-UX-10). El usuario pidió pestañas en vez de botones sueltos, un estilo con contraste y, sobre todo, una interfaz que impresione: "es como muy común… simple pero acogedora".
 

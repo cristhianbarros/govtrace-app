@@ -173,6 +173,19 @@ it('does not change the NIT to one already used, or to an invalid one', function
     expect($tenant->refresh()->nit)->toBe('900123456-8');
 });
 
+it('changes the legal name from the panel, and says why it cannot (it. 43f, V8)', function () {
+    (new RegisterOrganization)->handle('900123456-8', 'Veeduría Ciudadana Santa Marta', 'veeduria-smr');
+    $tenant = Tenant::query()->sole();
+
+    asSuperAdmin('PUT', "/admin/organizations/{$tenant->id}/nit", ['nit' => '900123456-8', 'name' => 'VC'])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['name' => 'El nombre de la organización debe tener entre 3 y 150 caracteres.']);
+
+    asSuperAdmin('PUT', "/admin/organizations/{$tenant->id}/nit", ['nit' => '900123456-8', 'name' => 'Veeduría Ciudadana del Distrito de Santa Marta'])->assertOk();
+
+    expect($tenant->refresh()->name)->toBe('Veeduría Ciudadana del Distrito de Santa Marta');
+});
+
 it('only lets the Super Administrador use the panel data', function () {
     (new RegisterOrganization)->handle('900123456-8', 'Veeduría Ciudadana Santa Marta', 'veeduria-smr');
     $tenant = Tenant::query()->sole();

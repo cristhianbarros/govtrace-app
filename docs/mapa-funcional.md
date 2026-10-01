@@ -258,7 +258,7 @@ flowchart TB
 | 3 | Dar de alta una organización | ✅ | Nueva organización: NIT con dígito de verificación, subdominio y, si quiere, el Administrador inicial (US-001, US-002). |
 | 4 | Acompañar al administrador hasta que active su cuenta | ⬜ 🔴 | **V2.** No ve si activó su cuenta ni puede reenviarle la invitación, que vence a las 48 h. Si el correo estaba mal escrito, o la organización se creó sin administrador, no hay cómo asignar uno después. La organización queda sin nadie que la gestione. |
 | 5 | Reemplazar a un administrador que se va o actúa mal | ⬜ 🔴 | **V3.** No puede asignar otro ni desactivarlo: solo puede suspender la organización entera. |
-| 6 | Gobernar | ⚠️ | Editar el NIT, suspender, reactivar y dar de baja (con doble confirmación): ✅. **V8:** la razón social no se puede cambiar, aunque US-011 la pide ("cambio de razón social o NIT"). |
+| 6 | Gobernar | ✅ | Editar el NIT, la razón social (it. 43f, V8) y la inscripción, suspender, reactivar y dar de baja (con doble confirmación): ✅. |
 | 7 | Operar | ✅ | Parámetros, auditoría, salud de SECOP, sellado (con reencolar las fallas), uso y alertas por correo. Sincronizar SECOP a mano no se puede (V15). |
 | 8 | Reportar en nombre de una organización que lo autorizó | ⚠️ 🟠 | **V7.** La regla existe y está probada (US-042-SEC, R-SA-02), pero no hay pantalla: solo se puede por API. |
 | 9 | Salir | ⬜ 🔴 | **V1.** Ni botón ni ruta de salida en el dominio central. |
@@ -368,7 +368,7 @@ También está completo:
 | V5 | ✅ **Cerrado en la it. 40d.** El dominio central no lleva a ninguna veeduría. El ciudadano no tiene cómo llegar, y el veedor que olvidó su enlace tampoco. | Ciudadano, veedor | 🟠 | Omisión (R-MAP-01 aísla los mapas; no prohíbe un directorio). | Un directorio de veedurías activas en el Inicio ❓, ya en la it. 40d. |
 | V6 | ✅ **Cerrado en la it. 43b.** La app del veedor no se puede instalar: hay service worker (`public/sw.js`), pero no hay manifiesto ni íconos. | Veedor | 🟠 | Omisión técnica | Un manifiesto por veeduría, con su nombre y su logo, los íconos y un "Instalar en el celular". |
 | V7 | Reportar en nombre de una organización (US-042-SEC): la regla está en el backend y probada, pero no hay pantalla. | Super Admin | 🟠 | Se hizo la API, no la pantalla. | Desde la organización autorizada, en el panel global, un formulario de reporte. |
-| V8 | La razón social no se puede cambiar: solo el NIT (`UpdateOrganizationLegalData`). | Super Admin | 🟠 | US-011 a medias. | Editar también el nombre legal, con la misma auditoría. |
+| V8 | ✅ **Cerrado en la it. 43f.** La razón social no se puede cambiar: solo el NIT (`UpdateOrganizationLegalData`). | Super Admin | 🟠 | US-011 a medias. | Editar también el nombre legal, con la misma auditoría. |
 | V9 | Ningún aviso al administrador cuando hay evidencias por revisar: quedan ocultas hasta que alguien entra. | Admin | 🟠 | No estaba en la SPEC. | ❓ Un correo diario con cuántas hay por revisar. |
 | V10 | Una veeduría no tiene cómo pedir el alta: no hay formulario ni contacto. | Veeduría interesada | 🟠 | El alta controlada es a propósito (US-001). El canal para pedirla, no se definió. | ❓ Un formulario de solicitud en el Inicio que llega al Super Administrador. Él aprueba (la Nueva organización sale precargada) o rechaza con un motivo. No es autorregistro: se conserva el control. |
 | V11 | ✅ **Cerrado en la it. 40c.** No se puede cambiar la contraseña con la sesión abierta: solo con "¿Olvidó su contraseña?". | Todos | 🟡 | No estaba en la SPEC. | "Cambiar contraseña" en "Mi cuenta" (el menú de la it. 40c). |

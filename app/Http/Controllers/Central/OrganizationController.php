@@ -93,6 +93,7 @@ class OrganizationController extends Controller
     public function updateNit(Request $request, string $tenant): JsonResponse
     {
         $data = $request->validate([
+            'name' => ['nullable', 'string'], // it. 43f (V8): la razón social; sin ella, no cambia
             'nit' => ['nullable', 'string'],
             'registration_number' => ['nullable', 'string', 'max:100'],
             'registration_authority' => ['nullable', 'string', 'max:150'],
@@ -100,7 +101,7 @@ class OrganizationController extends Controller
         $organization = Tenant::query()->findOrFail($tenant);
 
         try {
-            (new UpdateOrganizationLegalData)->handle($organization, $data['nit'] ?? null, $data['registration_number'] ?? null, $data['registration_authority'] ?? null);
+            (new UpdateOrganizationLegalData)->handle($organization, $data['nit'] ?? null, $data['registration_number'] ?? null, $data['registration_authority'] ?? null, $data['name'] ?? null);
         } catch (OrganizationValidationException $e) {
             throw ValidationException::withMessages([$this->fieldFor($e) => $e->getMessage()]);
         }

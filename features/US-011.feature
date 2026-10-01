@@ -53,3 +53,22 @@ Característica: Actualización del NIT y datos legales por el Super Administrad
     Dado que la organización solo tiene su inscripción
     Cuando intento quitarle la inscripción sin darle un NIT
     Entonces el cambio es rechazado con "Ingrese el NIT de la organización, o el número de la resolución o el acta de su inscripción y la entidad que la registró."
+
+  # It. 43f (V8 de docs/mapa-funcional.md): la razón social también se corrige a solicitud formal,
+  # como la pide el criterio de éxito ("cambio de razón social o NIT").
+
+  @complexity:low @origin:mapa_funcional
+  Escenario: Actualización de la razón social con registro de auditoría
+    Dado que estoy autenticado como Super Administrador en el panel global
+    Y la organización presentó una solicitud formal de cambio de razón social
+    Cuando cambio la razón social de la organización a "Veeduría Ciudadana del Distrito de Santa Marta"
+    Entonces la razón social de la organización es "Veeduría Ciudadana del Distrito de Santa Marta"
+    Y el log de auditoría registra quién hizo el cambio, cuándo, la razón social anterior y la nueva
+
+  @complexity:low @negative @origin:mapa_funcional
+  Escenario: La razón social cumple las reglas del alta
+    Dado que estoy autenticado como Super Administrador en el panel global
+    Cuando cambio la razón social de la organización a "VC"
+    Entonces el cambio es rechazado
+    Y la razón social sigue siendo "Veeduría Ciudadana Santa Marta"
+
