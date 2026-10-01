@@ -3,12 +3,15 @@
 namespace App\Providers;
 
 use App\Application\Sealing\SealingNetwork;
+use App\Infrastructure\Mail\CopyToMailpit;
 use App\Infrastructure\Stellar\MainnetConfiguration;
 use App\Infrastructure\Stellar\StellarRpc;
 use App\Infrastructure\Stellar\StellarSealingNetwork;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Middleware\TrustProxies;
 use Illuminate\Http\Request;
+use Illuminate\Mail\Events\MessageSent;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use RuntimeException;
@@ -47,6 +50,9 @@ class AppServiceProvider extends ServiceProvider
         TrustProxies::withHeaders(Request::HEADER_X_FORWARDED_FOR | Request::HEADER_X_FORWARDED_PROTO);
 
         $this->limitAbuse();
+
+        // It. 38b: en desarrollo, una copia de cada correo al buzón de Mailpit.
+        Event::listen(MessageSent::class, CopyToMailpit::class);
     }
 
     /**

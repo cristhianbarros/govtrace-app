@@ -103,6 +103,8 @@ ux-baseline: .env.docker ## Rewrite tests/ux/baseline.json after a UX improvemen
 admin: .env.docker ## The first Super Administrador of a new environment. Usage: make admin EMAIL=ana@x.co [NAME="Ana"] (asks for the password, or generates one)
 	@test -n "$(EMAIL)" || { echo "Uso: make admin EMAIL=ana@correo.co [NAME=\"Ana Directora\"]"; exit 1; }
 	@$(EXEC) php artisan admin:create "$(EMAIL)" $(if $(NAME),--name="$(NAME)")
+mail: ## The development mailbox (Mailpit, it. 38b): every mail the app sends, as the person gets it
+	@echo "  Correos de desarrollo -> http://mailpit.govtrace.localhost:$(HTTP_PORT)"
 invites: .env.docker ## The links of the latest mails (mail goes to a log in development): invitations, password recovery, and the codes of citizens (it. 44f)
 	@$(EXEC) php artisan invitations:latest $(if $(LIMIT),--limit=$(LIMIT))
 demo: .env.docker .env docker/app/xdebug.ini ## ONE command for a live demo: the app, the Stellar network and a demo organization with sealed reports (LUGAR="lat,lng": an example worksite where the presentation is; TERRITORIO=medellin: the Comuna 13)
@@ -184,6 +186,7 @@ hosts: ## Print the /etc/hosts block (only needed if LOCAL_IP is not 127.0.0.1)
 	@echo ""
 	@echo "$(LOCAL_IP)  govtrace.localhost"
 	@echo "$(LOCAL_IP)  adminer.govtrace.localhost"
+	@echo "$(LOCAL_IP)  mailpit.govtrace.localhost"
 
 image-qa: ## Build the immutable qa image (govtrace-app:qa)
 	@docker build -f docker/app/Dockerfile --target qa -t govtrace-app:qa .

@@ -75,6 +75,16 @@ return [
             'channel' => env('MAIL_LOG_CHANNEL', 'mail'),
         ],
 
+        // It. 38b: el buzón de desarrollo (docker-compose.yml), que recibe una copia de
+        // cada correo cuando MAIL_COPY_TO_MAILPIT=true (App\Infrastructure\Mail\CopyToMailpit).
+        'mailpit' => [
+            'transport' => 'smtp',
+            'scheme' => 'smtp',
+            'host' => env('MAILPIT_HOST', 'mailpit'),
+            'port' => (int) env('MAILPIT_PORT', 1025),
+            'timeout' => 5,
+        ],
+
         'array' => [
             'transport' => 'array',
         ],
@@ -114,5 +124,12 @@ return [
         'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
         'name' => env('MAIL_FROM_NAME', env('APP_NAME', 'Laravel')),
     ],
+
+    /*
+    | It. 38b: en desarrollo, una copia de cada correo al mailer "mailpit". Nunca
+    | en producción, diga lo que diga (App\Infrastructure\Mail\CopyToMailpit).
+    */
+
+    'copy_to_mailpit' => (bool) env('MAIL_COPY_TO_MAILPIT', false),
 
 ];

@@ -109,7 +109,10 @@ Las capturas de todas las pantallas, en celular y en computador: `make ux-check`
   - LUGAR tiene que ser el sitio exacto de la presentación, no el centro de la ciudad: por ejemplo, con clic derecho sobre el edificio en un mapa.
   - Además, el GPS tiene que dar 50 m o menos (US-008). Un portátil ubica por WiFi y a veces da más. Entonces, en Chrome, DevTools → *Sensores* → *Ubicación*, con las mismas coordenadas. Es una limitación del portátil, no del sistema: un celular da la ubicación por GPS.
 - **Cámara, ubicación e instalar la app.** El navegador solo las da en un contexto seguro. En el mismo equipo, `*.localhost` lo es; desde un celular en tu red (`http://<tu IP>:8080`), no. Sin cámara, puedes subir una imagen desde el equipo. Por la misma razón, "Instalar la app en este celular" solo aparece por HTTPS (staging) o en el mismo equipo.
-- **Los correos no se envían:** salen al archivo `storage/logs/mail.log` (`MAIL_MAILER=log`). `make invites` muestra los enlaces de los últimos correos; `make invites LIMIT=10` muestra más.
+- **Los correos no se envían a nadie:**
+  - salen al archivo `storage/logs/mail.log` (`MAIL_MAILER=log`);
+  - y llega una copia al buzón de desarrollo, **Mailpit**: `http://mailpit.govtrace.localhost:8080` (`make mail`). Ahí se leen como los vería quien los recibe, con sus enlaces y botones. Se vacía al reiniciarlo (it. 38b).
+  - `make invites` muestra los enlaces de los últimos correos; `make invites LIMIT=10` muestra más.
 - **SECOP.** Al registrar una organización se lanza la sincronización con SECOP II en el worker. Con internet, llegan contratos reales de Magdalena, que se suman a los de demostración; sin internet, la sincronización falla y se reintenta sin afectar la demostración.
 - **Si algo no sella,** `make demo` lo dice al terminar: casi siempre es el worker (`make ps`) o la red Stellar (`make stellar-up`).
 

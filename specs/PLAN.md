@@ -1530,6 +1530,28 @@ Suite: 702 en verde (8 nuevos). Vitest: 351. `make backup-check`: 13 comprobacio
 - **Un túnel** (ngrok, Cloudflare Tunnel): cada organización vive en su subdominio, así que tiene que aceptar subdominios comodín, y hay que cambiar `APP_URL`, `TENANCY_CENTRAL_DOMAINS` y `TENANCY_APEX_DOMAIN`. Con HTTPS, la cámara y el GPS del celular funcionan.
 - **Un entorno intermedio (*staging*) en AWS, apuntando a la testnet:** el recorrido completo con dominio, HTTPS y correo reales, por cuenta de cada quien (`docs/estado-37b.md`).
 
+#### Iteración 38b — El buzón de desarrollo (Mailpit)
+✅ **Cumplido (2026-09-30).** Pedida por el usuario: "Podrías instalar mailhog para poder ver los correos que se envían. En el proyecto de back_cosmetics del invima creo que lo utilizan".
+- **Lo que usa back_cosmetics es MailDev, no MailHog.** Se revisó `back_frame/environments/local/docker-compose.yml`: está la imagen `maildev/maildev` en el perfil `developing`, con su página en el 1080 y el SMTP en el 1025.
+- ❓ **Se eligió Mailpit** (`axllent/mailpit`):
+  - MailHog no se mantiene desde 2020;
+  - Mailpit hace lo mismo con los mismos puertos (1025 y 8025), se mantiene activamente y es el que trae Laravel Sail;
+  - pasar a MailDev, si se prefiere igual a back_cosmetics, es cambiar la imagen.
+- **Un servicio base de `docker-compose.yml`**, en `http://mailpit.govtrace.localhost:8080` por el proxy, con su websocket para que cada correo aparezca sin recargar la página. Guarda los últimos 1.000 en memoria y se vacía al reiniciarlo. `make mail` imprime la dirección.
+- **Una copia, no un reemplazo.** El correo de desarrollo sigue saliendo a `storage/logs/mail.log`, que leen `make invites` y `make e2e`, y `CopyToMailpit` manda una copia a Mailpit (`MAIL_COPY_TO_MAILPIT=true` en `.env.example`).
+  - Nunca en producción, aunque la variable lo diga.
+  - Si Mailpit no responde, el correo sale igual y queda un aviso en el log.
+  - `phpunit.xml` la apaga: los tests leen el `.env` de quien los corre, y no deben llenar su buzón.
+- **En un equipo que ya tenía el entorno**, después de traer este cambio: `docker compose restart proxy`. nginx monta su configuración como un archivo, y al cambiarlo git crea un archivo nuevo que el contenedor no ve hasta reiniciarse. `verify-stack.sh` lo detecta.
+- **Lo que mostró el buzón en su primer uso** (pendiente, no se cambió aquí):
+  - la bienvenida mezcla el "tú" ("Se creó tu cuenta") con el "usted" del resto de la app ("copie y pegue");
+  - los correos usan la plantilla de Laravel, en negro, sin la identidad de 40e;
+  - el remitente de desarrollo es `hello@example.com`.
+- **Prueba:**
+  - Pest, 5 casos: la copia a la misma persona, sin la variable no hay copia, en producción no hay copia, con Mailpit caído el correo sale igual, y está en desarrollo y no en producción;
+  - `verify-stack.sh`: Mailpit sano, y un correo de punta a punta, de la app al buzón;
+  - a mano: la bienvenida de un veedor y el código de un ciudadano, en el buzón.
+
 #### Iteración 39 — Sellar varias evidencias a la vez
 ✅ **Cumplido (2026-09-29).** Pedida por el usuario con prioridad ("se podría presentar en producción"), a partir del hallazgo de la it. 38. Complejidad alta (fallas de un sistema distribuido y dinero real): con Opus 5.5 max.
 
