@@ -15,6 +15,7 @@ import { AUTHORIZATION_REQUIRED } from '@/lib/privacy.js';
 const props = defineProps({
     valid: { type: Boolean, required: true },
     email: { type: String, default: '' },
+    name: { type: String, default: '' }, // it. 45c: vacío mientras sea solo el comienzo del correo
     token: { type: String, default: '' },
     action: { type: String, default: '' },
     message: { type: String, default: '' },
@@ -22,12 +23,17 @@ const props = defineProps({
     dataPolicyUrl: { type: String, default: '/privacidad' }, // US-058-LEG: la política que autoriza
 });
 
-const form = useForm({ token: props.token, password: '', password_confirmation: '', data_authorization: false, ...(props.declaration ? { declaration: false } : {}) });
+const NAME_REQUIRED = 'Escriba su nombre: al menos 2 letras.';
+
+const form = useForm({ token: props.token, name: props.name, password: '', password_confirmation: '', data_authorization: false, ...(props.declaration ? { declaration: false } : {}) });
 const hints = ref({});
-const serverError = computed(() => form.errors.token ?? form.errors.data_authorization ?? form.errors.declaration ?? form.errors.password ?? form.errors.password_confirmation);
+const serverError = computed(() => form.errors.token ?? form.errors.name ?? form.errors.data_authorization ?? form.errors.declaration ?? form.errors.password ?? form.errors.password_confirmation);
 
 function submit() {
     hints.value = {};
+    if (form.name.trim().length < 2) {
+        hints.value.name = NAME_REQUIRED;
+    }
     if (!isStrongPassword(form.password)) {
         hints.value.password = PASSWORD_RULES_MESSAGE;
     } else if (form.password !== form.password_confirmation) {
@@ -64,6 +70,15 @@ function submit() {
                 </p>
 
                 <p v-if="serverError" role="alert" class="rounded-lg bg-red-50 p-3 text-sm text-red-800">{{ serverError }}</p>
+
+                <!-- It. 45c: su nombre, para su veeduría (antes era la parte del correo antes de la @). -->
+                <div class="flex flex-col gap-1">
+                    <label for="name" class="text-sm font-semibold text-slate-700">Su nombre</label>
+                    <input id="name" v-model="form.name" type="text" autocomplete="name" maxlength="120" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-3 text-base" />
+                    <p class="text-xs" :class="hints.name ? 'text-red-700' : 'text-slate-500'">
+                        {{ hints.name ?? 'Lo ve su veeduría. En el sitio público no aparece su nombre: los reportes llevan un seudónimo.' }}
+                    </p>
+                </div>
 
                 <div class="flex flex-col gap-1">
                     <label for="password" class="text-sm font-semibold text-slate-700">Contraseña</label>

@@ -2296,6 +2296,32 @@ El usuario pidió seguir con lo que no espera a nadie: la deuda técnica y los h
   - `SpanishTest` ahora busca el pie de GovTrace;
   - a mano, en Mailpit: la bienvenida y el código del ciudadano.
 
+**45c — Los datos personales: SECOP, los informes de los ciudadanos y el nombre de cada quien.**
+
+✅ **45c cumplida (2026-09-30).**
+- **De SECOP II, solo lo que GovTrace usa** (decisión pendiente de la it. 7).
+  - La fila real trae unos 90 campos, revisados en la API el 2026-09-30. Entre ellos: del representante legal, el documento, el domicilio, el género y la nacionalidad; del supervisor y del ordenador del gasto, el nombre y el documento; la cuenta bancaria del contratista.
+  - Ahora `raw_payload` guarda los 13 campos que se leen (`ProcessSecopContractRow::KEPT_FIELDS`), por el principio de finalidad de la Ley 1581.
+  - Una migración recortó lo ya guardado, vigente y archivado: en desarrollo, 2.287 contratos.
+- **La retención de los informes de los ciudadanos** (D-V2-09, por defecto en la 44f: "mientras la veeduría esté en GovTrace").
+  - 30 días después de que la veeduría atiende un informe, se borra el correo y queda el informe.
+  - 30 días después de descartado, se borra entero, con su foto.
+  - Uno sin atender guarda el correo: todavía hay que responderle.
+  - `PurgeCitizenReports`, cada día a la 01:15 de Colombia. El log dice cuántos, nunca un correo.
+  - La política lo dice; versión `2026-09-30.3`.
+  - ❓ Los 30 días son la propuesta por defecto.
+- **El nombre de cada quien, al activar su cuenta** (deuda aceptada: era la parte del correo antes de la @).
+  - La pantalla lo pide, con al menos 2 letras. Dice quién lo ve: su veeduría; en el sitio público no aparece, porque los reportes llevan un seudónimo.
+  - Si la cuenta ya tiene un nombre de verdad, viene escrito.
+  - El servidor lo valida si llega, y si no llega conserva el anterior: así no se rompe una activación vieja.
+- **Descartado, con razón: la sincronización incremental de SECOP** (decisión pendiente de la it. 7).
+  - Se probó en la API: `:updated_at` cambia en todas las filas todos los días, porque el conjunto de datos se vuelve a publicar entero (las 6.198 obras de Antioquia tenían la misma hora). `ultima_actualizacion` viene vacío en la mayoría.
+  - No hay una marca confiable de lo que cambió. La corrida completa sigue: Antioquia son unas 7 páginas de 1.000 filas.
+- **Prueba:**
+  - Pest, 12 casos, vistos en rojo antes de implementar: lo que se guarda de SECOP y la migración; la retención (descartado, atendido, sin atender, el log y la hora); el nombre (lo pide, lo guarda, lo valida, conserva el anterior);
+  - Vitest: 459 de 459; el campo del nombre, en la activación, y el texto nuevo de la política;
+  - `make e2e`: 42 pasan; el Administrador y el veedor escriben su nombre al activar su cuenta.
+
 ## Pivote a Stellar (2026-09-28)
 
 El proyecto participa en **Stellar Apex**, así que la blockchain pasa de EVM/Polygon a **Stellar**, con Smart Contracts en **Soroban (Rust)**:
@@ -2378,6 +2404,6 @@ No bloquean ningún criterio de aceptación. **Aceptada por el usuario el 2026-0
 | ✅ *Cerrada en la it. 41:* `APP_LOCALE=en`: los mensajes por defecto de Laravel (`required`, `email`) salen en inglés si alguien se salta la pantalla | Las pantallas validan antes, en español (aceptada el 2026-09-28) | Traducir `lang/es` |
 | ✅ *Cerrada en la it. 45a:* el calendario corre en UTC: la sincronización de las 02:00 son las 21:00 en Colombia | Cada tarea dice su hora en Colombia en `routes/console.php` | `->timezone('America/Bogota')` en cada tarea, o `schedule_timezone` |
 | ✅ *Cerrada en la it. 42a:* repetir `make setup` sobre un stack que ya corre puede fallar en `up --wait`: el proxy se marca enfermo mientras la app reinicia | Jenkins parte de cero; para un stack existente basta `make up` | Más paciencia en el healthcheck del proxy |
-| El nombre de un veedor invitado es la parte local de su correo | Ninguna historia pide el nombre; todo lo público usa el seudónimo | Una historia de perfil del veedor |
+| ✅ *Cerrada en la it. 45c:* el nombre de un veedor invitado es la parte local de su correo | Ninguna historia pide el nombre; todo lo público usa el seudónimo | Una historia de perfil del veedor |
 | ✅ *Cerrada en la it. 38:* `make setup` no siembra la DIVIPOLA en desarrollo (la E2E la siembra sola) | Solo afecta a configurar territorios en una base de desarrollo nueva | `db:seed --class=DivipolaSeeder` en `make setup`; para producción entra en la it. 37 |
 | ✅ *Cerrada en la it. 39:* varios sellos enviados a la vez: la red acepta uno y rechaza los demás con `txINSUFFICIENT_FEE`; se reintentan a 1, 5 y 15 min (hallazgo de la it. 38) | Un veedor envía un reporte a la vez; solo se nota con varios reportes en el mismo segundo, y todos terminan sellados | Averiguar por qué (la comisión del *fee bump* con varias transacciones en el mismo ledger) y, si hace falta, subirla o reintentar pronto; antes de una salida con muchos veedores |

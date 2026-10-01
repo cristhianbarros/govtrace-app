@@ -66,3 +66,12 @@ describe('La política de tratamiento de datos', () => {
     });
 });
 
+
+describe('La retención de los informes de los ciudadanos (it. 45c)', () => {
+    it('says the email of a citizen is erased 30 days after the veeduría handles the report', () => {
+        const retention = open().findAll('#validity ~ ul li').map((item) => item.text());
+
+        expect(retention).toContain('El correo de quien informa a una veeduría, hasta 30 días después de que la veeduría atiende su informe. El informe atendido queda, sin el correo; el descartado se borra entero.');
+        expect(retention.join(' ')).not.toContain('mientras la veeduría esté en GovTrace');
+    });
+});

@@ -98,7 +98,7 @@ const missingText = computed(() => {
                     <li>El registro de auditoría, para siempre.</li>
                     <li>La relación entre un seudónimo y su veedor, 5 años desde su último reporte.</li>
                     <li>Los archivos de una organización dada de baja, 5 años.</li>
-                    <li>Los informes de los ciudadanos, con su correo cifrado, mientras la veeduría esté en GovTrace.</li>
+                    <li>El correo de quien informa a una veeduría, hasta 30 días después de que la veeduría atiende su informe. El informe atendido queda, sin el correo; el descartado se borra entero.</li>
                 </ul>
             </section>
         </article>

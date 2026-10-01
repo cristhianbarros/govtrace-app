@@ -55,6 +55,8 @@ test('El Super Administrador ve la invitación pendiente del Administrador y se 
 
 test('El Administrador activa su cuenta con el enlace del correo', async ({ page }) => {
     await page.goto(latestLinkTo(ALTA.admin));
+    // It. 45c: su nombre, para su veeduría.
+    await page.getByLabel('Su nombre').fill('Marta Ospina');
     await page.getByLabel('Contraseña', { exact: true }).fill(ALTA.password);
     await page.getByLabel('Confirmar contraseña').fill(ALTA.password);
     // It. 44e: la política de datos, enlazada, y la autorización del tratamiento de sus datos.
@@ -90,6 +92,7 @@ test('El Administrador invita a un veedor', async ({ page }) => {
 
 test('El veedor activa su cuenta y encuentra la obra para reportar', async ({ page }) => {
     await page.goto(latestLinkTo(ALTA.veedor));
+    await page.getByLabel('Su nombre').fill('Carlos Rojas');
     await page.getByLabel('Contraseña', { exact: true }).fill(ALTA.password);
     await page.getByLabel('Confirmar contraseña').fill(ALTA.password);
 
