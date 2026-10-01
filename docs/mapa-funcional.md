@@ -272,7 +272,7 @@ flowchart TB
 | 3 | Personalizar la organización | ✅ | Nombre de fantasía y logo (US-007). |
 | 4 | Armar el equipo | ⚠️ | Invitar, reenviar, revocar, desactivar y reactivar veedores: ✅. **V3:** no puede sumar otro administrador. Un mismo correo no puede ser administrador y veedor en la misma organización, así que si el administrador también sale a campo necesita otro correo ❓. |
 | 5 | Preparar las obras | ✅ | Contratos (US-015), corregir la ubicación (US-035) y agrupar contratos (US-045-INT). En Contratos no hay buscador (`docs/ux-analisis.md`). |
-| 6 | Revisar y publicar | ⚠️ 🔴 | Publicar, rechazar con motivo y retirar con lápida: ✅. **V4:** la tarjeta no dice de qué obra es la evidencia, ni quién la envió. **V9:** no le llega ningún aviso de que hay evidencias por revisar. |
+| 6 | Revisar y publicar | ✅ | Publicar, rechazar con motivo y retirar con lápida. La tarjeta dice de qué obra es y qué veedor la envió (it. 40b, V4), y cada mañana le llega un resumen de las evidencias por revisar (it. 43i, V9). |
 | 7 | Hacer seguimiento | ✅ | Resumen, CSV, auditoría y el aviso de fallas de sellado. |
 | 8 | Autorizar al Super Administrador | ✅ | 30 días, revocable (US-042-SEC). |
 | 9 | Salir | ⬜ 🔴 | **V1.** |
@@ -369,7 +369,7 @@ También está completo:
 | V6 | ✅ **Cerrado en la it. 43b.** La app del veedor no se puede instalar: hay service worker (`public/sw.js`), pero no hay manifiesto ni íconos. | Veedor | 🟠 | Omisión técnica | Un manifiesto por veeduría, con su nombre y su logo, los íconos y un "Instalar en el celular". |
 | V7 | ✅ **Cerrado en la it. 43g.** Reportar en nombre de una organización (US-042-SEC): la regla está en el backend y probada, pero no hay pantalla. | Super Admin | 🟠 | Se hizo la API, no la pantalla. | Desde la organización autorizada, en el panel global, un formulario de reporte. |
 | V8 | ✅ **Cerrado en la it. 43f.** La razón social no se puede cambiar: solo el NIT (`UpdateOrganizationLegalData`). | Super Admin | 🟠 | US-011 a medias. | Editar también el nombre legal, con la misma auditoría. |
-| V9 | Ningún aviso al administrador cuando hay evidencias por revisar: quedan ocultas hasta que alguien entra. | Admin | 🟠 | No estaba en la SPEC. | ❓ Un correo diario con cuántas hay por revisar. |
+| V9 | ✅ **Cerrado en la it. 43i** (un resumen diario). Ningún aviso al administrador cuando hay evidencias por revisar: quedan ocultas hasta que alguien entra. | Admin | 🟠 | No estaba en la SPEC. | ❓ Un correo diario con cuántas hay por revisar. |
 | V10 | Una veeduría no tiene cómo pedir el alta: no hay formulario ni contacto. | Veeduría interesada | 🟠 | El alta controlada es a propósito (US-001). El canal para pedirla, no se definió. | ❓ Un formulario de solicitud en el Inicio que llega al Super Administrador. Él aprueba (la Nueva organización sale precargada) o rechaza con un motivo. No es autorregistro: se conserva el control. |
 | V11 | ✅ **Cerrado en la it. 40c.** No se puede cambiar la contraseña con la sesión abierta: solo con "¿Olvidó su contraseña?". | Todos | 🟡 | No estaba en la SPEC. | "Cambiar contraseña" en "Mi cuenta" (el menú de la it. 40c). |
 | V12 | ✅ **Cerrado en la it. 40c.** En el mapa público no se puede buscar una obra por su nombre. | Ciudadano | 🟡 | US-028 pide estado, presupuesto y municipio. | Un buscador junto a la lista de obras (it. 40c). |

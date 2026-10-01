@@ -3,8 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Domain\Organization\Roles;
-use App\Domain\Reports\EditorialStatus;
-use App\Domain\Reports\Report;
+use App\Domain\Reports\PendingReview;
 use App\Domain\Sealing\ReportSeal;
 use App\Domain\Sealing\SealStatus;
 use Illuminate\Http\Request;
@@ -78,10 +77,7 @@ class HandleInertiaRequests extends Middleware
             return null;
         }
 
-        return Report::query()
-            ->where('editorial_status', EditorialStatus::Hidden)
-            ->whereHas('seal', fn ($seal) => $seal->where('status', SealStatus::Sealed))
-            ->count();
+        return PendingReview::count();
     }
 
     /** @return array{name: string, email: string, role: string}|null */
