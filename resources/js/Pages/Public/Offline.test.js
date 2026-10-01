@@ -24,3 +24,9 @@ describe('Mapa fuera de línea', () => {
         expect(wrapper.get('a[href="/verify"]').text()).toBe('Verificar un archivo en el validador');
     });
 });
+
+describe('Las pantallas vacías, ilustradas (it. 40f)', () => {
+    it('draws the cut signal next to the explanation', () => {
+        expect(mount(Offline).get('section svg').attributes('data-illustration')).toBe('offline');
+    });
+});

@@ -7,6 +7,7 @@ import { Head, usePage } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import FileDrop from '@/Components/Public/FileDrop.vue';
 import OrganizationNotice from '@/Components/Public/OrganizationNotice.vue';
+import PageHero from '@/Components/Public/PageHero.vue';
 import VerdictBanner from '@/Components/Public/VerdictBanner.vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { validate } from '@/lib/validator.js';
@@ -50,12 +51,11 @@ function chooseFile(chosen) {
     <Head title="Validador" />
     <AppLayout :title="page.props.organization ?? 'GovTrace'" :logo="page.props.organizationLogo" sections>
         <OrganizationNotice />
-        <h1 class="text-xl font-semibold">Validador de evidencias</h1>
-        <p class="mt-1 text-sm text-slate-700">
+        <PageHero title="Validador de evidencias" illustration="validator">
             Compruebe si una foto o un documento es el original: el mismo que la veeduría guardó con sello digital, sin un solo cambio. El archivo no sale de su equipo: se compara aquí mismo.
-        </p>
+        </PageHero>
         <!-- It. 43b (V14): el programa independiente del repositorio abierto (US-046-INT). -->
-        <div v-if="page.props.verifierUrl" class="mt-2 flex flex-col text-sm text-slate-700">
+        <div v-if="page.props.verifierUrl" class="mt-3 flex flex-col text-sm text-slate-700">
             <span>¿Prefiere no depender de esta página?</span>
             <a data-test="verifier" :href="page.props.verifierUrl" target="_blank" rel="noopener" class="inline-flex min-h-11 items-center self-start font-semibold underline">Compruébelo por su cuenta con el programa independiente</a>
         </div>

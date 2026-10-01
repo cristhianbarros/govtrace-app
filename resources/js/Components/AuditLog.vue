@@ -28,7 +28,7 @@ onMounted(() => load(1));
 </script>
 
 <template>
-    <LoadState :loading="loading" :error="error" :empty="log?.meta.total === 0" loading-text="Cargando el registro…" empty-text="Aún no hay nada registrado." @retry="load(pageNumber)">
+    <LoadState :loading="loading" :error="error" :empty="log?.meta.total === 0" loading-text="Cargando el registro…" empty-text="Aún no hay nada registrado." illustration="records" @retry="load(pageNumber)">
         <ul class="flex flex-col gap-2">
             <li v-for="entry in log.data" :key="entry.id" data-test="audit-entry" class="rounded-2xl bg-white p-3 text-sm shadow-soft ring-1 ring-slate-900/5">
                 <p class="font-semibold">{{ entry.action }}</p>

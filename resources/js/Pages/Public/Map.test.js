@@ -258,3 +258,18 @@ describe('Cómo funciona (it. 40d)', () => {
         expect(wrapper.findAll('a').find((link) => link.text() === 'Política de tratamiento de datos').attributes('href')).toBe('/privacidad');
     });
 });
+
+describe('Las pantallas vacías, ilustradas (it. 40f)', () => {
+    it('draws the magnifier over the map when no worksite matches, on the map and on the list', async () => {
+        const wrapper = await openMap([]);
+        expect(wrapper.get('[data-test="empty"] svg').attributes('data-illustration')).toBe('search');
+
+        fetchWorksiteList.mockResolvedValue([{ id: 3, name: 'Pavimentación de la Calle 30', municipality: 'Santa Marta', color_pin: 'green' }]);
+        await wrapper.findAll('button').find((button) => button.text() === 'Lista').trigger('click');
+        await flushPromises();
+        await wrapper.get('input[type="search"]').setValue('parque');
+
+        expect(wrapper.get('[data-test="empty"]').text()).toBe('Ninguna obra se llama así. Pruebe con otra palabra.');
+        expect(wrapper.get('[data-test="empty"] svg').attributes('data-illustration')).toBe('search');
+    });
+});

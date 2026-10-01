@@ -51,3 +51,18 @@ describe('La política de datos (it. 44e)', () => {
         expect(wrapper.findAll('a').find((link) => link.text() === 'Política de tratamiento de datos').attributes('href')).toBe('/privacidad');
     });
 });
+
+describe('Más imágenes en el Inicio (it. 40f)', () => {
+    it('draws each step of how it works: the photo, its seal and the map', () => {
+        const wrapper = mount(Home, { props: { organizations: ORGANIZATIONS } });
+
+        expect(wrapper.findAll('[data-test="how"] li svg').map((art) => art.attributes('data-illustration'))).toEqual(['evidence', 'validator', 'map']);
+    });
+
+    it('draws the neighbors waiting when there is no veeduría yet', () => {
+        const wrapper = mount(Home, { props: { organizations: [] } });
+
+        expect(wrapper.get('#veedurias [data-test="empty"]').text()).toBe('Aún no hay veedurías publicando en GovTrace.');
+        expect(wrapper.get('#veedurias [data-test="empty"] svg').attributes('data-illustration')).toBe('team');
+    });
+});

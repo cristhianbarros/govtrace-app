@@ -4,6 +4,7 @@
 // y, si entra, lleva a cada rol a su panel.
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import { ref } from 'vue';
+import Illustration from '@/Components/Brand/Illustration.vue';
 import PasswordField from '@/Components/PasswordField.vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { isEmail } from '@/lib/credentials.js';
@@ -37,10 +38,11 @@ function submit() {
     <Head title="Iniciar sesión" />
     <AppLayout :title="page.props.organization ?? 'GovTrace'" :logo="page.props.organizationLogo ?? null">
         <Link v-if="page.props.organization" href="/" class="mb-2 inline-flex min-h-11 items-center text-base font-semibold text-slate-700">← Volver al mapa de obras</Link>
-        <form class="mx-auto flex w-full max-w-sm flex-col gap-5 pt-4" novalidate @submit.prevent="submit">
-            <div>
-                <h1 class="text-xl font-semibold">Iniciar sesión</h1>
-                <p class="text-sm text-slate-600">{{ context }}</p>
+        <form class="mx-auto mt-2 flex w-full max-w-sm flex-col gap-5 rounded-3xl bg-white p-5 shadow-soft ring-1 ring-slate-900/5 md:p-7" novalidate @submit.prevent="submit">
+            <div class="flex flex-col items-center gap-2 text-center">
+                <Illustration name="welcome" size="w-28" />
+                <h1 class="text-2xl">Iniciar sesión</h1>
+                <p class="text-base text-slate-700">{{ context }}</p>
             </div>
 
             <p v-if="page.props.flash?.status" role="status" class="rounded-lg bg-emerald-50 p-3 text-sm font-semibold text-emerald-800">

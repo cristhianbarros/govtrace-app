@@ -85,6 +85,7 @@ const statusOf = (contract) => (contract.status === 'cancelled' ? 'Anulado/Retir
             :empty="contracts?.meta.total === 0"
             loading-text="Cargando contratos…"
             :empty-text="emptyText"
+            illustration="records"
             @retry="reload"
         >
             <ul class="flex flex-col gap-2">

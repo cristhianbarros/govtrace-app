@@ -8,6 +8,7 @@
 // es publicar una versión nueva: DataPolicy::VERSION.
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
+import PageHero from '@/Components/Public/PageHero.vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 
 const props = defineProps({
@@ -28,7 +29,7 @@ const missingText = computed(() => {
     <AppLayout :title="page.props.organization ?? 'GovTrace'" :logo="page.props.organizationLogo" :sections="Boolean(page.props.organization)">
         <article class="mx-auto flex max-w-2xl flex-col gap-4 text-base leading-relaxed">
             <Link href="/" class="inline-flex min-h-11 items-center self-start text-base font-semibold text-slate-700 underline">← Volver</Link>
-            <h1 class="text-xl font-semibold">Política de tratamiento de datos personales</h1>
+            <PageHero title="Política de tratamiento de datos personales" illustration="privacy">Qué datos suyos guarda GovTrace, para qué, y cómo conocerlos, corregirlos o pedir que se borren.</PageHero>
             <p v-if="policy.missing.length" data-test="draft" role="note" class="rounded-lg border-2 border-amber-500 bg-amber-50 p-3 font-semibold text-amber-900">
                 Borrador: faltan {{ missingText }} del responsable. Esta política todavía no rige.
             </p>

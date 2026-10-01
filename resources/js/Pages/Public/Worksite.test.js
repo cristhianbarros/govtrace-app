@@ -364,3 +364,13 @@ describe('Informar a esta veeduría (it. 44f)', () => {
     });
 });
 
+// It. 40f — R-UX-10.
+describe('Las pantallas vacías, ilustradas (it. 40f)', () => {
+    it('draws an empty camera when the worksite has no published evidence yet', async () => {
+        const wrapper = await openWorksite(calle30({ timeline: [] }));
+
+        expect(wrapper.get('[data-test="empty"]').text()).toContain('Aún no hay evidencias publicadas de esta obra.');
+        expect(wrapper.get('[data-test="empty"] svg').attributes('data-illustration')).toBe('evidence');
+        wrapper.unmount();
+    });
+});

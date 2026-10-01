@@ -3,6 +3,7 @@
 // de tiempo de sus evidencias publicadas, pedidas al abrirla (R-MAP-02).
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import { onMounted } from 'vue';
+import Illustration from '@/Components/Brand/Illustration.vue';
 import LoadState from '@/Components/LoadState.vue';
 import CitizenReportForm from '@/Components/Public/CitizenReportForm.vue';
 import ContractCard from '@/Components/Public/ContractCard.vue';
@@ -65,7 +66,10 @@ onMounted(load);
                 </section>
 
                 <h2 class="mb-3 mt-6 text-lg font-semibold">Evidencias publicadas</h2>
-                <p v-if="worksite.timeline.length === 0" class="rounded-2xl bg-white p-4 text-sm text-slate-600 shadow-soft ring-1 ring-slate-900/5">Aún no hay evidencias publicadas de esta obra.</p>
+                <div v-if="worksite.timeline.length === 0" data-test="empty" class="flex flex-col items-center gap-2 rounded-2xl bg-white px-4 py-6 text-center shadow-soft ring-1 ring-slate-900/5">
+                    <Illustration name="evidence" size="w-36" />
+                    <p class="text-base text-slate-700">Aún no hay evidencias publicadas de esta obra.</p>
+                </div>
                 <ol v-else class="flex flex-col gap-3">
                     <li v-for="evidence in worksite.timeline" :key="evidence.report_id">
                         <EvidenceCard :evidence="evidence" />

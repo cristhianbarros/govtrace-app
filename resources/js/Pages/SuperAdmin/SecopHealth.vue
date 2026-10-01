@@ -41,6 +41,7 @@ onMounted(load);
             :empty="run === null"
             loading-text="Cargando la última sincronización…"
             empty-text="Aún no ha corrido ninguna sincronización con SECOP II."
+            illustration="records"
             @retry="load"
         >
             <section class="flex flex-col gap-3 rounded-2xl bg-white p-3 text-sm shadow-soft ring-1 ring-slate-900/5">

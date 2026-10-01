@@ -131,6 +131,7 @@ Cada una se puede medir con un test, como las demás reglas de la SPEC:
       - una banda en verde en el Inicio, con una ilustración;
       - un encabezado en el mapa, con los tres estados como fichas grandes que también filtran;
       - pestañas en el sitio de cada veeduría (Obras, Estadísticas, Validar), en vez de botones sueltos.
+    - **Ilustraciones** (it. 40f): un juego propio en `Components/Brand/Illustration.vue`, plano y en la misma paleta, para cada pantalla vacía, los errores, los encabezados públicos, el ingreso y los pasos del Inicio. Son decorativas (`aria-hidden`): el texto dice todo. Una pantalla nueva con un vacío elige su dibujo con `illustration` en `LoadState`.
     - Todo pasa `make ux-check`: el contraste AA lo mide axe.
 
 ## 3. Hallazgos transversales
