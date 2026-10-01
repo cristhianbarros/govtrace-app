@@ -27,6 +27,9 @@ export const discardCitizenReport = (id) => dataOf(http.post(`/citizen-reports/$
 
 /** US-008: el reporte con sus archivos y sus SHA-256, como multipart. */
 export const sendReport = (form) => dataOf(http.post('/reports', form));
+// It. 43g (V7): el Super Administrador, en nombre de una organización que lo autorizó (US-042-SEC).
+export const searchContractsOf = (tenantId) => async (keyword) => (await dataOf(http.get(`/admin/organizations/${tenantId}/contracts/search`, { params: { q: keyword } }))).data;
+export const sendReportOnBehalf = (tenantId, form) => dataOf(http.post(`/admin/organizations/${tenantId}/reports`, form));
 
 /** Cerrar sesión (US-018 avisa antes si hay reportes sin enviar). */
 export const logout = () => dataOf(http.post('/logout'));

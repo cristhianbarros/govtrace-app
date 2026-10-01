@@ -1,7 +1,11 @@
 // It. 40a — el flujo del Super Administrador (docs/mapa-funcional.md, sección 2).
 // Gobierna la organización que dio de alta el flujo 1-alta, que corre antes.
 import { expect, test } from '@playwright/test';
-import { CENTRAL, PEOPLE, logIn, logOut } from './support.js';
+import { fileURLToPath } from 'node:url';
+import { CENTRAL, ORG, PEOPLE, logIn, logOut } from './support.js';
+
+const PHOTO = fileURLToPath(new URL('../../fixtures/evidence/foto.jpg', import.meta.url));
+const E2E_ORG = 'Veeduría de Pruebas E2E';
 
 const ALTA = 'Veeduría de Alta E2E';
 const PANEL = [
@@ -81,7 +85,37 @@ test('Opera la plataforma: parámetros, auditoría, SECOP, sellado y uso', async
     }
 });
 
-test.fixme('V7: crea un reporte en nombre de una organización que lo autorizó', async () => {});
+/** The Administradora of the e2e organization authorizes the Super Administrador, or revokes it (US-042-SEC). */
+async function authorization(page, button) {
+    await logIn(page, ORG, PEOPLE.admin);
+    await page.waitForURL('**/admin/inbox');
+    await page.goto(`${ORG}/admin/authorization`);
+    await page.getByRole('button', { name: button }).click();
+    await logOut(page);
+}
+
+test('V7: crea un reporte en nombre de una organización que lo autorizó (it. 43g)', async ({ page }) => {
+    await authorization(page, 'Autorizar por 30 días');
+
+    await enterThePanel(page);
+    const row = rowOf(page, E2E_ORG);
+    await expect(row.locator('[data-test="authorization"]')).toContainText('Lo autorizó a reportar en su nombre hasta el');
+    await row.getByRole('link', { name: 'Reportar en su nombre' }).click();
+    await page.waitForURL('**/report');
+    await expect(page.getByRole('heading', { name: `Reportar en nombre de ${E2E_ORG}` })).toBeVisible();
+
+    await page.getByLabel('Buscar Obra').fill('Parque de pruebas');
+    await page.locator('[data-test="contract-result"]').first().click();
+    await expect(page.getByText(/Precisión del GPS/)).toBeVisible();
+    await page.getByLabel('Avance').check();
+    await page.locator('input[type="file"]').first().setInputFiles(PHOTO);
+    await page.getByRole('button', { name: 'Enviar Reporte' }).click();
+    await expect(page.getByRole('status')).toContainText(`Reporte recibido en nombre de ${E2E_ORG}.`);
+    await logOut(page);
+
+    // Que la Administradora pueda volver a autorizar en su propio flujo.
+    await authorization(page, 'Revocar autorización');
+});
 
 test('Sincroniza SECOP a mano, sin esperar a la madrugada (V15)', async ({ page }) => {
     await enterThePanel(page);

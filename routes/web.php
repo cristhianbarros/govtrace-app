@@ -64,6 +64,9 @@ foreach (config('tenancy.central_domains') as $domain) {
             Route::post('/admin/organizations/{tenant}/decommission', [OrganizationController::class, 'decommission'])->name('admin.organizations.decommission');
             // US-042-SEC: un reporte en nombre de una organización que lo autorizó (R-SA-02).
             Route::post('/admin/organizations/{tenant}/reports', [OrganizationReportController::class, 'store'])->name('admin.organizations.reports.store');
+            // It. 43g (V7): su pantalla, y la búsqueda de la obra en el territorio de esa organización.
+            Route::get('/admin/organizations/{tenant}/report', [OrganizationReportController::class, 'create'])->name('admin.organizations.reports.create');
+            Route::get('/admin/organizations/{tenant}/contracts/search', [OrganizationReportController::class, 'contracts'])->name('admin.organizations.contracts.search');
 
             // US-038-CFG: parámetros globales. US-043-MON: el log de auditoría completo.
             Route::get('/admin/parameters', fn () => Inertia::render('SuperAdmin/Parameters'))->name('admin.parameters.show');

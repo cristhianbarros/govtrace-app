@@ -5,9 +5,13 @@
 import { useDebouncedSearch } from '@/composables/useDebouncedSearch.js';
 import { searchContracts } from '@/services/api.js';
 
+const props = defineProps({
+    // It. 43g: dónde buscar; por defecto, en la organización del veedor.
+    search: { type: Function, default: searchContracts },
+});
 const emit = defineEmits(['select']);
 
-const { keyword, results, searching, failed } = useDebouncedSearch(searchContracts);
+const { keyword, results, searching, failed } = useDebouncedSearch(props.search);
 </script>
 
 <template>
