@@ -4,7 +4,40 @@ Al 2026-09-29. Empezó sobre `77e6030` (iteración 39) y se actualizó en las it
 
 ✅ hecho y probado · ⚠️ a medias · ⬜ falta · 🔒 espera algo externo · ❓ decisión tuya
 
-## Dónde quedó (2026-09-30)
+## Dónde quedó (2026-09-30, noche)
+
+**Después del proceso actual, la interfaz y lo que quedó de las iteraciones pasadas.** El usuario pidió ilustraciones y una interfaz más acogedora; ver los correos que se envían; y seguir sin su revisión con lo que no espera a nadie ("continúa con lo sugerido").
+
+| Iteración | Qué | PR |
+|---|---|---|
+| 40e | Pestañas en el sitio de cada veeduría y una identidad propia: verde pino, sol y terracota, Atkinson Hyperlegible y Fraunces | #69 |
+| 40f | Ilustraciones en las pantallas vacías, los errores y los encabezados; el barrio en el pie; barras en las estadísticas | #70 |
+| 38b | El buzón de desarrollo: una copia de cada correo en Mailpit (back_cosmetics usa MailDev, no MailHog) | #71 |
+| 45a | El calendario en la hora de Colombia; cambiar la contraseña cierra las otras sesiones; el respaldo resiste una base que desaparece | #72 |
+| 45b | Los correos, de usted y con la identidad de GovTrace | #73 |
+| 45c | De SECOP solo lo que se usa (sin los datos personales de representantes y supervisores); la retención de los informes ciudadanos; el nombre al activar la cuenta | #74 |
+| 43f | V8: la razón social | #75 |
+| 43g | V7: reportar en nombre de una organización, con su pantalla | #76 |
+
+- **Vacíos de flujo que quedan: 4**, todos con una decisión tuya pendiente:
+  - V3: un segundo administrador, o reemplazarlo;
+  - V9: un aviso diario al administrador con las evidencias por revisar;
+  - V10: la solicitud de alta de una veeduría;
+  - V13: el contacto de la veeduría en su página.
+- **Tests:** Pest 935, Vitest 466, `make e2e` 50 (44 pasan y 6 `fixme`, uno por vacío), trace-check 315 de 315, y `make ux-check` sin retroceso.
+- **Hallazgos:**
+  - **LocalStack gratuito pierde los archivos al reiniciarse** (45a). En desarrollo, un reinicio de Docker borró las fotos del bucket; se recuperaron desde la copia de respaldo. En producción no pasa: es S3. ❓ Otro S3 local que guarde en disco.
+  - **La sincronización incremental de SECOP no es posible** (45c): el conjunto se vuelve a publicar entero cada día y `:updated_at` es igual en todas las filas.
+- **Decisiones por defecto que esperan tu confirmación**, cada una en su iteración de `specs/PLAN.md`:
+  - los 30 días de retención de los informes ciudadanos (45c);
+  - la alerta de la cola de sellado, que tutea, con el texto exacto de US-021 (45b).
+- **Pendiente de tu parte:**
+  - los datos del operador (`PRIVACY_CONTROLLER_*`): sin ellos, la política sigue como borrador;
+  - las 3 credenciales de testnet en Jenkins (desde la 37a);
+  - la revisión legal de la "Prueba Pericial Criptográfica", los impedimentos y el texto de la política;
+  - la cuenta de AWS para staging (42b) y la red principal (37b).
+
+## Dónde quedó (2026-09-30, mañana)
 
 El usuario pidió avanzar sin su revisión hasta el día siguiente, con la interfaz como prioridad, "como si mañana fuera el día de la demo". Se hicieron ocho iteraciones, cada una con su PR:
 
