@@ -143,6 +143,25 @@ services:
       retries: 20
       start_period: 10s
 
+  # ------------------------------------------------------------ mailpit ----
+  # It. 38b: el buzón de desarrollo. Cada correo que envía la app llega también
+  # aquí (MAIL_COPY_TO_MAILPIT=true), y se lee en
+  # http://mailpit.govtrace.localhost:8080, por el proxy. Guarda los últimos
+  # 1.000 en memoria: se vacía al reiniciarlo. Solo en desarrollo:
+  # docker-compose.prod.yml no lo tiene.
+  mailpit:
+    image: axllent/mailpit:v1.31
+    environment:
+      MP_MAX_MESSAGES: 1000
+      TZ: America/Bogota
+    networks: [govtrace]
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt: [no-new-privileges:true]
+    restart: unless-stopped
+    # El chequeo de salud viene en la imagen (/mailpit readyz).
+
   # ------------------------------------------------------------- worker ----
   # Laravel ships with QUEUE_CONNECTION=database (D1, specs/PLAN.md it.1):
   # no Redis needed for the MVP queue, so the worker only depends on pgsql.
