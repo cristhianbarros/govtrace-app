@@ -1925,7 +1925,7 @@ Esta iteración estaba reservada para ese recorrido. El recorrido se hizo para e
 
 **Queda de la 43a:**
 - V3 (❓ varios administradores o reemplazarlo);
-- V7 (la pantalla para reportar en nombre de una organización);
+- V7 (la pantalla para reportar en nombre de una organización); → **Cerrado en la 43g.**
 - V8 (la razón social). → **Cerrado en la 43f.**
 
 **43b — Llegar y volver.**
@@ -2034,6 +2034,24 @@ Esta iteración estaba reservada para ese recorrido. El recorrido se hizo para e
   - Pest, 5 casos (el cambio con su log, el rechazo, sin cambio, el nombre visible y la pantalla), vistos en rojo antes de implementar;
   - Vitest: el campo "Razón social", lleno con la actual;
   - `make e2e`: el `fixme` de V8 pasa a verde.
+
+**43g — V7: reportar en nombre de una organización, con su pantalla** (US-042-SEC, R-SA-02). La regla y el envío existían desde la it. 25, pero solo por API.
+
+✅ **43g cumplida (2026-09-30).**
+- **En el listado de organizaciones,** la que autorizó al Super Administrador dice hasta cuándo y ofrece "Reportar en su nombre". Solo una organización activa.
+- **La pantalla** (`SuperAdmin/ReportOnBehalf`) dice en nombre de quién reporta y hasta cuándo, y que el reporte queda en el registro de auditoría y pasa por la revisión de la veeduría como los demás.
+  - Busca la obra en el territorio de esa organización, con un endpoint nuevo del panel que exige la autorización vigente.
+  - Envía el mismo reporte que la PWA a la ruta que ya existía, con sus reglas: la geocerca, el GPS de 50 m o menos, los adjuntos y sus hashes.
+  - Sin autorización vigente, muestra el mensaje de US-042-SEC y nada más.
+- **Un solo formulario para los dos:** `Components/ReportForm.vue` (el GPS, qué vio, el comentario, los adjuntos, qué falta y enviar), con sus textos en `lib/report.js`.
+  - "Nuevo Reporte" del veedor lo usa y conserva lo suyo: las obras cercanas y la bandeja de salida sin señal.
+  - Sus 46 tests pasaron sin cambios.
+- **Sin modo sin conexión para el Super Administrador:** reporta con señal. Si el servidor rechaza, se ve el motivo.
+- **Prueba:**
+  - Pest, 5 casos (el listado, la pantalla con y sin autorización, la búsqueda solo con autorización, solo el Super Administrador), vistos en rojo;
+  - Vitest: la pantalla y el enlace del listado, vistos en rojo; "Nuevo Reporte", intacto;
+  - `make e2e`: el `fixme` de V7 pasa a verde. La Administradora autoriza, el Super Administrador busca la obra, la reporta con foto y GPS, y la Administradora revoca.
+- **Modelo:** Opus. Toca quién puede reportar en una organización ajena.
 
 **40e — Pestañas y una identidad simple y acogedora** (US-027, R-UX-10). El usuario pidió pestañas en vez de botones sueltos, un estilo con contraste y, sobre todo, una interfaz que impresione: "es como muy común… simple pero acogedora".
 

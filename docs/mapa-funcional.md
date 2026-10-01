@@ -260,7 +260,7 @@ flowchart TB
 | 5 | Reemplazar a un administrador que se va o actúa mal | ⬜ 🔴 | **V3.** No puede asignar otro ni desactivarlo: solo puede suspender la organización entera. |
 | 6 | Gobernar | ✅ | Editar el NIT, la razón social (it. 43f, V8) y la inscripción, suspender, reactivar y dar de baja (con doble confirmación): ✅. |
 | 7 | Operar | ✅ | Parámetros, auditoría, salud de SECOP, sellado (con reencolar las fallas), uso y alertas por correo. Sincronizar SECOP a mano no se puede (V15). |
-| 8 | Reportar en nombre de una organización que lo autorizó | ⚠️ 🟠 | **V7.** La regla existe y está probada (US-042-SEC, R-SA-02), pero no hay pantalla: solo se puede por API. |
+| 8 | Reportar en nombre de una organización que lo autorizó | ✅ | Desde el listado, la que lo autorizó dice hasta cuándo y lleva a su pantalla de reporte (it. 43g, V7). |
 | 9 | Salir | ⬜ 🔴 | **V1.** Ni botón ni ruta de salida en el dominio central. |
 
 ### Administrador de Organización
@@ -367,7 +367,7 @@ También está completo:
 | V4 | ✅ **Cerrado en la it. 40b.** La Bandeja no dice de qué obra es la evidencia ni quién la envió: el JSON trae `worksite_id`, pero no el nombre ni el autor. | Admin | 🔴 | US-036 pide "revisión responsable" sin nombrar los datos. | La obra (nombre y municipio) y el veedor en cada tarjeta. La obra ya está en la it. 40b; el veedor, ❓. |
 | V5 | ✅ **Cerrado en la it. 40d.** El dominio central no lleva a ninguna veeduría. El ciudadano no tiene cómo llegar, y el veedor que olvidó su enlace tampoco. | Ciudadano, veedor | 🟠 | Omisión (R-MAP-01 aísla los mapas; no prohíbe un directorio). | Un directorio de veedurías activas en el Inicio ❓, ya en la it. 40d. |
 | V6 | ✅ **Cerrado en la it. 43b.** La app del veedor no se puede instalar: hay service worker (`public/sw.js`), pero no hay manifiesto ni íconos. | Veedor | 🟠 | Omisión técnica | Un manifiesto por veeduría, con su nombre y su logo, los íconos y un "Instalar en el celular". |
-| V7 | Reportar en nombre de una organización (US-042-SEC): la regla está en el backend y probada, pero no hay pantalla. | Super Admin | 🟠 | Se hizo la API, no la pantalla. | Desde la organización autorizada, en el panel global, un formulario de reporte. |
+| V7 | ✅ **Cerrado en la it. 43g.** Reportar en nombre de una organización (US-042-SEC): la regla está en el backend y probada, pero no hay pantalla. | Super Admin | 🟠 | Se hizo la API, no la pantalla. | Desde la organización autorizada, en el panel global, un formulario de reporte. |
 | V8 | ✅ **Cerrado en la it. 43f.** La razón social no se puede cambiar: solo el NIT (`UpdateOrganizationLegalData`). | Super Admin | 🟠 | US-011 a medias. | Editar también el nombre legal, con la misma auditoría. |
 | V9 | Ningún aviso al administrador cuando hay evidencias por revisar: quedan ocultas hasta que alguien entra. | Admin | 🟠 | No estaba en la SPEC. | ❓ Un correo diario con cuántas hay por revisar. |
 | V10 | Una veeduría no tiene cómo pedir el alta: no hay formulario ni contacto. | Veeduría interesada | 🟠 | El alta controlada es a propósito (US-001). El canal para pedirla, no se definió. | ❓ Un formulario de solicitud en el Inicio que llega al Super Administrador. Él aprueba (la Nueva organización sale precargada) o rechaza con un motivo. No es autorregistro: se conserva el control. |
@@ -424,7 +424,7 @@ También está completo:
 
 La sospecha era que buena parte del código sirve para asegurar la calidad, y que hay cosas probadas que nunca llegaron a una pantalla. Medido:
 
-**Casi todo lo probado tiene su pantalla.** De las rutas del backend, solo una no la tiene: `POST /admin/organizations/{tenant}/reports`, la de reportar en nombre de una organización (V7). Las demás:
+**Todo lo probado tiene su pantalla.** La única ruta del backend que no la tenía, `POST /admin/organizations/{tenant}/reports` (reportar en nombre de una organización, V7), la tiene desde la it. 43g. Las demás:
 - las llama alguna pantalla;
 - van en un correo, como la invitación o el restablecer contraseña;
 - o el backend las entrega dentro del JSON que usa la pantalla: fotos, descargas, pruebas y recibos.

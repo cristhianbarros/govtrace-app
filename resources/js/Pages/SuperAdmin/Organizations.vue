@@ -21,6 +21,7 @@ import {
     updateOrganizationLegalData,
 } from '@/services/api.js';
 import { errorMessage } from '@/services/errors.js';
+import { formatDay } from '@/lib/format.js';
 
 const { data: organizations, loading, error, load } = useLoader(fetchOrganizations);
 
@@ -129,6 +130,12 @@ onMounted(load);
                                 <button type="button" class="min-h-11 rounded-xl border border-brand-200 text-brand-800 hover:bg-brand-50 px-3 text-sm font-semibold" @click="edit(organization)">Editar datos legales</button>
                             </div>
                         </div>
+
+                        <!-- It. 43g (V7): si autorizó al Super Administrador a reportar en su nombre (US-042-SEC), hasta cuándo. -->
+                        <p v-if="organization.authorized_until" data-test="authorization" class="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg bg-brand-50 p-3 text-sm text-brand-900">
+                            <span>Lo autorizó a reportar en su nombre hasta el {{ formatDay(organization.authorized_until) }}.</span>
+                            <Link :href="`/admin/organizations/${organization.id}/report`" class="inline-flex min-h-11 items-center font-semibold underline">Reportar en su nombre</Link>
+                        </p>
 
                         <!-- It. 43a (V2): quién la administra y el estado de su invitación. -->
                         <section v-if="organization.status !== 'Dada de baja'" data-test="administrators" class="mt-3 rounded-lg bg-slate-50 p-3" :aria-label="`Administrador de ${organization.name}`">

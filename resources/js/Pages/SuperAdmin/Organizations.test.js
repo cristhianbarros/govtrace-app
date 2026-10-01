@@ -335,3 +335,20 @@ describe('La razón social (it. 43f, V8)', () => {
     });
 });
 
+describe('Reportar en su nombre (it. 43g, V7)', () => {
+    it('says which organization authorized the Super Administrador, until when, and leads to report on its behalf', async () => {
+        const wrapper = await openOrganizations([{ ...smr, authorized_until: '2026-10-25T15:00:00+00:00' }]);
+        const authorization = wrapper.get('[data-test="authorization"]');
+
+        expect(authorization.text()).toContain('Lo autorizó a reportar en su nombre hasta el 25/10/2026');
+        expect(authorization.get('a').attributes('href')).toBe('/admin/organizations/tenant-smr/report');
+        expect(authorization.get('a').text()).toBe('Reportar en su nombre');
+    });
+
+    it('offers nothing of the kind to an organization that has not authorized it', async () => {
+        const wrapper = await openOrganizations([{ ...smr, authorized_until: null }]);
+
+        expect(wrapper.find('[data-test="authorization"]').exists()).toBe(false);
+    });
+});
+

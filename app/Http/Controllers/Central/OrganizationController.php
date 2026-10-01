@@ -10,6 +10,7 @@ use App\Application\Organization\SuspendOrganization;
 use App\Application\Organization\UpdateOrganizationLegalData;
 use App\Domain\Organization\Exceptions\OrganizationValidationException;
 use App\Domain\Organization\OrganizationStatus;
+use App\Domain\Organization\SuperAdminAuthorization;
 use App\Http\Controllers\Controller;
 use App\Infrastructure\Tenancy\Tenant;
 use Illuminate\Http\JsonResponse;
@@ -40,6 +41,10 @@ class OrganizationController extends Controller
                     // It. 43a (V16): quién la administra y en qué va su invitación. Una
                     // dada de baja ya no tiene su base de datos de usuarios.
                     'administrators' => $tenant->status === OrganizationStatus::Decommissioned->value ? [] : $administrators->of($tenant),
+                    // It. 43g (V7): hasta cuándo autorizó al Super Administrador a reportar en su nombre (US-042-SEC).
+                    'authorized_until' => $tenant->status === OrganizationStatus::Active->value
+                        ? $tenant->run(fn () => SuperAdminAuthorization::inForce()?->expires_at->toIso8601String())
+                        : null,
                 ]),
         ]);
     }
