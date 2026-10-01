@@ -2278,6 +2278,24 @@ El usuario pidió seguir con lo que no espera a nadie: la deuda técnica y los h
   - `make backup-check`: 2 casos nuevos, la base que desaparece y el error de verdad, vistos en rojo; todo en verde, con la restauración de prueba.
 
 
+**45b — Los correos, de usted y con la identidad de GovTrace.** Lo mostró el buzón de desarrollo en su primer uso (it. 38b).
+
+✅ **45b cumplida (2026-09-30).**
+- **De usted, como toda la aplicación:**
+  - la bienvenida decía "Se creó tu cuenta"; ahora, "su cuenta";
+  - la alerta de saldo decía "Fondéala"; ahora, "Fondéela";
+  - un test recorre los siete correos que reciben las personas y busca "tú", "tu", "te" y los imperativos de tú.
+- **La identidad de la it. 40e** (`resources/views/vendor/mail`):
+  - un tema propio sobre la plantilla de Laravel (`mail.markdown.theme = govtrace`): el verde pino en el botón, el nombre y los enlaces; la crema de fondo; la banda verde sobre el cuerpo; los grises cálidos; los títulos en Georgia, porque Fraunces no llega a los clientes de correo;
+  - la cabecera dice "GovTrace" y "Veeduría ciudadana de obras públicas";
+  - el pie dice "GovTrace · Evidencia ciudadana que nadie puede cambiar." y enlaza la política de datos (Ley 1581), en las versiones HTML y texto. Antes decía "Todos los derechos reservados".
+- **El remitente de desarrollo:** `no-responder@govtrace.localhost`, con el nombre "GovTrace", en `.env.example`. En producción lo fija `.env.production.example`.
+- ❓ **Queda la alerta de la cola de sellado** (US-021): "Revisa el estado de la red o del proveedor RPC" tutea y habla técnico, pero el texto exacto está en el escenario de la spec. Cambiarlo es enmendar US-021.
+- **Prueba:**
+  - Pest, 17 casos: de usted, la identidad en cada correo, el botón verde y el remitente, vistos en rojo antes de implementar;
+  - `SpanishTest` ahora busca el pie de GovTrace;
+  - a mano, en Mailpit: la bienvenida y el código del ciudadano.
+
 ## Pivote a Stellar (2026-09-28)
 
 El proyecto participa en **Stellar Apex**, así que la blockchain pasa de EVM/Polygon a **Stellar**, con Smart Contracts en **Soroban (Rust)**:

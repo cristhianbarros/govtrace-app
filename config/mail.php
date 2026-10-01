@@ -132,4 +132,14 @@ return [
 
     'copy_to_mailpit' => (bool) env('MAIL_COPY_TO_MAILPIT', false),
 
+    /*
+    | It. 45b: la plantilla de los correos, con la identidad de GovTrace
+    | (resources/views/vendor/mail: el tema, la cabecera y el pie).
+    */
+
+    'markdown' => [
+        'theme' => 'govtrace',
+        'paths' => [resource_path('views/vendor/mail')],
+    ],
+
 ];

@@ -31,7 +31,7 @@ class WelcomeNotification extends Notification
         return (new MailMessage)
             ->subject('Bienvenido a GovTrace')
             ->greeting("Hola, {$notifiable->name}")
-            ->line('Se creó tu cuenta en GovTrace.')
+            ->line('Se creó su cuenta en GovTrace.')
             ->action('Establecer mi contraseña', $this->url)
             ->line("Este enlace expira en {$this->validityHours} horas.");
     }
