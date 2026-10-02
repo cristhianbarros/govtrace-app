@@ -11,10 +11,18 @@ resolver 127.0.0.11 ipv6=off valid=10s;
 client_max_body_size 64M;
 server_tokens off;
 
+# It. 45f: el registro de acceso guarda solo la ruta de cada petición, sin sus
+# parámetros ($uri y no $request ni $request_uri): si una URL llevara la
+# ubicación del veedor u otro dato, no quedaría anotada con la hora y la IP.
+# Cada server lo declara: un access_log en el http de la imagen se sumaría.
+log_format govtrace '$remote_addr - $remote_user [$time_local] "$request_method $uri $server_protocol" '
+                    '$status $body_bytes_sent "$http_referer" "$http_user_agent"';
+
 # HTTP: solo lleva a HTTPS, con el mismo host (el subdominio de la organización).
 server {
     listen 80 default_server;
     server_name ${DOMAIN} *.${DOMAIN};
+    access_log /var/log/nginx/access.log govtrace;
 
     location = /healthz {
         access_log off;
@@ -30,6 +38,7 @@ server {
     listen 443 ssl default_server;
     http2 on;
     server_name ${DOMAIN} *.${DOMAIN};
+    access_log /var/log/nginx/access.log govtrace;
 
     ssl_certificate     /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;

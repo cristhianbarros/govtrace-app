@@ -2,7 +2,8 @@
 // US-035: las obras de la organización y su ubicación oficial — de donde se
 // calcula la geocerca de los veedores —, para corregirla arrastrando el pin
 // o escribiendo la latitud y la longitud. Cada corrección queda en el log.
-import { computed, onMounted, ref } from 'vue';
+// It. 45f: "Corregir ubicación" desde la Bandeja llega con ?corregir=<obra>.
+import { computed, nextTick, onMounted, ref } from 'vue';
 import LoadState from '@/Components/LoadState.vue';
 import LocationMap from '@/Components/LocationMap.vue';
 import { useLoader } from '@/composables/useLoader.js';
@@ -88,7 +89,21 @@ async function group() {
 const where = (worksite) =>
     worksite.latitude === null ? 'Sin ubicación oficial' : `${worksite.latitude.toFixed(7)}, ${worksite.longitude.toFixed(7)}`;
 
-onMounted(load);
+// It. 45f: abre la corrección de la obra que nombra el enlace de la Bandeja.
+async function openFromLink() {
+    const id = Number(new URLSearchParams(window.location.search).get('corregir'));
+    const worksite = (worksites.value ?? []).find((candidate) => candidate.id === id);
+    if (worksite) {
+        correct(worksite);
+        await nextTick();
+        document.getElementById(`obra-${worksite.id}`)?.scrollIntoView?.({ block: 'start' });
+    }
+}
+
+onMounted(async () => {
+    await load();
+    await openFromLink();
+});
 </script>
 
 <template>
@@ -106,7 +121,7 @@ onMounted(load);
         >
             <p class="text-sm text-slate-700"><strong>Descargar expediente:</strong> Un ZIP con las evidencias publicadas, sus pruebas y las plantillas del derecho de petición y de la denuncia ante la Contraloría.</p>
             <div class="flex flex-col gap-3">
-                <article v-for="worksite in worksites" :key="worksite.id" class="flex flex-col gap-2 rounded-2xl bg-white p-3 text-sm shadow-soft ring-1 ring-slate-900/5">
+                <article v-for="worksite in worksites" :id="`obra-${worksite.id}`" :key="worksite.id" class="flex flex-col gap-2 rounded-2xl bg-white p-3 text-sm shadow-soft ring-1 ring-slate-900/5">
                     <p v-if="worksite.name" class="text-base font-semibold">{{ worksite.name }}</p>
                     <ul class="flex flex-col gap-1">
                         <li v-for="contract in worksite.contracts" :key="contract.secop_contract_id" class="flex flex-wrap items-center justify-between gap-2">

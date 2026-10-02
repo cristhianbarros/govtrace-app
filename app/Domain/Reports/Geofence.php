@@ -17,12 +17,15 @@ final class Geofence
         public readonly int $radiusMeters,
     ) {}
 
-    public function assertContains(GeoPoint $point): void
+    /** @return float how far from the center $point is, in meters (it. 45f: the Bandeja shows it) */
+    public function assertContains(GeoPoint $point): float
     {
         $distance = $this->center->distanceInMetersTo($point);
 
         if ($distance > $this->radiusMeters) {
             throw ReportValidationException::outsideGeofence($distance, $this->radiusMeters);
         }
+
+        return $distance;
     }
 }

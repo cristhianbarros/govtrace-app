@@ -4,12 +4,21 @@
 // retirarla. Las reglas son del servidor (it. 15); aquí, la pantalla.
 import { flushPromises, mount } from '@vue/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { defineComponent, h } from 'vue';
 import Inbox from './Inbox.vue';
 import { decideOnEvidence, fetchInbox } from '@/services/api.js';
 import { router } from '@/testing/inertia.js';
 
 vi.mock('@inertiajs/vue3', async () => await import('@/testing/inertia.js'));
 vi.mock('@/services/api.js');
+// It. 45f: el mapa pequeño del punto que fijó la ubicación (Leaflet se prueba en LocationMap.test.js).
+vi.mock('@/Components/LocationMap.vue', () => ({
+    default: defineComponent({
+        props: { modelValue: { type: Object, default: null }, readonly: { type: Boolean, default: false } },
+        setup: (props) => () =>
+            h('div', { 'data-test': 'location-map', 'data-readonly': String(props.readonly) }, `${props.modelValue.latitude}, ${props.modelValue.longitude}`),
+    }),
+}));
 
 const PUBLISHED = 'Evidencia publicada. Ya es visible en el mapa.';
 const TOMBSTONE = '🚫 Evidencia retirada por la organización por incumplimiento de políticas.';
@@ -26,6 +35,7 @@ const evidence = (overrides = {}) => ({
     suspicious_capture_time: false,
     files: [{ id: 70, kind: 'photo', sha256: 'ab'.repeat(32) }],
     seal: { merkle_root: 'cd'.repeat(32), tx_hash: 'ef'.repeat(32), ledger: 1201 },
+    location: { anchored_worksite: false, distance_meters: 120, point: null, corrected: false },
     actions: ['publish', 'reject'],
     ...overrides,
 });
@@ -214,5 +224,65 @@ describe('Contexto de cada evidencia (it. 40b)', () => {
 
         expect(wrapper.get('[data-test="worksite"]').text()).toBe('Pavimentación Calle 30');
         expect(wrapper.text()).not.toContain('Enviada por');
+    });
+
+});
+
+// It. 45f — la ubicación de cada evidencia, sin las coordenadas del veedor.
+describe('La ubicación de cada evidencia (it. 45f)', () => {
+    const ANCHORED = '📍 Este reporte fijó la ubicación oficial de la obra.';
+    const anchoring = (overrides = {}) =>
+        evidence({ location: { anchored_worksite: true, distance_meters: 0, point: { latitude: 11.2418781, longitude: -74.199 }, corrected: false, ...overrides } });
+
+    it('La evidencia que fijó la ubicación de la obra llega marcada: with the point on a small map, and a link to correct it', async () => {
+        const wrapper = await openInbox([anchoring()]);
+
+        expect(wrapper.text()).toContain(ANCHORED);
+        expect(wrapper.text()).not.toContain('Después se corrigió.');
+        const map = wrapper.get('[data-test="location-map"]');
+        expect(map.text()).toBe('11.2418781, -74.199');
+        expect(map.attributes('data-readonly')).toBe('true');
+        expect(wrapper.get('a[data-test="correct-location"]').attributes('href')).toBe('/admin/worksites?corregir=1');
+        expect(wrapper.get('a[data-test="correct-location"]').text()).toBe('Corregir ubicación');
+    });
+
+    it('says when the location that evidence fixed was corrected afterwards', async () => {
+        const wrapper = await openInbox([anchoring({ corrected: true })]);
+
+        expect(wrapper.text()).toContain(`${ANCHORED} Después se corrigió.`);
+    });
+
+    it('Cada evidencia de la bandeja dice a qué distancia de la obra se tomó: without a map nor the coordinates of the veedor', async () => {
+        const wrapper = await openInbox([evidence()]);
+
+        expect(wrapper.text()).toContain('Tomada a 120 m de la obra.');
+        expect(wrapper.text()).not.toContain(ANCHORED);
+        expect(wrapper.find('[data-test="location-map"]').exists()).toBe(false);
+    });
+
+    it('says nothing of the location of an evidence received before it was recorded', async () => {
+        const wrapper = await openInbox([evidence({ location: { anchored_worksite: false, distance_meters: null, point: null, corrected: false } })]);
+
+        expect(wrapper.text()).not.toContain('Tomada a');
+        expect(wrapper.text()).not.toContain(ANCHORED);
+    });
+
+    it('Rechazar la evidencia que fijó la ubicación no la cambia: the confirmation says so, and offers to correct it', async () => {
+        const wrapper = await openInbox([anchoring()]);
+
+        await button(wrapper, 'Rechazar').trigger('click');
+
+        const warning = wrapper.get('[data-test="anchored-reject-warning"]');
+        expect(warning.text()).toContain('Este reporte fijó la ubicación oficial de la obra. Rechazarlo no la cambia: si el lugar está mal, corríjalo en Obras.');
+        expect(warning.get('a').attributes('href')).toBe('/admin/worksites?corregir=1');
+        expect(warning.get('a').text()).toBe('Corregir ubicación');
+    });
+
+    it('does not warn about the location when rejecting any other evidence', async () => {
+        const wrapper = await openInbox([evidence()]);
+
+        await button(wrapper, 'Rechazar').trigger('click');
+
+        expect(wrapper.find('[data-test="anchored-reject-warning"]').exists()).toBe(false);
     });
 });

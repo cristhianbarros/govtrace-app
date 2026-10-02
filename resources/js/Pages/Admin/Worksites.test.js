@@ -184,5 +184,25 @@ describe('El expediente de una obra (it. 44b)', () => {
         expect(downloads[0].text()).toBe('Descargar expediente');
         expect(wrapper.text()).toContain('Un ZIP con las evidencias publicadas, sus pruebas y las plantillas del derecho de petición y de la denuncia ante la Contraloría.');
     });
-});
 
+    // It. 45f: "Corregir ubicación" desde la Bandeja abre la corrección de esa obra.
+    it('opens the correction of the worksite named in the link from the Bandeja', async () => {
+        window.history.replaceState({}, '', '/admin/worksites?corregir=3');
+        const other = { ...gaira, id: 4, latitude: 11.3, longitude: -74.1 };
+
+        const wrapper = await openWorksites([other, gaira]);
+
+        expect(wrapper.get('input#latitude').element.value).toBe('11.2');
+        expect(wrapper.get('input#longitude').element.value).toBe('-74.23');
+        window.history.replaceState({}, '', '/admin/worksites');
+    });
+
+    it('opens no correction when the link names no worksite of the organization', async () => {
+        window.history.replaceState({}, '', '/admin/worksites?corregir=99');
+
+        const wrapper = await openWorksites();
+
+        expect(wrapper.find('input#latitude').exists()).toBe(false);
+        window.history.replaceState({}, '', '/admin/worksites');
+    });
+});

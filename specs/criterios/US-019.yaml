@@ -7,6 +7,7 @@ criterios_aceptacion:
   validaciones_reglas:
     - "Aplican las mismas reglas de US-016: solo obras del territorio de la organización (R-VC-04), en estado activo o Terminadas/Liquidadas hace 12 meses o menos"
     - "Solo se sugieren obras con ubicación (ancladas)"
+    - "(It. 45f, 2026-10-02, decidido por el usuario) La ubicación del veedor viaja en el cuerpo de la petición (POST), nunca en la URL: las URL quedan en los registros de acceso del proxy y del servidor web, con la hora y la IP. Como segunda barrera, esos registros no guardan los parámetros de ninguna URL"
   manejo_errores:
     - {caso: "Ninguna obra a menos de 500 m", mensaje: "📍 No se encontraron obras a menos de 500m. Utilice el buscador para encontrarla por nombre o contrato."}
   requisitos_ux:

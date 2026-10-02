@@ -61,3 +61,27 @@ Característica: Bandeja de revisión y publicación de evidencias
     Cuando abro la bandeja de entrada
     Entonces cada evidencia muestra el nombre de su obra y su municipio
     Y el nombre del veedor que la envió
+
+  @complexity:medium
+  Escenario: La evidencia que fijó la ubicación de la obra llega marcada
+    Dado que la obra "Pavimentación Calle 30" no tenía ubicación oficial
+    Y el primer reporte desde ella fijó su ubicación
+    Cuando abro la bandeja de entrada
+    Entonces esa evidencia dice "📍 Este reporte fijó la ubicación oficial de la obra."
+    Y muestra ese punto en un mapa pequeño
+    Y ofrece "Corregir ubicación", que abre la corrección de esa obra
+
+  @complexity:low @privacy
+  Escenario: Cada evidencia de la bandeja dice a qué distancia de la obra se tomó
+    Dado que una evidencia se tomó a 120 m de la ubicación oficial de su obra
+    Cuando abro la bandeja de entrada
+    Entonces esa evidencia dice "Tomada a 120 m de la obra."
+    Y no muestra las coordenadas del veedor
+
+  @complexity:low
+  Escenario: Rechazar la evidencia que fijó la ubicación no la cambia
+    Dado que en la bandeja está la evidencia que fijó la ubicación de la obra
+    Cuando elijo "Rechazar"
+    Entonces la confirmación avisa "Este reporte fijó la ubicación oficial de la obra. Rechazarlo no la cambia: si el lugar está mal, corríjalo en Obras."
+    Y ofrece "Corregir ubicación"
+    Y al confirmar el rechazo, la ubicación oficial de la obra sigue igual

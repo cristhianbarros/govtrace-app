@@ -23,6 +23,11 @@ use Illuminate\Support\Collection;
  *
  * Each one says which worksite it is about (its name and municipality) and
  * which veedor sent it (it. 40b): a responsible review needs that context.
+ *
+ * And where it was taken (it. 45f): the one that fixed the official location
+ * of its worksite (First-Touch, R-GEO-01) comes marked, with that point —
+ * the worksite's —; the others, how far from the worksite they were taken,
+ * never the veedor's coordinates.
  */
 class ReviewInbox
 {
@@ -54,9 +59,34 @@ class ReviewInbox
                     'sha256' => $evidence->sha256,
                 ])->all(),
                 'seal' => $report->seal->only(['merkle_root', 'tx_hash', 'ledger']),
+                'location' => $this->location($report),
                 'actions' => $report->editorialActions(),
             ])
             ->all();
+    }
+
+    /**
+     * Where the report was taken, as the server recorded it on arrival. Only
+     * the report that fixed the location brings its point, which is the
+     * worksite's; and whether it was corrected afterwards (US-035).
+     *
+     * @return array{anchored_worksite: bool, distance_meters: ?int, point: ?array{latitude: float, longitude: float}, corrected: bool}
+     */
+    private function location(Report $report): array
+    {
+        if (! $report->anchored_worksite) {
+            return ['anchored_worksite' => false, 'distance_meters' => $report->distance_to_worksite_meters, 'point' => null, 'corrected' => false];
+        }
+
+        $point = ['latitude' => round((float) $report->latitude, 7), 'longitude' => round((float) $report->longitude, 7)];
+        $official = $report->worksite?->location();
+
+        return [
+            'anchored_worksite' => true,
+            'distance_meters' => $report->distance_to_worksite_meters,
+            'point' => $point,
+            'corrected' => $official !== null && [round($official->latitude, 7), round($official->longitude, 7)] !== array_values($point),
+        ];
     }
 
     /**
