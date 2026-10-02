@@ -3,7 +3,11 @@
 // revisa — las fotos o el PDF tal como se sellaron, la clasificación, el
 // comentario, la marca de hora sospechosa y el sello — y sus decisiones,
 // de a una. Rechazar y retirar piden motivo.
+// It. 45f: dónde se tomó, sin las coordenadas del veedor. La que fijó la
+// ubicación oficial de la obra (First-Touch) llega marcada, con ese punto y
+// el enlace para corregirlo en Obras (US-035).
 import { computed, ref } from 'vue';
+import LocationMap from '@/Components/LocationMap.vue';
 import { formatDateTime } from '@/lib/format.js';
 import { decideOnEvidence } from '@/services/api.js';
 import { errorMessage } from '@/services/errors.js';
@@ -22,6 +26,14 @@ const props = defineProps({
 const emit = defineEmits(['decided']);
 
 const TOMBSTONE = '🚫 Evidencia retirada por la organización por incumplimiento de políticas.';
+const ANCHORED = '📍 Este reporte fijó la ubicación oficial de la obra.';
+
+const location = computed(() => props.evidence.location ?? {});
+const anchored = computed(() => location.value.anchored_worksite === true && location.value.point !== null);
+const distance = computed(() =>
+    !anchored.value && Number.isFinite(location.value.distance_meters) ? new Intl.NumberFormat('es-CO').format(location.value.distance_meters) : null,
+);
+const correctHref = computed(() => `/admin/worksites?corregir=${props.evidence.worksite_id}`);
 
 const withReason = {
     reject: { confirm: 'Confirmar rechazo', label: 'Motivo del rechazo (lo verá el veedor)', done: 'Evidencia rechazada. Su veedor verá el motivo.' },
@@ -89,6 +101,17 @@ async function decide(decision) {
             </template>
         </div>
 
+        <p v-if="distance !== null" data-test="distance" class="text-base text-slate-700">Tomada a {{ distance }} m de la obra.</p>
+        <div v-if="anchored" data-test="anchored" class="flex flex-col gap-2 rounded-lg bg-amber-50 p-3 ring-1 ring-amber-200">
+            <p class="text-base font-semibold text-amber-900">{{ ANCHORED }}{{ location.corrected ? ' Después se corrigió.' : '' }}</p>
+            <LocationMap :model-value="location.point" readonly />
+            <a
+                data-test="correct-location"
+                :href="correctHref"
+                class="inline-flex min-h-11 items-center self-start rounded-xl border border-brand-200 bg-white px-3 font-semibold text-brand-800 hover:bg-brand-50"
+            >Corregir ubicación</a>
+        </div>
+
         <p class="text-sm">{{ evidence.comment || 'Sin comentario.' }}</p>
         <p class="text-xs text-slate-600"><span aria-hidden="true">✓</span> Con sello digital · bloque {{ evidence.seal.ledger }}</p>
 
@@ -98,6 +121,13 @@ async function decide(decision) {
             <p v-if="asking === 'withdraw'" class="rounded bg-slate-100 p-2 text-sm">
                 En el mapa público quedará una lápida: «{{ TOMBSTONE }}». El retiro es definitivo.
             </p>
+            <div v-if="asking === 'reject' && anchored" data-test="anchored-reject-warning" class="flex flex-col gap-2 rounded bg-amber-50 p-3 text-base text-amber-900">
+                <p>Este reporte fijó la ubicación oficial de la obra. Rechazarlo no la cambia: si el lugar está mal, corríjalo en Obras.</p>
+                <a
+                    :href="correctHref"
+                    class="inline-flex min-h-11 items-center self-start rounded-xl border border-brand-200 bg-white px-3 font-semibold text-brand-800 hover:bg-brand-50"
+                >Corregir ubicación</a>
+            </div>
             <label :for="`reason-${evidence.id}`" class="text-sm font-semibold text-slate-700">{{ withReason[asking].label }}</label>
             <textarea :id="`reason-${evidence.id}`" v-model="reason" rows="2" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-base"></textarea>
             <div class="flex gap-2">

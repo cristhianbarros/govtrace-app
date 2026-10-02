@@ -65,10 +65,13 @@ class CreateReport
             $worksite = $this->lockedWorksiteOf($contract);
             $officialLocation = $worksite->location();
 
-            if ($officialLocation === null) {
+            // It. 45f: lo que la Bandeja dirá de su ubicación, sin las coordenadas del veedor.
+            $anchored = $officialLocation === null;
+            if ($anchored) {
                 $worksite->anchorAt($reading->point);
+                $distanceMeters = 0;
             } else {
-                (new Geofence($officialLocation, $radiusMeters))->assertContains($reading->point);
+                $distanceMeters = (int) round((new Geofence($officialLocation, $radiusMeters))->assertContains($reading->point));
             }
 
             $report = Report::create([
@@ -83,6 +86,8 @@ class CreateReport
                 'captured_at' => $input->capturedAt,
                 'received_at' => $receivedAt,
                 'suspicious_capture_time' => SuspiciousCaptureTime::applies($input->capturedAt, $receivedAt),
+                'anchored_worksite' => $anchored,
+                'distance_to_worksite_meters' => $distanceMeters,
             ]);
 
             $this->storeEvidences($report, $evidenceSet);

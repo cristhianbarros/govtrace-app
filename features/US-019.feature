@@ -34,3 +34,9 @@ Característica: Sugerencia de obras cercanas
     Dado que no hay obras ancladas a menos de 500 m de mí
     Cuando abro la sugerencia de obras cercanas
     Entonces veo el mensaje "📍 No se encontraron obras a menos de 500m. Utilice el buscador para encontrarla por nombre o contrato."
+
+  @complexity:low @privacy
+  Escenario: Mi ubicación no viaja en la URL de la petición
+    Cuando abro la sugerencia de obras cercanas
+    Entonces la app envía mi ubicación en el cuerpo de la petición
+    Y el servidor no acepta pedir las obras cercanas con la ubicación en la URL

@@ -171,6 +171,7 @@ Su panel está en el sitio de su veeduría. En el computador tiene una barra lat
 | Función | Qué hace |
 |---|---|
 | **Revisar** | Las evidencias **selladas y ocultas**, de una en una: de qué obra son, qué veedor las envió, la clasificación, el comentario, las fotos y la marca de hora sospechosa. La pestaña dice cuántas hay. |
+| **Dónde se tomó** | Cada evidencia dice a qué distancia de la obra se tomó ("Tomada a 120 m de la obra."), sin las coordenadas del veedor. La que fijó la ubicación oficial de una obra que no la tenía llega marcada, con el punto en un mapa pequeño y **Corregir ubicación**; al rechazarla, se avisa que la ubicación no cambia (it. 45f). |
 | **Publicar** | Pasa al mapa público. No hay publicación masiva. |
 | **Rechazar con motivo** | Nunca se publica; el veedor ve el motivo. |
 | **Retirar una publicada** | Con motivo: en el mapa queda una lápida. No se borra nada, y el sello en Stellar sigue. |

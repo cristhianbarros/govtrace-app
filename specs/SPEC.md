@@ -276,7 +276,7 @@ Suma los impedimentos del veedor (it. 44c) y los datos de inscripción de una ve
 | PUT | `/organization/territory` | Territorio (códigos DIVIPOLA) | Admin Org | US-012 |
 | GET | `/contracts` | Listado paginado del territorio | Admin Org | US-015 |
 | GET | `/contracts/search?q=` | Búsqueda de obras seleccionables | Veedor | US-016 |
-| GET | `/worksites/nearby?lat=&lng=` | Hasta 5 obras ancladas a menos de 500 m | Veedor | US-019 |
+| POST | `/worksites/nearby` (`latitude` y `longitude` en el cuerpo, nunca en la URL: it. 45f) | Hasta 5 obras ancladas a menos de 500 m | Veedor | US-019 |
 | POST | `/reports` | Crear reporte: archivos, hashes, lat/lng/hora de captura, clasificación y comentario | Veedor | US-008, US-009, US-018 |
 | GET | `/me/reports` · `/me/reports/{id}/receipt` | Mis reportes y Recibo de Inmutabilidad | Veedor | US-010, US-023 |
 | GET | `/inbox` | Bandeja de evidencias ocultas | Admin Org | US-036 |

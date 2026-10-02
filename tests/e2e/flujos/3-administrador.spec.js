@@ -29,6 +29,12 @@ test('Cada evidencia de la Bandeja dice de qué obra es y qué veedor la envió 
     await expect(card).toContainText('Enviada por Veedor E2E');
 });
 
+test('Cada evidencia de la Bandeja dice a qué distancia de la obra se tomó (it. 45f)', async ({ page }) => {
+    await enter(page);
+
+    await expect(page.locator('article').first()).toContainText(/Tomada a \d+ m de la obra\./);
+});
+
 test('Publica una evidencia: pasa al mapa', async ({ page }) => {
     await enter(page);
 

@@ -6,6 +6,7 @@ use App\Application\Publication\PublicTimeline;
 use App\Application\Sealing\SealingNetwork;
 use App\Domain\Audit\AuditLog;
 use App\Domain\Organization\Roles;
+use App\Domain\Organization\User as OrganizationUser;
 use App\Domain\Reports\Report;
 use App\Infrastructure\Tenancy\Tenant;
 use Database\Seeders\DivipolaSeeder;
@@ -263,4 +264,70 @@ it('shares how many evidences wait in the inbox, for the tab of the Bandeja', fu
     $this->withoutVite()->actingAs($this->veedor, 'tenant')
         ->get('http://veeduria-smr.govtrace.localhost/my-reports')
         ->assertInertia(fn (Assert $page) => $page->where('inboxPending', null));
+});
+
+/*
+ * It. 45f — la ubicación en la Bandeja. El reporte que fijó la ubicación de
+ * su obra (First-Touch, R-GEO-01) llega marcado, con ese punto, que es el de
+ * la obra; los demás dicen a qué distancia de la obra se tomaron, sin las
+ * coordenadas del veedor.
+ */
+
+/** A worksite that had no location, and the sealed report that fixed it. */
+function anchoringReport(object $test): int
+{
+    reportableContract('CO1.PCCNTR.7654321');
+    $test->unlocated = worksiteWithContracts($test->tenant, ['CO1.PCCNTR.7654321'], null);
+
+    return sealedReport($test->tenant, $test->veedor, ['secop_contract_id' => 'CO1.PCCNTR.7654321']);
+}
+
+function inboxEvidence(OrganizationUser $administrator, int $reportId): array
+{
+    return collect(inbox($administrator)->assertOk()->json('data'))->firstWhere('id', $reportId);
+}
+
+it('La evidencia que fijó la ubicación de la obra llega marcada: with that point, which is the worksite\'s', function () {
+    $reportId = anchoringReport($this);
+    [$latitude, $longitude] = pointMetersNorthOf(santaMartaWorksiteLocation(), 120);
+
+    expect(inboxEvidence($this->administrator, $reportId)['location'])->toEqual([
+        'anchored_worksite' => true,
+        'distance_meters' => 0,
+        'point' => ['latitude' => round($latitude, 7), 'longitude' => round($longitude, 7)],
+        'corrected' => false,
+    ]);
+});
+
+it('tells when the location that report fixed was corrected afterwards', function () {
+    $reportId = anchoringReport($this);
+
+    $this->flushSession();
+    $this->actingAs($this->administrator, 'tenant')
+        ->patchJson("http://veeduria-smr.govtrace.localhost/worksites/{$this->unlocated->id}/location", ['latitude' => 11.2411, 'longitude' => -74.1995])
+        ->assertOk();
+    tenancy()->end();
+    $this->flushSession();
+
+    expect(inboxEvidence($this->administrator, $reportId)['location']['corrected'])->toBeTrue();
+});
+
+it('Cada evidencia de la bandeja dice a qué distancia de la obra se tomó: and never the coordinates of the veedor', function () {
+    $evidence = inboxEvidence($this->administrator, $this->hidden[0]);
+    [$latitude] = pointMetersNorthOf(santaMartaWorksiteLocation(), 120);
+
+    expect($evidence['location'])->toBe(['anchored_worksite' => false, 'distance_meters' => 120, 'point' => null, 'corrected' => false])
+        ->and(json_encode($evidence))->not->toContain((string) round($latitude, 4));
+});
+
+it('Rechazar la evidencia que fijó la ubicación no la cambia: the worksite keeps the location it fixed', function () {
+    $reportId = anchoringReport($this);
+    $fixed = $this->tenant->run(fn () => $this->unlocated->fresh()->location());
+
+    $this->flushSession();
+    editorialDecision($this->administrator, 'reject', $reportId, ['reason' => 'La foto no deja ver la obra.'])->assertOk();
+    tenancy()->end();
+
+    expect(editorialStatusOf($this->tenant, $reportId))->toBe('Rechazado')
+        ->and($this->tenant->run(fn () => $this->unlocated->fresh()->location()))->toEqual($fixed);
 });

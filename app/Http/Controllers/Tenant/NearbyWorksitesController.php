@@ -8,7 +8,11 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-/** GET /worksites/nearby?latitude=&longitude= (US-019): the worksites the veedor has near, for "Nuevo Reporte". */
+/**
+ * POST /worksites/nearby (US-019): the worksites the veedor has near, for
+ * "Nuevo Reporte". The location goes in the body, never in the URL (it. 45f):
+ * URLs end up in the access logs of the proxy and the web server.
+ */
 class NearbyWorksitesController extends Controller
 {
     public function __invoke(Request $request): JsonResponse

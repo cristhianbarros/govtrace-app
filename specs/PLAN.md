@@ -1104,7 +1104,7 @@ Suite: 554 en verde. Vitest: 309 en verde. Cada regla nueva se comprobó rompié
 
 Suite: 570 en verde. Vitest: 316 en verde. Cada regla nueva se comprobó rompiéndola a propósito: 12 casos. El que sobrevivía (el radio exacto: sin él, la caja de búsqueda ya excluía a la de 650 m al norte) llevó a un test de esquina: 400 m al norte y 400 m al este son 566 m.
 
-- **Obras cercanas** (`GET /worksites/nearby`, del veedor):
+- **Obras cercanas** (`GET /worksites/nearby`, del veedor; `POST`, con la ubicación en el cuerpo, desde la it. 45f):
   - calcula Haversine en SQL (D10) dentro de una caja alrededor del veedor, sin PostGIS;
   - aplica las reglas de "Buscar Obra": territorio (R-VC-04) y contrato reportable hoy;
   - devuelve hasta 5 fichas, de la más cercana a la más lejana;
@@ -2446,6 +2446,43 @@ El usuario pidió seguir con lo que no espera a nadie: la deuda técnica y los h
 - **El banner del Administrador por evidencias en "Falla de Sellado"**, de la misma historia, también tenía jerga ("selladas en blockchain"). Ahora dice: "Alerta: 3 evidencias no se pudieron certificar de forma segura. El soporte técnico de GovTrace tiene que revisarlas." Así aplica R-UX-06.
 - **La enmienda queda en `features/US-021.feature` y su criterio**, con los títulos de los escenarios intactos: la trazabilidad no cambia (315 de 315).
 - **Prueba:** Pest, la alerta en `SealingRetriesTest` y en los correos de usted (`MailIdentityTest`); Vitest, el banner. Vistos en rojo antes de implementar.
+
+**45f — La ubicación del veedor: fuera de los registros, y la primera ubicación a la vista** (enmiendas de US-019 y US-036; R-GEO-01, US-035). El usuario, el 2026-10-02, al probar la geocerca en el navegador: "Sí, hazlas juntas con su PR".
+- **Hallazgo:** "Obras cercanas" pedía `GET /worksites/nearby?latitude=…&longitude=…`. El proxy (nginx) y el servidor web (Apache) anotan cada URL con la hora y la IP, también en producción, así que los registros guardaban las coordenadas exactas del veedor cada vez que buscaba obras. Con eso se puede reconstruir por dónde anduvo, y contradice R-PRIV (en público, la ubicación va aproximada y el veedor con seudónimo).
+- **Hueco:** el primer reporte de una obra sin ubicación la fija (First-Touch, R-GEO-01) sin pasar por la geocerca, y la Bandeja no lo decía: el Administrador lo publicaba sin saber que, de paso, aceptaba dónde queda la obra.
+- **Qué cambia:**
+  - "Obras cercanas" va por `POST`, con la ubicación en el cuerpo; un `GET` responde 405;
+  - nginx (desarrollo y producción) y Apache dejan de anotar los parámetros de las URL;
+  - cada reporte guarda, al llegar, si fijó la ubicación de su obra y a qué distancia de la ubicación oficial se tomó (`reports.anchored_worksite`, `reports.distance_to_worksite_meters`, escritos una vez como el resto de lo enviado);
+  - la Bandeja marca el reporte que fijó la ubicación, con un mapa pequeño y "Corregir ubicación", y dice la distancia de los demás, sin mostrar las coordenadas del veedor;
+  - rechazar ese reporte avisa que la ubicación no cambia y ofrece corregirla.
+- **Done-when:** los escenarios nuevos de `features/US-019.feature` (1) y `features/US-036.feature` (3) en verde, con sus tests vistos en rojo antes; la suite completa, `make e2e`, `make ux-check` y `make trace-check` en verde.
+- **Modelo:** Opus. Privacidad del veedor (R-PRIV) y una regla de ubicación que no se puede deshacer en lo sellado.
+
+✅ **45f cumplida (2026-10-02).**
+- **"Obras cercanas" por `POST`** (`routes/tenant.php`, `services/api.js`): la ubicación va en el cuerpo y un `GET` responde 405.
+- **Los registros, sin parámetros:**
+  - nginx (desarrollo y producción) usa `log_format govtrace` con `$uri` en vez de `$request`, declarado en cada `server`, porque un `access_log` en el `http` de la imagen se sumaría;
+  - Apache usa `"%m %U %H"` en vez de `%r`.
+  - Comprobado contra el stack de desarrollo: una petición a `/up?latitude=…` queda anotada como `GET /up` en los dos, y una sola vez en nginx.
+- **Lo que el servidor sabe al recibir un reporte** (migración por organización `2026_10_02_000210`): `reports.anchored_worksite` y `reports.distance_to_worksite_meters`, en la lista de lo enviado (no se pueden cambiar). `Geofence::assertContains` devuelve la distancia que midió.
+- **La Bandeja** (`ReviewInbox`, `EvidenceCard`):
+  - "Tomada a 120 m de la obra.";
+  - la que fijó la ubicación, "📍 Este reporte fijó la ubicación oficial de la obra.", con su punto en un mapa de solo lectura y "Corregir ubicación", que abre la corrección de esa obra en Obras (`?corregir=<obra>`). Si la ubicación ya se corrigió, agrega "Después se corrigió.";
+  - al rechazarla, el aviso de que la ubicación no cambia, con el mismo enlace;
+  - las coordenadas solo viajan para el reporte que fijó la ubicación, porque son las de la obra.
+- **De paso, un fallo visual desde la it. 18.** Las capas de Leaflet (z-index de 400 a 1000) se pintaban encima de las barras fijas de la app al desplazarse, también en Obras. `LocationMap` ahora aísla su contexto (`isolate`). Visto en capturas antes y después.
+- ❓ **Decisiones por defecto:**
+  - la distancia es la que midió el servidor al recibir el reporte, contra la ubicación oficial de ese momento, no contra la actual;
+  - los reportes anteriores a la 45f no traen la marca ni la distancia: no se reconstruyen;
+  - rechazar el reporte que fijó la ubicación no la borra; la corrección es explícita, en Obras.
+- **Pendiente, no es de esta iteración:** las rutas con un token en la ruta (`/reset-password/{token}`) siguen en los registros, porque `$uri` y `%U` guardan la ruta. Son de un solo uso y vencen en 60 minutos.
+- **Prueba:**
+  - Pest: 12 casos nuevos (obras cercanas por POST y el 405, lo que se guarda al recibir y que no se puede cambiar, la Bandeja con la marca, la corrección posterior, la distancia sin coordenadas, el rechazo que no cambia la ubicación, y los formatos de nginx y Apache). El de rechazar ya pasaba: el servidor nunca cambió la ubicación al rechazar; lo nuevo de ese escenario es el aviso de la pantalla.
+  - Vitest: 12 casos nuevos (el API por POST y la guarda de los GET, la marca, la corrección, la distancia, el reporte antiguo, el aviso al rechazar, el enlace a Obras, el mapa de solo lectura y el aislamiento). Los que prueban lo nuevo se vieron en rojo antes de implementar; tres que prueban lo que no debe aparecer (sin dato, sin aviso, sin enlace a una obra ajena) ya pasaban.
+  - `make e2e`: 51 de 51; la Bandeja dice la distancia.
+  - `make ux-check`: sin retroceso.
+  - `make trace-check`: 343 de 343.
 
 ## Pivote a Stellar (2026-09-28)
 

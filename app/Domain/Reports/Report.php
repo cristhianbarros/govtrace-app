@@ -31,6 +31,8 @@ class Report extends Model
         'user_id', 'worksite_id', 'classification', 'comment',
         'latitude', 'longitude', 'accuracy_meters', 'geofence_radius_meters',
         'captured_at', 'received_at', 'suspicious_capture_time',
+        // It. 45f: whether it fixed the official location of its worksite, and how far from it it was taken.
+        'anchored_worksite', 'distance_to_worksite_meters',
     ];
 
     protected $fillable = [
@@ -44,6 +46,8 @@ class Report extends Model
         'captured_at' => 'datetime',
         'received_at' => 'datetime',
         'suspicious_capture_time' => 'boolean',
+        'anchored_worksite' => 'boolean',
+        'distance_to_worksite_meters' => 'integer',
         'editorial_status' => EditorialStatus::class,
         'editorial_decided_at' => 'datetime',
     ];

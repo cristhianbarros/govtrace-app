@@ -15,10 +15,13 @@ use Illuminate\Testing\TestResponse;
 
 /*
  * Iteración 31 — Sugerencia de obras cercanas (specs/PLAN.md). Traduce
- * features/US-019.feature (7 casos) contra GET /worksites/nearby: hasta 5
+ * features/US-019.feature (7 casos) contra POST /worksites/nearby: hasta 5
  * obras ancladas a menos de 500 m (la geocerca, US-038-CFG), de la más
  * cercana a la más lejana, con Haversine en SQL (D10). Las mismas reglas de
  * US-016: del territorio (R-VC-04) y reportables. La pantalla, Vitest.
+ *
+ * It. 45f: la ubicación va en el cuerpo (POST), nunca en la URL: las URL
+ * quedan en los registros de acceso del proxy y del servidor web.
  *
  * Sin RefreshDatabase — registrar la organización ejecuta CREATE DATABASE.
  */
@@ -60,7 +63,7 @@ function nearby(array $position = ME): TestResponse
     test()->flushSession();
 
     return test()->actingAs(test()->veedor, 'tenant')
-        ->getJson('http://veeduria-smr.govtrace.localhost/worksites/nearby?latitude='.$position[0].'&longitude='.$position[1]);
+        ->postJson('http://veeduria-smr.govtrace.localhost/worksites/nearby', ['latitude' => $position[0], 'longitude' => $position[1]]);
 }
 
 it('Hasta 5 obras dentro de 500 m ordenadas por distancia', function () {
@@ -118,5 +121,16 @@ it('needs a valid position, and is only for veedores', function () {
 
     $administrator = reportingMember($this->tenant, 'ana.perez@veeduria-smr.org', Roles::Administrator);
     $this->flushSession();
-    $this->actingAs($administrator, 'tenant')->getJson('http://veeduria-smr.govtrace.localhost/worksites/nearby?latitude=11.24&longitude=-74.19')->assertForbidden();
+    $this->actingAs($administrator, 'tenant')->postJson('http://veeduria-smr.govtrace.localhost/worksites/nearby', ['latitude' => 11.24, 'longitude' => -74.19])->assertForbidden();
+});
+
+it('Mi ubicación no viaja en la URL de la petición: it takes the location in the body, and a GET with it in the URL is not allowed', function () {
+    worksiteAt(50);
+
+    expect(array_column(nearby()->assertOk()->json('data'), 'distance_meters'))->toBe([50]);
+
+    $this->flushSession();
+    $this->actingAs($this->veedor, 'tenant')
+        ->getJson('http://veeduria-smr.govtrace.localhost/worksites/nearby?latitude='.ME[0].'&longitude='.ME[1])
+        ->assertStatus(405);
 });

@@ -2,9 +2,13 @@
 // D8: un mapa de Leaflet con las teselas de OpenStreetMap (R-INT-02) y un
 // pin que se arrastra hasta el sitio real de la obra (US-035). Leaflet se
 // descarga solo cuando el mapa aparece: el resto de la app no lo carga.
+// It. 45f: de solo lectura, en la Bandeja, el punto donde se tomó un reporte.
+// Y aislado (isolate): las capas de Leaflet, con z-index de 400 a 1000, se
+// pintaban encima de las barras fijas de la app al desplazarse.
 import { onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue';
 
 const location = defineModel({ type: Object, required: true }); // { latitude, longitude }
+const props = defineProps({ readonly: { type: Boolean, default: false } });
 
 const container = ref(null);
 const map = shallowRef(null);
@@ -25,7 +29,8 @@ onMounted(async () => {
 
     // Un pin dibujado con CSS: sin las imágenes del ícono por defecto de Leaflet.
     const pin = L.divIcon({ className: '', html: '<span class="block size-6 rounded-full border-4 border-white bg-red-600 shadow"></span>', iconSize: [24, 24] });
-    marker.value = L.marker(point, { draggable: true, icon: pin, keyboard: true, title: 'Ubicación oficial de la obra' }).addTo(map.value);
+    const title = props.readonly ? 'Donde se tomó el reporte' : 'Ubicación oficial de la obra';
+    marker.value = L.marker(point, { draggable: !props.readonly, icon: pin, keyboard: !props.readonly, title }).addTo(map.value);
     marker.value.on('dragend', () => {
         const { lat, lng } = marker.value.getLatLng();
         location.value = { latitude: round7(lat), longitude: round7(lng) };
@@ -45,5 +50,5 @@ defineExpose({ tiles, marker });
 </script>
 
 <template>
-    <div ref="container" class="h-72 w-full rounded-lg border border-slate-200"></div>
+    <div ref="container" class="isolate w-full rounded-lg border border-slate-200" :class="readonly ? 'h-48' : 'h-72'"></div>
 </template>

@@ -231,7 +231,7 @@ Route::middleware([
 
             // US-016: "Buscar Obra". US-019: las obras cercanas.
             Route::get('/contracts/search', ContractSearchController::class)->name('contracts.search');
-            Route::get('/worksites/nearby', NearbyWorksitesController::class)->name('worksites.nearby');
+            Route::post('/worksites/nearby', NearbyWorksitesController::class)->name('worksites.nearby');
         });
     });
 });
