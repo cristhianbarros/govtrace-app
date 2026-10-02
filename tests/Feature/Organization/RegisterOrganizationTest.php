@@ -128,7 +128,8 @@ it('records the registration in the audit log, with the Super Administrador who 
         ->and($entry->actor_type)->toBe('super_admin')
         ->and($entry->actor_id)->toBe((string) $superAdmin->id)
         ->and($entry->before)->toBeNull()
-        ->and($entry->after)->toBe(['nit' => '900123456-8', 'name' => 'Veeduría Ciudadana Santa Marta', 'subdomain' => 'veeduria-smr.govtrace.localhost']);
+        // it. 46b: nadie consultó el RUES antes de registrarla
+        ->and($entry->after)->toBe(['nit' => '900123456-8', 'name' => 'Veeduría Ciudadana Santa Marta', 'subdomain' => 'veeduria-smr.govtrace.localhost', 'rues' => null]);
 
     $superAdmin->delete();
 });

@@ -24,6 +24,7 @@
 - **Aprobar** es dar el alta de siempre (US-001), con la Nueva organización precargada: el nombre, la inscripción y el correo de contacto como Administrador inicial (US-002). El Super Administrador elige el subdominio. Al registrarla, la solicitud queda aprobada.
 - **Rechazar** pide un motivo, que le llega por correo al contacto.
 - **Retención:** una solicitud decidida se borra a los 30 días, como los informes ciudadanos (45c).
+- **Validación asistida (it. 46b, pedida por el usuario el 2026-10-01: "¿cómo sabe un Super Administrador que una veeduría es 100 % legal?"):** no hay un servicio público que lo diga. La solicitud trae **el PDF** de la resolución o del certificado de inscripción, y el panel muestra **lo que dicen los datos abiertos del RUES** (datos.gov.co, Confecámaras) de su NIT o su matrícula. Las veedurías inscritas en una personería no están en esos datos (el registro de veedurías del RUES pide credenciales), así que para ellas se revisa el PDF. Es una ayuda, no la decisión: si el RUES no responde, se decide con el PDF. Lo que dijo el RUES queda en la auditoría de la decisión. El PDF de una solicitud aprobada queda con la organización hasta que se purgan sus archivos; el de una rechazada se borra con ella.
 
 ## Criterios de aceptación
 `specs/criterios/US-062-ALT.yaml` · `features/US-062-ALT.feature`

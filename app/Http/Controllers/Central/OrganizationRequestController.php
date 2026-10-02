@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Central;
 
 use App\Application\Organization\OrganizationRequests;
+use App\Application\Organization\RegistrationDocuments;
+use App\Domain\Organization\OrganizationRequest;
 use App\Http\Controllers\Controller;
 use DomainException;
 use Illuminate\Http\JsonResponse;
@@ -10,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * US-062-ALT (it. 43k, V10): a veeduría asks for its alta from the Home
@@ -30,6 +33,7 @@ class OrganizationRequestController extends Controller
             'registration_authority' => ['nullable', 'string', 'max:150'],
             'data_authorization' => ['accepted'],
             'website' => ['nullable', 'string'], // el campo oculto: solo un robot lo llena
+            'document' => ['nullable'], // it. 46b: RegistrationDocuments lo revisa
         ], ['data_authorization.accepted' => self::AUTHORIZATION_REQUIRED]);
 
         $answer = response()->json(['message' => "Recibimos su solicitud. El equipo de GovTrace la revisará y le escribirá a {$data['contact_email']}."], 201);
@@ -39,10 +43,15 @@ class OrganizationRequestController extends Controller
 
         $requests = new OrganizationRequests;
         $problems = $requests->problems($data['name'] ?? null, $data['contact_email'] ?? null, $data['registration_number'] ?? null, $data['registration_authority'] ?? null);
+        try {
+            $document = RegistrationDocuments::assertAcceptable($request->file('document'));
+        } catch (ValidationException) {
+            $problems['document'] = RegistrationDocuments::NEEDS_THE_PDF;
+        }
         if ($problems !== []) {
             throw ValidationException::withMessages($problems);
         }
-        $requests->submit($data['name'], $data['contact_email'], $data['registration_number'], $data['registration_authority']);
+        $requests->submit($data['name'], $data['contact_email'], $data['registration_number'], $data['registration_authority'], $document);
 
         return $answer;
     }
@@ -55,6 +64,20 @@ class OrganizationRequestController extends Controller
     public function index(): JsonResponse
     {
         return response()->json(['data' => (new OrganizationRequests)->pending()]);
+    }
+
+    /** It. 46b: lo que dice el RUES de la veeduría de la solicitud. */
+    public function rues(int $organizationRequest): JsonResponse
+    {
+        return response()->json((new OrganizationRequests)->rues($organizationRequest));
+    }
+
+    /** It. 46b: el PDF que adjuntó, solo para el Super Administrador. */
+    public function document(int $organizationRequest): StreamedResponse
+    {
+        $pending = OrganizationRequest::query()->findOrFail($organizationRequest);
+
+        return RegistrationDocuments::download($pending->document_path, "Inscripción {$pending->name}");
     }
 
     public function reject(Request $request, int $organizationRequest): JsonResponse

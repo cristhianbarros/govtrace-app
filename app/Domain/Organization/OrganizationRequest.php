@@ -14,7 +14,7 @@ class OrganizationRequest extends Model
 {
     use CentralConnection;
 
-    protected $fillable = ['name', 'contact_email', 'registration_number', 'registration_authority', 'status', 'rejection_reason', 'decided_at', 'tenant_id', 'data_authorized_at', 'data_policy_version'];
+    protected $fillable = ['name', 'contact_email', 'registration_number', 'registration_authority', 'status', 'rejection_reason', 'decided_at', 'tenant_id', 'data_authorized_at', 'data_policy_version', 'document_path'];
 
     protected $casts = [
         'decided_at' => 'datetime',

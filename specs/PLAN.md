@@ -2502,6 +2502,8 @@ El usuario pidió seguir con lo que no espera a nadie: la deuda técnica y los h
 
 **46 — El gobierno de la plataforma y la defensa en profundidad.** Tres preguntas del usuario el 2026-10-02, mientras probaba la 45f. Aprobó el orden: "Sí, agrégalas al plan en ese orden."
 
+**Orden aprobado por el usuario el 2026-10-02:** 46a (✅), 46b (✅), 46c y 46d; después, 46e.
+
 **46a — Los Super Administradores: más de uno, y nunca ninguno** (historia nueva, US-063-USR). El usuario: "podría darse el caso que el sistema quede sin super administrador y que la aplicación tenga cierta dependencia de eso."
 - **Hoy:**
   - un Super Administrador solo se crea desde la consola del servidor (`make admin`, `admin:create`); no hay pantalla para agregar otro ni para desactivar uno;
@@ -2564,6 +2566,31 @@ El usuario pidió seguir con lo que no espera a nadie: la deuda técnica y los h
 - **Done-when:** los escenarios de la enmienda de `features/US-062-ALT.feature` y `features/US-001.feature` en verde, con el RUES simulado en los tests y una consulta real comprobada a mano.
 - **Modelo:** Opus xhigh. Recibe un archivo de cualquiera, sin cuenta (abuso, malware, datos personales), y consulta una fuente externa.
 
+✅ **46b cumplida (2026-10-02).**
+- **Esquema** (base central, `2026_10_02_000200`): `organization_requests.document_path` y `tenants.registration_document_path`.
+- **El PDF** (`App\Application\Organization\RegistrationDocuments`):
+  - la solicitud no se recibe sin él: solo PDF de verdad (los primeros bytes son `%PDF-`, no basta con que se llame `.pdf`) y hasta 10 MB; el mensaje va con los demás problemas del formulario;
+  - se guarda privado en el disco de las evidencias (`central/organization-requests/{id}.pdf`);
+  - lo descarga solo el Super Administrador, como adjunto, con `nosniff` y `Content-Security-Policy: sandbox`;
+  - al aprobarla pasa a la organización (`{tenant}/registro/inscripcion.pdf`, "Documento de inscripción (PDF)" en su fila) y se purga con sus archivos a los 5 años de la baja; el de una rechazada se borra con ella a los 30 días.
+- **El RUES** (`App\Infrastructure\Rues\RuesClient`, `App\Application\Organization\RuesLookup`):
+  - por el NIT, sin dígito de verificación; si no tiene, por la matrícula, quedándose con los registros de la cámara que escribió la veeduría (la matrícula se repite entre cámaras);
+  - a SoQL solo llegan dígitos;
+  - una inscrita en una personería no se consulta: no está en esos datos, y se revisa el PDF;
+  - la respuesta se guarda una hora (cinco minutos si el RUES no respondió), y la auditoría de la decisión y del alta guarda la que vio el Super Administrador, sin volver a consultar; si nadie consultó, guarda que no se consultó;
+  - **dos fechas:** "Datos del RUES al…" es la del extracto mensual (los metadatos del conjunto, una vez al día), y cada registro dice cuándo se actualizaron sus datos. La consulta real lo mostró: el campo `fecha_actualizacion` es la del registro (14/08/2024 para una veeduría de Medellín), no la del extracto (04/09/2026);
+  - si el RUES no responde, la pantalla lo dice y la solicitud se decide igual.
+- **Las pantallas:** el Inicio pide el PDF, con un botón propio ("Elegir el PDF") y no el del navegador, que habla en su idioma; "Solicitudes de alta" muestra lo que dice el RUES y el enlace al PDF; la Nueva organización, "Consultar en el RUES".
+- **La política de datos** (versión `2026-10-02.1`): el PDF puede traer los nombres de los integrantes, se consulta el RUES y el PDF de una aprobada queda con la organización.
+- **Consulta real comprobada a mano** (2026-10-02, desde el contenedor): por matrícula, "VEEDURIA CIUDADANA PAISAJE URBANO", Medellín, activa; por NIT, una sociedad con dos registros en cámaras distintas.
+- ❓ **Decisiones por defecto, tal como estaban en el plan.** Queda un riesgo: el PDF no se analiza contra malware. Se descarga como adjunto, en un sandbox, y solo lo abre el Super Administrador.
+- **Prueba:**
+  - Pest: `RuesValidationTest` (16 casos, el RUES simulado con `Http::fake`), la purga del documento con la baja y las solicitudes con su PDF, vistos en rojo antes;
+  - Vitest: 14 casos nuevos (el formulario, el cliente del API, el bloque del RUES, la consulta en la Nueva organización y el enlace al documento);
+  - `make e2e`: 52 de 52; el flujo V10 adjunta el PDF, ve que una inscrita en una personería no está en el RUES y descarga el PDF;
+  - `make ux-check`: sin retroceso;
+  - `make trace-check`: 364 de 364.
+
 **46c — Identificadores públicos que no se pueden recorrer.** El usuario: "los índices de los maestros que son numéricos… Podríamos pensar en un id uuid o algo que sea difícil de descifrar en cuanto a autoincremental."
 - **Hoy:** las URL llevan IDs autoincrementales. No es un hueco de autorización, porque cada ruta revisa permisos (una base por organización, los roles, solo lo publicado en lo público, el token de la invitación); pero revelan el volumen y dejan recorrer lo público en orden.
 - **Qué cambia:**
@@ -2589,6 +2616,22 @@ El usuario pidió seguir con lo que no espera a nadie: la deuda técnica y los h
   - sin búsqueda de texto libre en los valores: los filtros cubren las preguntas de "quién hizo qué y cuándo".
 - **Done-when:** los escenarios de la enmienda de `features/US-043-MON.feature` en verde; `make ux-check` sin retroceso.
 - **Modelo:** Sonnet medium. Es una consulta y su pantalla, sobre un registro que ya existe; los permisos (quién ve qué) no cambian.
+
+**46e — Los rostros en las fotos, difuminados en el celular** (enmienda de R-PRIV-05 y de US-009; también la foto del informe ciudadano, US-059-LEG). **Aprobada** por el usuario el 2026-10-02: "R-PRIV-05 Amendment (Faces in photos): Approved. We must blur faces to comply with Ley 1581, as faces are biometric personal data. Log this as iteration 46e."
+- **Por qué en el celular:** la foto se sella tal como la envía el celular, y la descarga pública es ese mismo archivo. Difuminar en el servidor rompería la verificación. Se difumina antes de calcular la huella: lo que se sella es la foto ya difuminada, y el original nunca sale del teléfono.
+- **Qué cambia:**
+  - un aviso al adjuntar una foto: si aparecen personas, sobre todo niños, sus rostros se difuminan antes de enviar;
+  - la detección automática de rostros en el navegador, con MediaPipe Face Detector (Google, Apache-2.0, unos 230 KB, alojado en GovTrace, sin enviar la foto a nadie). Los rostros detectados se difuminan por defecto;
+  - una herramienta para difuminar a mano otras zonas: rostros lejanos que el detector no ve, placas;
+  - la Bandeja dice cuántas zonas se difuminaron;
+  - también la foto opcional del informe ciudadano;
+  - R-PRIV-05 se reescribe; la CSP permite WebAssembly (`'wasm-unsafe-eval'`) para el detector.
+- ❓ **Decisiones por defecto:**
+  - no se envía un rostro detectado sin difuminar. Si el detector se equivoca (no es un rostro), el veedor puede quitar ese recuadro, y la Bandeja lo marca;
+  - el difuminado es definitivo: no se guarda el original;
+  - el detector funciona mejor a menos de 2 m; para lo demás está la herramienta manual.
+- **Done-when:** los escenarios de la enmienda de `features/US-009.feature` y `features/US-059-LEG.feature` en verde; el difuminado probado con imágenes con y sin rostros, en Vitest y en un navegador real (`make e2e`); `make ux-check` sin retroceso.
+- **Modelo:** Opus xhigh. Toca la foto antes de su huella (la integridad de lo sellado) y datos personales sensibles.
 
 ## Pivote a Stellar (2026-09-28)
 

@@ -2,7 +2,7 @@
 // quedan en los registros de acceso del proxy y del servidor web, con la hora
 // y la IP. "Obras cercanas" la manda en el cuerpo de un POST.
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { fetchNearbyWorksites } from './api.js';
+import { fetchNearbyWorksites, requestOrganization } from './api.js';
 import source from './api.js?raw';
 
 const http = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() }));
@@ -26,5 +26,20 @@ describe('El API de la organización', () => {
 
         expect(getRequests.length).toBeGreaterThan(0);
         expect(getRequests.filter((line) => /latitude|longitude/.test(line))).toEqual([]);
+    });
+
+    // It. 46b: la solicitud de alta lleva el PDF, así que viaja como formulario con archivos.
+    it('sends the request for an alta as a form with its PDF', async () => {
+        http.post.mockResolvedValue({ data: { message: 'Recibimos su solicitud.' } });
+        const resolution = new File(['%PDF-1.7'], 'resolucion.pdf', { type: 'application/pdf' });
+
+        await requestOrganization({ name: 'Veeduría Ciudadana de La Pradera', data_authorization: true, document: resolution });
+
+        const [path, body] = http.post.mock.calls[0];
+        expect(path).toBe('/organization-requests');
+        expect(body).toBeInstanceOf(FormData);
+        expect(body.get('name')).toBe('Veeduría Ciudadana de La Pradera');
+        expect(body.get('data_authorization')).toBe('1');
+        expect(body.get('document').name).toBe('resolucion.pdf');
     });
 });

@@ -14,6 +14,7 @@ use App\Domain\Organization\Registration;
 use App\Infrastructure\Tenancy\Tenant;
 use App\Models\User as SuperAdmin;
 use DomainException;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Notification;
 
 /**
@@ -22,6 +23,10 @@ use Illuminate\Support\Facades\Notification;
  * name and the registration, and a valid contact email. No email goes to
  * whoever asks until the Super Administrador decides: the form must not send
  * mail to third parties.
+ *
+ * It. 46b: the request brings the PDF of its resolution or registration
+ * certificate (RegistrationDocuments), and each decision keeps in the audit
+ * log what the RUES said when the Super Administrador looked (RuesLookup).
  */
 class OrganizationRequests
 {
@@ -50,12 +55,12 @@ class OrganizationRequests
         return $problems;
     }
 
-    /** Call after problems() came back empty. */
-    public function submit(string $name, string $email, string $number, string $authority): OrganizationRequest
+    /** Call after problems() came back empty, with the PDF RegistrationDocuments accepted. */
+    public function submit(string $name, string $email, string $number, string $authority, UploadedFile $document): OrganizationRequest
     {
         $registration = Registration::from($number, $authority);
 
-        return OrganizationRequest::create([
+        $request = OrganizationRequest::create([
             'name' => OrganizationName::fromString($name)->value,
             'contact_email' => OrganizationContact::from($email, null)->email,
             'registration_number' => $registration->number,
@@ -63,6 +68,9 @@ class OrganizationRequests
             'data_authorized_at' => now(),
             'data_policy_version' => DataPolicy::VERSION,
         ]);
+        RegistrationDocuments::keepForRequest($request, $document);
+
+        return $request;
     }
 
     /** @return list<array<string, mixed>> the pending ones, oldest first */
@@ -72,6 +80,7 @@ class OrganizationRequests
             ->map(fn (OrganizationRequest $request) => [
                 ...$this->prefill($request),
                 'received_at' => $request->created_at->toIso8601String(),
+                'has_document' => $request->document_path !== null,
             ])->all();
     }
 
@@ -86,12 +95,20 @@ class OrganizationRequests
         return $request->only(['id', 'name', 'contact_email', 'registration_number', 'registration_authority']);
     }
 
+    /** @return array<string, mixed> what the RUES says of the veeduría of the request (it. 46b) */
+    public function rues(int $id): array
+    {
+        $request = OrganizationRequest::query()->findOrFail($id);
+
+        return (new RuesLookup)->of(null, $request->registration_number, $request->registration_authority);
+    }
+
     public function reject(int $id, string $reason, SuperAdmin $actor): OrganizationRequest
     {
         $request = $this->undecided($id);
         $request->update(['status' => 'rejected', 'rejection_reason' => $reason, 'decided_at' => now()]);
         Notification::route('mail', $request->contact_email)->notify(new OrganizationRequestRejected($request->name, $reason));
-        $this->audit('organization_request.rejected', null, $actor, $request, ['reason' => $reason]);
+        $this->audit('organization_request.rejected', null, $actor, $request, ['reason' => $reason, 'rues' => $this->seen($request)]);
 
         return $request;
     }
@@ -101,7 +118,14 @@ class OrganizationRequests
     {
         $request = $this->undecided($id);
         $request->update(['status' => 'approved', 'decided_at' => now(), 'tenant_id' => $tenant->id]);
-        $this->audit('organization_request.approved', $tenant->id, $actor, $request, ['tenant_id' => $tenant->id]);
+        RegistrationDocuments::handOverTo($request, $tenant);
+        $this->audit('organization_request.approved', $tenant->id, $actor, $request, ['tenant_id' => $tenant->id, 'rues' => $this->seen($request)]);
+    }
+
+    /** @return array<string, mixed>|null what the Super Administrador saw of the RUES before deciding */
+    private function seen(OrganizationRequest $request): ?array
+    {
+        return RuesLookup::seen(null, $request->registration_number, $request->registration_authority);
     }
 
     private function undecided(int $id): OrganizationRequest

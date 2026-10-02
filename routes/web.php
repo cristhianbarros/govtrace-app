@@ -69,6 +69,11 @@ foreach (config('tenancy.central_domains') as $domain) {
             ]))->name('admin.organizations.new');
             Route::get('/admin/organization-requests', [OrganizationRequestController::class, 'show'])->name('admin.organization-requests.show');
             Route::get('/admin/organization-requests/data', [OrganizationRequestController::class, 'index'])->name('admin.organization-requests.index');
+            // It. 46b: lo que dice el RUES de cada solicitud, y el PDF que adjuntó.
+            Route::get('/admin/organization-requests/{organizationRequest}/rues', [OrganizationRequestController::class, 'rues'])->whereNumber('organizationRequest')->middleware('throttle:60,1')->name('admin.organization-requests.rues');
+            Route::get('/admin/organization-requests/{organizationRequest}/document', [OrganizationRequestController::class, 'document'])->whereNumber('organizationRequest')->name('admin.organization-requests.document');
+            Route::get('/admin/rues', [OrganizationController::class, 'rues'])->middleware('throttle:60,1')->name('admin.rues');
+            Route::get('/admin/organizations/{tenant}/registration-document', [OrganizationController::class, 'registrationDocument'])->name('admin.organizations.registration-document');
             Route::post('/admin/organization-requests/{organizationRequest}/reject', [OrganizationRequestController::class, 'reject'])->whereNumber('organizationRequest')->name('admin.organization-requests.reject');
             Route::get('/admin/organizations/data', [OrganizationController::class, 'index'])->name('admin.organizations.index');
             Route::post('/admin/organizations', [OrganizationController::class, 'store'])->name('admin.organizations.store');

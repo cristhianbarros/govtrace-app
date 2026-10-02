@@ -11,6 +11,7 @@ use App\Infrastructure\Tenancy\Domain;
 use App\Infrastructure\Tenancy\Tenant;
 use App\Models\User as SuperAdmin;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Testing\TestResponse;
 
@@ -64,12 +65,14 @@ it('Alta de una veeduría sin NIT, con su inscripción: it is registered, its su
         ->and($tenant->registration_number)->toBe('Resolución 012 de 2026')
         ->and($tenant->registration_authority)->toBe('Personería de Santa Marta')
         ->and(Domain::query()->where('domain', 'trupillos.govtrace.localhost')->exists())->toBeTrue()
-        ->and(AuditLog::query()->where('action', 'organization.registered')->sole()->after)->toBe([
+        ->and(Arr::except(AuditLog::query()->where('action', 'organization.registered')->sole()->after, 'rues'))->toBe([
             'nit' => null,
             'name' => 'Veeduría del Parque Los Trupillos',
             'subdomain' => 'trupillos.govtrace.localhost',
             'registration' => 'Resolución 012 de 2026 · Personería de Santa Marta',
-        ]);
+        ])
+        // it. 46b: inscrita en una personería, que los datos abiertos del RUES no traen
+        ->and(AuditLog::query()->where('action', 'organization.registered')->sole()->after['rues']['status'])->toBe('personeria');
 });
 
 it('Una organización necesita su NIT o su inscripción: without both, nothing is registered', function () {

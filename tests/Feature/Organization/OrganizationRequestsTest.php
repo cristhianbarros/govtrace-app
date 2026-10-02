@@ -7,9 +7,11 @@ use App\Domain\Organization\OrganizationRequest;
 use App\Infrastructure\Tenancy\Tenant;
 use App\Jobs\PurgeOrganizationRequests;
 use App\Models\User as SuperAdmin;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Notifications\AnonymousNotifiable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Testing\TestResponse;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -29,6 +31,7 @@ const NEEDS_AUTHORIZATION = 'Para enviar la solicitud, autorice el tratamiento d
 beforeEach(function () {
     $this->artisan('migrate');
     Notification::fake();
+    Storage::fake('evidencias');
     $this->superAdmin = SuperAdmin::factory()->create(['name' => 'Equipo GovTrace']);
 });
 
@@ -49,6 +52,8 @@ function requestAlta(array $changes = []): TestResponse
         'contact_email' => 'contacto@lapradera.org',
         'registration_number' => 'Resolución 045 de 2026',
         'registration_authority' => 'Personería de Medellín',
+        // It. 46b: la resolución o el certificado de inscripción, en PDF.
+        'document' => UploadedFile::fake()->createWithContent('resolucion.pdf', "%PDF-1.7\n%%EOF\n"),
         'data_authorization' => true,
         ...$changes,
     ]);

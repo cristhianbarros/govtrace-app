@@ -124,6 +124,8 @@ onMounted(load);
                             <div>
                                 <p class="font-semibold">{{ organization.name }}</p>
                                 <p class="text-slate-600">{{ organization.identification }} · {{ organization.subdomain }}</p>
+                                <!-- It. 46b: la resolución o el certificado que adjuntó al pedir el alta. -->
+                                <a v-if="organization.has_registration_document" :href="`/admin/organizations/${organization.id}/registration-document`" class="inline-flex min-h-11 items-center font-semibold text-brand-800 underline">Documento de inscripción (PDF)</a>
                             </div>
                             <div class="flex shrink-0 items-center gap-2">
                                 <span class="rounded px-2 py-0.5 text-xs font-semibold" :class="statusStyle[organization.status] ?? 'bg-slate-100 text-slate-700'">

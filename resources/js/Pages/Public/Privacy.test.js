@@ -80,8 +80,10 @@ describe('Las solicitudes de alta (it. 43k)', () => {
     it('says what a veeduría that asks for its alta gives, what for, and for how long', () => {
         const text = open().text();
 
-        expect(text).toContain('De quien pide el alta de una veeduría desde el Inicio: el nombre de la veeduría, un correo de contacto y la resolución de la Personería que la inscribió. Sirven para decidir el alta y responderle.');
-        expect(text).toContain('Las solicitudes de alta de una veeduría, hasta 30 días después de decididas.');
+        expect(text).toContain('De quien pide el alta de una veeduría desde el Inicio: el nombre de la veeduría, un correo de contacto, su resolución o matrícula y la entidad que la inscribió, y el PDF de esa resolución o del certificado de inscripción, que puede traer los nombres de sus integrantes.');
+        // It. 46b: el RUES se consulta para comprobar la inscripción, y el PDF de una solicitud aprobada queda con la organización.
+        expect(text).toContain('para comprobar la inscripción también se consultan los datos abiertos del RUES (Confecámaras).');
+        expect(text).toContain('Las solicitudes de alta de una veeduría, y su PDF, hasta 30 días después de decididas. Si el alta se aprueba, el PDF queda con la organización.');
     });
 });
 

@@ -19,7 +19,7 @@ class Tenant extends BaseTenant implements TenantWithDatabase
 {
     use HasDatabase, HasDomains;
 
-    protected $fillable = ['id', 'nit', 'registration_number', 'registration_authority', 'registration_key', 'name', 'display_name', 'logo_path', 'contact_email', 'contact_phone', 'status', 'decommissioned_at', 'evidence_files_purged_at'];
+    protected $fillable = ['id', 'nit', 'registration_number', 'registration_authority', 'registration_key', 'name', 'display_name', 'logo_path', 'contact_email', 'contact_phone', 'status', 'decommissioned_at', 'evidence_files_purged_at', 'registration_document_path'];
 
     protected $casts = [
         'decommissioned_at' => 'datetime',

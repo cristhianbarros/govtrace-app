@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Application\Organization\RegistrationDocuments;
 use App\Domain\Organization\OrganizationRequest;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -23,6 +24,10 @@ class PurgeOrganizationRequests implements ShouldQueue
         OrganizationRequest::query()
             ->where('status', '!=', 'pending')
             ->where('decided_at', '<', now()->subDays(self::RETENTION_DAYS))
-            ->delete();
+            ->each(function (OrganizationRequest $request) {
+                // It. 46b: con su PDF. El de una aprobada ya pasó a su organización.
+                RegistrationDocuments::forget($request->document_path);
+                $request->delete();
+            });
     }
 }

@@ -165,7 +165,7 @@ Suma los impedimentos del veedor (it. 44c) y los datos de inscripción de una ve
 - **R-PRIV-02** — Las coordenadas de cada evidencia se muestran al público aproximadas (~100 m), nunca exactas — US-029, US-050-RPT, US-052-RPT
 - **R-PRIV-03** — (enmendada el 2026-09-29) En el JSON de metadatos sellado, el ID del veedor se reemplaza por un seudónimo antes de sellar; se publica el hash de ese JSON, no el JSON, que trae la ubicación exacta (R-PRIV-02) — US-020b, US-050-RPT, US-052-RPT
 - **R-PRIV-04** — La app limpia los metadatos de los PDF (autor, software, fechas) antes de calcular el hash — US-009
-- **R-PRIV-05** — No se difuminan rostros ni placas: se publican tal cual y la organización decide al revisar (US-036). Riesgo aceptado por el usuario — US-009
+- **R-PRIV-05** — No se difuminan rostros ni placas: se publican tal cual y la organización decide al revisar (US-036). Riesgo aceptado por el usuario — US-009. → **Enmienda aprobada el 2026-10-02 (it. 46e):** los rostros se difuminan en el celular antes de calcular la huella (Ley 1581); se reescribe al abrir la 46e.
 - **R-PRIV-06** — Las fotos se optimizan en el teléfono antes del hash: lado mayor 1920 px, JPEG, calidad 80 %; se sella el archivo optimizado — US-009
 
 ### Mapa y publicación

@@ -18,13 +18,29 @@ defineProps({
 
 // It. 43k (V10, US-062-ALT): una veeduría pide su alta; el Super Administrador la decide.
 const AUTHORIZATION_REQUIRED = 'Para enviar la solicitud, autorice el tratamiento de sus datos personales.';
-const request = reactive({ name: '', email: '', resolution: '', authority: '', authorized: false, website: '' });
+// It. 46b: la resolución o el certificado de inscripción, en PDF, para que el Super Administrador compruebe la inscripción.
+const NEEDS_THE_PDF = 'Adjunte la resolución o el certificado de inscripción en PDF, de hasta 10 MB.';
+const MAX_DOCUMENT_BYTES = 10 * 1024 * 1024;
+const request = reactive({ name: '', email: '', resolution: '', authority: '', document: null, authorized: false, website: '' });
+const documentRefused = ref(false);
+
+function chooseDocument(event) {
+    request.document = event.target.files?.[0] ?? null;
+    documentRefused.value = false;
+}
+
+const acceptableDocument = (file) =>
+    file !== null && (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) && file.size > 0 && file.size <= MAX_DOCUMENT_BYTES;
 const requestSent = ref(null);
 const requestRefused = ref(null);
 const requesting = ref(false);
 
 async function sendRequest() {
     requestRefused.value = null;
+    documentRefused.value = !acceptableDocument(request.document);
+    if (documentRefused.value) {
+        return;
+    }
     if (!request.authorized) {
         requestRefused.value = AUTHORIZATION_REQUIRED;
         return;
@@ -37,6 +53,7 @@ async function sendRequest() {
                 contact_email: request.email.trim(),
                 registration_number: request.resolution.trim(),
                 registration_authority: request.authority.trim(),
+                document: request.document,
                 data_authorization: true,
                 website: request.website,
             })
@@ -118,10 +135,27 @@ const STEPS = [
                     <input id="request-name" v-model="request.name" type="text" maxlength="150" autocomplete="organization" class="min-h-12 rounded-lg border border-slate-300 bg-white px-3 text-base" />
                     <label for="request-email" class="text-base font-semibold">Correo de contacto</label>
                     <input id="request-email" v-model="request.email" type="email" inputmode="email" autocomplete="email" maxlength="150" class="min-h-12 rounded-lg border border-slate-300 bg-white px-3 text-base" />
-                    <label for="request-resolution" class="text-base font-semibold">Número de la resolución de la Personería</label>
+                    <label for="request-resolution" class="text-base font-semibold">Número de la resolución o de la matrícula</label>
                     <input id="request-resolution" v-model="request.resolution" type="text" maxlength="100" placeholder="Resolución 045 de 2026" class="min-h-12 rounded-lg border border-slate-300 bg-white px-3 text-base" />
-                    <label for="request-authority" class="text-base font-semibold">Personería que la expidió</label>
+                    <label for="request-authority" class="text-base font-semibold">Personería o cámara de comercio que la registró</label>
                     <input id="request-authority" v-model="request.authority" type="text" maxlength="150" placeholder="Personería de Medellín" class="min-h-12 rounded-lg border border-slate-300 bg-white px-3 text-base" />
+                    <!-- El botón propio, y no el del navegador: el del navegador habla en su idioma ("Choose File"). -->
+                    <p id="request-document-label" class="text-base font-semibold">Resolución o certificado de inscripción (PDF)</p>
+                    <label class="flex min-h-12 cursor-pointer items-center gap-2 rounded-lg border-2 border-dashed border-slate-300 bg-white px-3 py-2 text-base font-semibold text-brand-800 focus-within:ring-2 focus-within:ring-brand-600">
+                        <span id="request-document-choice" class="min-w-0 break-words">{{ request.document ? request.document.name : 'Elegir el PDF' }}</span>
+                        <input
+                            id="request-document"
+                            type="file"
+                            accept="application/pdf,.pdf"
+                            class="sr-only"
+                            aria-labelledby="request-document-label request-document-choice"
+                            aria-describedby="request-document-hint"
+                            @change="chooseDocument"
+                        />
+                    </label>
+                    <p id="request-document-hint" :role="documentRefused ? 'alert' : null" class="text-base" :class="documentRefused ? 'text-red-800' : 'text-slate-600'">
+                        {{ documentRefused ? NEEDS_THE_PDF : 'Solo PDF, hasta 10 MB. Con él, el equipo de GovTrace comprueba la inscripción.' }}
+                    </p>
                     <!-- Solo un robot llena este campo: la solicitud no se guarda. -->
                     <div aria-hidden="true" class="absolute -left-[10000px] size-px overflow-hidden">
                         <label for="request-website">No llene este campo</label>

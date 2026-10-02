@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Application\Organization\RegistrationDocuments;
 use App\Domain\Audit\AuditLog;
 use App\Domain\Organization\OrganizationStatus;
 use App\Domain\Reports\Evidence;
@@ -41,7 +42,10 @@ class PurgeDecommissionedEvidence implements ShouldQueue
                 return $deleted;
             });
 
-            $tenant->update(['evidence_files_purged_at' => now()]);
+            // It. 46b: el PDF de inscripción de su solicitud de alta, que quedó con la organización.
+            RegistrationDocuments::forget($tenant->registration_document_path);
+
+            $tenant->update(['evidence_files_purged_at' => now(), 'registration_document_path' => null]);
 
             AuditLog::record(
                 action: 'organization.evidence_files_purged',

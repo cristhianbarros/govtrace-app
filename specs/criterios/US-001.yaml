@@ -22,6 +22,7 @@ criterios_aceptacion:
   casos_edge:
     - "It. 44d (A5): una veeduría sin NIT se registra con su inscripción — el número de la resolución o el acta y la entidad que la registró, una personería o una cámara de comercio (Ley 850 de 2003, art. 3) —; una organización tiene su NIT, su inscripción o los dos, nunca ninguno (R-LEG-06)"
     - "Dos inscripciones son la misma aunque se escriban con otras mayúsculas, tildes o espacios; la misma resolución de otra personería es otra inscripción"
+    - "(It. 46b, 2026-10-02, decidido por el usuario) En la nueva organización, el Super Administrador consulta los datos abiertos del RUES por el NIT (o por la matrícula, si la inscribió una cámara de comercio) antes de registrarla; al registrarla, el log de auditoría guarda lo que dijo el RUES. La decisión sigue siendo suya"
 validacion_smart:
   specific: true
   measurable: true
