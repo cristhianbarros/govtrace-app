@@ -1,8 +1,25 @@
 # Estado del MVP: lo que falta, por área
 
-Al 2026-10-01. Empezó sobre `77e6030` (iteración 39) y se actualizó en las it. 41 y 42a y con los análisis de UX y de flujos. Para ir abordándolo: cada punto dice qué falta y, cuando depende de ti, qué hay que decidir.
+Al 2026-10-02. Empezó sobre `77e6030` (iteración 39) y se actualizó en las it. 41 y 42a y con los análisis de UX y de flujos. Para ir abordándolo: cada punto dice qué falta y, cuando depende de ti, qué hay que decidir.
 
 ✅ hecho y probado · ⚠️ a medias · ⬜ falta · 🔒 espera algo externo · ❓ decisión tuya
+
+## Dónde quedó (2026-10-02)
+
+**La ubicación del veedor y lo que sigue.** Al probar la geocerca en el navegador salió que "Obras cercanas" dejaba las coordenadas del veedor en los registros de acceso, y que la Bandeja no decía qué reporte había fijado la ubicación de una obra.
+
+| Iteración | Qué | PR |
+|---|---|---|
+| — | Las funciones de cada rol (`docs/funciones-por-rol.md`) | #84 |
+| — | La preparación del operador para la red principal (`docs/preparacion-red-principal.md`) y el recorrido de cada rol en la guía local | #85 |
+| 45f | La ubicación del veedor fuera de los registros (POST y registros sin parámetros); la primera ubicación de una obra a la vista en la Bandeja; el mapa ya no tapa las barras fijas | #86 |
+
+- **Tests:** Pest 984, Vitest 497, `make e2e` 51 de 51, trace-check 343 de 343, y `make ux-check` sin retroceso.
+- **Lo que sigue, aprobado por el usuario en este orden** (detalle en `specs/PLAN.md`, bloque 46):
+  1. **46a:** más de un Super Administrador desde el panel, sin quedar nunca en cero;
+  2. **46b:** la validación asistida de una veeduría con los datos abiertos del RUES, y el PDF de su resolución;
+  3. **46c:** identificadores públicos (ULID) en las URL, sin tocar las llaves numéricas selladas en Stellar.
+- **Pendiente, sin iteración todavía:** `/reset-password/{token}` lleva el token en la ruta y sigue en los registros (un solo uso, 60 minutos).
 
 ## Dónde quedó (2026-10-01)
 
@@ -302,6 +319,9 @@ Desde el checkpoint base, primero lo que corta un flujo, después lo que lo deja
 | — | **Tú:** la cuenta de AWS y el perfil de KMS (sección 5) | Desbloquea las siguientes | 🔒 |
 | 7 | **It. 42b, staging en AWS** con testnet | La prueba real | 🔒 |
 | 8 | **37b:** KMS, y después la red principal | Producción | 🔒 |
+| 9 | **It. 46a, los Super Administradores** | La dependencia de un solo Super Administrador | ⬜ |
+| 10 | **It. 46b, la validación asistida con el RUES** | El alta, hoy 100 % manual | ⬜ |
+| 11 | **It. 46c, identificadores públicos** | Los IDs que se pueden recorrer | ⬜ |
 
 **Decisiones tuyas (❓):**
 - el segundo factor para el Super Administrador;
