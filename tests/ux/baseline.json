@@ -22,14 +22,14 @@
   },
   "escritorio/admin-contracts": {
     "axe": {},
-    "textUnder16": 31,
+    "textUnder16": 32,
     "textUnder14": 0,
     "smallTargets": 0,
     "targets": 17
   },
   "escritorio/admin-inbox": {
     "axe": {},
-    "textUnder16": 11,
+    "textUnder16": 10,
     "textUnder14": 0,
     "smallTargets": 0,
     "targets": 17
@@ -39,14 +39,14 @@
     "textUnder16": 3,
     "textUnder14": 0,
     "smallTargets": 0,
-    "targets": 15
+    "targets": 18
   },
   "escritorio/admin-organization": {
     "axe": {},
-    "textUnder16": 26,
+    "textUnder16": 20,
     "textUnder14": 0,
-    "smallTargets": 6,
-    "targets": 17
+    "smallTargets": 5,
+    "targets": 19
   },
   "escritorio/admin-summary": {
     "axe": {},
@@ -95,7 +95,7 @@
     "textUnder16": 0,
     "textUnder14": 0,
     "smallTargets": 0,
-    "targets": 5
+    "targets": 12
   },
   "escritorio/publico-mapa": {
     "axe": {},
@@ -130,49 +130,63 @@
     "textUnder16": 82,
     "textUnder14": 0,
     "smallTargets": 0,
-    "targets": 9
+    "targets": 11
   },
   "escritorio/superadmin-nueva-organizacion": {
     "axe": {},
     "textUnder16": 0,
     "textUnder14": 0,
     "smallTargets": 6,
-    "targets": 16
+    "targets": 18
   },
   "escritorio/superadmin-organizaciones": {
     "axe": {},
-    "textUnder16": 5,
+    "textUnder16": 4,
     "textUnder14": 0,
     "smallTargets": 0,
-    "targets": 14
+    "targets": 20
   },
   "escritorio/superadmin-parametros": {
     "axe": {},
-    "textUnder16": 14,
+    "textUnder16": 12,
     "textUnder14": 0,
     "smallTargets": 0,
-    "targets": 17
+    "targets": 19
   },
   "escritorio/superadmin-secop": {
     "axe": {},
     "textUnder16": 0,
     "textUnder14": 0,
     "smallTargets": 0,
-    "targets": 8
+    "targets": 10
   },
   "escritorio/superadmin-sellado": {
     "axe": {},
-    "textUnder16": 32,
+    "textUnder16": 30,
     "textUnder14": 0,
     "smallTargets": 0,
-    "targets": 7
+    "targets": 9
+  },
+  "escritorio/superadmin-solicitudes": {
+    "axe": {},
+    "textUnder16": 0,
+    "textUnder14": 0,
+    "smallTargets": 0,
+    "targets": 11
+  },
+  "escritorio/superadmin-super-administradores": {
+    "axe": {},
+    "textUnder16": 0,
+    "textUnder14": 0,
+    "smallTargets": 0,
+    "targets": 11
   },
   "escritorio/superadmin-uso": {
     "axe": {},
-    "textUnder16": 51,
+    "textUnder16": 46,
     "textUnder14": 0,
     "smallTargets": 0,
-    "targets": 7
+    "targets": 9
   },
   "escritorio/veedor-declaracion": {
     "axe": {},
@@ -225,31 +239,31 @@
   },
   "movil/admin-contracts": {
     "axe": {},
-    "textUnder16": 32,
+    "textUnder16": 33,
     "textUnder14": 0,
     "smallTargets": 0,
     "targets": 11
   },
   "movil/admin-inbox": {
     "axe": {},
-    "textUnder16": 14,
+    "textUnder16": 13,
     "textUnder14": 0,
     "smallTargets": 0,
     "targets": 11
   },
   "movil/admin-observers": {
     "axe": {},
-    "textUnder16": 5,
+    "textUnder16": 3,
     "textUnder14": 0,
     "smallTargets": 0,
-    "targets": 9
+    "targets": 12
   },
   "movil/admin-organization": {
     "axe": {},
-    "textUnder16": 34,
+    "textUnder16": 25,
     "textUnder14": 0,
-    "smallTargets": 9,
-    "targets": 11
+    "smallTargets": 8,
+    "targets": 13
   },
   "movil/admin-summary": {
     "axe": {},
@@ -298,7 +312,7 @@
     "textUnder16": 0,
     "textUnder14": 0,
     "smallTargets": 0,
-    "targets": 5
+    "targets": 12
   },
   "movil/publico-mapa": {
     "axe": {},
@@ -330,7 +344,7 @@
   },
   "movil/superadmin-auditoria": {
     "axe": {},
-    "textUnder16": 83,
+    "textUnder16": 84,
     "textUnder14": 0,
     "smallTargets": 0,
     "targets": 7
@@ -344,10 +358,10 @@
   },
   "movil/superadmin-organizaciones": {
     "axe": {},
-    "textUnder16": 5,
+    "textUnder16": 4,
     "textUnder14": 0,
     "smallTargets": 0,
-    "targets": 12
+    "targets": 16
   },
   "movil/superadmin-parametros": {
     "axe": {},
@@ -365,10 +379,24 @@
   },
   "movil/superadmin-sellado": {
     "axe": {},
-    "textUnder16": 35,
+    "textUnder16": 34,
     "textUnder14": 0,
     "smallTargets": 0,
     "targets": 5
+  },
+  "movil/superadmin-solicitudes": {
+    "axe": {},
+    "textUnder16": 0,
+    "textUnder14": 0,
+    "smallTargets": 0,
+    "targets": 7
+  },
+  "movil/superadmin-super-administradores": {
+    "axe": {},
+    "textUnder16": 0,
+    "textUnder14": 0,
+    "smallTargets": 0,
+    "targets": 7
   },
   "movil/superadmin-uso": {
     "axe": {},

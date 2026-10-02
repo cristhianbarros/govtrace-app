@@ -80,7 +80,9 @@ Tenant::query()
 SuperAdministrator::query()->updateOrCreate(
     ['email' => 'e2e.superadmin@govtrace.test'],
     ['name' => 'Super Administrador E2E', 'password' => E2E_PASSWORD],
-);
+)->forceFill(['is_active' => true, 'invitation_token_hash' => null, 'invitation_expires_at' => null])->save();
+// It. 46a: los Super Administradores que invita el flujo (e2e.superadmin2.<hora>@govtrace.test).
+SuperAdministrator::query()->where('email', 'like', 'e2e.superadmin2.%@govtrace.test')->delete();
 
 $tenant = (new RegisterOrganization)->handle(E2E_NIT, 'Veeduría de Pruebas E2E', E2E_SUBDOMAIN);
 (new ConfigureTerritory)->handle($tenant, ['47']);

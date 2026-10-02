@@ -159,6 +159,8 @@ Pregunta la contraseña sin mostrarla; con la respuesta vacía genera una y la m
 
 Entra en `http://govtrace.localhost:8080/login` y llegarás a `/admin/organizations`.
 
+**Otro Super Administrador** (it. 46a): en el panel, **Super Administradores** → **Invitar a otro Super Administrador**. El enlace llega a Mailpit; quien lo abre crea su contraseña y entra al panel global. Mientras haya uno solo activo, el panel lo avisa.
+
 ### 3. Crear una organización
 
 Hay dos caminos.

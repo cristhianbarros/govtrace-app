@@ -50,7 +50,8 @@ class AuthenticateUser
         if (! ($user->is_active ?? true)) {
             Auth::guard($guard)->logout();
 
-            throw AuthenticationRejected::accountDeactivated();
+            // It. 46a: a Super Administrador answers to another one, not to an organization.
+            throw $guard === 'web' ? AuthenticationRejected::superAdministratorDeactivated() : AuthenticationRejected::accountDeactivated();
         }
 
         RateLimiter::clear($key);

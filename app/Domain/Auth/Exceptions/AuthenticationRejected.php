@@ -53,4 +53,16 @@ class AuthenticationRejected extends DomainException
     {
         return new self('Su cuenta se encuentra desactivada. Comuníquese con el administrador de su organización.');
     }
+
+    /** It. 46a (US-063-USR): a Super Administrador answers to the other Super Administradores, not to an organization. */
+    public static function superAdministratorDeactivated(): self
+    {
+        return new self('Su cuenta se encuentra desactivada. Comuníquese con otro Super Administrador de GovTrace.');
+    }
+
+    /** It. 46a: the open session of a Super Administrador who was deactivated, on its next request. */
+    public static function superAdministratorDeactivatedWhileSignedIn(): self
+    {
+        return new self('Su cuenta de Super Administrador fue desactivada.');
+    }
 }

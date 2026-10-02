@@ -92,7 +92,8 @@ class SealReport implements ShouldQueue
                 return;
             } catch (SponsorOutOfFunds $e) {
                 if (SealingPause::start($e->getMessage())) {
-                    Notification::send(SuperAdmin::all(), new SponsorOutOfFundsAlert($network->sponsorAddress()));
+                    // It. 46a: solo los Super Administradores activos.
+                    Notification::send(SuperAdmin::query()->active()->get(), new SponsorOutOfFundsAlert($network->sponsorAddress()));
                 }
                 $this->release(self::PAUSED_RETRY_SECONDS);
 

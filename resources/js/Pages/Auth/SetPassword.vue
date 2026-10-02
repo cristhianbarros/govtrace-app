@@ -21,6 +21,8 @@ const props = defineProps({
     message: { type: String, default: '' },
     declaration: { type: Boolean, default: false }, // un veedor la hace; el Administrador, no
     dataPolicyUrl: { type: String, default: '/privacidad' }, // US-058-LEG: la política que autoriza
+    // It. 46a: quién ve el nombre; un Super Administrador no lo ve una veeduría.
+    nameHint: { type: String, default: 'Lo ve su veeduría. En el sitio público no aparece su nombre: los reportes llevan un seudónimo.' },
 });
 
 const NAME_REQUIRED = 'Escriba su nombre: al menos 2 letras.';
@@ -76,7 +78,7 @@ function submit() {
                     <label for="name" class="text-sm font-semibold text-slate-700">Su nombre</label>
                     <input id="name" v-model="form.name" type="text" autocomplete="name" maxlength="120" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-3 text-base" />
                     <p class="text-xs" :class="hints.name ? 'text-red-700' : 'text-slate-500'">
-                        {{ hints.name ?? 'Lo ve su veeduría. En el sitio público no aparece su nombre: los reportes llevan un seudónimo.' }}
+                        {{ hints.name ?? nameHint }}
                     </p>
                 </div>
 

@@ -7,6 +7,7 @@ use App\Domain\Auth\Notifications\ResetPasswordLink;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -22,6 +23,18 @@ class User extends Authenticatable
     // patrocinadora se quedó sin XLM, it. 13) iría a la tabla "users" de esa
     // organización: sus veedores.
     use CentralConnection, HasFactory, Notifiable;
+
+    /**
+     * It. 46a (US-063-USR): a Super Administrador who can act — active, and
+     * with the account activated (a pending invitation does not count). The
+     * only ones who get the alerts, and the ones the platform never runs out of.
+     *
+     * @param  Builder<self>  $query
+     */
+    public function scopeActive(Builder $query): void
+    {
+        $query->where('is_active', true)->whereNull('invitation_token_hash');
+    }
 
     /** US-039-USR: the link goes to the global panel. */
     public function sendPasswordResetNotification(#[\SensitiveParameter] $token): void
@@ -39,6 +52,9 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_active' => 'boolean',
+            'invitation_expires_at' => 'datetime',
+            'data_authorized_at' => 'datetime',
         ];
     }
 }

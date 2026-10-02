@@ -44,10 +44,14 @@ async function measure(page) {
         return Object.fromEntries(result.violations.map((violation) => [violation.id, violation.nodes.length]));
     });
     const layout = await page.evaluate((selector) => {
+        // Lo que nadie ve ni alcanza no se mide: ni lo oculto, ni lo que está fuera de la página y oculto a la
+        // tecnología de apoyo (el campo trampa de los robots en el Inicio, it. 43k).
         const visible = (element) => {
             const box = element.getBoundingClientRect();
             const style = getComputedStyle(element);
-            return box.width > 2 && box.height > 2 && style.visibility !== 'hidden' && style.display !== 'none' && Number(style.opacity) > 0;
+            const offPage = box.right < 0 || box.bottom < -window.scrollY;
+            return box.width > 2 && box.height > 2 && style.visibility !== 'hidden' && style.display !== 'none' && Number(style.opacity) > 0
+                && !(offPage && element.closest('[aria-hidden="true"]'));
         };
         let characters = 0;
         let under16 = 0;
@@ -154,6 +158,9 @@ for (const [viewport, options] of Object.entries(VIEWPORTS)) {
                 ['superadmin-secop', 'secop-health'],
                 ['superadmin-sellado', 'sealing'],
                 ['superadmin-uso', 'usage'],
+                // It. 43k: faltaba en el recorrido. It. 46a: la pantalla nueva.
+                ['superadmin-solicitudes', 'organization-requests'],
+                ['superadmin-super-administradores', 'super-administrators'],
             ]) {
                 await visit(page, viewport, name, `${CENTRAL}/admin/${path}`);
             }

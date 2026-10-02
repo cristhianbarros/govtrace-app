@@ -2,7 +2,7 @@
 // Gobierna la organización que dio de alta el flujo 1-alta, que corre antes.
 import { expect, test } from '@playwright/test';
 import { fileURLToPath } from 'node:url';
-import { CENTRAL, ORG, PEOPLE, logIn, logOut } from './support.js';
+import { CENTRAL, ORG, PEOPLE, latestLinkTo, logIn, logOut } from './support.js';
 
 const PHOTO = fileURLToPath(new URL('../../fixtures/evidence/foto.jpg', import.meta.url));
 const E2E_ORG = 'Veeduría de Pruebas E2E';
@@ -86,6 +86,44 @@ test('V3: agrega otro Administrador a una organización que ya tiene uno (it. 43
     await expect(page.getByText(/Invitación enviada a e2e\.alta\.admin2\./)).toBeVisible();
     await expect(administrators).toContainText('Ana Pérez');
     await expect(administrators).toContainText('Invitación pendiente');
+});
+
+test('Invita a otro Super Administrador, que activa su cuenta; lo desactiva y lo reactiva (it. 46a, US-063-USR)', async ({ page, browser }) => {
+    const email = `e2e.superadmin2.${Date.now()}@govtrace.test`;
+    await enterThePanel(page);
+    await page.goto(`${CENTRAL}/admin/super-administrators`);
+
+    await page.getByRole('button', { name: 'Invitar a otro Super Administrador' }).click();
+    const form = page.locator('form[data-test="invite"]');
+    await form.getByLabel('Nombre').fill('Luis Gómez');
+    await form.getByLabel('Correo electrónico').fill(email);
+    await form.getByRole('button', { name: 'Enviar invitación' }).click();
+    await expect(page.getByText(`Invitación enviada a ${email}.`, { exact: false })).toBeVisible();
+    const luis = page.locator('[data-test="super-admin"]').filter({ hasText: email });
+    await expect(luis).toContainText('Invitación pendiente');
+
+    // El invitado, en su propio navegador, activa su cuenta y llega al panel global.
+    const elsewhere = await browser.newContext();
+    const invitee = await elsewhere.newPage();
+    await invitee.goto(latestLinkTo(email));
+    await invitee.getByLabel('Su nombre').fill('Luis Gómez');
+    await invitee.getByLabel('Contraseña', { exact: true }).fill('Luis#2026clave');
+    await invitee.getByLabel('Confirmar contraseña').fill('Luis#2026clave');
+    await invitee.getByLabel('Autorizo el tratamiento de mis datos personales según esta política.').check();
+    await invitee.getByRole('button', { name: 'Activar mi cuenta' }).click();
+    await invitee.waitForURL('**/admin/organizations');
+    await elsewhere.close();
+
+    await page.reload();
+    await expect(luis).toContainText('Activo');
+    await luis.getByRole('button', { name: 'Desactivar' }).click();
+    await luis.getByRole('button', { name: 'Confirmar desactivación' }).click();
+    await expect(luis).toContainText('Inactivo');
+    await luis.getByRole('button', { name: 'Reactivar' }).click();
+    await expect(luis).toContainText('Activo');
+
+    // Nadie se desactiva a sí mismo.
+    await expect(page.locator('[data-test="super-admin"]').filter({ hasText: 'Usted' }).getByRole('button', { name: 'Desactivar' })).toHaveCount(0);
 });
 
 test('Opera la plataforma: parámetros, auditoría, SECOP, sellado y uso', async ({ page }) => {
