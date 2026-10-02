@@ -2484,6 +2484,58 @@ El usuario pidió seguir con lo que no espera a nadie: la deuda técnica y los h
   - `make ux-check`: sin retroceso.
   - `make trace-check`: 343 de 343.
 
+**46 — El gobierno de la plataforma y la defensa en profundidad.** Tres preguntas del usuario el 2026-10-02, mientras probaba la 45f. Aprobó el orden: "Sí, agrégalas al plan en ese orden."
+
+**46a — Los Super Administradores: más de uno, y nunca ninguno** (historia nueva, US-063-USR). El usuario: "podría darse el caso que el sistema quede sin super administrador y que la aplicación tenga cierta dependencia de eso."
+- **Hoy:**
+  - un Super Administrador solo se crea desde la consola del servidor (`make admin`, `admin:create`); no hay pantalla para agregar otro ni para desactivar uno;
+  - las alertas críticas (saldo de la patrocinadora) van por correo a cada Super Administrador y al webhook (`ALERT_WEBHOOK_URL`); sin ninguno de los dos, no le llegan a nadie.
+  - Sin un Super Administrador, las veedurías que ya existen siguen trabajando (reportar, sellar, publicar, el sitio público, la sincronización con el SECOP II); se detienen las altas, los cambios de administrador, las suspensiones, los datos legales, los parámetros y el reencolado de sellos fallidos.
+- **Qué cambia:**
+  - "Super Administradores" en el panel global: invitar a otro por correo, con un enlace de un solo uso como las invitaciones; desactivar y reactivar;
+  - la plataforma nunca queda sin un Super Administrador activo: desactivar al único se niega, y una invitación pendiente no cuenta (la misma regla de la 43j);
+  - desactivar a uno cierra sus sesiones;
+  - un aviso en el panel, y por correo y webhook, cuando queda uno solo activo;
+  - todo en la auditoría central;
+  - `make admin` sigue como la vía de recuperación si todos pierden el acceso;
+  - `docs/go-live.md`: al menos dos Super Administradores activos y el webhook configurado antes de salir.
+- ❓ **Decisiones por defecto:**
+  - un Super Administrador no se desactiva a sí mismo: lo hace otro;
+  - el doble factor para el Super Administrador sigue como decisión abierta aparte.
+- **Done-when:** los escenarios de `features/US-063-USR.feature` en verde, el flujo en `tests/e2e/flujos/2-super-administrador.spec.js`, `make ux-check` sin retroceso.
+- **Modelo:** Opus xhigh. Control de acceso a toda la plataforma.
+
+**46b — La validación asistida de una veeduría** (enmiendas de US-062-ALT y US-001). El usuario: "como sabe un super administrador que una veeduria es 100% legal… si existe algún end point o si netamente el proceso es 100% manual."
+- **Hoy:** el formato y la unicidad son automáticos (el dígito de verificación de la DIAN, la inscripción no repetida); que la veeduría exista y esté vigente lo revisa el Super Administrador a mano, sin consultar ninguna fuente.
+- **Las fuentes oficiales** (revisadas el 2026-10-02):
+  - **datos abiertos del RUES** (Confecámaras, `datos.gov.co/resource/c82u-588k`, extracto mensual, sin credenciales): lo inscrito en las cámaras de comercio, con `organizacion_juridica`, `estado_matricula`, `camara_comercio` y `matricula`. Hay 382 organizaciones de tipo "VEEDURIA" (336 activas), muchas sin NIT (`0000000000000`), que se buscan por cámara y matrícula; y las fundaciones y ONG con NIT;
+  - **el micrositio de veedurías del RUES** (`veedurias.rues.org.co`), donde las personerías deben reportar las suyas según la Cámara de Comercio de Medellín: pide usuario y autenticación, sin API abierta;
+  - **los registros de las personerías:** no hay uno nacional abierto; algunas publican el suyo (Envigado `jju5-br3w`, Manizales `n4tp-t5g6`, Bogotá en su portal).
+- **Qué cambia:**
+  - al revisar una solicitud de alta, y al dar de alta directamente, GovTrace consulta el RUES por NIT, o por cámara y matrícula, y muestra: nombre, cámara, estado de la matrícula y fecha del extracto; o "No encontrada en el RUES";
+  - la solicitud pide adjuntar el PDF de la resolución o del certificado de inscripción;
+  - la decisión sigue siendo del Super Administrador; el resultado de la consulta queda en la auditoría junto con la decisión;
+  - si el RUES no responde, la revisión sigue y lo dice.
+- ❓ **Decisiones por defecto:**
+  - el PDF: solo PDF, hasta 10 MB, guardado privado; se borra con la solicitud a los 30 días si se rechaza, y se conserva con la organización si se aprueba;
+  - no se consultan todavía los registros abiertos de las personerías: son pocos y cada uno tiene su formato;
+  - revisar cada mes si una veeduría aprobada aparece después como cancelada en el RUES queda para después.
+- **Done-when:** los escenarios de la enmienda de `features/US-062-ALT.feature` y `features/US-001.feature` en verde, con el RUES simulado en los tests y una consulta real comprobada a mano.
+- **Modelo:** Opus xhigh. Recibe un archivo de cualquiera, sin cuenta (abuso, malware, datos personales), y consulta una fuente externa.
+
+**46c — Identificadores públicos que no se pueden recorrer.** El usuario: "los índices de los maestros que son numéricos… Podríamos pensar en un id uuid o algo que sea difícil de descifrar en cuanto a autoincremental."
+- **Hoy:** las URL llevan IDs autoincrementales. No es un hueco de autorización, porque cada ruta revisa permisos (una base por organización, los roles, solo lo publicado en lo público, el token de la invitación); pero revelan el volumen y dejan recorrer lo público en orden.
+- **Qué cambia:**
+  - una columna `public_id` (ULID) en obras, reportes, evidencias e informes ciudadanos, y en las organizaciones y solicitudes del panel global;
+  - las URL y el API usan `public_id`: la página de la obra, el recibo, la foto, la descarga y la prueba de cada evidencia, los informes ciudadanos y las rutas de administración;
+  - los datos abiertos (CSV y JSON) exponen `public_id`, no el número;
+  - **las llaves numéricas no cambian:** la referencia de la obra sellada en Stellar es `sha256("organización:id de obra")`, y cambiar ese id rompería la verificación de lo ya sellado. El `.prueba.json` y el verificador independiente siguen igual.
+- ❓ **Decisiones por defecto:**
+  - ULID y no UUIDv7: ordenable, 26 caracteres, cómodo en una URL;
+  - las URL públicas viejas, con número, redirigen (301) a la nueva, porque pudieron compartirse.
+- **Done-when:** ninguna ruta de la app lleva en la URL un id numérico de esas tablas (un test que recorra las rutas), y los enlaces viejos redirigen; `make e2e` y `make trace-check` en verde.
+- **Modelo:** Opus xhigh. Migra datos en todas las organizaciones, cambia URL que pudieron compartirse y no puede romper lo sellado.
+
 ## Pivote a Stellar (2026-09-28)
 
 El proyecto participa en **Stellar Apex**, así que la blockchain pasa de EVM/Polygon a **Stellar**, con Smart Contracts en **Soroban (Rust)**:
