@@ -55,6 +55,34 @@ final class AuditLabels
         'super_admin.authorized' => 'Autorizó al Super Administrador a reportar',
         'super_admin.authorization_revoked' => 'Revocó la autorización al Super Administrador',
         'report.created_by_super_admin' => 'Creó un reporte en nombre de la organización',
+        'super_admin.created' => 'Creó un Super Administrador desde la consola del servidor',
+    ];
+
+    /** It. 46d: the action types of the filter, in the order they are offered. */
+    private const GROUPS = [
+        'organizaciones' => 'Organizaciones y obras',
+        'evidencias' => 'Evidencias e informes',
+        'cuentas' => 'Cuentas e invitaciones',
+        'configuracion' => 'Configuración',
+        'sellado' => 'Sellado',
+    ];
+
+    /** Actions whose prefix would put them in another type. */
+    private const GROUP_EXCEPTIONS = [
+        'organization.profile_updated' => 'configuracion',
+        'organization.territory_configured' => 'configuracion',
+        'organization.administrator_assigned' => 'cuentas',
+        'organization.administrator_invited' => 'cuentas',
+        'organization.administrator_deactivated' => 'cuentas',
+        'organization.administrator_reactivated' => 'cuentas',
+    ];
+
+    private const GROUP_BY_PREFIX = [
+        'organization' => 'organizaciones', 'organization_request' => 'organizaciones', 'worksite' => 'organizaciones', 'dossier' => 'organizaciones',
+        'evidence' => 'evidencias', 'report' => 'evidencias', 'citizen_report' => 'evidencias', 'citizen_reports' => 'evidencias',
+        'observer' => 'cuentas', 'super_admin' => 'cuentas', 'invitation' => 'cuentas', 'privacy' => 'cuentas',
+        'parameter' => 'configuracion',
+        'seal' => 'sellado',
     ];
 
     private const ACTORS = [
@@ -63,6 +91,47 @@ final class AuditLabels
         'observer' => 'Veedor de Campo',
         'system' => 'Sistema',
     ];
+
+    /** @return list<array{key: string, label: string}> */
+    public static function groups(): array
+    {
+        return array_map(fn (string $key, string $label) => ['key' => $key, 'label' => $label], array_keys(self::GROUPS), self::GROUPS);
+    }
+
+    public static function groupKeys(): array
+    {
+        return array_keys(self::GROUPS);
+    }
+
+    public static function groupOf(string $action): ?string
+    {
+        return self::GROUP_EXCEPTIONS[$action] ?? self::GROUP_BY_PREFIX[strstr($action, '.', true)] ?? null;
+    }
+
+    /** @return list<string> the labeled actions of that type */
+    public static function actionsOf(string $group): array
+    {
+        return array_values(array_filter(self::labeledActions(), fn (string $action) => self::groupOf($action) === $group));
+    }
+
+    /** @return list<string> */
+    public static function labeledActions(): array
+    {
+        return array_keys(self::ACTIONS);
+    }
+
+    /**
+     * "Ana Directora desactivó a un Super Administrador (luis@govtrace.org)":
+     * who, the action as a verb, and the email of who it was done to, if recorded.
+     */
+    public static function sentence(?string $type, ?string $name, string $action, ?array $before, ?array $after): string
+    {
+        $who = $type === null || $type === 'system' ? 'El sistema' : ($name !== null && $name !== '' ? $name : (self::ACTORS[$type] ?? $type));
+        $label = self::action($action);
+        $email = $after['email'] ?? $before['email'] ?? null;
+
+        return $who.' '.mb_strtolower(mb_substr($label, 0, 1)).mb_substr($label, 1).(is_string($email) ? " ({$email})" : '');
+    }
 
     public static function action(string $action): string
     {

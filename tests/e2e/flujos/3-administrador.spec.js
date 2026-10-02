@@ -99,7 +99,15 @@ test('Descarga el expediente de una obra, para el derecho de petición y la denu
 
     // Cada descarga queda en el log de auditoría.
     await page.goto(`${ORG}/admin/audit`);
-    await expect(page.getByText('Descargó el expediente de una obra').first()).toBeVisible();
+    await expect(page.getByText(/descargó el expediente de una obra/).first()).toBeVisible();
+
+    // It. 46d: se filtra por tipo de acción y por quién; "Quitar filtros" lo muestra todo otra vez.
+    await page.getByLabel('Tipo de acción').selectOption({ label: 'Cuentas e invitaciones' });
+    await page.getByLabel('Quién lo hizo').fill('Nadie con este nombre');
+    await page.getByRole('button', { name: 'Filtrar' }).click();
+    await expect(page.getByText('Ninguna entrada cumple esos filtros.')).toBeVisible();
+    await page.getByRole('button', { name: 'Quitar filtros' }).click();
+    await expect(page.getByText(/descargó el expediente de una obra/).first()).toBeVisible();
 });
 
 test('Cuida la identidad de la organización y sigue el resumen y la auditoría', async ({ page }) => {

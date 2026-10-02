@@ -7,11 +7,18 @@ criterios_aceptacion:
     - "El Super Administrador consulta todas las entradas del log"
     - "Cada Administrador de Organización consulta solo las entradas de su organización"
     - "Cada entrada muestra quién, cuándo, la acción, el valor anterior y el nuevo"
+    - "(It. 46d) Filtros combinables: fecha (desde y hasta, días de Colombia), quién lo hizo (parte del nombre), tipo de acción y, en el panel global, organización; viajan como parámetros de la consulta, la paginación los conserva y 'Quitar filtros' los borra"
+    - "(It. 46d) Cada entrada es una frase ('Ana Directora desactivó a un Super Administrador (luis@govtrace.org)') con el antes y el después desplegables"
   validaciones_reglas:
-    - "Un Administrador de Organización nunca ve entradas de otra organización"
-  manejo_errores: []
-  requisitos_ux: []
-  casos_edge: []
+    - "Un Administrador de Organización nunca ve entradas de otra organización, ni filtrando por otra"
+    - "(It. 46d) El tipo de acción se elige de una lista (organizaciones, evidencias, cuentas, configuración, sellado), no se escribe; sin búsqueda de texto libre en los valores"
+    - "(It. 46d) Toda acción que el código registra tiene su etiqueta y su tipo: un test las recorre"
+  manejo_errores:
+    - {caso: "Fecha inválida, 'hasta' anterior a 'desde', tipo de acción o organización desconocidos", mensaje: "El filtro se rechaza (422) y dice cuál es el problema"}
+  requisitos_ux:
+    - "Los filtros se ven sobre la lista, con etiquetas visibles; 'Quitar filtros' aparece solo con alguno activo; sin resultados, 'Ninguna entrada cumple esos filtros.'"
+  casos_edge:
+    - "Sin filtros, el log se ve como antes"
 validacion_smart:
   specific: true
   measurable: true
