@@ -73,6 +73,24 @@ fi
 in_backup 'dropdb --if-exists backup_check_broken; dropdb --if-exists backup_check_vanishing; rm -rf /tmp/shim'
 read -r first second < <(in_backup 'ls -1d /backups/2*Z | tail -2 | xargs')
 
+# It. 45g: al arrancar, la base o el S3 pueden no estar listos todavía (después de
+# reiniciar el equipo, Docker los arranca a todos a la vez). La copia al arrancar se
+# reintenta un rato en vez de esperar a la próxima hora. Un backup.sh de mentira,
+# delante en el PATH, falla las dos primeras veces.
+in_backup 'rm -rf /tmp/shim45g && mkdir -p /tmp/shim45g'
+printf '%s\n' '#!/usr/bin/env bash' \
+    'n=$(( $(cat /tmp/shim45g/intentos 2>/dev/null || echo 0) + 1 )); echo "$n" > /tmp/shim45g/intentos' \
+    '[ "$n" -ge 3 ] && { echo "[backup] copia de prueba lista"; exit 0; }' \
+    'echo "psql: error: Connection refused" >&2; exit 1' | in_backup 'cat > /tmp/shim45g/backup.sh && chmod +x /tmp/shim45g/backup.sh'
+out=$(in_backup 'PATH=/tmp/shim45g:$PATH BACKUP_STARTUP_RETRIES=5 BACKUP_STARTUP_RETRY_SECONDS=1 BACKUP_INTERVAL_SECONDS=86400 timeout 10 /usr/local/bin/entrypoint.sh' 2>&1)
+if grep -q "intento 1 de 5" <<< "$out" && grep -q "intento 2 de 5" <<< "$out" && grep -q "copia de prueba lista" <<< "$out" \
+    && [ "$(in_backup 'cat /tmp/shim45g/intentos' | tr -d '\r')" = 3 ]; then
+    pass "la copia al arrancar se reintenta mientras la base o el S3 no están listos, y se hace sin esperar a la hora"
+else
+    flunk "la copia al arrancar no se reintentó"; echo "$out" | tail -4
+fi
+in_backup 'rm -rf /tmp/shim45g'
+
 # La restauración de prueba, sobre copias alteradas: tiene que fallar.
 $COMPOSE --profile restore up -d --wait restore-pg >/dev/null || { echo "FAIL  el PostgreSQL de prueba no arrancó"; exit 1; }
 drill_on() { # $1: la copia; limpia la base de prueba antes
