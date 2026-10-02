@@ -211,6 +211,12 @@ final class StellarSealingNetwork implements SealingNetwork
 
         // El fee bump cubre la comisión completa de la transacción interna,
         // incluida la de recursos de Soroban. Stellar cobra lo consumido.
+        // La base es esa comisión completa, no la mínima de 100 stroops, a
+        // propósito: el SDK la multiplica por (operaciones + 1), así que la puja
+        // de inclusión queda cerca de la comisión del sello, por encima de
+        // cualquier pico de congestión. En congestión cada transacción paga la
+        // menor puja que entró al ledger, no la suya: la puja alta asegura la
+        // entrada sin subir el costo (docs/sellado-en-stellar.md, sección 10).
         $feeBump = (new FeeBumpTransactionBuilder($transaction))
             ->setBaseFee(max(100, $transaction->getFee()))
             ->setFeeAccount($this->sponsorAddress())

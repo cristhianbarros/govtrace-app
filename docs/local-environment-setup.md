@@ -142,6 +142,7 @@ make restart        # para que la app y el worker lean el contrato nuevo del .en
 make ps             # app, proxy, pgsql, worker, scheduler y stellar, "healthy"
 ```
 
+- Qué es cada pieza del sellado (el contrato, las cuentas, la verificación), explicado para quien no ha trabajado con blockchain: `docs/sellado-en-stellar.md`.
 - `make contract-deploy` crea las cuentas de desarrollo (selladora, patrocinadora y tesorería, fondeadas por friendbot), despliega el contrato y escribe su ID y las llaves en `.env`. Ese archivo no va a git.
 - Comprobación: `make contract-smoke` sella, rechaza a una cuenta externa y rechaza un duplicado, con transacciones reales.
 - El sellado lo hace el **worker** de la cola. Si `make ps` no lo muestra sano, ningún reporte pasará de «En Cola».

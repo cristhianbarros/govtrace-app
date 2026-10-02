@@ -4,6 +4,17 @@ Al 2026-10-02. Empezó sobre `77e6030` (iteración 39) y se actualizó en las it
 
 ✅ hecho y probado · ⚠️ a medias · ⬜ falta · 🔒 espera algo externo · ❓ decisión tuya
 
+## Dónde quedó (2026-10-02, tarde)
+
+| Iteración | Qué | PR |
+|---|---|---|
+| 46a | Varios Super Administradores, y nunca ninguno (US-063-USR) | #88 |
+| — | El sellado en Stellar, explicado (`docs/sellado-en-stellar.md`), y la revisión del contrato y del RPC frente a las guías de Stellar | este |
+
+- **Tests:** Pest 1003, Vitest 508, `make e2e` 52 de 52, trace-check 355 de 355, `make ux-check` sin retroceso.
+- **La revisión frente a las guías de Stellar** (skills.stellar.org): el contrato cumple la lista de seguridad y no se cambia; el servidor simula, acota la validez, reintenta y no depende de la historia del RPC. Pendientes antes de la red principal: confirmar que el RPC devuelve un sello archivado (~180 días), comprobar en testnet que la selladora no acumula reembolsos y correr Scout sobre el contrato.
+- **Lo que sigue:** 46b (validación con el RUES), 46c (identificadores públicos) y 46d (auditoría con filtros). La de los rostros en las fotos (enmienda de R-PRIV-05) espera la aprobación del usuario.
+
 ## Dónde quedó (2026-10-02)
 
 **La ubicación del veedor y lo que sigue.** Al probar la geocerca en el navegador salió que "Obras cercanas" dejaba las coordenadas del veedor en los registros de acceso, y que la Bandeja no decía qué reporte había fijado la ubicación de una obra.
