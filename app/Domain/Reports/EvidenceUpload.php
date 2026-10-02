@@ -17,6 +17,8 @@ final class EvidenceUpload
         public readonly string $mimeType,
         public readonly int $sizeBytes,
         public readonly ?string $declaredSha256,
+        // It. 46e (R-PRIV-05): lo que el celular dice que difuminó; null en un PDF o desde una app anterior.
+        public readonly ?Blurring $blurring = null,
     ) {}
 
     /** A file on disk; without $declaredSha256, it declares its own hash (as an honest phone would). */

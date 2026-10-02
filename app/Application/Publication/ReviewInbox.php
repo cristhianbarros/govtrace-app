@@ -5,6 +5,7 @@ namespace App\Application\Publication;
 use App\Domain\Contracts\Contract;
 use App\Domain\Geography\Municipality;
 use App\Domain\Geography\PlaceName;
+use App\Domain\Reports\Blurring;
 use App\Domain\Reports\EditorialStatus;
 use App\Domain\Reports\Evidence;
 use App\Domain\Reports\Report;
@@ -58,6 +59,8 @@ class ReviewInbox
                     'id' => $evidence->public_id,
                     'kind' => $evidence->kind,
                     'sha256' => $evidence->sha256,
+                    // It. 46e (R-PRIV-05): lo que se difuminó en el celular; null si se envió antes.
+                    'blurring' => Blurring::presentOf($evidence),
                 ])->all(),
                 'seal' => $report->seal->only(['merkle_root', 'tx_hash', 'ledger']),
                 'location' => $this->location($report),

@@ -17,6 +17,7 @@ criterios_aceptacion:
     - "Código equivocado o vencido: 'El código no es válido o ya venció. Pida uno nuevo.'; 5 intentos fallidos lo anulan"
     - "Más de 3 informes del mismo correo en un día, o 2 de la misma obra: 429 con el motivo"
     - "Una foto con metadatos, de otro formato o de más de 10 MB se rechaza con el motivo"
+    - "(It. 46e, R-PRIV-05) La foto opcional pasa por la misma revisión que la del veedor: los rostros se difuminan en el celular antes de enviarla"
   requisitos_ux:
     - "Dos pasos en la misma obra: el correo, y después el código y el mensaje; botones de 44 px y letra de 16 px"
   casos_edge:

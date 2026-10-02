@@ -2,7 +2,7 @@
 // Gobierna la organización que dio de alta el flujo 1-alta, que corre antes.
 import { expect, test } from '@playwright/test';
 import { fileURLToPath } from 'node:url';
-import { CENTRAL, ORG, PEOPLE, latestLinkTo, logIn, logOut } from './support.js';
+import { CENTRAL, ORG, PEOPLE, latestLinkTo, logIn, logOut, attachPhoto } from './support.js';
 
 const PHOTO = fileURLToPath(new URL('../../fixtures/evidence/foto.jpg', import.meta.url));
 const E2E_ORG = 'Veeduría de Pruebas E2E';
@@ -158,7 +158,7 @@ test('V7: crea un reporte en nombre de una organización que lo autorizó (it. 4
     await page.locator('[data-test="contract-result"]').first().click();
     await expect(page.getByText(/Precisión del GPS/)).toBeVisible();
     await page.getByLabel('Avance').check();
-    await page.locator('input[type="file"]').first().setInputFiles(PHOTO);
+    await attachPhoto(page, PHOTO);
     await page.getByRole('button', { name: 'Enviar Reporte' }).click();
     await expect(page.getByRole('status')).toContainText(`Reporte recibido en nombre de ${E2E_ORG}.`);
     await logOut(page);

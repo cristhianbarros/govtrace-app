@@ -33,6 +33,12 @@ const anchored = computed(() => location.value.anchored_worksite === true && loc
 const distance = computed(() =>
     !anchored.value && Number.isFinite(location.value.distance_meters) ? new Intl.NumberFormat('es-CO').format(location.value.distance_meters) : null,
 );
+// It. 46e (R-PRIV-05): lo que se difuminó en el celular, foto por foto; null si se envió antes.
+const blurred = computed(() => props.evidence.files.map((file) => file.blurring).filter(Boolean));
+const blurredZones = computed(() => blurred.value.reduce((total, blurring) => total + blurring.faces + blurring.manual, 0));
+const dismissedBlurs = computed(() => blurred.value.reduce((total, blurring) => total + blurring.dismissed, 0));
+const zonesLabel = computed(() => (blurredZones.value === 0 ? 'Sin zonas difuminadas en el celular' : `${blurredZones.value} ${blurredZones.value === 1 ? 'zona difuminada' : 'zonas difuminadas'} en el celular`));
+
 const correctHref = computed(() => `/admin/worksites?corregir=${props.evidence.worksite_id}`);
 
 const withReason = {
@@ -86,6 +92,10 @@ async function decide(decision) {
             </span>
         </div>
 
+        <p v-if="blurred.length" data-test="blurring" class="text-base text-slate-700">{{ zonesLabel }}</p>
+        <p v-if="dismissedBlurs > 0" data-test="dismissed-blur" class="rounded-lg bg-amber-50 p-2 text-base font-semibold text-amber-900">
+            ⚠ Quien la envió quitó {{ dismissedBlurs }} {{ dismissedBlurs === 1 ? 'difuminado' : 'difuminados' }} que el detector propuso: revise que no se vea un rostro.
+        </p>
         <div class="grid grid-cols-2 gap-2 md:grid-cols-3">
             <template v-for="file in evidence.files" :key="file.id">
                 <img

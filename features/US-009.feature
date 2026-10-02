@@ -63,11 +63,50 @@ Característica: Adjuntar fotos o PDF con privacidad y hash en el teléfono
     Entonces el PDF que se sube no conserva autor, software ni fechas
     Y el SHA-256 se calcula sobre el PDF ya limpio
 
-  @complexity:low @edge
-  Escenario: Las fotos no se difuminan
-    Cuando adjunto una foto donde se ven rostros y la placa de un vehículo
-    Entonces la foto se sube sin difuminar
-    Y queda a decisión del Administrador de Organización al revisarla
+  # It. 46e (R-PRIV-05 reescrita): los rostros se difuminan en el celular, antes de la huella.
+  @complexity:high
+  Escenario: Los rostros de una foto se difuminan en el celular antes de calcular su huella
+    Cuando adjunto una foto donde se ve el rostro de una persona
+    Entonces la app me dice que encontró 1 rostro y que lo difuminó
+    Y la foto que se envía tiene ese rostro difuminado
+    Y el SHA-256 se calcula sobre la foto ya difuminada
+
+  @complexity:low
+  Escenario: Una foto sin rostros se envía sin difuminar nada
+    Cuando adjunto una foto de la obra donde no se ve a nadie
+    Entonces la app me dice que no encontró rostros
+    Y me invita a difuminar a mano una persona o una placa, si la ve
+
+  @complexity:medium
+  Escenario: Difumino a mano lo que el detector no vio
+    Dado que adjunté una foto donde se ve una placa de un vehículo
+    Cuando toco la foto sobre la placa
+    Entonces esa zona queda difuminada en la foto que se envía
+
+  @complexity:medium @edge
+  Escenario: Quito un recuadro que no es un rostro, y la Bandeja lo marca
+    Dado que el detector propuso un rostro donde no lo hay
+    Cuando marco "No es un rostro"
+    Entonces esa zona no se difumina
+    Y el Administrador de Organización ve en la Bandeja que quité un difuminado propuesto
+
+  @complexity:medium @edge
+  Escenario: Si el detector no carga, la foto se revisa a mano
+    Dado que el detector de rostros no pudo cargar en el teléfono
+    Cuando adjunto una foto
+    Entonces la app me pide revisar la foto y difuminar a mano a las personas que se vean
+    Y puedo enviar el reporte
+
+  @complexity:low
+  Escenario: La Bandeja dice cuántas zonas se difuminaron
+    Dado que el veedor envió una foto con 2 rostros difuminados y 1 zona difuminada a mano
+    Cuando el Administrador de Organización la revisa en la Bandeja
+    Entonces ve "3 zonas difuminadas en el celular"
+
+  @complexity:low
+  Escenario: El servidor guarda la foto tal como llegó del celular, ya difuminada
+    Cuando el servidor recibe la foto
+    Entonces la guarda byte a byte, sin volver a codificarla
 
   @complexity:medium @negative
   Escenario: El hash del servidor no coincide con el del teléfono

@@ -1,7 +1,8 @@
 // US-009, R-PRIV-06: cada foto se optimiza en el teléfono antes de subirla:
 // JPEG, lado mayor de 1920 px, calidad 80 %, y sin EXIF (ni coordenadas, ni
-// modelo del teléfono, ni fecha). No se difumina nada (R-PRIV-05): solo se
-// escala. Lo que sale de aquí es lo que se hashea, se sube y se sella.
+// modelo del teléfono, ni fecha). It. 46e (R-PRIV-05): entre el escalado y el
+// JPEG, los rostros se difuminan (prepare.js). Lo que sale de aquí es lo que se
+// hashea, se sube y se sella.
 
 export const MAX_PHOTO_SIDE = 1920;
 export const JPEG_QUALITY = 0.8;
@@ -91,6 +92,8 @@ function encodeJpeg(image, width, height, quality) {
     });
 }
 
+export const photoName = (file) => `${file.name.replace(/\.[^.]*$/, '') || 'foto'}.jpg`;
+
 /** @returns {Promise<File>} la foto lista para subir */
 export async function optimizePhoto(file, { decode = decodeImage, encode = encodeJpeg } = {}) {
     const { image, width, height } = await decode(file);
@@ -98,8 +101,23 @@ export async function optimizePhoto(file, { decode = decodeImage, encode = encod
     const jpeg = await encode(image, size.width, size.height, JPEG_QUALITY);
     image.close?.();
 
-    const bytes = stripJpegMetadata(new Uint8Array(await jpeg.arrayBuffer()));
-    const name = `${file.name.replace(/\.[^.]*$/, '') || 'foto'}.jpg`;
+    return new File([stripJpegMetadata(new Uint8Array(await jpeg.arrayBuffer()))], photoName(file), { type: 'image/jpeg' });
+}
 
-    return new File([bytes], name, { type: 'image/jpeg' });
+/** It. 46e: la foto escalada en un canvas, para revisar sus rostros y difuminarlos antes del JPEG. */
+export async function photoCanvas(file, { decode = decodeImage, createCanvas = () => document.createElement('canvas') } = {}) {
+    const { image, width, height } = await decode(file);
+    const size = scaledSize(width, height);
+    const canvas = createCanvas();
+    canvas.width = size.width;
+    canvas.height = size.height;
+    canvas.getContext('2d').drawImage(image, 0, 0, size.width, size.height);
+    image.close?.();
+    return canvas;
+}
+
+/** It. 46e: el canvas, ya difuminado, en JPEG y sin metadatos. */
+export async function photoFile(canvas, name, { encode = encodeJpeg } = {}) {
+    const jpeg = await encode(canvas, canvas.width, canvas.height, JPEG_QUALITY);
+    return new File([stripJpegMetadata(new Uint8Array(await jpeg.arrayBuffer()))], name, { type: 'image/jpeg' });
 }

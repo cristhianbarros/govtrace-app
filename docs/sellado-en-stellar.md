@@ -36,7 +36,8 @@ El código está en tres lugares:
 ```
  Celular del veedor            Servidor de GovTrace                     Red Stellar
  ──────────────────            ────────────────────                     ───────────
- 1. Toma las fotos
+ 1. Toma las fotos y
+    difumina los rostros
  2. Calcula la huella
     de cada una ───────────▶   3. Comprueba las huellas
                                4. Arma el árbol de Merkle del reporte:

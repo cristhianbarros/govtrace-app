@@ -9,6 +9,7 @@ use App\Domain\Contracts\ContractArchive;
 use App\Domain\Organization\User;
 use App\Domain\Organization\WatchedTerritories;
 use App\Domain\Reports\Evidence;
+use App\Domain\Reports\EvidenceKind;
 use App\Domain\Reports\EvidenceSet;
 use App\Domain\Reports\EvidenceUpload;
 use App\Domain\Reports\Exceptions\ReportValidationException;
@@ -105,8 +106,9 @@ class CreateReport
     }
 
     /**
-     * Byte for byte, as the phone sent them (R-PRIV-05: nothing is blurred
-     * or re-encoded — what's stored is what gets sealed). If anything fails,
+     * Byte for byte, as the phone sent them (R-PRIV-05: the faces were
+     * blurred on the phone, before the hash; nothing is re-encoded here —
+     * what's stored is what gets sealed). If anything fails,
      * the objects already written are removed and the transaction rolls
      * the report back.
      */
@@ -133,6 +135,12 @@ class CreateReport
                     'size_bytes' => $upload->sizeBytes,
                     'sha256' => $upload->serverSha256(),
                     'storage_path' => $path,
+                    // It. 46e: lo que el celular difuminó; solo en una foto.
+                    ...($upload->kind() === EvidenceKind::Photo && $upload->blurring !== null ? [
+                        'blurred_faces' => $upload->blurring->faces,
+                        'dismissed_faces' => $upload->blurring->dismissed,
+                        'blurred_by_hand' => $upload->blurring->manual,
+                    ] : []),
                 ]);
             }
         } catch (Throwable $e) {

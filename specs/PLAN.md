@@ -2502,7 +2502,7 @@ El usuario pidió seguir con lo que no espera a nadie: la deuda técnica y los h
 
 **46 — El gobierno de la plataforma y la defensa en profundidad.** Tres preguntas del usuario el 2026-10-02, mientras probaba la 45f. Aprobó el orden: "Sí, agrégalas al plan en ese orden."
 
-**Orden aprobado por el usuario el 2026-10-02:** 46a (✅), 46b (✅), 46c (✅) y 46d (✅); después, 46e.
+**Orden aprobado por el usuario el 2026-10-02:** 46a (✅), 46b (✅), 46c (✅), 46d (✅) y 46e (✅).
 
 **46a — Los Super Administradores: más de uno, y nunca ninguno** (historia nueva, US-063-USR). El usuario: "podría darse el caso que el sistema quede sin super administrador y que la aplicación tenga cierta dependencia de eso."
 - **Hoy:**
@@ -2670,6 +2670,37 @@ El usuario pidió seguir con lo que no espera a nadie: la deuda técnica y los h
   - el detector funciona mejor a menos de 2 m; para lo demás está la herramienta manual.
 - **Done-when:** los escenarios de la enmienda de `features/US-009.feature` y `features/US-059-LEG.feature` en verde; el difuminado probado con imágenes con y sin rostros, en Vitest y en un navegador real (`make e2e`); `make ux-check` sin retroceso.
 - **Modelo:** Opus xhigh. Toca la foto antes de su huella (la integridad de lo sellado) y datos personales sensibles.
+
+✅ **46e cumplida (2026-10-02).** R-PRIV-05 reescrita; enmiendas de US-009 y US-059-LEG.
+- **El detector:** BlazeFace (Google, Apache-2.0) en TensorFlow.js con el backend de CPU, en lugar de MediaPipe.
+  - Es el mismo tipo de modelo. MediaPipe necesitaba un WebAssembly de 11,7 MB (3,4 MB comprimido); este pesa unos 0,15 MB de código comprimido más 0,4 MB de modelo.
+  - Para un veedor con datos móviles es la diferencia entre poder y no poder.
+  - El modelo vive en el repositorio (`resources/js/lib/evidence/blazeface/`, con su licencia). Vite le da un nombre con huella, así que el Service Worker lo guarda; "Nuevo Reporte" lo descarga al abrir, con señal.
+  - El código de TF.js va en partes que se cargan solo al revisar una foto.
+- **Dónde mira:** la foto entera y sus cuatro cuartos, que se solapan, para ver rostros más pequeños. En los cuartos solo cuentan los rostros pequeños: en *La Gioconda*, un cuarto confundía las manos con un rostro.
+  - Cada rostro se agranda a la cabeza entera.
+  - El mismo rostro visto dos veces se junta en uno.
+- **El difuminado** (`lib/evidence/blur.js`): cada zona se encoge a 6 píxeles y se estira de vuelta. Funciona en todo navegador, sin el filtro de canvas, y no se puede deshacer.
+- **La revisión** (`PhotoReview.vue`): la foto ya difuminada y lo que encontró el detector, en una frase.
+  - Tocar la foto difumina otra zona, y tocarla otra vez la quita.
+  - Nueve botones difuminan sin tocar la foto, para quien usa el teclado.
+  - "No es un rostro" quita un recuadro y avisa que la veeduría lo verá.
+  - Se revisa de a una foto; el informe ciudadano pasa por la misma revisión.
+  - Un doble toque en "Usar esta foto" no la adjunta dos veces ni se salta la siguiente (lo encontré al revisar el código).
+- **Lo que llega al servidor:** la foto, byte a byte, como siempre, y `blurs`, un JSON por archivo: cuántos rostros, cuántos se quitaron y cuántas zonas a mano.
+  - Viaja en los campos del reporte, así que pasa igual por la bandeja de salida sin señal y por el reporte del Super Administrador.
+  - Se guarda en `evidences` (`blurred_faces`, `dismissed_faces`, `blurred_by_hand`).
+  - Una app anterior que no lo envía se recibe igual. Uno que no cuadra con los archivos se rechaza (422).
+- **La Bandeja:** "3 zonas difuminadas en el celular", y "⚠ Quien la envió quitó 1 difuminado que el detector propuso: revise que no se vea un rostro."
+- **La CSP:** `'wasm-unsafe-eval'` en `script-src`. TF.js intenta compilar un WebAssembly mínimo al cargar (long.js, para enteros de 64 bits). La directiva permite solo eso, no `eval`; lo encontró la prueba de la CSP en el navegador.
+- **Los archivos de prueba:** *La Gioconda* (dominio público) y el paisaje de su fondo. Se descartó el retrato de prueba de MediaPipe, una persona real.
+- ❓ **Decisiones por defecto, tal como estaban:** un rostro detectado no se envía sin difuminar, salvo con "No es un rostro" (que la Bandeja marca); el difuminado es definitivo. Además: el informe ciudadano no guarda los conteos.
+- **Prueba:**
+  - Vitest: el detector con un modelo doble, el difuminado, el borrador y la foto final (la huella es la de la difuminada), la revisión, el selector, el formulario ciudadano, la Bandeja y la descarga del detector al abrir;
+  - Pest: `BlurredFacesTest` (los conteos, una app anterior, un PDF, lo que no cuadra) y la CSP;
+  - `make e2e`: 53 de 53. En un Chromium de verdad, el veedor adjunta *La Gioconda*, ve "Encontramos 1 rostro", difumina una zona a mano y envía. Cuando el worker la sella, la Administradora ve "2 zonas difuminadas", y en el archivo guardado el detalle del rostro baja a menos del 40 % (el resto queda igual). La CSP, sin violaciones con el detector cargado;
+  - `make ux-check`: la revisión nueva, sin violaciones de axe ni letra pequeña; la línea base, reescrita;
+  - `make trace-check`: 383 de 383.
 
 ## Pivote a Stellar (2026-09-28)
 

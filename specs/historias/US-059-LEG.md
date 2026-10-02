@@ -26,6 +26,7 @@
 - **Límites:** 3 informes por correo al día y 1 por obra; códigos por correo y por IP; 5 intentos por código; 10 minutos de vigencia.
 - **La foto** es opcional, JPEG o PNG hasta 10 MB y sin metadatos. El navegador la limpia como la del veedor.
 - **La autorización** del tratamiento de datos (Ley 1581, art. 9) se da al pedir el código, con la misma política.
+- **It. 46e (R-PRIV-05):** la foto opcional pasa por la misma revisión que la del veedor: los rostros se difuminan en el celular antes de enviarla.
 
 ## Criterios de aceptación
 `specs/criterios/US-059-LEG.yaml` · `features/US-059-LEG.feature`

@@ -4,12 +4,24 @@
 import { flushPromises, mount } from '@vue/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import EvidencePicker from './EvidencePicker.vue';
-import { prepareEvidence } from '@/lib/evidence/prepare.js';
+import PhotoReview from './PhotoReview.vue';
+import { draftPhoto, finishPhoto, prepareEvidence } from '@/lib/evidence/prepare.js';
 
 vi.mock('@/lib/evidence/prepare.js', async (importOriginal) => ({
     ...(await importOriginal()),
     prepareEvidence: vi.fn(),
+    draftPhoto: vi.fn(),
+    finishPhoto: vi.fn(),
 }));
+vi.mock('@/lib/evidence/blur.js', async (importOriginal) => ({ ...(await importOriginal()), renderPreview: vi.fn() }));
+
+/** It. 46e: each photo is reviewed before it is attached; this one is used as the detector left it. */
+async function useEachPhoto(wrapper) {
+    while (wrapper.findComponent(PhotoReview).exists()) {
+        wrapper.findComponent(PhotoReview).vm.$emit('use', { dismissed: [], manual: [] });
+        await flushPromises();
+    }
+}
 
 const photo = (n) => new File([`foto ${n}`], `foto${n}.heic`, { type: 'image/heic' });
 const pdf = () => new File(['%PDF'], 'acta.pdf', { type: 'application/pdf' });
@@ -29,6 +41,15 @@ async function choose(wrapper, files) {
 }
 
 beforeEach(() => {
+    draftPhoto.mockReset();
+    finishPhoto.mockReset();
+    draftPhoto.mockImplementation(async (file) => ({ name: file.name.replace(/\.heic$/, '.jpg'), canvas: {}, faces: [], detector: 'ok' }));
+    finishPhoto.mockImplementation(async (draft) => ({
+        kind: 'photo',
+        file: new File([draft.name], draft.name, { type: 'image/jpeg' }),
+        sha256: 'ab'.repeat(32),
+        blurs: { faces: 0, dismissed: 0, manual: 0 },
+    }));
     prepareEvidence.mockReset();
     prepareEvidence.mockImplementation(async (file) => ({
         kind: file.type === 'application/pdf' ? 'pdf' : 'photo',
@@ -42,16 +63,19 @@ describe('EvidencePicker', () => {
         const wrapper = mountPicker();
 
         await choose(wrapper, [1, 2, 3, 4, 5, 6].map(photo));
+        await useEachPhoto(wrapper);
 
         expect(wrapper.props('modelValue')).toHaveLength(5);
         expect(wrapper.props('modelValue')[0]).toMatchObject({ kind: 'photo', sha256: 'ab'.repeat(32) });
-        expect(prepareEvidence).toHaveBeenCalledTimes(5);
+        expect(draftPhoto).toHaveBeenCalledTimes(5);
+        expect(finishPhoto).toHaveBeenCalledTimes(5);
         expect(wrapper.text()).toContain('Un reporte admite máximo 5 fotos.');
     });
 
     it('La app no permite mezclar fotos y PDF: after 2 photos, a PDF is not added', async () => {
         const wrapper = mountPicker();
         await choose(wrapper, [photo(1), photo(2)]);
+        await useEachPhoto(wrapper);
 
         expect(wrapper.get('input[type="file"]').attributes('accept')).toBe('image/*');
 
@@ -78,6 +102,7 @@ describe('EvidencePicker', () => {
 
         expect(wrapper.props('modelValue')).toEqual([]);
         expect(prepareEvidence).not.toHaveBeenCalled();
+        expect(draftPhoto).not.toHaveBeenCalled();
         expect(wrapper.text()).toContain('Solo se aceptan fotos en JPEG o un documento PDF; los videos y otros archivos no están permitidos.');
     });
 
@@ -94,6 +119,7 @@ describe('EvidencePicker', () => {
     it('lets the veedor remove an attached file', async () => {
         const wrapper = mountPicker();
         await choose(wrapper, [photo(1), photo(2)]);
+        await useEachPhoto(wrapper);
 
         await wrapper.findAll('[data-test="remove-evidence"]')[0].trigger('click');
 
@@ -113,3 +139,67 @@ describe('Tomar la foto o elegirla (it. 40d)', () => {
         expect(wrapper.get('input[type="file"]').attributes('capture')).toBeUndefined();
     });
 });
+
+// It. 46e — R-PRIV-05 reescrita: los rostros se difuminan en el celular, antes de la huella.
+describe('Los rostros, difuminados antes de adjuntar (it. 46e)', () => {
+    it('warns, next to the buttons, that the faces are blurred before sending', () => {
+        const wrapper = mountPicker();
+
+        expect(wrapper.get('[data-test="faces-warning"]').text()).toBe('Si en la foto aparecen personas, sobre todo niños, sus rostros se difuminan antes de enviarla.');
+    });
+
+    it('attaches each photo only after its review, one at a time, with what was blurred', async () => {
+        finishPhoto.mockImplementation(async (draft, review) => ({
+            kind: 'photo',
+            file: new File([draft.name], draft.name, { type: 'image/jpeg' }),
+            sha256: 'ab'.repeat(32),
+            blurs: { faces: 1, dismissed: review.dismissed.length, manual: review.manual.length },
+        }));
+        const wrapper = mountPicker();
+
+        await choose(wrapper, [photo(1), photo(2)]);
+        expect(wrapper.props('modelValue')).toEqual([]);
+        expect(wrapper.findComponent(PhotoReview).props()).toMatchObject({ position: 1, total: 2 });
+
+        wrapper.findComponent(PhotoReview).vm.$emit('use', { dismissed: [0], manual: [] });
+        await flushPromises();
+        expect(wrapper.findComponent(PhotoReview).props()).toMatchObject({ position: 2, total: 2 });
+        expect(finishPhoto).toHaveBeenCalledWith(expect.objectContaining({ name: 'foto1.jpg' }), { dismissed: [0], manual: [] });
+
+        wrapper.findComponent(PhotoReview).vm.$emit('use', { dismissed: [], manual: [] });
+        await flushPromises();
+        expect(wrapper.findComponent(PhotoReview).exists()).toBe(false);
+        expect(wrapper.props('modelValue').map((evidence) => evidence.blurs)).toEqual([
+            { faces: 1, dismissed: 1, manual: 0 },
+            { faces: 1, dismissed: 0, manual: 0 },
+        ]);
+    });
+
+    it('does not attach a photo the veedor chose not to use', async () => {
+        const wrapper = mountPicker();
+
+        await choose(wrapper, [photo(1)]);
+        wrapper.findComponent(PhotoReview).vm.$emit('discard');
+        await flushPromises();
+
+        expect(wrapper.props('modelValue')).toEqual([]);
+        expect(finishPhoto).not.toHaveBeenCalled();
+    });
+
+    it('attaches a photo once, even with a double tap on "Usar esta foto", and still reviews the next one', async () => {
+        let finish;
+        finishPhoto.mockImplementation((draft) => new Promise((resolve) => (finish = () => resolve({ kind: 'photo', file: new File([draft.name], draft.name), sha256: 'ab'.repeat(32), blurs: null }))));
+        const wrapper = mountPicker();
+        await choose(wrapper, [photo(1), photo(2)]);
+
+        wrapper.findComponent(PhotoReview).vm.$emit('use', { dismissed: [], manual: [] });
+        wrapper.findComponent(PhotoReview).vm.$emit('use', { dismissed: [], manual: [] });
+        finish();
+        await flushPromises();
+
+        expect(finishPhoto).toHaveBeenCalledTimes(1);
+        expect(wrapper.props('modelValue')).toHaveLength(1);
+        expect(wrapper.findComponent(PhotoReview).props()).toMatchObject({ position: 2, total: 2 });
+    });
+});
+

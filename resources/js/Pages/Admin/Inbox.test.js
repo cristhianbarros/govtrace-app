@@ -286,3 +286,28 @@ describe('La ubicación de cada evidencia (it. 45f)', () => {
         expect(wrapper.find('[data-test="anchored-reject-warning"]').exists()).toBe(false);
     });
 });
+
+// It. 46e — R-PRIV-05 reescrita: lo que el veedor difuminó en el celular.
+describe('Lo difuminado en el celular (it. 46e)', () => {
+    const photoWith = (blurring) => evidence({ files: [{ id: 'f1', kind: 'photo', sha256: 'ab'.repeat(32), blurring }] });
+
+    it('La Bandeja dice cuántas zonas se difuminaron', async () => {
+        const wrapper = await openInbox([photoWith({ faces: 2, dismissed: 0, manual: 1 })]);
+
+        expect(wrapper.get('[data-test="blurring"]').text()).toBe('3 zonas difuminadas en el celular');
+        expect(wrapper.find('[data-test="dismissed-blur"]').exists()).toBe(false);
+    });
+
+    it('Quito un recuadro que no es un rostro, y la Bandeja lo marca: the Administrador sees that a proposed blur was removed', async () => {
+        const wrapper = await openInbox([photoWith({ faces: 0, dismissed: 1, manual: 0 })]);
+
+        expect(wrapper.get('[data-test="blurring"]').text()).toBe('Sin zonas difuminadas en el celular');
+        expect(wrapper.get('[data-test="dismissed-blur"]').text()).toBe('⚠ Quien la envió quitó 1 difuminado que el detector propuso: revise que no se vea un rostro.');
+    });
+
+    it('says nothing of the blurring of a photo sent before it existed', async () => {
+        const wrapper = await openInbox([photoWith(null)]);
+
+        expect(wrapper.find('[data-test="blurring"]').exists()).toBe(false);
+    });
+});

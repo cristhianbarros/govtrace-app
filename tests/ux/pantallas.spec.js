@@ -15,7 +15,7 @@ const AXE = require.resolve('axe-core/axe.min.js');
 const SHOTS = fileURLToPath(new URL('../../storage/framework/testing/ux/shots/', import.meta.url));
 const MEASURES = fileURLToPath(new URL('../../storage/framework/testing/ux/medidas.json', import.meta.url));
 const BASELINE = fileURLToPath(new URL('./baseline.json', import.meta.url));
-const PHOTO = fileURLToPath(new URL('../fixtures/evidence/foto.jpg', import.meta.url));
+const FACE = fileURLToPath(new URL('../fixtures/evidence/rostro-pintura.jpg', import.meta.url)); // it. 46e
 
 // Cuánto puede empeorar una pantalla antes de fallar, en puntos porcentuales:
 // un nombre más largo o una fila más no es una regresión.
@@ -127,7 +127,11 @@ for (const [viewport, options] of Object.entries(VIEWPORTS)) {
 
             await page.getByLabel('Buscar Obra').fill('Parque de pruebas');
             await page.locator('[data-test="contract-result"]').first().click();
-            await page.locator('input[type="file"]').first().setInputFiles(PHOTO);
+            // It. 46e: la revisión de la foto, con un rostro ya difuminado, y el reporte armado.
+            await page.locator('input[type="file"]').first().setInputFiles(FACE);
+            await page.locator('[data-test="faces-found"]').waitFor({ timeout: 30_000 });
+            await visit(page, viewport, 'veedor-revisar-foto');
+            await page.getByRole('button', { name: 'Usar esta foto', exact: true }).click();
             await visit(page, viewport, 'veedor-reporte-armado');
 
             await visit(page, viewport, 'veedor-mis-reportes', `${ORG}/my-reports`);

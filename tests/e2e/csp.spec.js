@@ -4,9 +4,9 @@
 // ninguna pantalla pública ni del veedor provoca una sola violación.
 import { fileURLToPath } from 'node:url';
 import { expect, test } from '@playwright/test';
-import { worksiteUrl } from './flujos/support.js';
+import { attachPhoto, worksiteUrl } from './flujos/support.js';
 
-const PHOTO = fileURLToPath(new URL('../fixtures/evidence/foto.jpg', import.meta.url));
+const FACE = fileURLToPath(new URL('../fixtures/evidence/rostro-pintura.jpg', import.meta.url));
 
 /** Every CSP violation of the page, from before its first script runs. */
 async function watchViolations(page) {
@@ -51,7 +51,8 @@ test('La CSP no bloquea nada en las pantallas públicas ni en las del veedor', a
     await page.getByLabel('Buscar Obra').fill('Parque de pruebas');
     await page.locator('[data-test="contract-result"]').first().click();
     await expect(page.getByText(/Precisión del GPS/)).toBeVisible();
-    await page.locator('input[type="file"]').first().setInputFiles(PHOTO);
+    // It. 46e: la foto pasa por el detector de rostros (TF.js y su modelo, de GovTrace) sin que la CSP lo bloquee.
+    await attachPhoto(page, FACE);
     await expect(page.getByRole('button', { name: 'Enviar Reporte' })).toBeVisible();
     await page.goto('/my-reports');
 

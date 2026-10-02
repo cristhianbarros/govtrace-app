@@ -87,7 +87,7 @@ El sitio tiene tres pestañas: **Obras**, **Estadísticas** y **Validar**. Al pi
 - **"¿Sabe de un problema en esta obra?":** los canales oficiales de la Contraloría General de la República (línea 199, el 01 8000 y SIPAR en línea), con lo que puede hacer cualquier ciudadano (it. 44a).
 - **"Informar a esta veeduría"** (US-059-LEG, it. 44f):
   1. El ciudadano escribe su correo, autoriza el tratamiento de sus datos y recibe un **código de 6 dígitos**. Vale 10 minutos y admite 5 intentos.
-  2. Con el código, escribe lo que vio, entre 20 y 2.000 caracteres, y una foto opcional (JPEG, hasta 10 MB, sin metadatos).
+  2. Con el código, escribe lo que vio, entre 20 y 2.000 caracteres, y una foto opcional (JPEG, hasta 10 MB, sin metadatos), que revisa antes de enviar, con los rostros ya difuminados (it. 46e).
   3. Le llega un correo con la referencia de su informe, como `7KQ3-M9XD` (it. 46c: no un número consecutivo, que decía cuántos había). La veeduría le responde desde GovTrace **sin ver su correo**, que se guarda cifrado.
   - Límites: 3 informes por correo al día, 1 por obra, y límites por conexión.
   - El informe no se sella, no se publica y no cambia el estado de la obra.
@@ -144,6 +144,7 @@ El sitio tiene tres pestañas: **Obras**, **Estadísticas** y **Validar**. Al pi
 | **2. El GPS** | Toma la ubicación al elegir la obra. Exige **50 m de precisión o mejor**, y si no la tiene ofrece "Reintentar GPS". | US-008 |
 | **3. Qué vio** | **Avance**, **Retraso** o **Abandono**, cada uno con su explicación en una línea, y un comentario opcional de hasta 500 caracteres. | US-008 |
 | **4. Los adjuntos** | **De 1 a 5 fotos, o un PDF**, de hasta 10 MB cada uno: tomar la foto o elegirla. El teléfono **les quita los metadatos** (ubicación, cámara) y calcula su **huella SHA-256** antes de enviarlas. | US-009 |
+| **5. Los rostros, difuminados** | Cada foto se revisa antes de adjuntarla: el teléfono busca los rostros y **los difumina** ("Encontramos 1 rostro y lo difuminamos."). Tocar la foto difumina otra zona (un rostro lejano, una placa); "No es un rostro" quita un recuadro equivocado, y la veeduría lo verá. La huella es la de la foto ya difuminada: el original nunca sale del teléfono. Si el detector no carga, la foto se revisa a mano. | R-PRIV-05, US-009 (it. 46e) |
 | **5. Enviar** | Junto al botón, en palabras, lo que falta ("Para enviar falta: …"). El servidor vuelve a validar todo: la **geocerca** (500 m de la obra, parámetro), la precisión, la hora de captura (marca la sospechosa) y que la huella coincida. | US-008, it. 40b |
 
 **Sin señal** (US-018):
@@ -170,7 +171,7 @@ Su panel está en el sitio de su veeduría. En el computador tiene una barra lat
 
 | Función | Qué hace |
 |---|---|
-| **Revisar** | Las evidencias **selladas y ocultas**, de una en una: de qué obra son, qué veedor las envió, la clasificación, el comentario, las fotos y la marca de hora sospechosa. La pestaña dice cuántas hay. |
+| **Revisar** | Las evidencias **selladas y ocultas**, de una en una: de qué obra son, qué veedor las envió, la clasificación, el comentario, las fotos y la marca de hora sospechosa. Cuántas zonas se difuminaron en el celular, y un aviso si el veedor quitó un difuminado que el detector propuso (it. 46e). La pestaña dice cuántas hay. |
 | **Dónde se tomó** | Cada evidencia dice a qué distancia de la obra se tomó ("Tomada a 120 m de la obra."), sin las coordenadas del veedor. La que fijó la ubicación oficial de una obra que no la tenía llega marcada, con el punto en un mapa pequeño y **Corregir ubicación**; al rechazarla, se avisa que la ubicación no cambia (it. 45f). |
 | **Publicar** | Pasa al mapa público. No hay publicación masiva. |
 | **Rechazar con motivo** | Nunca se publica; el veedor ve el motivo. |
@@ -296,7 +297,7 @@ No es un rol de la aplicación, pero es parte de operarla. Todo está en `make h
 - **Privacidad:**
   - el veedor aparece en lo público solo con un **seudónimo**;
   - la ubicación pública va **aproximada** (unos 100 m);
-  - las fotos se publican **sin metadatos**;
+  - las fotos se publican **sin metadatos** y con los **rostros difuminados** en el celular (it. 46e);
   - en la red pública solo va la huella de cada evidencia: ningún dato personal.
 - **Cada veeduría es independiente:** una base de datos por organización. El Super Administrador no reporta en una sin su autorización.
 - **Todo cambio importante va al log de auditoría,** que no se puede editar.
