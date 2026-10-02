@@ -30,7 +30,7 @@ Al 2026-10-02. Empezó sobre `77e6030` (iteración 39) y se actualizó en las it
   1. **46a:** más de un Super Administrador desde el panel, sin quedar nunca en cero;
   2. **46b:** la validación asistida de una veeduría con los datos abiertos del RUES, y el PDF de su resolución;
   3. **46c:** identificadores públicos (ULID) en las URL, sin tocar las llaves numéricas selladas en Stellar.
-- **Pendiente, sin iteración todavía:** `/reset-password/{token}` lleva el token en la ruta y sigue en los registros (un solo uso, 60 minutos).
+- ~~**Pendiente:** `/reset-password/{token}` lleva el token en la ruta y sigue en los registros.~~ **Resuelto en la 45g**, junto con el token de las invitaciones que volvía en el Referer.
 
 ## Dónde quedó (2026-10-01)
 

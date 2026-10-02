@@ -70,6 +70,23 @@ it('leaves the public RPC out of the policy when there is none', function () {
     expect(cspOf($this->withoutVite()->get('http://govtrace.localhost/login'))['connect-src'])->toBe("'self'");
 });
 
+// It. 45g: una página con un token en su URL (la invitación, el enlace para restablecer la contraseña)
+// no lo repite en el Referer de lo que carga ni del formulario: el Referer queda en los registros de acceso.
+it('sends no Referer from the pages with a token in their URL, and only the origin to other sites from the rest', function () {
+    (new RegisterOrganization)->handle('900123456-8', 'Veeduría Ciudadana Santa Marta', 'veeduria-smr');
+
+    foreach ([
+        'http://govtrace.localhost/reset-password/token-de-prueba?email=ana%40correo.co',
+        'http://govtrace.localhost/set-password/1?token=token-de-prueba',
+        'http://veeduria-smr.govtrace.localhost/reset-password/token-de-prueba?email=ana%40correo.co',
+        'http://veeduria-smr.govtrace.localhost/set-password/1?token=token-de-prueba',
+    ] as $url) {
+        expect($this->withoutVite()->get($url)->headers->get('Referrer-Policy'))->toBe('no-referrer');
+    }
+
+    expect($this->withoutVite()->get('http://govtrace.localhost/login')->headers->get('Referrer-Policy'))->toBe('strict-origin-when-cross-origin');
+});
+
 it('allows the camera and the location only for the site itself', function () {
     expect($this->withoutVite()->get('http://govtrace.localhost/login')->headers->get('Permissions-Policy'))
         ->toBe('camera=(self), geolocation=(self), microphone=(), payment=(), usb=()');

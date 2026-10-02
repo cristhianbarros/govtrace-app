@@ -15,8 +15,19 @@ server_tokens off;
 # parámetros ($uri y no $request ni $request_uri): si una URL llevara la
 # ubicación del veedor u otro dato, no quedaría anotada con la hora y la IP.
 # Cada server lo declara: un access_log en el http de la imagen se sumaría.
-log_format govtrace '$remote_addr - $remote_user [$time_local] "$request_method $uri $server_protocol" '
-                    '$status $body_bytes_sent "$http_referer" "$http_user_agent"';
+# It. 45g: tampoco los tokens. El del enlace para restablecer la contraseña va en
+# la ruta, y el de una invitación puede volver en el Referer de lo que su página
+# carga: los dos se enmascaran.
+map $uri $govtrace_log_uri {
+    ~^/reset-password/.  "/reset-password/[token]";
+    default              $uri;
+}
+map $http_referer $govtrace_log_referer {
+    ~/(set|reset)-password/  "[enlace con token]";
+    default                  $http_referer;
+}
+log_format govtrace '$remote_addr - $remote_user [$time_local] "$request_method $govtrace_log_uri $server_protocol" '
+                    '$status $body_bytes_sent "$govtrace_log_referer" "$http_user_agent"';
 
 # HTTP: solo lleva a HTTPS, con el mismo host (el subdominio de la organización).
 server {

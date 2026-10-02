@@ -2476,13 +2476,29 @@ El usuario pidió seguir con lo que no espera a nadie: la deuda técnica y los h
   - la distancia es la que midió el servidor al recibir el reporte, contra la ubicación oficial de ese momento, no contra la actual;
   - los reportes anteriores a la 45f no traen la marca ni la distancia: no se reconstruyen;
   - rechazar el reporte que fijó la ubicación no la borra; la corrección es explícita, en Obras.
-- **Pendiente, no es de esta iteración:** las rutas con un token en la ruta (`/reset-password/{token}`) siguen en los registros, porque `$uri` y `%U` guardan la ruta. Son de un solo uso y vencen en 60 minutos.
+- **Pendiente, no es de esta iteración:** las rutas con un token en la ruta (`/reset-password/{token}`) siguen en los registros, porque `$uri` y `%U` guardan la ruta. Son de un solo uso y vencen en 60 minutos. → **Resuelto en la 45g.**
 - **Prueba:**
   - Pest: 12 casos nuevos (obras cercanas por POST y el 405, lo que se guarda al recibir y que no se puede cambiar, la Bandeja con la marca, la corrección posterior, la distancia sin coordenadas, el rechazo que no cambia la ubicación, y los formatos de nginx y Apache). El de rechazar ya pasaba: el servidor nunca cambió la ubicación al rechazar; lo nuevo de ese escenario es el aviso de la pantalla.
   - Vitest: 12 casos nuevos (el API por POST y la guarda de los GET, la marca, la corrección, la distancia, el reporte antiguo, el aviso al rechazar, el enlace a Obras, el mapa de solo lectura y el aislamiento). Los que prueban lo nuevo se vieron en rojo antes de implementar; tres que prueban lo que no debe aparecer (sin dato, sin aviso, sin enlace a una obra ajena) ya pasaban.
   - `make e2e`: 51 de 51; la Bandeja dice la distancia.
   - `make ux-check`: sin retroceso.
   - `make trace-check`: 343 de 343.
+
+**45g — Los tokens fuera de los registros, y el respaldo que espera a la base.** El usuario, el 2026-10-02: "Si terminas antes de lo esperado, mejora algo que tengas por mejorar y me lo resumes para revisarlo."
+
+✅ **45g cumplida (2026-10-02).**
+- **Hallazgo 1:** el token de una invitación (`/set-password/{id}?token=…`) seguía en los registros de acceso. Desde la 45f, la línea de la petición ya no guarda los parámetros, pero cada CSS y JS que carga esa página lo repetía en el `Referer`, en nginx y en Apache. El de restablecer la contraseña va en la ruta (`/reset-password/{token}`), así que quedaba completo. Los dos valen como una llave mientras no vencen (48 horas y 60 minutos).
+- **Qué cambia:**
+  - **las páginas con un token en su URL** responden `Referrer-Policy: no-referrer` (`SecurityHeaders`), y las demás `strict-origin-when-cross-origin`. Apache ya no impone la suya: queda `Header setifempty`, sin `always`, para lo que sirve solo; con `always`, la respuesta salía con dos cabeceras;
+  - **nginx** (desarrollo y producción) enmascara `/reset-password/<token>` como `/reset-password/[token]` y un Referer de esas páginas como `[enlace con token]` (dos `map`);
+  - **Apache** anota esas peticiones con un formato propio, sin su ruta ni su Referer (`govtrace_private`).
+  - Comprobado contra el stack de desarrollo: el token ya no aparece en ninguno de los dos registros, y cada respuesta lleva una sola `Referrer-Policy`.
+- **Hallazgo 2:** después de reiniciar el equipo, Docker arranca todos los servicios a la vez, sin el orden de `depends_on`. La copia de respaldo al arrancar falló porque PostgreSQL no estaba lista, y el servicio quedó "unhealthy" hasta la copia de la hora siguiente. `make backup-check` tampoco arrancaba.
+- **Qué cambia:** la copia al arrancar se reintenta 10 veces cada 30 s (`BACKUP_STARTUP_RETRIES`, `BACKUP_STARTUP_RETRY_SECONDS`) antes de dejarla para la próxima hora. Comprobado deteniendo PostgreSQL y reiniciando el respaldo: dos intentos fallidos, la copia al volver la base y el servicio sano.
+- **Prueba:**
+  - Pest: la política de Referer en las páginas con token, en el dominio central y en el de una organización, y el enmascarado en nginx y Apache (`SecurityHeadersTest`, `AccessLogsTest`), vistos en rojo antes; las suites de infraestructura e ingreso, 118 de 118;
+  - `make backup-check`: la sección nueva (un `backup.sh` de mentira falla dos veces y la tercera copia se hace sin esperar a la hora), vista en rojo con el entrypoint anterior; 16 de 16.
+- **Modelo:** Opus. Seguridad de los enlaces de acceso y la continuidad de los respaldos.
 
 **46 — El gobierno de la plataforma y la defensa en profundidad.** Tres preguntas del usuario el 2026-10-02, mientras probaba la 45f. Aprobó el orden: "Sí, agrégalas al plan en ese orden."
 

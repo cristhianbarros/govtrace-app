@@ -19,6 +19,11 @@ use Symfony\Component\HttpFoundation\Response;
  * Por HTTPS, además, HSTS (un año, con los subdominios: cada organización es
  * uno) y upgrade-insecure-requests. Una respuesta que ya trae su CSP (el logo,
  * más estricta) la conserva.
+ *
+ * It. 45g: el Referer. Una página con un token en su URL (la invitación, el
+ * enlace para restablecer la contraseña) no lo repite en lo que carga ni en su
+ * formulario: el Referer queda en los registros de acceso. Las demás, solo el
+ * origen hacia otros sitios.
  */
 class SecurityHeaders
 {
@@ -32,6 +37,7 @@ class SecurityHeaders
             $response->headers->set('Content-Security-Policy', $this->policy($request));
         }
         $response->headers->set('Permissions-Policy', 'camera=(self), geolocation=(self), microphone=(), payment=(), usb=()');
+        $response->headers->set('Referrer-Policy', $request->is('set-password/*', 'reset-password/*') ? 'no-referrer' : 'strict-origin-when-cross-origin');
 
         if ($request->isSecure()) {
             $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
