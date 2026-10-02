@@ -335,7 +335,7 @@ Revisión del 2026-10-01, sobre el código. Ninguna bloquea el MVP; van de mayor
    - El Problem Brief promete "sellar ambas partes" para demostrar las actas retroactivas. Si mañana el SECOP II muestra una suspensión con fecha de ayer, hoy GovTrace no puede probar que ayer no estaba.
    - Dos caminos:
      - meter los datos del contrato en los metadatos de cada reporte (barato, pero cambia el formato sellado y el verificador);
-     - guardar el historial de cada contrato y sellar cada día una raíz de Merkle de lo sincronizado (una transacción diaria, unos 0,07 XLM).
+     - guardar el historial de cada contrato y sellar cada día una raíz de Merkle de lo sincronizado (una transacción diaria, entre 0,24 y 0,28 XLM, lo que costó cada sello en testnet).
 2. **Alertar los cambios retroactivos.** Con ese historial, avisar a la veeduría y mostrar en la ficha cuando el SECOP II cambia la fecha de fin, el estado o el valor de una obra que ya tiene evidencias selladas. Es el detector del "maquillaje" que describe el Problem Brief.
 3. **Avisar al veedor de la decisión sobre su reporte.** Hoy solo la ve en "Mis Reportes": no le llega un correo cuando su reporte se publica o se descarta, ni la razón.
 4. **Seguir una obra.** Un ciudadano o periodista deja su correo, verificado como en los informes ciudadanos, y recibe un aviso cuando se publica una evidencia nueva o cambia el estado de la obra.

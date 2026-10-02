@@ -119,7 +119,17 @@ Las capturas de todas las pantallas, en celular y en computador: `make ux-check`
 
 ## Paso a paso, a mano
 
-Para partir de una organización vacía en lugar de la de demostración.
+Para partir de una organización vacía en lugar de la de demostración, y probar el flujo de cada rol:
+
+| Rol | Qué se prueba | Paso |
+|---|---|---|
+| La veeduría, sin cuenta | Pide su alta desde el Inicio | 3 |
+| Super Administrador | Aprueba o rechaza la solicitud, o crea la organización directamente | 2 y 3 |
+| Administrador | Activa su cuenta, agrega otros administradores, configura el territorio y el contacto, invita veedores, publica evidencias y responde a los ciudadanos | 4, 5, 7, 10 y 11 |
+| Veedor | Activa su cuenta, reporta con GPS y fotos, y sigue el sellado | 7, 8 y 9 |
+| Ciudadano, sin cuenta | Ve el mapa y la obra, valida un archivo e informa a la veeduría | 10 y 11 |
+
+Todos los correos (invitaciones, códigos, respuestas, rechazos) llegan al buzón de desarrollo, **Mailpit**: `http://mailpit.govtrace.localhost:8080` (`make mail`). `make invites` muestra en la terminal los enlaces de los últimos.
 
 ### 1. Levantar todo
 
@@ -151,14 +161,23 @@ Entra en `http://govtrace.localhost:8080/login` y llegarás a `/admin/organizati
 
 ### 3. Crear una organización
 
-1. `/admin/organizations/new`.
+Hay dos caminos.
+
+**a) La veeduría pide su alta** (it. 43k):
+1. En el Inicio (`http://govtrace.localhost:8080`), sin sesión, **¿Su veeduría quiere publicar en GovTrace?**: *Nombre de la veeduría*, *Correo de contacto*, *Número de la resolución de la Personería* y *Personería que la expidió*; autorizar el tratamiento de los datos y **Enviar solicitud**.
+2. Como Super Administrador, en el menú **Solicitudes de alta** (con el número de pendientes):
+   - **Aprobar y dar de alta** abre el formulario de la nueva organización con los datos de la solicitud; se completan los del punto b) y se guarda;
+   - o **Rechazar**, con el motivo, y **Confirmar rechazo**: el motivo le llega por correo a la veeduría (en Mailpit).
+
+**b) El Super Administrador la crea directamente:**
+1. `/admin/organizations/new` (**+ Nueva organización**).
 2. Nombre, NIT con dígito de verificación (por ejemplo `900123456-8`) y subdominio (por ejemplo `veeduria-smr`).
 3. Nombre y correo de su **Administrador inicial**.
 4. Al guardar se crea su base de datos y su dominio: `http://veeduria-smr.govtrace.localhost:8080`.
 
-### 4. El enlace de invitación del Administrador
+### 4. El Administrador: su invitación y otros administradores
 
-El correo sale a un archivo, no a un buzón. Para ver su enlace:
+El correo de la invitación llega a Mailpit, y además a un archivo. Para ver su enlace en la terminal:
 
 ```bash
 make invites
@@ -166,9 +185,16 @@ make invites
 
 Muestra a quién le llegó cada correo, su asunto y el enlace, ya con el puerto correcto. Ábrelo en el navegador y define la contraseña. Entras al panel de la organización (`/admin/inbox`).
 
-### 5. Configurar el territorio
+**Más de un administrador** (it. 43j):
+- el Super Administrador, en **Organizaciones**: **Agregar otro Administrador**, **Desactivar** y **Reactivar**;
+- o el propio Administrador, en `/admin/observers`, sección **Administradores**: **Invitar a otro administrador**.
+- La organización nunca queda sin un administrador activo: desactivar al único se niega, y una invitación pendiente no cuenta.
+
+### 5. Configurar el territorio y el contacto
 
 En la organización, `/admin/territory`: elige el departamento y los municipios que vigila (por ejemplo, Magdalena → Santa Marta). Al guardar se despacha la sincronización de contratos con SECOP II.
+
+En `/admin/organization`, el nombre, el logo y el **contacto público** (correo y teléfono opcional, it. 43h): salen al pie del sitio de la veeduría.
 
 ### 6. Contratos y obras
 
@@ -215,7 +241,15 @@ Cámara y ubicación: ver [arriba](#lo-que-hay-que-saber-antes-de-una-demostraci
    - el validador del navegador en `/verify` (lee el sello del contrato por el RPC);
    - o el verificador independiente: `make verify-check`.
 
-### 11. Otras pantallas para recorrer
+### 11. El informe de un ciudadano
+
+1. Sin sesión, en la página de una obra (`/worksite/{id}`): **Informar a esta veeduría**.
+2. *Su correo*, la autorización del tratamiento de los datos y **Enviarme el código**. El código de 6 dígitos llega a Mailpit (o con `make invites`); vale 10 minutos.
+3. Con el código, lo que vio (entre 20 y 2.000 caracteres) y una foto opcional: **Enviar a la veeduría**. Le llega un correo con el número de su informe.
+4. Como Administrador, en **Informes ciudadanos** (`/admin/citizen-reports`): el informe, sin el correo de quien lo envió. **Responder**, escribir la respuesta y **Enviar respuesta**: le llega al ciudadano por correo (en Mailpit).
+- Límites: 3 informes por correo al día y 1 por obra. El informe no se sella ni se publica.
+
+### 12. Otras pantallas para recorrer
 
 - **Panel global:** `/admin/parameters`, `/admin/audit`, `/admin/secop-health`, `/admin/sealing` y `/admin/usage`.
 - **Organización:** `/admin/observers`, `/admin/territory`, `/admin/contracts`, `/admin/worksites`, `/admin/organization`, `/admin/audit`, `/admin/summary` y la autorización al Super Administrador en `/admin/authorization`.
