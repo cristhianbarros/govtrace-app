@@ -5,6 +5,7 @@ use App\Application\Organization\RegisterOrganization;
 use App\Application\Sealing\SealingNetwork;
 use App\Domain\Audit\AuditLog;
 use App\Domain\Organization\Roles;
+use App\Domain\Reports\Report;
 use App\Domain\Sealing\ReportSeal;
 use App\Domain\Sealing\SealStatus;
 use App\Infrastructure\Tenancy\Tenant;
@@ -64,7 +65,7 @@ afterEach(function () {
 function failedSeal(): int
 {
     test()->flushSession();
-    $reportId = sendReport(test()->veedor)->assertCreated()->json('id');
+    $reportId = createdReportId(sendReport(test()->veedor));
     tenancy()->end();
 
     test()->tenant->run(fn () => ReportSeal::query()->where('report_id', $reportId)->update([
@@ -89,7 +90,7 @@ function sealStatus(int $reportId): string
 function requeue(array $reportIds, ?string $organizationId = null): TestResponse
 {
     return test()->actingAs(test()->superAdmin, 'web')->postJson('http://govtrace.localhost/admin/sealing/requeue', [
-        'seals' => array_map(fn (int $id) => ['organization_id' => $organizationId ?? test()->tenant->id, 'report_id' => $id], $reportIds),
+        'seals' => array_map(fn (int $id) => ['organization_id' => $organizationId ?? test()->tenant->id, 'report_id' => publicIdOf(Report::class, $id)], $reportIds), // it. 46c
     ]);
 }
 
@@ -110,7 +111,7 @@ it('Re-encolar varias evidencias a la vez: 3 of the 4 go back "En Cola", the fou
 
 it('Un Administrador de Organización no puede re-encolar', function () {
     $reportId = failedSeal();
-    $body = ['seals' => [['organization_id' => $this->tenant->id, 'report_id' => $reportId]]];
+    $body = ['seals' => [['organization_id' => $this->tenant->id, 'report_id' => publicIdOf(Report::class, $reportId)]]];
 
     $this->actingAs($this->administrator, 'tenant')->postJson('http://govtrace.localhost/admin/sealing/requeue', $body)->assertUnauthorized();
     $this->actingAs($this->administrator, 'tenant')->postJson('http://veeduria-smr.govtrace.localhost/admin/sealing/requeue', $body)->assertNotFound();
@@ -176,7 +177,7 @@ it('rejects a requeue without seals, or of an organization that does not exist',
 })->with([
     'sin evidencias' => [['seals' => []]],
     'organización inexistente' => [['seals' => [['organization_id' => 'no-existe', 'report_id' => 1]]]],
-    'reporte no numérico' => [['seals' => [['organization_id' => 'veeduria-smr', 'report_id' => 'uno']]]],
+    'reporte sin su identificador público' => [['seals' => [['organization_id' => 'veeduria-smr', 'report_id' => 'uno']]]],
 ]);
 
 it('lists the seals in "Falla de Sellado" of every organization, oldest failure first', function () {
@@ -190,7 +191,7 @@ it('lists the seals in "Falla de Sellado" of every organization, oldest failure 
     $failures = $this->actingAs($this->superAdmin, 'web')->getJson('http://govtrace.localhost/admin/sealing/data')->assertOk()->json('failures');
 
     expect($failures)->toBe([
-        ['organization_id' => $this->tenant->id, 'organization' => 'Veeduría Ciudadana Santa Marta', 'report_id' => $older, 'failed_at' => '2026-09-29T07:00:00-05:00', 'attempts' => 5, 'last_error' => LAST_ERROR],
-        ['organization_id' => $this->tenant->id, 'organization' => 'Veeduría Ciudadana Santa Marta', 'report_id' => $newer, 'failed_at' => '2026-09-29T09:00:00-05:00', 'attempts' => 5, 'last_error' => LAST_ERROR],
+        ['organization_id' => $this->tenant->id, 'organization' => 'Veeduría Ciudadana Santa Marta', 'report_id' => publicIdOf(Report::class, $older), 'failed_at' => '2026-09-29T07:00:00-05:00', 'attempts' => 5, 'last_error' => LAST_ERROR],
+        ['organization_id' => $this->tenant->id, 'organization' => 'Veeduría Ciudadana Santa Marta', 'report_id' => publicIdOf(Report::class, $newer), 'failed_at' => '2026-09-29T09:00:00-05:00', 'attempts' => 5, 'last_error' => LAST_ERROR],
     ]);
 });

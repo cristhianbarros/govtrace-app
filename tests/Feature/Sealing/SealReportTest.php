@@ -71,9 +71,7 @@ function distinctPhoto(int $number): UploadedFile
 /** El reporte de las Antecedentes: 3 fotos que ya pasaron la verificación de hashes. */
 function reportWithThreePhotos(array $overrides = []): int
 {
-    return sendReport(test()->veedor, array_merge(['files' => [distinctPhoto(1), distinctPhoto(2), distinctPhoto(3)]], $overrides))
-        ->assertCreated()
-        ->json('id');
+    return createdReportId(sendReport(test()->veedor, array_merge(['files' => [distinctPhoto(1), distinctPhoto(2), distinctPhoto(3)]], $overrides)));
 }
 
 function runSealReport(int $reportId): void
@@ -184,10 +182,11 @@ it('El veedor nunca ve billeteras ni comisiones: never asks the veedor for a Ste
 
     expect(array_keys($response->json()))->toBe(['id']);
 
-    runSealReport($response->json('id'));
-    runConfirmSeal($response->json('id'));
+    $reportId = createdReportId($response);
+    runSealReport($reportId);
+    runConfirmSeal($reportId);
 
-    expect(sealOf($response->json('id'))->status->label())->toBe('Sellada');
+    expect(sealOf($reportId)->status->label())->toBe('Sellada');
 });
 
 it('Firma la cuenta selladora y paga la cuenta patrocinadora: the sealer account signs and the sponsor account pays; no secret key in the repository or .env.example', function () {

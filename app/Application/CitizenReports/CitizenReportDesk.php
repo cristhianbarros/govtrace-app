@@ -92,7 +92,7 @@ class CitizenReportDesk
             ]);
         });
 
-        Notification::route('mail', self::normalized($email))->notify(new CitizenReportReceived($report->id, tenant()->displayName(), self::nameOf($worksite)));
+        Notification::route('mail', self::normalized($email))->notify(new CitizenReportReceived($report->reference(), tenant()->displayName(), self::nameOf($worksite)));
 
         return $report;
     }

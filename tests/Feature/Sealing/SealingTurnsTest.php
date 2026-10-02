@@ -70,7 +70,7 @@ function reportsOf(string $subdomain, int $count): array
 
     return array_map(function (int $number) use ($tenant, $veedor, $subdomain) {
         test()->flushSession();
-        $reportId = sendReport($veedor, ['comment' => "Reporte {$number} de {$subdomain}"], "{$subdomain}.govtrace.localhost")->assertCreated()->json('id');
+        $reportId = createdReportId(sendReport($veedor, ['comment' => "Reporte {$number} de {$subdomain}"], "{$subdomain}.govtrace.localhost"), "{$subdomain}.govtrace.localhost");
         tenancy()->end();
 
         return [$tenant, $reportId];

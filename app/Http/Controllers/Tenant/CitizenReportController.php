@@ -22,7 +22,7 @@ class CitizenReportController extends Controller
     {
         $data = $request->validate([
             'email' => ['required', 'email', 'max:254'],
-            'worksite_id' => ['required', 'integer', 'exists:tenant.worksites,id'],
+            'worksite_id' => ['required', 'string', 'exists:tenant.worksites,public_id'], // it. 46c: su identificador público
             'data_authorization' => ['nullable', 'boolean'],
         ]);
 
@@ -38,7 +38,7 @@ class CitizenReportController extends Controller
         $data = $request->validate([
             'email' => ['required', 'email', 'max:254'],
             'code' => ['required', 'string'],
-            'worksite_id' => ['required', 'integer', 'exists:tenant.worksites,id'],
+            'worksite_id' => ['required', 'string', 'exists:tenant.worksites,public_id'], // it. 46c: su identificador público
             'message' => ['required', 'string', 'min:20', 'max:2000'],
             'photo' => ['nullable', 'file'],
         ], [
@@ -47,9 +47,9 @@ class CitizenReportController extends Controller
         ]);
 
         return $this->refusing(function () use ($desk, $data, $request) {
-            $report = $desk->receive($data['email'], $data['code'], Worksite::query()->findOrFail($data['worksite_id']), $data['message'], $request->file('photo'));
+            $report = $desk->receive($data['email'], $data['code'], Worksite::byPublicId($data['worksite_id']), $data['message'], $request->file('photo'));
 
-            return response()->json(['message' => 'Su informe llegó a la veeduría. Si lo atiende, le responde a su correo.', 'number' => $report->id], 201);
+            return response()->json(['message' => 'Su informe llegó a la veeduría. Si lo atiende, le responde a su correo.', 'number' => $report->reference()], 201);
         });
     }
 

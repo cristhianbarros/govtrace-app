@@ -71,7 +71,7 @@ class AssignInitialAdministrator
             );
 
             $domain = $tenant->domains()->first()->domain;
-            $url = TenantUrl::to($domain, "set-password/{$user->id}?token={$token->plain}");
+            $url = TenantUrl::to($domain, "set-password/{$user->public_id}?token={$token->plain}");
 
             $user->notify(new WelcomeNotification($url, $validityHours));
 

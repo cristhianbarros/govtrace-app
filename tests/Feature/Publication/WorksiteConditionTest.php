@@ -44,16 +44,16 @@ afterEach(function () {
 });
 
 /** @return array{color: string, label: string, reason: string} what the view of the worksite says of it */
-function conditionOfWorksite(int $worksiteId): array
+function conditionOfWorksite(string $worksiteId): array
 {
     return publicGet("/public/worksites/{$worksiteId}")->assertOk()->json('data.condition');
 }
 
-function worksiteOnTime(Tenant $tenant): int
+function worksiteOnTime(Tenant $tenant): string
 {
     reportableContract('CO1.PCCNTR.1234567');
 
-    return worksiteWithContracts($tenant, ['CO1.PCCNTR.1234567'], santaMartaWorksiteLocation())->id;
+    return worksiteWithContracts($tenant, ['CO1.PCCNTR.1234567'], santaMartaWorksiteLocation())->public_id; // it. 46c
 }
 
 /** A report published by the Administrador, captured two days ago; its capture day in Colombia. */
@@ -110,7 +110,7 @@ it('La obra muestra su estado y por qué: at risk when the latest published repo
 
 it('La obra muestra su estado y por qué: at risk when its end date passed and SECOP still shows it in execution, like its pin', function () {
     reportableContract('CO1.PCCNTR.1234567', ['end_date' => CarbonImmutable::today()->subMonth()->toDateString()]);
-    $worksiteId = worksiteWithContracts($this->tenant, ['CO1.PCCNTR.1234567'], santaMartaWorksiteLocation())->id;
+    $worksiteId = worksiteWithContracts($this->tenant, ['CO1.PCCNTR.1234567'], santaMartaWorksiteLocation())->public_id; // it. 46c
 
     expect(conditionOfWorksite($worksiteId))->toBe([
         'color' => 'red',
@@ -123,7 +123,7 @@ it('La obra muestra su estado y por qué: at risk when its end date passed and S
 it('names every reason when there is more than one', function () {
     reportableContract('CO1.PCCNTR.1234567');
     reportableContract('CO1.PCCNTR.7654321', ['end_date' => CarbonImmutable::today()->subMonth()->toDateString()]);
-    $worksiteId = worksiteWithContracts($this->tenant, ['CO1.PCCNTR.1234567', 'CO1.PCCNTR.7654321'], santaMartaWorksiteLocation())->id;
+    $worksiteId = worksiteWithContracts($this->tenant, ['CO1.PCCNTR.1234567', 'CO1.PCCNTR.7654321'], santaMartaWorksiteLocation())->public_id; // it. 46c
     $day = publishedTwoDaysAgo($this, 'Retraso');
 
     expect(conditionOfWorksite($worksiteId))->toBe([
@@ -141,8 +141,8 @@ it('names every reason when there is more than one', function () {
 it('lists the worksites of the map with their name, municipality and state, when the list is opened', function () {
     reportableContract('CO1.PCCNTR.1234567');
     reportableContract('CO1.PCCNTR.7654321', ['object' => 'Construcción del parque Los Trupillos', 'end_date' => CarbonImmutable::today()->subMonth()->toDateString()]);
-    $calle30 = worksiteWithContracts($this->tenant, ['CO1.PCCNTR.1234567'], santaMartaWorksiteLocation())->id;
-    $parque = worksiteWithContracts($this->tenant, ['CO1.PCCNTR.7654321'], [11.2195, -74.2054])->id;
+    $calle30 = worksiteWithContracts($this->tenant, ['CO1.PCCNTR.1234567'], santaMartaWorksiteLocation())->public_id; // it. 46c
+    $parque = worksiteWithContracts($this->tenant, ['CO1.PCCNTR.7654321'], [11.2195, -74.2054])->public_id;
     worksiteWithContracts($this->tenant, [], null); // sin ubicación: sin pin, y fuera de la lista
 
     expect(publicGet('/public/worksites/list')->assertOk()->json('data'))->toBe([

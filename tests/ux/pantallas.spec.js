@@ -8,7 +8,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { expect, test } from '@playwright/test';
-import { CENTRAL, ORG, PEOPLE, logIn } from '../e2e/flujos/support.js';
+import { CENTRAL, ORG, PEOPLE, logIn, worksiteUrl } from '../e2e/flujos/support.js';
 
 const require = createRequire(import.meta.url);
 const AXE = require.resolve('axe-core/axe.min.js');
@@ -105,10 +105,11 @@ for (const [viewport, options] of Object.entries(VIEWPORTS)) {
         test.use(options);
 
         test(`público, ${viewport}`, async ({ page }) => {
+            const worksite = await worksiteUrl(page.request);
             for (const [name, url] of [
                 ['publico-inicio', `${CENTRAL}/`],
                 ['publico-mapa', `${ORG}/`],
-                ['publico-obra', `${ORG}/worksite/1`],
+                ['publico-obra', worksite],
                 ['publico-estadisticas', `${ORG}/stats`],
                 ['publico-validador', `${ORG}/verify`],
                 ['publico-entrar-veeduria', `${ORG}/login`],

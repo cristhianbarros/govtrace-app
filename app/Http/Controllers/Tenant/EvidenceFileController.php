@@ -14,9 +14,9 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class EvidenceFileController extends Controller
 {
-    public function show(int $evidence): StreamedResponse
+    public function show(string $evidence): StreamedResponse
     {
-        $file = Evidence::query()->findOrFail($evidence);
+        $file = Evidence::byPublicId($evidence);
 
         return Storage::disk('evidencias')->response($file->storage_path, null, [
             'Content-Type' => $file->mime_type,

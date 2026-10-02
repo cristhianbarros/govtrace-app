@@ -24,7 +24,7 @@ class PublicWorksiteView
         $card = new GetPublicContractCard;
 
         return [
-            'id' => $worksite->id,
+            'id' => $worksite->public_id, // it. 46c
             // Sin nombre (una ficha de un solo contrato), el objeto del contrato.
             'name' => $worksite->name ?? $contracts->first()?->object,
             'contracts' => $contracts->map(fn (Contract $contract) => [

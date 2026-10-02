@@ -4,6 +4,7 @@ use App\Application\Organization\ChangeOrganizationStatus;
 use App\Application\Organization\ConfigureTerritory;
 use App\Application\Organization\RegisterOrganization;
 use App\Domain\Organization\OrganizationStatus;
+use App\Domain\Shared\PublicId;
 use App\Infrastructure\Tenancy\Tenant;
 use Database\Seeders\DivipolaSeeder;
 use Illuminate\Support\Facades\DB;
@@ -51,15 +52,15 @@ it('La vista no exige inicio de sesión: serves the view of a worksite, with its
     reportableContract('CO1.PCCNTR.1234567');
     $worksite = worksiteWithContracts($this->tenant, ['CO1.PCCNTR.1234567'], santaMartaWorksiteLocation());
 
-    $this->withoutVite()->get("http://veeduria-smr.govtrace.localhost/worksite/{$worksite->id}")
+    $this->withoutVite()->get("http://veeduria-smr.govtrace.localhost/worksite/{$worksite->public_id}")
         ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page->component('Public/Worksite')->where('worksiteId', $worksite->id));
+        ->assertInertia(fn (Assert $page) => $page->component('Public/Worksite')->where('worksiteId', $worksite->public_id));
 });
 
 it('keeps both pages open while the organization is suspended, with the notice (R-AUD-01)', function () {
     (new ChangeOrganizationStatus)->handle($this->tenant, OrganizationStatus::Suspended, 'organization.suspended');
 
-    foreach (['/', '/worksite/1'] as $path) {
+    foreach (['/', '/worksite/'.PublicId::generate()] as $path) {
         $this->withoutVite()->get("http://veeduria-smr.govtrace.localhost{$path}")
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page->where('organizationNotice', '⚠️ Esta organización se encuentra suspendida temporalmente. Sus evidencias publicadas siguen disponibles solo para consulta.'));

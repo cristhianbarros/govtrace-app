@@ -4,6 +4,7 @@
 // ninguna pantalla pública ni del veedor provoca una sola violación.
 import { fileURLToPath } from 'node:url';
 import { expect, test } from '@playwright/test';
+import { worksiteUrl } from './flujos/support.js';
 
 const PHOTO = fileURLToPath(new URL('../fixtures/evidence/foto.jpg', import.meta.url));
 
@@ -34,7 +35,7 @@ test('La CSP no bloquea nada en las pantallas públicas ni en las del veedor', a
 
     // El mapa público pide sus imágenes a OpenStreetMap (que respondan depende de internet; que se pidan, de la CSP).
     await expect(page.locator('img.leaflet-tile').first()).toBeAttached({ timeout: 30_000 });
-    await page.goto('/worksite/1');
+    await page.goto(await worksiteUrl(page.request));
     await expect(page.getByText('Parque de pruebas sin conexión').first()).toBeVisible();
     await page.goto('/stats');
     await page.goto('/verify');

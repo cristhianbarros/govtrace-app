@@ -92,7 +92,8 @@ class OrganizationRequests
     /** @return array{id: int, name: string, contact_email: string, registration_number: string, registration_authority: string} */
     public function prefill(OrganizationRequest $request): array
     {
-        return $request->only(['id', 'name', 'contact_email', 'registration_number', 'registration_authority']);
+        // It. 46c (US-064-SEC): su identificador público, no su número.
+        return ['id' => $request->public_id, ...$request->only(['name', 'contact_email', 'registration_number', 'registration_authority'])];
     }
 
     /** @return array<string, mixed> what the RUES says of the veeduría of the request (it. 46b) */

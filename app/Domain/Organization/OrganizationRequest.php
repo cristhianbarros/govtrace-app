@@ -2,6 +2,7 @@
 
 namespace App\Domain\Organization;
 
+use App\Domain\Shared\HasPublicId;
 use Illuminate\Database\Eloquent\Model;
 use Stancl\Tenancy\Database\Concerns\CentralConnection;
 
@@ -12,7 +13,7 @@ use Stancl\Tenancy\Database\Concerns\CentralConnection;
  */
 class OrganizationRequest extends Model
 {
-    use CentralConnection;
+    use CentralConnection, HasPublicId;
 
     protected $fillable = ['name', 'contact_email', 'registration_number', 'registration_authority', 'status', 'rejection_reason', 'decided_at', 'tenant_id', 'data_authorized_at', 'data_policy_version', 'document_path'];
 

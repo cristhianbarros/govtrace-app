@@ -66,7 +66,7 @@ class OrganizationReportController extends Controller
             throw ValidationException::withMessages([$e->field => $e->getMessage()]);
         }
 
-        return response()->json(['id' => $report->id], 201);
+        return response()->json(['id' => $report->public_id], 201); // it. 46c
     }
 
     private function authorizedUntil(Tenant $organization): ?string

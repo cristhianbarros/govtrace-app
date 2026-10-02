@@ -8,6 +8,7 @@ use App\Application\Sealing\SealingNetwork;
 use App\Domain\Configuration\ConfigurableParameter;
 use App\Domain\Configuration\Parameters;
 use App\Domain\Sealing\Xlm;
+use App\Domain\Shared\PublicId;
 use App\Http\Controllers\Controller;
 use App\Infrastructure\Tenancy\Tenant;
 use Carbon\CarbonImmutable;
@@ -48,7 +49,7 @@ class SealingController extends Controller
         $data = $request->validate([
             'seals' => ['required', 'array', 'min:1', 'max:500'],
             'seals.*.organization_id' => ['required', 'string', Rule::exists(Tenant::class, 'id')],
-            'seals.*.report_id' => ['required', 'integer'],
+            'seals.*.report_id' => ['required', 'string', 'regex:/^'.PublicId::PATTERN.'$/'], // it. 46c: su identificador público
         ]);
 
         $requeued = $failures->requeue($data['seals'], $request->user('web'));

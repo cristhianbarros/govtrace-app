@@ -81,7 +81,7 @@ it('Filtrar por estado, fechas, presupuesto y municipio: only the worksites that
 
     $pins = filteredPins(['status' => 'red', 'from' => '2026-09-01', 'to' => '2026-09-30', 'min_value' => 1_000_000_000, 'municipality' => '47001']);
 
-    expect($pins)->toBe([$match->id]);
+    expect($pins)->toBe([$match->public_id]);
 });
 
 it('Ninguna obra coincide: no pin', function () {
@@ -98,17 +98,17 @@ it('applies each filter on its own, and counts the budget of every contract of a
     $grouped = worksiteWithContracts($this->tenant, ['CO1.PCCNTR.2000001', 'CO1.PCCNTR.2000002'], [11.2408, -74.1990]);
     $green = filteredWorksite('CO1.PCCNTR.1000001', ['value' => 100_000_000, 'municipality_code' => '47189']);
 
-    expect(filteredPins(['min_value' => 1_000_000_000]))->toBe([$grouped->id])
-        ->and(filteredPins(['status' => 'green']))->toBe([$grouped->id, $green->id])
-        ->and(filteredPins(['municipality' => '47189']))->toBe([$green->id])
-        ->and(filteredPins([]))->toBe([$grouped->id, $green->id]);
+    expect(filteredPins(['min_value' => 1_000_000_000]))->toBe([$grouped->public_id])
+        ->and(filteredPins(['status' => 'green']))->toBe([$grouped->public_id, $green->public_id])
+        ->and(filteredPins(['municipality' => '47189']))->toBe([$green->public_id])
+        ->and(filteredPins([]))->toBe([$grouped->public_id, $green->public_id]);
 });
 
 it('counts the evidence dates in the time of Colombia', function () {
     // El 1 de octubre a las 03:00 UTC todavía es 30 de septiembre en Colombia.
     $late = filteredWorksite('CO1.PCCNTR.1000001', [], 'Avance', '2026-10-01 03:05:00');
 
-    expect(filteredPins(['from' => '2026-09-01', 'to' => '2026-09-30']))->toBe([$late->id]);
+    expect(filteredPins(['from' => '2026-09-01', 'to' => '2026-09-30']))->toBe([$late->public_id]);
 });
 
 it('refuses a filter it does not know', function () {

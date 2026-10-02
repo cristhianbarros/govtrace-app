@@ -39,9 +39,9 @@ const accepted = (file) => ACCEPTED_TYPES.includes(file.type) || ACCEPTED_NAMES.
 
 /**
  * @param {{
- *   file: File, mode: 'free'|'contextual'|'attached', reportId?: number, proofFile?: File,
+ *   file: File, mode: 'free'|'contextual'|'attached', reportId?: string, proofFile?: File,
  *   stellar: { rpc_url: string, network_passphrase: string, contracts: string[], explorer_url: ?string },
- *   findProof: (sha256: string, reportId?: number) => Promise<{ visibility: string, proof: object }|null>,
+ *   findProof: (sha256: string, reportId?: string) => Promise<{ visibility: string, proof: object }|null>,
  *   fetch?: typeof fetch,
  * }} input
  * @returns {Promise<{ verdict: 'authentic'|'altered'|'not_found'|'rejected'|'error', message: string, explorerUrl?: ?string, archived?: boolean }>}

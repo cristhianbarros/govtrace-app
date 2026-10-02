@@ -8,6 +8,7 @@ use App\Domain\Reports\Exceptions\EditorialDecisionRejected;
 use App\Domain\Reports\Exceptions\EvidenceIsImmutable;
 use App\Domain\Sealing\ReportSeal;
 use App\Domain\Sealing\SealStatus;
+use App\Domain\Shared\HasPublicId;
 use App\Domain\Worksites\Worksite;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -26,6 +27,8 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  */
 class Report extends Model
 {
+    use HasPublicId;
+
     /** Everything the veedor sent and the server recorded on arrival. */
     private const SENT = [
         'user_id', 'worksite_id', 'classification', 'comment',

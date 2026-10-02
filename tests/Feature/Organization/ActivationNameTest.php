@@ -39,7 +39,7 @@ afterEach(function () {
 
 function activateWith(array $fields): TestResponse
 {
-    return test()->post(test()->domain.'/set-password/'.test()->veedor->id, [
+    return test()->post(test()->domain.'/set-password/'.test()->veedor->public_id, [
         'token' => test()->token,
         'password' => 'Veeduria#2026',
         'password_confirmation' => 'Veeduria#2026',
@@ -50,7 +50,7 @@ function activateWith(array $fields): TestResponse
 }
 
 it('asks for the name on the activation screen, empty while it is only the start of the email', function () {
-    $this->get($this->domain.'/set-password/'.$this->veedor->id.'?token='.$this->token)
+    $this->get($this->domain.'/set-password/'.$this->veedor->public_id.'?token='.$this->token)
         ->assertInertia(fn (Assert $page) => $page->component('Auth/SetPassword')->where('name', ''));
 });
 

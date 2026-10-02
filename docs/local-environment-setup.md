@@ -239,7 +239,7 @@ Cámara y ubicación: ver [arriba](#lo-que-hay-que-saber-antes-de-una-demostraci
 ### 10. Publicar y ver en el mapa
 
 1. Como Administrador, `/admin/inbox`: **Publicar** el reporte (o rechazarlo o retirarlo).
-2. Público, sin sesión: el mapa en `http://<subdominio>.govtrace.localhost:8080/`, la obra en `/worksite/{id}`, las estadísticas en `/stats` y los datos abiertos en `/open-data.csv` y `/open-data.json`.
+2. Público, sin sesión: el mapa en `http://<subdominio>.govtrace.localhost:8080/`, la obra en `/worksite/{id}` (`{id}` es su identificador público, de 26 caracteres, it. 46c), las estadísticas en `/stats` y los datos abiertos en `/open-data.csv` y `/open-data.json`.
 3. Verificación:
    - el validador del navegador en `/verify` (lee el sello del contrato por el RPC);
    - o el verificador independiente: `make verify-check`.

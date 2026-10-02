@@ -92,7 +92,7 @@ it('publishes an evidence: "Evidencia publicada. Ya es visible en el mapa.", and
 
     expect(editorialStatusOf($this->tenant, $reportId))->toBe('Publicado')
         ->and($onMap)->toBe([$reportId])
-        ->and(array_column($timeline, 'report_id'))->toBe([$reportId])
+        ->and(array_column($timeline, 'report_id'))->toBe([publicIdOf(Report::class, $reportId)])
         ->and($timeline[0]['comment'])->toBe('Obra detenida hace 2 meses')
         ->and($timeline[0]['files'])->toHaveCount(1);
 
@@ -175,7 +175,7 @@ it('Un Administrador no publica evidencias de otra organización: does not let a
     // de Ciénaga (p. ej. copiando la cookie) no vale ahí.
     test()->actingAs($this->administrator, 'tenant')
         ->withSession([ScopeSessions::$tenantIdKey => $this->tenant->id])
-        ->postJson("http://veeduria-cienaga.govtrace.localhost/reports/{$theirReport}/publish")
+        ->postJson('http://veeduria-cienaga.govtrace.localhost/reports/'.publicIdOf(Report::class, $theirReport, 'veeduria-cienaga.govtrace.localhost').'/publish')
         ->assertForbidden();
 
     expect(editorialStatusOf($cienaga, $theirReport))->toBe('Oculto');
@@ -186,10 +186,11 @@ it('shows the suspicious capture time mark in the inbox, and that evidence is de
     $suspicious = sealedReport($this->tenant, $this->veedor, ['captured_at' => now()->addMinutes(10)->toIso8601String()]);
 
     $rows = collect(inbox($this->administrator)->assertOk()->json('data'))->keyBy('id');
+    $row = publicIdOf(Report::class, $suspicious);
 
-    expect($rows[$suspicious]['suspicious_capture_time'])->toBeTrue()
-        ->and($rows[$suspicious]['actions'])->toBe(['publish', 'reject'])
-        ->and($rows->except($suspicious)->pluck('suspicious_capture_time')->unique()->all())->toBe([false]);
+    expect($rows[$row]['suspicious_capture_time'])->toBeTrue()
+        ->and($rows[$row]['actions'])->toBe(['publish', 'reject'])
+        ->and($rows->except($row)->pluck('suspicious_capture_time')->unique()->all())->toBe([false]);
 
     // R-MON-02: la marca no bloquea ni rechaza; decide el Administrador.
     editorialDecision($this->administrator, $decision, $suspicious, $data)->assertOk();
@@ -207,11 +208,11 @@ it('lists only sealed evidences in the inbox, and does not publish one before it
     // (US-024): la evidencia llega a la bandeja cuando llega a "Sellada".
     $this->network->closesLedgerRightAway = false;
     test()->flushSession();
-    $inFlight = sendReport($this->veedor)->assertCreated()->json('id');
+    $inFlight = createdReportId(sendReport($this->veedor));
 
     $rows = inbox($this->administrator)->assertOk()->json('data');
 
-    expect(array_column($rows, 'id'))->toBe($this->hidden)
+    expect(array_column($rows, 'id'))->toBe(array_map(fn (int $id) => publicIdOf(Report::class, $id), $this->hidden))
         ->and($rows[0])->toHaveKeys(['id', 'worksite_id', 'classification', 'comment', 'captured_at', 'received_at', 'suspicious_capture_time', 'files', 'seal', 'actions'])
         ->and($rows[0]['seal'])->toHaveKeys(['merkle_root', 'tx_hash', 'ledger']);
 
@@ -246,7 +247,7 @@ it('records every editorial decision in the audit log: who, when, before and aft
 it('Cada evidencia de la bandeja dice de qué obra es y quién la envió: the worksite, its municipality and the veedor', function () {
     $evidence = inbox($this->administrator)->assertOk()->json('data.0');
 
-    expect($evidence['worksite'])->toBe(['id' => $this->worksite->id, 'name' => 'Pavimentación Calle 30', 'municipality' => 'Santa Marta'])
+    expect($evidence['worksite'])->toBe(['id' => $this->worksite->public_id, 'name' => 'Pavimentación Calle 30', 'municipality' => 'Santa Marta'])
         ->and($evidence['observer'])->toBe('Miembro de prueba');
 });
 
@@ -284,7 +285,7 @@ function anchoringReport(object $test): int
 
 function inboxEvidence(OrganizationUser $administrator, int $reportId): array
 {
-    return collect(inbox($administrator)->assertOk()->json('data'))->firstWhere('id', $reportId);
+    return collect(inbox($administrator)->assertOk()->json('data'))->firstWhere('id', publicIdOf(Report::class, $reportId));
 }
 
 it('La evidencia que fijó la ubicación de la obra llega marcada: with that point, which is the worksite\'s', function () {
@@ -304,7 +305,7 @@ it('tells when the location that report fixed was corrected afterwards', functio
 
     $this->flushSession();
     $this->actingAs($this->administrator, 'tenant')
-        ->patchJson("http://veeduria-smr.govtrace.localhost/worksites/{$this->unlocated->id}/location", ['latitude' => 11.2411, 'longitude' => -74.1995])
+        ->patchJson("http://veeduria-smr.govtrace.localhost/worksites/{$this->unlocated->public_id}/location", ['latitude' => 11.2411, 'longitude' => -74.1995])
         ->assertOk();
     tenancy()->end();
     $this->flushSession();

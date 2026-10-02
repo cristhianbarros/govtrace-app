@@ -4,6 +4,7 @@ use App\Application\Privacy\DataPolicy;
 use App\Domain\Audit\AuditLog;
 use App\Domain\Organization\Notifications\OrganizationRequestRejected;
 use App\Domain\Organization\OrganizationRequest;
+use App\Domain\Shared\PublicId;
 use App\Infrastructure\Tenancy\Tenant;
 use App\Jobs\PurgeOrganizationRequests;
 use App\Models\User as SuperAdmin;
@@ -125,9 +126,9 @@ it('El Super Administrador aprueba una solicitud: the new organization comes pre
     $request = pendingRequest();
 
     test()->flushSession();
-    $this->actingAs($this->superAdmin, 'web')->get(CENTRAL_HOST."/admin/organizations/new?request={$request->id}")
+    $this->actingAs($this->superAdmin, 'web')->get(CENTRAL_HOST."/admin/organizations/new?request={$request->public_id}")
         ->assertInertia(fn (Assert $page) => $page->component('SuperAdmin/NewOrganization')->where('request', [
-            'id' => $request->id,
+            'id' => $request->public_id,
             'name' => 'Veeduría Ciudadana de La Pradera',
             'contact_email' => 'contacto@lapradera.org',
             'registration_number' => 'Resolución 045 de 2026',
@@ -141,7 +142,7 @@ it('El Super Administrador aprueba una solicitud: the new organization comes pre
         'subdomain' => 'la-pradera',
         'administrator_name' => 'Contacto de La Pradera',
         'administrator_email' => 'contacto@lapradera.org',
-        'request_id' => $request->id,
+        'request_id' => $request->public_id,
     ])->assertCreated();
 
     $tenant = Tenant::query()->where('name', 'Veeduría Ciudadana de La Pradera')->sole();
@@ -153,7 +154,7 @@ it('El Super Administrador aprueba una solicitud: the new organization comes pre
 it('El Super Administrador rechaza una solicitud con un motivo: the contact gets it by email', function () {
     $request = pendingRequest();
 
-    asTheOperator('POST', "/admin/organization-requests/{$request->id}/reject", ['reason' => 'La resolución no corresponde a una veeduría inscrita.'])
+    asTheOperator('POST', "/admin/organization-requests/{$request->public_id}/reject", ['reason' => 'La resolución no corresponde a una veeduría inscrita.'])
         ->assertOk()
         ->assertJson(['message' => 'Solicitud rechazada. Le escribimos a contacto@lapradera.org con el motivo.']);
 
@@ -166,9 +167,9 @@ it('El Super Administrador rechaza una solicitud con un motivo: the contact gets
 it('asks for a reason to reject, and decides each request only once', function () {
     $request = pendingRequest();
 
-    asTheOperator('POST', "/admin/organization-requests/{$request->id}/reject", ['reason' => ''])->assertUnprocessable();
-    asTheOperator('POST', "/admin/organization-requests/{$request->id}/reject", ['reason' => 'No es una veeduría.'])->assertOk();
-    asTheOperator('POST', "/admin/organization-requests/{$request->id}/reject", ['reason' => 'Otra vez.'])->assertStatus(409);
+    asTheOperator('POST', "/admin/organization-requests/{$request->public_id}/reject", ['reason' => ''])->assertUnprocessable();
+    asTheOperator('POST', "/admin/organization-requests/{$request->public_id}/reject", ['reason' => 'No es una veeduría.'])->assertOk();
+    asTheOperator('POST', "/admin/organization-requests/{$request->public_id}/reject", ['reason' => 'Otra vez.'])->assertStatus(409);
 });
 
 it('Un robot que llena el campo oculto no deja solicitud: it gets the same answer', function () {
@@ -203,5 +204,5 @@ it('Una solicitud decidida se borra a los 30 días', function () {
 it('serves the requests only to the Super Administrador', function () {
     test()->flushSession();
     $this->getJson(CENTRAL_HOST.'/admin/organization-requests/data')->assertUnauthorized();
-    $this->postJson(CENTRAL_HOST.'/admin/organization-requests/1/reject', ['reason' => 'x'])->assertUnauthorized();
+    $this->postJson(CENTRAL_HOST.'/admin/organization-requests/'.PublicId::generate().'/reject', ['reason' => 'x'])->assertUnauthorized();
 });

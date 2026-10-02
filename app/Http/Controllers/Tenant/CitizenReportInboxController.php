@@ -20,24 +20,24 @@ class CitizenReportInboxController extends Controller
         return response()->json(['data' => $inbox->list()]);
     }
 
-    public function photo(int $report): StreamedResponse
+    public function photo(string $report): StreamedResponse
     {
-        $path = CitizenReport::query()->findOrFail($report)->photo_path;
+        $path = CitizenReport::byPublicId($report)->photo_path;
         abort_if($path === null, 404);
 
         return Storage::disk('evidencias')->response($path, "informe-{$report}.jpg", ['Content-Type' => 'image/jpeg', 'Cache-Control' => 'no-store, private']);
     }
 
-    public function answer(Request $request, int $report, CitizenReportInbox $inbox): JsonResponse
+    public function answer(Request $request, string $report, CitizenReportInbox $inbox): JsonResponse
     {
         $data = $request->validate(['answer' => ['required', 'string', 'min:5', 'max:2000']], ['answer.required' => 'Escriba la respuesta para el ciudadano.']);
 
-        return $this->handling(fn () => $inbox->answer($request->user('tenant'), $report, $data['answer']), 'Respuesta enviada al ciudadano.');
+        return $this->handling(fn () => $inbox->answer($request->user('tenant'), CitizenReport::idOf($report), $data['answer']), 'Respuesta enviada al ciudadano.');
     }
 
-    public function discard(Request $request, int $report, CitizenReportInbox $inbox): JsonResponse
+    public function discard(Request $request, string $report, CitizenReportInbox $inbox): JsonResponse
     {
-        return $this->handling(fn () => $inbox->discard($request->user('tenant'), $report), 'Informe descartado.');
+        return $this->handling(fn () => $inbox->discard($request->user('tenant'), CitizenReport::idOf($report)), 'Informe descartado.');
     }
 
     private function handling(Closure $work, string $done): JsonResponse

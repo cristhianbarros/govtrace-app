@@ -32,7 +32,7 @@ class OrganizationAdministrators
         'inactive' => 'Inactivo',
     ];
 
-    /** @return list<array{id: int, name: string, email: string, status: string, label: string}> */
+    /** @return list<array{id: string, name: string, email: string, status: string, label: string}> it. 46c: its public id */
     public function of(Tenant $tenant): array
     {
         return $this->inside($tenant, fn () => User::role(Roles::Administrator->value, 'tenant')->orderBy('id')->get()
@@ -44,7 +44,7 @@ class OrganizationAdministrators
                     default => 'pending',
                 };
 
-                return ['id' => $administrator->id, 'name' => $administrator->name, 'email' => $administrator->email, 'status' => $status, 'label' => self::LABELS[$status]];
+                return ['id' => $administrator->public_id, 'name' => $administrator->name, 'email' => $administrator->email, 'status' => $status, 'label' => self::LABELS[$status]];
             })->all());
     }
 
@@ -62,10 +62,10 @@ class OrganizationAdministrators
     }
 
     /** @return int the hours the new link is valid */
-    public function resend(Tenant $tenant, int $userId, SuperAdmin $actor): int
+    public function resend(Tenant $tenant, string $publicId, SuperAdmin $actor): int
     {
-        return $this->inside($tenant, function () use ($tenant, $userId, $actor) {
-            $administrator = $this->invited($userId);
+        return $this->inside($tenant, function () use ($tenant, $publicId, $actor) {
+            $administrator = $this->invited($publicId);
             $before = InvitationLink::audited($administrator);
             $hours = InvitationLink::issue($administrator);
             $this->audit('invitation.resent', $tenant, $actor, $before, InvitationLink::audited($administrator));
@@ -74,10 +74,10 @@ class OrganizationAdministrators
         });
     }
 
-    public function revoke(Tenant $tenant, int $userId, SuperAdmin $actor): string
+    public function revoke(Tenant $tenant, string $publicId, SuperAdmin $actor): string
     {
-        return $this->inside($tenant, function () use ($tenant, $userId, $actor) {
-            $administrator = $this->invited($userId);
+        return $this->inside($tenant, function () use ($tenant, $publicId, $actor) {
+            $administrator = $this->invited($publicId);
             $before = InvitationLink::audited($administrator);
             $administrator->syncRoles([]);
             $administrator->delete();
@@ -93,10 +93,10 @@ class OrganizationAdministrators
      * activates the account. EnsureAccountIsUsable ends the session on its
      * next request.
      */
-    public function deactivate(Tenant $tenant, int $userId, SuperAdmin $actor): void
+    public function deactivate(Tenant $tenant, string $publicId, SuperAdmin $actor): void
     {
-        $this->inside($tenant, function () use ($tenant, $userId, $actor) {
-            $administrator = $this->administrator($userId);
+        $this->inside($tenant, function () use ($tenant, $publicId, $actor) {
+            $administrator = $this->administrator($publicId);
             $othersActive = User::role(Roles::Administrator->value, 'tenant')
                 ->whereKeyNot($administrator->id)
                 ->where('is_active', true)
@@ -109,9 +109,9 @@ class OrganizationAdministrators
         });
     }
 
-    public function reactivate(Tenant $tenant, int $userId, SuperAdmin $actor): void
+    public function reactivate(Tenant $tenant, string $publicId, SuperAdmin $actor): void
     {
-        $this->inside($tenant, fn () => $this->changeAccess('organization.administrator_reactivated', $tenant, $actor, $this->administrator($userId), true));
+        $this->inside($tenant, fn () => $this->changeAccess('organization.administrator_reactivated', $tenant, $actor, $this->administrator($publicId), true));
     }
 
     private function changeAccess(string $action, Tenant $tenant, SuperAdmin $actor, User $administrator, bool $active): void
@@ -122,17 +122,17 @@ class OrganizationAdministrators
     }
 
     /** An Administrador of the organization, with an activated account; anything else is not found. */
-    private function administrator(int $userId): User
+    private function administrator(string $publicId): User
     {
-        return User::role(Roles::Administrator->value, 'tenant')->whereKey($userId)->whereNull('invitation_token_hash')->firstOrFail();
+        return User::role(Roles::Administrator->value, 'tenant')->where('public_id', $publicId)->whereNull('invitation_token_hash')->firstOrFail();
     }
 
     /** An Administrador whose invitation is still unanswered (pending or expired); anything else is not found. */
-    private function invited(int $userId): User
+    private function invited(string $publicId): User
     {
-        $administrator = User::role(Roles::Administrator->value, 'tenant')->whereKey($userId)->first();
+        $administrator = User::role(Roles::Administrator->value, 'tenant')->where('public_id', $publicId)->first();
         if ($administrator === null) {
-            throw (new ModelNotFoundException)->setModel(User::class, [$userId]);
+            throw (new ModelNotFoundException)->setModel(User::class, [$publicId]);
         }
         if ($administrator->invitation_token_hash === null) {
             throw OrganizationValidationException::noPendingInvitation();

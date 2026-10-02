@@ -72,7 +72,7 @@ it('accepts a report close to the worksite, with the position, classification an
     $response->assertCreated();
     $report = storedReports($this->tenant)->sole();
 
-    expect($response->json('id'))->toBe($report->id)
+    expect($response->json('id'))->toBe($report->public_id) // it. 46c (US-064-SEC)
         ->and($report->worksite_id)->toBe($this->worksite->id)
         ->and($report->user_id)->toBe($this->veedor->id)
         ->and($report->classification->value)->toBe('Retraso')
@@ -237,7 +237,7 @@ it('Una ubicación oficial errónea se corrige: lets veedores at the real site r
     // El Administrador de Organización la corrige (US-035, it. 11).
     $administrator = reportingMember($this->tenant, 'admin@veeduria-smr.org', Roles::Administrator);
     $this->actingAs($administrator, 'tenant')
-        ->patchJson("http://veeduria-smr.govtrace.localhost/worksites/{$this->worksite->id}/location", ['latitude' => $realSite[0], 'longitude' => $realSite[1]])
+        ->patchJson("http://veeduria-smr.govtrace.localhost/worksites/{$this->worksite->public_id}/location", ['latitude' => $realSite[0], 'longitude' => $realSite[1]])
         ->assertOk();
 
     sendReport($this->veedor, ['latitude' => $realSite[0], 'longitude' => $realSite[1]])->assertCreated();

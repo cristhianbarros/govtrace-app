@@ -93,9 +93,9 @@ it('Con autorización vigente el Super Administrador puede crear un reporte: acc
     authorizeSuperAdmin($this->administrator)->assertCreated();
     $this->travelBack();
 
-    $reportId = superAdminReport()->assertCreated()->json('id');
+    $reportId = superAdminReport()->assertCreated()->json('id'); // it. 46c: su identificador público
 
-    $author = $this->tenant->run(fn () => Report::query()->findOrFail($reportId)->user);
+    $author = $this->tenant->run(fn () => Report::byPublicId($reportId)->user);
     $entries = AuditLog::query()->where('organization_id', $this->tenant->id)->orderBy('id')->get();
     $authorized = $entries->firstWhere('action', 'super_admin.authorized');
     $reported = $entries->firstWhere('action', 'report.created_by_super_admin');
@@ -103,7 +103,7 @@ it('Con autorización vigente el Super Administrador puede crear un reporte: acc
     expect($author->name)->toBe('Super Administrador de GovTrace')
         ->and($authorized->only(['actor_type', 'actor_id']))->toBe(['actor_type' => 'organization_admin', 'actor_id' => (string) $this->administrator->id])
         ->and($reported->only(['actor_type', 'actor_id']))->toBe(['actor_type' => 'super_admin', 'actor_id' => (string) $this->superAdmin->id])
-        ->and($reported->after)->toMatchArray(['report_id' => $reportId, 'secop_contract_id' => 'CO1.PCCNTR.1234567']);
+        ->and($reported->after)->toMatchArray(['report_id' => $this->tenant->run(fn () => Report::idOf($reportId)), 'secop_contract_id' => 'CO1.PCCNTR.1234567']);
 });
 
 it('Sin autorización vigente el Super Administrador no puede reportar', function (Closure $situation) {

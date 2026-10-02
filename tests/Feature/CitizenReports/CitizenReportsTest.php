@@ -64,7 +64,7 @@ afterEach(function () {
 /** POST /citizen-reports/code, as a visitor without a session. */
 function requestCode(array $data = []): TestResponse
 {
-    return test()->postJson(CITIZEN_HOST.'/citizen-reports/code', ['email' => CITIZEN, 'worksite_id' => test()->worksite->id, 'data_authorization' => true, ...$data]);
+    return test()->postJson(CITIZEN_HOST.'/citizen-reports/code', ['email' => CITIZEN, 'worksite_id' => test()->worksite->public_id, 'data_authorization' => true, ...$data]);
 }
 
 /** The code the citizen got by mail. */
@@ -88,7 +88,7 @@ function sendCitizenReport(array $data = []): TestResponse
     return test()->post(CITIZEN_HOST.'/citizen-reports', [
         'email' => CITIZEN,
         'code' => mailedCode(),
-        'worksite_id' => test()->worksite->id,
+        'worksite_id' => test()->worksite->public_id,
         'message' => 'La obra lleva dos semanas sin trabajadores y el cerramiento se cayó.',
         ...$data,
     ], ['Accept' => 'application/json']);
@@ -121,12 +121,14 @@ it('El ciudadano informa a la veeduría con su correo verificado: a code by mail
     $response = sendCitizenReport(['photo' => citizenPhoto()])->assertCreated()->assertJson(['message' => RECEIVED]);
 
     $report = $this->tenant->run(fn () => CitizenReport::query()->sole());
-    expect($response->json('number'))->toBe($report->id)
+    // It. 46c (US-064-SEC): una referencia corta, de su identificador público, y no su número consecutivo.
+    expect($response->json('number'))->toBe($report->reference())
+        ->and($report->reference())->toMatch('/^[0-9A-HJKMNP-TV-Z]{4}-[0-9A-HJKMNP-TV-Z]{4}$/')
         ->and($report->worksite_id)->toBe($this->worksite->id)
         ->and($report->status)->toBe('new')
         ->and($report->photo_path)->not->toBeNull()
         ->and($report->data_policy_version)->toBe(DataPolicy::VERSION);
-    Notification::assertSentOnDemand(CitizenReportReceived::class, fn (CitizenReportReceived $notification, array $channels, AnonymousNotifiable $notifiable) => $notifiable->routes['mail'] === CITIZEN && $notification->number === $report->id);
+    Notification::assertSentOnDemand(CitizenReportReceived::class, fn (CitizenReportReceived $notification, array $channels, AnonymousNotifiable $notifiable) => $notifiable->routes['mail'] === CITIZEN && $notification->number === $report->reference());
 });
 
 it('Sin un código válido no se recibe el informe: a wrong or expired code, and 5 wrong attempts void it', function () {
@@ -176,7 +178,7 @@ it('Límites contra el spam: 3 reports a day per email, and 1 per worksite', fun
 
         return worksiteWithContracts($this->tenant, [$contract], santaMartaWorksiteLocation());
     };
-    $worksites = [$this->worksite->id, $other('CO1.PCCNTR.2000001')->id, $other('CO1.PCCNTR.2000002')->id, $other('CO1.PCCNTR.2000003')->id];
+    $worksites = [$this->worksite->public_id, $other('CO1.PCCNTR.2000001')->public_id, $other('CO1.PCCNTR.2000002')->public_id, $other('CO1.PCCNTR.2000003')->public_id];
 
     // Una mañana, un informe por hora: cada uno necesita su código, y hay 3 códigos por hora.
     $this->travelTo('2026-10-01 08:00:00');
@@ -213,8 +215,8 @@ it('El informe ciudadano no se sella ni se publica: no seal, not on the map, the
     sendCitizenReport()->assertCreated();
 
     expect($this->tenant->run(fn () => ReportSeal::query()->count()))->toBe(0)
-        ->and(publicGet('/public/worksites/'.$this->worksite->id)->assertOk()->json('data.timeline'))->toBe([])
-        ->and(publicGet('/public/worksites/'.$this->worksite->id)->json('data.condition.color'))->toBe('green');
+        ->and(publicGet('/public/worksites/'.$this->worksite->public_id)->assertOk()->json('data.timeline'))->toBe([])
+        ->and(publicGet('/public/worksites/'.$this->worksite->public_id)->json('data.condition.color'))->toBe('green');
 });
 
 it('La veeduría recibe los informes sin ver el correo del ciudadano: the worksite, the date, the message and the photo', function () {
@@ -225,6 +227,8 @@ it('La veeduría recibe los informes sin ver el correo del ciudadano: the worksi
     $row = $response->json('data.0');
     expect($row)->toMatchArray(['worksite' => 'Pavimentación Calle 30', 'message' => 'La obra lleva dos semanas sin trabajadores y el cerramiento se cayó.', 'status' => 'new', 'status_label' => 'Nuevo'])
         ->and($row['photo_url'])->toBe("/citizen-reports/{$row['id']}/photo")
+        // It. 46c: la referencia corta que recibió el ciudadano, para hablar del mismo informe.
+        ->and($row['reference'])->toBe($this->tenant->run(fn () => CitizenReport::query()->sole()->reference()))
         ->and($response->getContent())->not->toContain(CITIZEN);
 
     $this->actingAs($this->administrator, 'tenant')->get(CITIZEN_HOST.$row['photo_url'])->assertOk()->assertHeader('Content-Type', 'image/jpeg');
@@ -241,7 +245,7 @@ it('La veeduría responde al ciudadano: the answer goes to their mail, the repor
     $this->actingAs($this->administrator, 'tenant')->postJson(CITIZEN_HOST."/citizen-reports/{$id}/answer", ['answer' => 'Gracias. El sábado va un veedor a documentarlo.'])
         ->assertOk()->assertJson(['message' => 'Respuesta enviada al ciudadano.']);
 
-    Notification::assertSentOnDemand(CitizenReportAnswered::class, fn (CitizenReportAnswered $notification, array $channels, AnonymousNotifiable $notifiable) => $notifiable->routes['mail'] === CITIZEN && $notification->answer === 'Gracias. El sábado va un veedor a documentarlo.');
+    Notification::assertSentOnDemand(CitizenReportAnswered::class, fn (CitizenReportAnswered $notification, array $channels, AnonymousNotifiable $notifiable) => $notifiable->routes['mail'] === CITIZEN && $notification->answer === 'Gracias. El sábado va un veedor a documentarlo.' && $notification->number === $this->tenant->run(fn () => CitizenReport::query()->sole()->reference()));
     expect(adminCitizenReports()->json('data.0'))->toMatchArray(['status' => 'answered', 'status_label' => 'Atendido', 'answer' => 'Gracias. El sábado va un veedor a documentarlo.'])
         ->and(AuditLog::query()->where('action', 'citizen_report.answered')->where('actor_type', 'organization_admin')->exists())->toBeTrue();
 });

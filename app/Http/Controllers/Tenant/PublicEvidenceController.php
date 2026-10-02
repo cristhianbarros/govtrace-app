@@ -26,7 +26,7 @@ class PublicEvidenceController extends Controller
     /** US-003b: the file itself, until the retention after a decommission deletes it; its proof stays. */
     public const PURGED = 'Este archivo se borró al cumplirse 5 años de la baja de la organización. Su sello en Stellar y su prueba de inclusión se conservan.';
 
-    public function download(int $evidence): StreamedResponse|JsonResponse
+    public function download(string $evidence): StreamedResponse|JsonResponse
     {
         $file = $this->published($evidence);
 
@@ -41,7 +41,7 @@ class PublicEvidenceController extends Controller
     }
 
     /** US-029: the photo itself, for the thumbnails and the viewer of the timeline — inline, the bytes that were sealed. */
-    public function photo(int $evidence): StreamedResponse
+    public function photo(string $evidence): StreamedResponse
     {
         $file = $this->published($evidence);
         abort_unless($file->kind === EvidenceKind::Photo->value, 404);
@@ -52,7 +52,7 @@ class PublicEvidenceController extends Controller
         ]);
     }
 
-    public function proof(int $evidence): JsonResponse
+    public function proof(string $evidence): JsonResponse
     {
         $file = $this->published($evidence);
 
@@ -62,11 +62,12 @@ class PublicEvidenceController extends Controller
         ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     }
 
-    private function published(int $evidence): Evidence
+    private function published(string $evidence): Evidence
     {
         return Evidence::query()
             ->whereHas('report', fn ($report) => $report->onPublicMap())
             ->with('report.seal')
-            ->findOrFail($evidence);
+            ->where('public_id', $evidence)
+            ->firstOrFail();
     }
 }

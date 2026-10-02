@@ -10,6 +10,7 @@ use App\Domain\Organization\Roles;
 use App\Domain\Reports\Report;
 use App\Domain\Sealing\MerkleTree;
 use App\Domain\Sealing\ReportSeal;
+use App\Domain\Shared\PublicId;
 use App\Domain\Worksites\Worksite;
 use App\Infrastructure\Tenancy\Tenant;
 use Database\Seeders\DivipolaSeeder;
@@ -78,7 +79,7 @@ function twoPublishedEvidences(): array
 
 function requestDossier(mixed $as = null): TestResponse
 {
-    return test()->actingAs($as ?? test()->administrator, 'tenant')->get(DOSSIER_HOST.'/worksites/'.test()->worksite->id.'/dossier.zip');
+    return test()->actingAs($as ?? test()->administrator, 'tenant')->get(DOSSIER_HOST.'/worksites/'.test()->worksite->public_id.'/dossier.zip');
 }
 
 /** @return array<string, string> the entries of the downloaded ZIP: name => bytes */
@@ -110,7 +111,7 @@ function dossierText(string $document): string
 function filesOf(int $reportId): array
 {
     return test()->tenant->run(fn () => Report::query()->findOrFail($reportId)->evidences()->orderBy('id')->get()
-        ->map(fn ($evidence) => (object) ['id' => $evidence->id, 'sha256' => $evidence->sha256, 'name' => $evidence->downloadName(), 'proof_name' => $evidence->proofName()])->all());
+        ->map(fn ($evidence) => (object) ['id' => $evidence->id, 'public_id' => $evidence->public_id, 'sha256' => $evidence->sha256, 'name' => $evidence->downloadName(), 'proof_name' => $evidence->proofName()])->all());
 }
 
 it('Descargar el expediente de una obra: a ZIP with the dossier, the two templates, the readme and every published file with its proof', function () {
@@ -143,7 +144,7 @@ it('Los archivos del expediente son los que se sellaron: byte for byte, with the
         $proof = json_decode($entries[str_replace($file->name, $file->proof_name, $path)], true);
 
         expect(hash('sha256', $entries[$path]))->toBe($file->sha256)
-            ->and($proof)->toBe(publicGet("/public/evidences/{$file->id}/proof")->assertOk()->json())
+            ->and($proof)->toBe(publicGet("/public/evidences/{$file->public_id}/proof")->assertOk()->json())
             ->and(MerkleTree::verify($file->sha256, $proof['proof'], $proof['merkle_root']))->toBeTrue();
     }
 });
@@ -268,12 +269,12 @@ it('Solo el Administrador descarga el expediente: not a veedor, nor a visitor', 
     twoPublishedEvidences();
 
     requestDossier($this->veedor)->assertForbidden();
-    publicGet('/worksites/'.$this->worksite->id.'/dossier.zip')->assertUnauthorized();
+    publicGet('/worksites/'.$this->worksite->public_id.'/dossier.zip')->assertUnauthorized();
     tenancy()->end();
 
     expect(AuditLog::query()->where('action', 'dossier.downloaded')->exists())->toBeFalse();
 });
 
 it('answers 404 for a worksite that does not exist', function () {
-    $this->actingAs($this->administrator, 'tenant')->get(DOSSIER_HOST.'/worksites/999999/dossier.zip')->assertNotFound();
+    $this->actingAs($this->administrator, 'tenant')->get(DOSSIER_HOST.'/worksites/'.PublicId::generate().'/dossier.zip')->assertNotFound();
 });

@@ -6,6 +6,7 @@ use App\Application\Sealing\SealingNetwork;
 use App\Domain\Audit\AuditLog;
 use App\Domain\Organization\Roles;
 use App\Domain\Organization\User as OrganizationUser;
+use App\Domain\Reports\Report;
 use App\Domain\Sealing\ReportSeal;
 use App\Domain\Sealing\SealStatus;
 use App\Infrastructure\Tenancy\Tenant;
@@ -61,12 +62,16 @@ afterEach(function () {
 
 function receiptFor(OrganizationUser $veedor, int $reportId): TestResponse
 {
-    return test()->actingAs($veedor, 'tenant')->getJson("http://veeduria-smr.govtrace.localhost/reports/{$reportId}/receipt");
+    $report = publicIdOf(Report::class, $reportId); // it. 46c
+
+    return test()->actingAs($veedor, 'tenant')->getJson("http://veeduria-smr.govtrace.localhost/reports/{$report}/receipt");
 }
 
 function publicReceipt(int $reportId): TestResponse
 {
-    return test()->getJson("http://veeduria-smr.govtrace.localhost/public/reports/{$reportId}/receipt");
+    $report = publicIdOf(Report::class, $reportId); // it. 46c
+
+    return test()->getJson("http://veeduria-smr.govtrace.localhost/public/reports/{$report}/receipt");
 }
 
 function sealRecord(int $reportId): ReportSeal
@@ -78,7 +83,7 @@ function sealRecord(int $reportId): ReportSeal
 function resentReport(): array
 {
     test()->flushSession();
-    $reportId = sendReport(test()->veedor)->assertCreated()->json('id');
+    $reportId = createdReportId(sendReport(test()->veedor));
     tenancy()->end();
 
     test()->network->closesLedgerRightAway = false;
@@ -123,7 +128,7 @@ it('Recibo de una evidencia sellada: root, transaction, ledger, exact ledger tim
 
 it('La evidencia aún no está sellada: the message, and nothing of the seal', function () {
     $this->flushSession();
-    $reportId = sendReport($this->veedor)->assertCreated()->json('id');
+    $reportId = createdReportId(sendReport($this->veedor));
 
     receiptFor($this->veedor, $reportId)
         ->assertOk()
@@ -160,7 +165,7 @@ it('logs nothing for a seal that entered on its first transaction', function () 
 
 it('logs no resend when the recorded transaction was the one that entered, found once the RPC came back', function () {
     $this->flushSession();
-    $reportId = sendReport($this->veedor)->assertCreated()->json('id');
+    $reportId = createdReportId(sendReport($this->veedor));
     tenancy()->end();
     app()->call([new SealReport($this->tenant->id, $reportId), 'handle']);
     $sent = sealRecord($reportId)->tx_hash;
@@ -178,7 +183,7 @@ it('logs no resend when the recorded transaction was the one that entered, found
 
 it('shows the transaction that sealed the root when the answer to its sending never came', function () {
     $this->flushSession();
-    $reportId = sendReport($this->veedor)->assertCreated()->json('id');
+    $reportId = createdReportId(sendReport($this->veedor));
     tenancy()->end();
 
     // La primera no entra en 5 minutos: vuelve a la cola (US-021).
@@ -207,7 +212,7 @@ it('shows the transaction that sealed the root when the answer to its sending ne
 
 it('shows the veedor the same message while the sealing is failing: he never sees an error', function () {
     $this->flushSession();
-    $reportId = sendReport($this->veedor)->assertCreated()->json('id');
+    $reportId = createdReportId(sendReport($this->veedor));
     $this->tenant->run(fn () => ReportSeal::query()->where('report_id', $reportId)->update(['status' => SealStatus::Failed, 'attempts' => 5]));
 
     receiptFor($this->veedor, $reportId)->assertExactJson(['data' => ['sealed' => false, 'message' => RECEIPT_PENDING]]);

@@ -15,7 +15,7 @@ import { fetchReceipt, findProof } from '@/services/api.js';
 
 const props = defineProps({
     receiptUrl: { type: String, required: true },
-    reportId: { type: Number, required: true },
+    reportId: { type: String, required: true }, // it. 46c: su identificador público
 });
 
 const page = usePage();

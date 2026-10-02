@@ -94,7 +94,7 @@ function signsIn(string $email, string $password = STRONG_PASSWORD): ?string
 it('Un Super Administrador invita a otro: the invitation goes out, it shows as pending, and it is audited', function () {
     [$luis, , $url] = invitedSuperAdmin('Luis Gómez', 'luis@govtrace.org');
 
-    expect($url)->toStartWith(CENTRAL."/set-password/{$luis->id}?token=")
+    expect($url)->toStartWith(CENTRAL."/set-password/{$luis->public_id}?token=")
         ->and(collect(superAdministratorsSeenBy($this->ana))->firstWhere('email', 'luis@govtrace.org'))
         ->toMatchArray(['name' => 'Luis Gómez', 'status' => 'pending', 'label' => 'Invitación pendiente', 'is_me' => false])
         ->and(AuditLog::query()->where('action', 'super_admin.invited')->first())
@@ -105,11 +105,11 @@ it('Un Super Administrador invita a otro: the invitation goes out, it shows as p
 it('El invitado activa su cuenta y entra al panel global: with his name, his password and the authorization of his data', function () {
     [$luis, $token] = invitedSuperAdmin('Luis Gómez', 'luis@govtrace.org');
 
-    $this->withoutVite()->get(CENTRAL."/set-password/{$luis->id}?token={$token}")
-        ->assertInertia(fn (Assert $page) => $page->component('Auth/SetPassword')->where('valid', true)->where('declaration', false)->where('action', "/set-password/{$luis->id}")
+    $this->withoutVite()->get(CENTRAL."/set-password/{$luis->public_id}?token={$token}")
+        ->assertInertia(fn (Assert $page) => $page->component('Auth/SetPassword')->where('valid', true)->where('declaration', false)->where('action', "/set-password/{$luis->public_id}")
             ->where('nameHint', 'Lo ven los demás Super Administradores, y queda en el registro de auditoría.'));
 
-    $this->post(CENTRAL."/set-password/{$luis->id}", ['token' => $token, 'name' => 'Luis Gómez Ruiz', 'password' => STRONG_PASSWORD, 'password_confirmation' => STRONG_PASSWORD, 'data_authorization' => true])
+    $this->post(CENTRAL."/set-password/{$luis->public_id}", ['token' => $token, 'name' => 'Luis Gómez Ruiz', 'password' => STRONG_PASSWORD, 'password_confirmation' => STRONG_PASSWORD, 'data_authorization' => true])
         ->assertRedirect(CENTRAL.'/dashboard');
 
     $luis->refresh();
@@ -117,7 +117,7 @@ it('El invitado activa su cuenta y entra al panel global: with his name, his pas
         ->and($luis->name)->toBe('Luis Gómez Ruiz')
         ->and($luis->invitation_token_hash)->toBeNull()
         ->and($luis->data_authorized_at)->not->toBeNull()
-        ->and(collect(superAdministratorsSeenBy($this->ana))->firstWhere('id', $luis->id)['status'])->toBe('active')
+        ->and(collect(superAdministratorsSeenBy($this->ana))->firstWhere('id', $luis->public_id)['status'])->toBe('active')
         ->and(AuditLog::query()->where('action', 'super_admin.activated')->where('actor_id', (string) $luis->id)->exists())->toBeTrue()
         ->and(AuditLog::query()->whereNull('organization_id')->where('action', 'privacy.data_authorized')->exists())->toBeTrue();
 });
@@ -126,11 +126,11 @@ it('does not activate the account without the authorization of the data, nor wit
     [$luis, $token] = invitedSuperAdmin('Luis Gómez', 'luis@govtrace.org');
     $data = ['token' => $token, 'name' => 'Luis Gómez', 'password' => STRONG_PASSWORD, 'password_confirmation' => STRONG_PASSWORD];
 
-    $this->postJson(CENTRAL."/set-password/{$luis->id}", $data)->assertJsonValidationErrors('data_authorization');
-    $this->postJson(CENTRAL."/set-password/{$luis->id}", [...$data, 'token' => 'otro', 'data_authorization' => true])->assertJsonValidationErrors('token');
+    $this->postJson(CENTRAL."/set-password/{$luis->public_id}", $data)->assertJsonValidationErrors('data_authorization');
+    $this->postJson(CENTRAL."/set-password/{$luis->public_id}", [...$data, 'token' => 'otro', 'data_authorization' => true])->assertJsonValidationErrors('token');
 
     $luis->forceFill(['invitation_expires_at' => now()->subMinute()])->save();
-    $this->withoutVite()->get(CENTRAL."/set-password/{$luis->id}?token={$token}")
+    $this->withoutVite()->get(CENTRAL."/set-password/{$luis->public_id}?token={$token}")
         ->assertInertia(fn (Assert $page) => $page->where('valid', false));
     expect($luis->fresh()->invitation_token_hash)->not->toBeNull();
 });
@@ -138,7 +138,7 @@ it('does not activate the account without the authorization of the data, nor wit
 it('Un Super Administrador desactiva a otro que se fue: he can no longer sign in, and his open session ends on his next request', function () {
     $luis = activeSuperAdmin('Luis Gómez', 'luis@govtrace.org');
 
-    inTheGlobalPanelAs($this->ana, 'POST', "/admin/super-administrators/{$luis->id}/deactivate")->assertOk();
+    inTheGlobalPanelAs($this->ana, 'POST', "/admin/super-administrators/{$luis->public_id}/deactivate")->assertOk();
 
     expect(signsIn('luis@govtrace.org'))->toBe('Su cuenta se encuentra desactivada. Comuníquese con otro Super Administrador de GovTrace.')
         ->and(AuditLog::query()->where('action', 'super_admin.deactivated')->first())
@@ -152,9 +152,9 @@ it('Un Super Administrador desactiva a otro que se fue: he can no longer sign in
 
 it('Un Super Administrador reactiva a otro: he can sign in again', function () {
     $luis = activeSuperAdmin('Luis Gómez', 'luis@govtrace.org');
-    inTheGlobalPanelAs($this->ana, 'POST', "/admin/super-administrators/{$luis->id}/deactivate")->assertOk();
+    inTheGlobalPanelAs($this->ana, 'POST', "/admin/super-administrators/{$luis->public_id}/deactivate")->assertOk();
 
-    inTheGlobalPanelAs($this->ana, 'POST', "/admin/super-administrators/{$luis->id}/reactivate")->assertOk();
+    inTheGlobalPanelAs($this->ana, 'POST', "/admin/super-administrators/{$luis->public_id}/reactivate")->assertOk();
 
     expect(signsIn('luis@govtrace.org'))->toBeNull()
         ->and(AuditLog::query()->where('action', 'super_admin.reactivated')->exists())->toBeTrue();
@@ -163,13 +163,13 @@ it('Un Super Administrador reactiva a otro: he can sign in again', function () {
 it('Reenviar y revocar una invitación pendiente de Super Administrador: a new link replaces the old one, and revoking leaves none', function () {
     [$luis, $firstToken] = invitedSuperAdmin('Luis Gómez', 'luis@govtrace.org');
 
-    inTheGlobalPanelAs($this->ana, 'POST', "/admin/super-administrators/{$luis->id}/invitation/resend")->assertOk();
+    inTheGlobalPanelAs($this->ana, 'POST', "/admin/super-administrators/{$luis->public_id}/invitation/resend")->assertOk();
 
     $luis->refresh();
     expect($luis->invitation_token_hash)->not->toBe(InvitationToken::hashOf($firstToken));
     Notification::assertSentToTimes($luis, WelcomeNotification::class, 2);
 
-    inTheGlobalPanelAs($this->ana, 'POST', "/admin/super-administrators/{$luis->id}/invitation/revoke")->assertOk();
+    inTheGlobalPanelAs($this->ana, 'POST', "/admin/super-administrators/{$luis->public_id}/invitation/revoke")->assertOk();
 
     expect(SuperAdmin::query()->where('email', 'luis@govtrace.org')->exists())->toBeFalse()
         ->and(AuditLog::query()->whereIn('action', ['super_admin.invitation_resent', 'super_admin.invitation_revoked'])->count())->toBe(2);
@@ -178,18 +178,18 @@ it('Reenviar y revocar una invitación pendiente de Super Administrador: a new l
 it('does not resend nor revoke the invitation of an account already active', function (string $action) {
     $luis = activeSuperAdmin('Luis Gómez', 'luis@govtrace.org');
 
-    inTheGlobalPanelAs($this->ana, 'POST', "/admin/super-administrators/{$luis->id}/invitation/{$action}")->assertNotFound();
+    inTheGlobalPanelAs($this->ana, 'POST', "/admin/super-administrators/{$luis->public_id}/invitation/{$action}")->assertNotFound();
 })->with(['resend', 'revoke']);
 
 it('Un Super Administrador no se desactiva a sí mismo', function () {
     activeSuperAdmin('Luis Gómez', 'luis@govtrace.org');
 
-    inTheGlobalPanelAs($this->ana, 'POST', "/admin/super-administrators/{$this->ana->id}/deactivate")
+    inTheGlobalPanelAs($this->ana, 'POST', "/admin/super-administrators/{$this->ana->public_id}/deactivate")
         ->assertUnprocessable()
         ->assertJson(['message' => NOT_YOURSELF]);
 
     expect($this->ana->fresh()->is_active)->toBeTrue()
-        ->and(collect(superAdministratorsSeenBy($this->ana))->firstWhere('id', $this->ana->id)['is_me'])->toBeTrue();
+        ->and(collect(superAdministratorsSeenBy($this->ana))->firstWhere('id', $this->ana->public_id)['is_me'])->toBeTrue();
 });
 
 /*
@@ -252,7 +252,7 @@ it('Al quedar un solo Super Administrador activo llega una alerta: to the active
     config(['services.alerts.webhook_url' => 'https://alertas.example/hook']);
     $luis = activeSuperAdmin('Luis Gómez', 'luis@govtrace.org');
 
-    inTheGlobalPanelAs($this->ana, 'POST', "/admin/super-administrators/{$luis->id}/deactivate")->assertOk();
+    inTheGlobalPanelAs($this->ana, 'POST', "/admin/super-administrators/{$luis->public_id}/deactivate")->assertOk();
 
     Notification::assertSentTo($this->ana, OnlyOneSuperAdministrator::class, fn (OnlyOneSuperAdministrator $alert) => $alert->subject() === 'GovTrace: queda un solo Super Administrador activo'
         && str_contains($alert->message(), ONE_LEFT));
@@ -264,7 +264,7 @@ it('sends no alert while two or more remain active', function () {
     $luis = activeSuperAdmin('Luis Gómez', 'luis@govtrace.org');
     activeSuperAdmin('Marta Ruiz', 'marta@govtrace.org');
 
-    inTheGlobalPanelAs($this->ana, 'POST', "/admin/super-administrators/{$luis->id}/deactivate")->assertOk();
+    inTheGlobalPanelAs($this->ana, 'POST', "/admin/super-administrators/{$luis->public_id}/deactivate")->assertOk();
 
     Notification::assertNothingSentTo($this->ana, OnlyOneSuperAdministrator::class);
 });
@@ -293,7 +293,7 @@ it('Solo un Super Administrador gestiona Super Administradores: without a sessio
     $luis = activeSuperAdmin('Luis Gómez', 'luis@govtrace.org');
 
     $this->postJson(CENTRAL.'/admin/super-administrators', ['name' => 'Intruso', 'email' => 'intruso@correo.co'])->assertUnauthorized();
-    $this->postJson(CENTRAL."/admin/super-administrators/{$luis->id}/deactivate")->assertUnauthorized();
+    $this->postJson(CENTRAL."/admin/super-administrators/{$luis->public_id}/deactivate")->assertUnauthorized();
     $this->getJson(CENTRAL.'/admin/super-administrators/data')->assertUnauthorized();
 
     expect($luis->fresh()->is_active)->toBeTrue();

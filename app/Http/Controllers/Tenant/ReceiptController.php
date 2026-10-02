@@ -19,16 +19,16 @@ use Illuminate\Http\Request;
  */
 class ReceiptController extends Controller
 {
-    public function mine(Request $request, int $report): JsonResponse
+    public function mine(Request $request, string $report): JsonResponse
     {
-        $sealed = Report::query()->where('user_id', $request->user('tenant')->id)->with('seal')->findOrFail($report);
+        $sealed = Report::query()->where('user_id', $request->user('tenant')->id)->with('seal')->where('public_id', $report)->firstOrFail();
 
         return response()->json(['data' => SealReceipt::of($sealed->seal)]);
     }
 
-    public function public(int $report): JsonResponse
+    public function public(string $report): JsonResponse
     {
-        $sealed = Report::query()->onPublicTimeline()->with('seal')->findOrFail($report);
+        $sealed = Report::query()->onPublicTimeline()->with('seal')->where('public_id', $report)->firstOrFail();
 
         return response()->json(['data' => SealReceipt::of($sealed->seal)]);
     }

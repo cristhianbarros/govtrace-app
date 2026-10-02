@@ -4,6 +4,7 @@ namespace App\Domain\Worksites;
 
 use App\Domain\Geography\GeoPoint;
 use App\Domain\Reports\Report;
+use App\Domain\Shared\HasPublicId;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use LogicException;
@@ -20,6 +21,8 @@ use LogicException;
  */
 class Worksite extends Model
 {
+    use HasPublicId;
+
     protected $fillable = ['name', 'latitude', 'longitude', 'located_at', 'at_risk'];
 
     protected $casts = [

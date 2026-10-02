@@ -209,7 +209,7 @@ it('Varias evidencias a la vez esperan su turno sin gastar intentos: 7 evidences
 
         foreach (range(1, $count) as $number) {
             $this->flushSession();
-            $reports[] = [$tenant, sendReport($veedor, ['comment' => "Reporte {$number} de {$subdomain}"], "{$subdomain}.govtrace.localhost")->assertCreated()->json('id')];
+            $reports[] = [$tenant, createdReportId(sendReport($veedor, ['comment' => "Reporte {$number} de {$subdomain}"], "{$subdomain}.govtrace.localhost"), "{$subdomain}.govtrace.localhost")];
             tenancy()->end();
         }
     }

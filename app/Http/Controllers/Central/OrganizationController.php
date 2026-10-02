@@ -12,6 +12,7 @@ use App\Application\Organization\RuesLookup;
 use App\Application\Organization\SuspendOrganization;
 use App\Application\Organization\UpdateOrganizationLegalData;
 use App\Domain\Organization\Exceptions\OrganizationValidationException;
+use App\Domain\Organization\OrganizationRequest;
 use App\Domain\Organization\OrganizationStatus;
 use App\Domain\Organization\SuperAdminAuthorization;
 use App\Http\Controllers\Controller;
@@ -65,8 +66,10 @@ class OrganizationController extends Controller
             'subdomain' => ['required', 'string'],
             'administrator_name' => ['nullable', 'string', 'required_with:administrator_email'],
             'administrator_email' => ['nullable', 'string', 'required_with:administrator_name'],
-            'request_id' => ['nullable', 'integer'], // it. 43k: la solicitud de alta de la que sale
+            'request_id' => ['nullable', 'string'], // it. 43k: la solicitud de alta de la que sale; 46c: su identificador público
         ]);
+        // Antes de registrarla: una solicitud que no existe no deja una organización a medias.
+        $organizationRequest = isset($data['request_id']) ? OrganizationRequest::idOf($data['request_id']) : null;
 
         try {
             $tenant = (new RegisterOrganizationWithAdministrator)->handle(
@@ -83,8 +86,8 @@ class OrganizationController extends Controller
         }
 
         // It. 43k (V10): registrarla aprueba la solicitud de alta de la que salió.
-        if (isset($data['request_id'])) {
-            (new OrganizationRequests)->approve((int) $data['request_id'], $tenant, $request->user('web'));
+        if ($organizationRequest !== null) {
+            (new OrganizationRequests)->approve($organizationRequest, $tenant, $request->user('web'));
         }
 
         $domain = $tenant->domains()->first()->domain;

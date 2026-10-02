@@ -62,7 +62,7 @@ it('seals a test report on the Stellar testnet, with the fee paid by the sponsor
         // régimen. Con D12 los dos cuestan lo mismo.
         $sealReport = function () use ($tenant, $veedor, $rpc, $sponsor): array {
             $sponsorBefore = $rpc->accountBalance($sponsor);
-            $reportId = sendReport($veedor)->assertCreated()->json('id');
+            $reportId = createdReportId(sendReport($veedor));
             app()->call([new SealReport($tenant->id, $reportId), 'handle']);
 
             // Testnet cierra un ledger cada ~5 s.

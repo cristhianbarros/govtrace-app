@@ -5,6 +5,7 @@ use App\Application\Organization\RegisterOrganization;
 use App\Application\Sealing\SealingNetwork;
 use App\Domain\Organization\Roles;
 use App\Domain\Organization\User as OrganizationUser;
+use App\Domain\Reports\Report;
 use App\Domain\Sealing\ReportSeal;
 use App\Domain\Sealing\SealStatus;
 use App\Infrastructure\Tenancy\Tenant;
@@ -62,15 +63,15 @@ function myReports(?OrganizationUser $veedor = null): TestResponse
 function receivedReport(array $overrides = []): int
 {
     test()->flushSession();
-    $reportId = sendReport(test()->veedor, $overrides)->assertCreated()->json('id');
+    $publicId = sendReport(test()->veedor, $overrides)->assertCreated()->json('id');
     tenancy()->end();
 
-    return $reportId;
+    return test()->tenant->run(fn () => Report::idOf($publicId)); // it. 46c: el API da su identificador público
 }
 
 function mine(int $reportId): array
 {
-    return collect(myReports()->assertOk()->json('data'))->firstWhere('id', $reportId);
+    return collect(myReports()->assertOk()->json('data'))->firstWhere('id', publicIdOf(Report::class, $reportId));
 }
 
 it('Estado técnico y estado editorial por separado', function () {
@@ -132,7 +133,7 @@ it('Solo veo mis propios reportes', function () {
     }
     $own = receivedReport();
 
-    expect(array_column(myReports()->assertOk()->json('data'), 'id'))->toBe([$own]);
+    expect(array_column(myReports()->assertOk()->json('data'), 'id'))->toBe([publicIdOf(Report::class, $own)]);
 });
 
 // Reglas derivadas ------------------------------------------------------
@@ -143,7 +144,8 @@ it('lists the newest first, with what each one is about and the way to its recei
 
     $reports = myReports()->assertOk()->json('data');
 
-    expect(array_column($reports, 'id'))->toBe([$newer, $older])
+    $newer = publicIdOf(Report::class, $newer);
+    expect(array_column($reports, 'id'))->toBe([$newer, publicIdOf(Report::class, $older)])
         ->and($reports[0])->toMatchArray([
             'classification' => 'Abandono',
             // La ficha completa, no un contrato: el reporte es de la obra (R-INT-05).

@@ -79,12 +79,12 @@ it('Sin los datos del responsable la política es un borrador: it says which one
 it('Autorizo el tratamiento de mis datos al activar mi cuenta: the date, the version of the policy and the audit log', function () {
     [$veedor, $token] = invitedMember(fn () => (new InviteObserver)->handle('carlos@correo.co'));
 
-    $this->get(POLICY_HOST."/set-password/{$veedor->id}?token={$token}")
+    $this->get(POLICY_HOST."/set-password/{$veedor->public_id}?token={$token}")
         ->assertInertia(fn (AssertableInertia $page) => $page->where('dataPolicyUrl', '/privacidad'));
     tenancy()->end();
 
     $this->travelTo('2026-09-30 15:00:00');
-    $this->post(POLICY_HOST."/set-password/{$veedor->id}", [
+    $this->post(POLICY_HOST."/set-password/{$veedor->public_id}", [
         'token' => $token, 'password' => 'Veeduria#2026', 'password_confirmation' => 'Veeduria#2026',
         'declaration' => true, 'data_authorization' => true,
     ])->assertRedirect(POLICY_HOST.'/reports/new');
@@ -110,9 +110,9 @@ it('Sin la autorización no se activa la cuenta: a veedor nor an Administrador, 
     [$administrator, $adminToken] = invitedMember(fn () => (new AssignInitialAdministrator)->handle($this->tenant, 'Marta Ospina', 'marta@veeduria.org'));
     tenancy()->end();
 
-    $this->post(POLICY_HOST."/set-password/{$veedor->id}", ['token' => $token, 'password' => 'Veeduria#2026', 'password_confirmation' => 'Veeduria#2026', 'declaration' => true])
+    $this->post(POLICY_HOST."/set-password/{$veedor->public_id}", ['token' => $token, 'password' => 'Veeduria#2026', 'password_confirmation' => 'Veeduria#2026', 'declaration' => true])
         ->assertSessionHasErrors(['data_authorization' => AUTHORIZATION_REQUIRED]);
-    $this->post(POLICY_HOST."/set-password/{$administrator->id}", ['token' => $adminToken, 'password' => 'Veeduria#2026', 'password_confirmation' => 'Veeduria#2026'])
+    $this->post(POLICY_HOST."/set-password/{$administrator->public_id}", ['token' => $adminToken, 'password' => 'Veeduria#2026', 'password_confirmation' => 'Veeduria#2026'])
         ->assertSessionHasErrors(['data_authorization' => AUTHORIZATION_REQUIRED]);
     $this->assertGuest('tenant');
     tenancy()->end();
@@ -125,6 +125,6 @@ it('asks for both at once: a veedor who marks neither sees both messages', funct
     [$veedor, $token] = invitedMember(fn () => (new InviteObserver)->handle('carlos@correo.co'));
     tenancy()->end();
 
-    $this->post(POLICY_HOST."/set-password/{$veedor->id}", ['token' => $token, 'password' => 'Veeduria#2026', 'password_confirmation' => 'Veeduria#2026'])
+    $this->post(POLICY_HOST."/set-password/{$veedor->public_id}", ['token' => $token, 'password' => 'Veeduria#2026', 'password_confirmation' => 'Veeduria#2026'])
         ->assertSessionHasErrors(['data_authorization' => AUTHORIZATION_REQUIRED, 'declaration' => 'Para ser veedor, declare que no está en ninguno de estos casos.']);
 });

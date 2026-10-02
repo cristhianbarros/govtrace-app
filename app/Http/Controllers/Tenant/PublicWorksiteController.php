@@ -47,8 +47,8 @@ class PublicWorksiteController extends Controller
         return response()->json(['data' => ['municipalities' => (new PublicMap)->municipalities()]]);
     }
 
-    public function show(int $worksite): JsonResponse
+    public function show(string $worksite): JsonResponse
     {
-        return response()->json(['data' => (new PublicWorksiteView)->handle(Worksite::query()->findOrFail($worksite))]);
+        return response()->json(['data' => (new PublicWorksiteView)->handle(Worksite::byPublicId($worksite))]);
     }
 }

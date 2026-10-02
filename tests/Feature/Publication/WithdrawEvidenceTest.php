@@ -81,7 +81,7 @@ it('withdraws with a reason: the public card becomes a tombstone, the seal stays
 
     // La lápida: sin fotos ni comentario, con el aviso.
     expect($timeline)->toHaveCount(1)
-        ->and($timeline[0]['report_id'])->toBe($this->published)
+        ->and($timeline[0]['report_id'])->toBe(publicIdOf(Report::class, $this->published))
         ->and($timeline[0])->not->toHaveKey('comment')
         ->and($timeline[0])->not->toHaveKey('files')
         ->and($timeline[0]['notice'])->toBe(TOMBSTONE_NOTICE);
@@ -143,7 +143,7 @@ it('Una evidencia nunca publicada no se retira sino que se rechaza: does not wit
         ->assertConflict()
         ->assertJson(['message' => 'Una evidencia nunca publicada no se retira: se rechaza desde la bandeja de entrada.']);
 
-    $row = collect(inbox($this->administrator)->json('data'))->firstWhere('id', $hidden);
+    $row = collect(inbox($this->administrator)->json('data'))->firstWhere('id', publicIdOf(Report::class, $hidden));
 
     expect($row['actions'])->toBe(['publish', 'reject'])
         ->and(editorialStatusOf($this->tenant, $hidden))->toBe('Oculto');
@@ -157,9 +157,9 @@ it('El Administrador no puede borrar ni alterar una evidencia sellada: does not 
     // No hay ninguna ruta para borrar el reporte o su archivo, ni para reemplazarlo.
     foreach ([
         $admin->deleteJson("http://veeduria-smr.govtrace.localhost/reports/{$this->published}"),
-        $admin->deleteJson("http://veeduria-smr.govtrace.localhost/reports/{$this->published}/evidences/{$evidence->id}"),
-        $admin->postJson("http://veeduria-smr.govtrace.localhost/reports/{$this->published}/evidences/{$evidence->id}", ['file' => evidencePhoto('otra.jpg')]),
-        $admin->putJson("http://veeduria-smr.govtrace.localhost/reports/{$this->published}/evidences/{$evidence->id}", ['file' => evidencePhoto('otra.jpg')]),
+        $admin->deleteJson("http://veeduria-smr.govtrace.localhost/reports/{$this->published}/evidences/{$evidence->public_id}"),
+        $admin->postJson("http://veeduria-smr.govtrace.localhost/reports/{$this->published}/evidences/{$evidence->public_id}", ['file' => evidencePhoto('otra.jpg')]),
+        $admin->putJson("http://veeduria-smr.govtrace.localhost/reports/{$this->published}/evidences/{$evidence->public_id}", ['file' => evidencePhoto('otra.jpg')]),
     ] as $response) {
         expect($response->status())->toBeIn([404, 405]);
     }

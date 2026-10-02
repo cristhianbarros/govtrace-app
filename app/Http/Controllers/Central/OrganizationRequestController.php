@@ -67,25 +67,25 @@ class OrganizationRequestController extends Controller
     }
 
     /** It. 46b: lo que dice el RUES de la veeduría de la solicitud. */
-    public function rues(int $organizationRequest): JsonResponse
+    public function rues(string $organizationRequest): JsonResponse
     {
-        return response()->json((new OrganizationRequests)->rues($organizationRequest));
+        return response()->json((new OrganizationRequests)->rues(OrganizationRequest::idOf($organizationRequest)));
     }
 
     /** It. 46b: el PDF que adjuntó, solo para el Super Administrador. */
-    public function document(int $organizationRequest): StreamedResponse
+    public function document(string $organizationRequest): StreamedResponse
     {
-        $pending = OrganizationRequest::query()->findOrFail($organizationRequest);
+        $pending = OrganizationRequest::byPublicId($organizationRequest);
 
         return RegistrationDocuments::download($pending->document_path, "Inscripción {$pending->name}");
     }
 
-    public function reject(Request $request, int $organizationRequest): JsonResponse
+    public function reject(Request $request, string $organizationRequest): JsonResponse
     {
         $data = $request->validate(['reason' => ['required', 'string', 'max:1000']], ['reason.required' => 'Escriba el motivo: le llega a quien pidió el alta.']);
 
         try {
-            $rejected = (new OrganizationRequests)->reject($organizationRequest, trim($data['reason']), $request->user('web'));
+            $rejected = (new OrganizationRequests)->reject(OrganizationRequest::idOf($organizationRequest), trim($data['reason']), $request->user('web'));
         } catch (DomainException $e) {
             return response()->json(['message' => $e->getMessage()], 409);
         }

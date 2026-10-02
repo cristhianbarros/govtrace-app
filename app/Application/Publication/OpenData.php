@@ -33,7 +33,7 @@ final class OpenData
             $pseudonyms[$report->user_id] ??= VeedorPseudonym::compute($report->user);
 
             return [
-                'reporte' => $report->id,
+                'reporte' => $report->public_id, // it. 46c (US-064-SEC)
                 'obra' => $labels[$report->worksite_id]['name'],
                 'contrato' => $labels[$report->worksite_id]['contracts'],
                 'municipio' => $labels[$report->worksite_id]['municipalities'],

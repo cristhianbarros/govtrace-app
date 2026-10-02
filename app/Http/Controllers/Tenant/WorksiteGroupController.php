@@ -26,7 +26,7 @@ class WorksiteGroupController extends Controller
         }
 
         return response()->json(['data' => [
-            'id' => $worksite->id,
+            'id' => $worksite->public_id, // it. 46c
             'name' => $worksite->name,
             'secop_contract_ids' => $worksite->contracts()->orderBy('secop_contract_id')->pluck('secop_contract_id')->all(),
         ]], 201);

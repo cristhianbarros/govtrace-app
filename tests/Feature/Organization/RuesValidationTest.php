@@ -131,7 +131,7 @@ it('El Super Administrador ve lo que dice el RUES de una veeduría inscrita en u
     ]);
     $request = paisajeUrbano();
 
-    $answer = inThePanel('GET', "/admin/organization-requests/{$request->id}/rues")->assertOk()->json();
+    $answer = inThePanel('GET', "/admin/organization-requests/{$request->public_id}/rues")->assertOk()->json();
 
     // The date of the data is the one of the monthly extract; each record says when its own data were last updated.
     expect($answer)->toMatchArray(['status' => 'found', 'message' => null, 'data_date' => '2026-09-04'])
@@ -152,7 +152,7 @@ it('shows every match when none is of the chamber the veeduría wrote', function
     Http::fake([RUES_URL => Http::response([ruesRow(['camara_comercio' => 'BOGOTA']), ruesRow(['camara_comercio' => 'CALI'])])]);
     $request = paisajeUrbano();
 
-    expect(array_column(inThePanel('GET', "/admin/organization-requests/{$request->id}/rues")->json('records'), 'chamber'))->toBe(['BOGOTA', 'CALI']);
+    expect(array_column(inThePanel('GET', "/admin/organization-requests/{$request->public_id}/rues")->json('records'), 'chamber'))->toBe(['BOGOTA', 'CALI']);
 });
 
 it('asks the date of the monthly extract once a day, not on every lookup', function () {
@@ -178,12 +178,12 @@ it('Una veeduría inscrita en una personería no está en los datos abiertos del
     askForTheAlta()->assertCreated();
     $request = OrganizationRequest::query()->sole();
 
-    inThePanel('GET', "/admin/organization-requests/{$request->id}/rues")
+    inThePanel('GET', "/admin/organization-requests/{$request->public_id}/rues")
         ->assertOk()
         ->assertJson(['status' => 'personeria', 'message' => REGISTERED_IN_A_PERSONERIA, 'records' => []]);
     Http::assertNothingSent();
 
-    $download = inThePanel('GET', "/admin/organization-requests/{$request->id}/document")->assertOk();
+    $download = inThePanel('GET', "/admin/organization-requests/{$request->public_id}/document")->assertOk();
     expect($download->headers->get('Content-Type'))->toBe('application/pdf')
         ->and($download->headers->get('Content-Disposition'))->toStartWith('attachment;')
         ->and($download->headers->get('X-Content-Type-Options'))->toBe('nosniff')
@@ -195,19 +195,19 @@ it('Si el RUES no responde, la revisión sigue: the request can still be decided
     Http::fake([RUES_URL => fn () => throw new ConnectionException('timeout')]);
     $request = paisajeUrbano();
 
-    inThePanel('GET', "/admin/organization-requests/{$request->id}/rues")
+    inThePanel('GET', "/admin/organization-requests/{$request->public_id}/rues")
         ->assertOk()
         ->assertJson(['status' => 'unavailable', 'message' => RUES_UNAVAILABLE, 'records' => []]);
 
-    inThePanel('POST', "/admin/organization-requests/{$request->id}/reject", ['reason' => 'No se pudo comprobar la inscripción.'])->assertOk();
+    inThePanel('POST', "/admin/organization-requests/{$request->public_id}/reject", ['reason' => 'No se pudo comprobar la inscripción.'])->assertOk();
 });
 
 it('La decisión queda en la auditoría con lo que dijo el RUES: what the Super Administrador saw', function () {
     Http::fake([RUES_URL => Http::response([ruesRow()])]);
     $request = paisajeUrbano();
-    inThePanel('GET', "/admin/organization-requests/{$request->id}/rues")->assertOk();
+    inThePanel('GET', "/admin/organization-requests/{$request->public_id}/rues")->assertOk();
 
-    inThePanel('POST', "/admin/organization-requests/{$request->id}/reject", ['reason' => 'La matrícula está cancelada.'])->assertOk();
+    inThePanel('POST', "/admin/organization-requests/{$request->public_id}/reject", ['reason' => 'La matrícula está cancelada.'])->assertOk();
 
     $rues = AuditLog::query()->where('action', 'organization_request.rejected')->sole()->after['rues'];
     expect($rues['status'])->toBe('found')
@@ -225,7 +225,7 @@ it('El PDF de una solicitud aprobada queda con la organización: and the Super A
         'registration_number' => 'Resolución 045 de 2026',
         'registration_authority' => 'Personería de Medellín',
         'subdomain' => 'la-pradera',
-        'request_id' => $request->id,
+        'request_id' => $request->public_id,
     ])->assertCreated();
 
     $tenant = Tenant::query()->where('name', 'Veeduría Ciudadana de La Pradera')->sole();
@@ -255,8 +255,8 @@ it('Solo el Super Administrador descarga el PDF de una solicitud: nor queries th
     $request = OrganizationRequest::query()->sole();
 
     test()->flushSession();
-    $this->getJson(RUES_HOST."/admin/organization-requests/{$request->id}/document")->assertUnauthorized();
-    $this->getJson(RUES_HOST."/admin/organization-requests/{$request->id}/rues")->assertUnauthorized();
+    $this->getJson(RUES_HOST."/admin/organization-requests/{$request->public_id}/document")->assertUnauthorized();
+    $this->getJson(RUES_HOST."/admin/organization-requests/{$request->public_id}/rues")->assertUnauthorized();
     $this->getJson(RUES_HOST.'/admin/rues?nit=900123456-8')->assertUnauthorized();
 });
 

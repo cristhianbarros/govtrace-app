@@ -2502,7 +2502,7 @@ El usuario pidió seguir con lo que no espera a nadie: la deuda técnica y los h
 
 **46 — El gobierno de la plataforma y la defensa en profundidad.** Tres preguntas del usuario el 2026-10-02, mientras probaba la 45f. Aprobó el orden: "Sí, agrégalas al plan en ese orden."
 
-**Orden aprobado por el usuario el 2026-10-02:** 46a (✅), 46b (✅), 46c y 46d; después, 46e.
+**Orden aprobado por el usuario el 2026-10-02:** 46a (✅), 46b (✅), 46c (✅) y 46d; después, 46e.
 
 **46a — Los Super Administradores: más de uno, y nunca ninguno** (historia nueva, US-063-USR). El usuario: "podría darse el caso que el sistema quede sin super administrador y que la aplicación tenga cierta dependencia de eso."
 - **Hoy:**
@@ -2603,6 +2603,36 @@ El usuario pidió seguir con lo que no espera a nadie: la deuda técnica y los h
   - las URL públicas viejas, con número, redirigen (301) a la nueva, porque pudieron compartirse.
 - **Done-when:** ninguna ruta de la app lleva en la URL un id numérico de esas tablas (un test que recorra las rutas), y los enlaces viejos redirigen; `make e2e` y `make trace-check` en verde.
 - **Modelo:** Opus xhigh. Migra datos en todas las organizaciones, cambia URL que pudieron compartirse y no puede romper lo sellado.
+
+✅ **46c cumplida (2026-10-02).** Historia nueva **US-064-SEC** y regla **R-SEC-08**.
+- **El identificador** (`App\Domain\Shared\PublicId`, `HasPublicId`): un ULID en minúsculas, que nace con cada registro. Está en las obras, los reportes, las evidencias, los informes ciudadanos y los usuarios de cada organización, y en los Super Administradores y las solicitudes de alta.
+- **Migraciones:** `2026_10_02_000300` central y por organización (`PublicIdColumn`). Los registros que ya existían reciben un identificador con la fecha en que se crearon, así siguen ordenándose igual que la llave numérica.
+- **Las llaves numéricas no cambian:**
+  - la referencia de la obra sellada sigue siendo `sha256("organización:id de obra")` (R-BLK-02), y un test lo comprueba con dos sellos;
+  - la prueba de inclusión no lleva ningún número;
+  - el log de auditoría sigue guardando los números, porque es interno;
+  - la capa HTTP traduce: `Model::idOf()` y `Model::byPublicId()`.
+- **Las rutas:** toda ruta que nombra uno de esos registros exige el patrón del ULID. Un test recorre todas las rutas de la app.
+- **Las rutas internas** responden 404 a un número.
+- **El API:** cada `id` y `*_id` de esas tablas es el identificador público. Eso cubre el mapa y su lista, la línea de tiempo y sus enlaces, el recibo, la prueba por huella (`?report=`), los datos abiertos (CSV y JSON), la Bandeja, los informes ciudadanos, el equipo, los administradores, "Mis Reportes", las obras cercanas, los Super Administradores, las solicitudes de alta y las fallas de sellado. La Nueva organización (`?request=`, `request_id`) y el formulario del ciudadano (`worksite_id`) reciben el identificador público.
+- **Los enlaces viejos** (`App\Http\Controllers\LegacyLinkController`, rutas `legacy.*`, 30 por minuto por conexión):
+  - la página de la obra, sus datos, el recibo, la foto, la descarga y la prueba redirigen (301) solo si lo que nombran ya es público;
+  - la invitación ya enviada redirige solo con su token válido. Si no, muestra la pantalla del enlace no válido, que no dice si la cuenta existe;
+  - así el número no vuelve a abrir el recorrido. Lo encontré al escribirlo: la primera versión redirigía cualquier número, y dejaba saber qué usuarios existían.
+- **Sin conexión:** el reporte guardado en el celular nombra la obra por su contrato de SECOP, no por un número. Se recibe igual.
+- **El informe de un ciudadano** se nombra con una referencia corta, tomada de la parte aleatoria de su identificador (`7KQ3-M9XD`), en pantalla, en sus dos correos y en la lista de la veeduría. Antes era su número consecutivo, que decía cuántos había.
+- **El expediente** (`dossier.zip`) nombra sus carpetas con el identificador público del reporte.
+- ❓ **Decisiones por defecto:**
+  - ULID, y no UUIDv7;
+  - quedan fuera el número de una entrada del log de auditoría (solo la ve quien administra) y el de los contratos, que es el de SECOP;
+  - las rutas de almacenamiento de los archivos siguen con el número, porque son internas;
+  - los enlaces viejos quedan en `docs/go-live.md` como decisión: se pueden quitar antes de la red principal si no hay enlaces compartidos.
+- **Prueba:**
+  - Pest: `PublicIdentifiersTest` (22 casos: las rutas, los enlaces viejos y sus límites, el API público y los paneles, la invitación, sin conexión, lo sellado, la migración), además de los tests que armaban URL con el número;
+  - Vitest: la corrección desde la Bandeja con un identificador público, los tipos de las props y la referencia del informe ciudadano;
+  - `make e2e`: 52 de 52 (la CSP y el recorrido de UX abren la obra por su identificador público);
+  - `make ux-check`: sin retroceso;
+  - `make trace-check`: 371 de 371.
 
 **46d — La auditoría con filtros, en frases** (enmienda de US-043-MON). El usuario, el 2026-10-02: "Podrías hacer una mejora en la interfaz de auditoria. Actualmente, no permite realizar filtros de ningún tipo."
 - **Hoy:** el registro pasa de 20 en 20, lo más reciente primero, sin ningún filtro. Cada entrada muestra la acción, quién y cuándo, y los valores de antes y después en crudo (`clave: valor`, con JSON).

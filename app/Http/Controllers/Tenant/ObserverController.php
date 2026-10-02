@@ -28,7 +28,7 @@ class ObserverController extends Controller
         return response()->json([
             'data' => User::role(Roles::Observer->value, 'tenant')->orderBy('email')->get()
                 ->map(fn (User $observer) => [
-                    'id' => $observer->id,
+                    'id' => $observer->public_id, // it. 46c
                     'email' => $observer->email,
                     'status' => $observer->statusLabel(),
                     // US-057-LEG: cuándo declaró no tener impedimentos para ser veedor; null, aún no.
@@ -38,7 +38,7 @@ class ObserverController extends Controller
         ]);
     }
 
-    public function deactivate(Request $request, int $observer): JsonResponse
+    public function deactivate(Request $request, string $observer): JsonResponse
     {
         return $this->change(function () use ($request, $observer) {
             (new DeactivateObserver)->handle($request->user('tenant'), $this->observer($observer));
@@ -47,7 +47,7 @@ class ObserverController extends Controller
         });
     }
 
-    public function reactivate(Request $request, int $observer): JsonResponse
+    public function reactivate(Request $request, string $observer): JsonResponse
     {
         return $this->change(function () use ($request, $observer) {
             (new ReactivateObserver)->handle($request->user('tenant'), $this->observer($observer));
@@ -57,7 +57,7 @@ class ObserverController extends Controller
     }
 
     /** US-040-USR */
-    public function resendInvitation(Request $request, int $observer): JsonResponse
+    public function resendInvitation(Request $request, string $observer): JsonResponse
     {
         return $this->change(function () use ($request, $observer) {
             $invited = $this->observer($observer);
@@ -68,7 +68,7 @@ class ObserverController extends Controller
     }
 
     /** US-040-USR */
-    public function revokeInvitation(Request $request, int $observer): JsonResponse
+    public function revokeInvitation(Request $request, string $observer): JsonResponse
     {
         return $this->change(function () use ($request, $observer) {
             $invited = $this->observer($observer);
@@ -78,9 +78,9 @@ class ObserverController extends Controller
         });
     }
 
-    private function observer(int $id): User
+    private function observer(string $publicId): User
     {
-        return User::role(Roles::Observer->value, 'tenant')->findOrFail($id);
+        return User::role(Roles::Observer->value, 'tenant')->where('public_id', $publicId)->firstOrFail();
     }
 
     /** @param  callable(): string  $change  the change, returning what to tell the Administrador */

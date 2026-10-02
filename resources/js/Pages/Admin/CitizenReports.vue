@@ -65,7 +65,7 @@ onMounted(load);
                         <span class="font-semibold">{{ report.worksite }}</span>
                         <span class="rounded px-2 py-0.5 text-sm font-semibold" :class="STATE[report.status]">{{ report.status_label }}</span>
                     </header>
-                    <p class="text-sm text-slate-600">Informe n.º {{ report.id }} · {{ formatDateTime(report.received_at) }}</p>
+                    <p class="text-sm text-slate-600">Informe n.º {{ report.reference }} · {{ formatDateTime(report.received_at) }}</p>
                     <p class="whitespace-pre-line">{{ report.message }}</p>
                     <a v-if="report.photo_url" :href="report.photo_url" target="_blank" rel="noopener" class="self-start">
                         <img :src="report.photo_url" alt="Foto que envió el ciudadano" class="size-32 rounded-lg object-cover" />

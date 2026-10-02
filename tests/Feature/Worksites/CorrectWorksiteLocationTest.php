@@ -5,7 +5,9 @@ use App\Application\Organization\RegisterOrganization;
 use App\Domain\Audit\AuditLog;
 use App\Domain\Organization\Roles;
 use App\Domain\Organization\User as OrganizationUser;
+use App\Domain\Shared\PublicId;
 use App\Domain\Worksites\Worksite;
+use App\Infrastructure\Tenancy\Domain;
 use App\Infrastructure\Tenancy\Tenant;
 use Database\Seeders\DivipolaSeeder;
 use Illuminate\Support\Facades\DB;
@@ -51,7 +53,11 @@ afterEach(function () {
 
 function correctLocation(OrganizationUser $member, string $subdomain, int $worksiteId, float $latitude, float $longitude): TestResponse
 {
-    return test()->actingAs($member, 'tenant')->patchJson("http://{$subdomain}.govtrace.localhost/worksites/{$worksiteId}/location", [
+    // It. 46c: la ruta nombra la obra por su identificador público; una que no es de esa organización no se encuentra.
+    $worksite = Domain::query()->where('domain', "{$subdomain}.govtrace.localhost")->firstOrFail()->tenant
+        ->run(fn () => Worksite::query()->whereKey($worksiteId)->value('public_id')) ?? PublicId::generate();
+
+    return test()->actingAs($member, 'tenant')->patchJson("http://{$subdomain}.govtrace.localhost/worksites/{$worksite}/location", [
         'latitude' => $latitude,
         'longitude' => $longitude,
     ]);

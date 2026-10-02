@@ -30,7 +30,7 @@ class OrganizationAdministratorController extends Controller
         });
     }
 
-    public function resend(Request $request, string $tenant, int $user): JsonResponse
+    public function resend(Request $request, string $tenant, string $user): JsonResponse
     {
         return $this->answer(function () use ($request, $tenant, $user) {
             $organization = Tenant::query()->findOrFail($tenant);
@@ -42,7 +42,7 @@ class OrganizationAdministratorController extends Controller
         });
     }
 
-    public function revoke(Request $request, string $tenant, int $user): JsonResponse
+    public function revoke(Request $request, string $tenant, string $user): JsonResponse
     {
         return $this->answer(function () use ($request, $tenant, $user) {
             $email = (new OrganizationAdministrators)->revoke(Tenant::query()->findOrFail($tenant), $user, $request->user('web'));
@@ -52,7 +52,7 @@ class OrganizationAdministratorController extends Controller
     }
 
     /** It. 43j (V3): an Administrador who left can no longer enter; never the only active one. */
-    public function deactivate(Request $request, string $tenant, int $user): JsonResponse
+    public function deactivate(Request $request, string $tenant, string $user): JsonResponse
     {
         return $this->answer(function () use ($request, $tenant, $user) {
             (new OrganizationAdministrators)->deactivate(Tenant::query()->findOrFail($tenant), $user, $request->user('web'));
@@ -61,7 +61,7 @@ class OrganizationAdministratorController extends Controller
         });
     }
 
-    public function reactivate(Request $request, string $tenant, int $user): JsonResponse
+    public function reactivate(Request $request, string $tenant, string $user): JsonResponse
     {
         return $this->answer(function () use ($request, $tenant, $user) {
             (new OrganizationAdministrators)->reactivate(Tenant::query()->findOrFail($tenant), $user, $request->user('web'));

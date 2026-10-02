@@ -22,6 +22,13 @@ export const PEOPLE = {
 };
 export const WORKSITE = 'Parque de pruebas sin conexión';
 
+/** It. 46c (US-064-SEC): the page of the e2e worksite, named by its public id, not its number. */
+export async function worksiteUrl(request) {
+    const listing = await (await request.get(`${ORG}/public/worksites/list`)).json();
+
+    return `${ORG}/worksite/${listing.data.find((worksite) => worksite.name === WORKSITE).id}`;
+}
+
 export async function logIn(page, base, email, password = PASSWORD) {
     await page.goto(`${base}/login`);
     await page.getByLabel('Correo electrónico').fill(email);

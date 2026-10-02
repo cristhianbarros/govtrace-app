@@ -31,7 +31,7 @@ const contract = {
 };
 
 const abandonment = {
-    report_id: 12,
+    report_id: '01j9xq3m7v8k2d4f6g8h0jkm12',
     classification: 'Abandono',
     captured_at: '2026-09-27T15:15:32+00:00',
     comment: 'Obra detenida hace 2 meses',
@@ -40,10 +40,10 @@ const abandonment = {
     seal: SEAL,
     receipt_url: '/public/reports/12/receipt',
 };
-const withdrawn = { report_id: 11, classification: 'Retraso', captured_at: '2026-09-20T13:00:00+00:00', notice: TOMBSTONE, seal: SEAL, receipt_url: '/public/reports/11/receipt' };
+const withdrawn = { report_id: '01j9xq3m7v8k2d4f6g8h0jkm11', classification: 'Retraso', captured_at: '2026-09-20T13:00:00+00:00', notice: TOMBSTONE, seal: SEAL, receipt_url: '/public/reports/11/receipt' };
 const progress = {
     ...abandonment,
-    report_id: 10,
+    report_id: '01j9xq3m7v8k2d4f6g8h0jkm10',
     classification: 'Avance',
     captured_at: '2026-09-10T14:00:00+00:00',
     comment: 'Ya fundieron la primera losa',
@@ -52,11 +52,11 @@ const progress = {
 };
 
 const AT_RISK = { color: 'red', label: 'En riesgo', reason: 'El reporte publicado más reciente, del 27/09/2026, es de abandono.' };
-const calle30 = (changes = {}) => ({ id: 7, name: 'Pavimentación Calle 30', contracts: [contract], timeline: [abandonment, withdrawn, progress], condition: AT_RISK, ...changes });
+const calle30 = (changes = {}) => ({ id: '01j9xq3m7v8k2d4f6g8h0jkmnp', name: 'Pavimentación Calle 30', contracts: [contract], timeline: [abandonment, withdrawn, progress], condition: AT_RISK, ...changes });
 
 async function openWorksite(worksite = calle30()) {
     fetchWorksite.mockResolvedValue(worksite);
-    const wrapper = mount(Worksite, { props: { worksiteId: 7 }, attachTo: document.body });
+    const wrapper = mount(Worksite, { props: { worksiteId: '01j9xq3m7v8k2d4f6g8h0jkmnp' }, attachTo: document.body });
     await flushPromises();
     return wrapper;
 }
@@ -115,7 +115,7 @@ describe('Vista de obra — la línea de tiempo (US-029)', () => {
     it('Línea de tiempo cargada al hacer clic en el pin: each card with date, classification, comment, thumbnails and the seal button', async () => {
         const wrapper = await openWorksite();
 
-        expect(fetchWorksite).toHaveBeenCalledWith(7);
+        expect(fetchWorksite).toHaveBeenCalledWith('01j9xq3m7v8k2d4f6g8h0jkmnp');
         expect(cards(wrapper)).toHaveLength(3);
         const first = cards(wrapper)[0];
         expect(first.text()).toContain(formatDateTime(abandonment.captured_at));
@@ -240,7 +240,7 @@ describe('Vista de obra — el modo contextual del validador (US-024)', () => {
         await input.trigger('change');
         await flushPromises();
 
-        expect(validate).toHaveBeenCalledWith(expect.objectContaining({ file: copy, mode: 'contextual', reportId: 12, stellar: STELLAR, findProof }));
+        expect(validate).toHaveBeenCalledWith(expect.objectContaining({ file: copy, mode: 'contextual', reportId: '01j9xq3m7v8k2d4f6g8h0jkm12', stellar: STELLAR, findProof }));
         const banner = cards(wrapper)[0].get('[data-test="verdict"]');
         expect(banner.attributes('role')).toBe('alert');
         expect(banner.text()).toContain('❌ Archivo Alterado o Falso.');
@@ -252,12 +252,12 @@ describe('Vista de obra — estados', () => {
     it('shows that it is loading the worksite', () => {
         fetchWorksite.mockReturnValue(new Promise(() => {}));
 
-        expect(mount(Worksite, { props: { worksiteId: 7 } }).text()).toContain('Cargando la obra…');
+        expect(mount(Worksite, { props: { worksiteId: '01j9xq3m7v8k2d4f6g8h0jkmnp' } }).text()).toContain('Cargando la obra…');
     });
 
     it('says when it could not load it, and lets retry', async () => {
         fetchWorksite.mockRejectedValueOnce(new Error('Network Error')).mockResolvedValueOnce(calle30());
-        const wrapper = mount(Worksite, { props: { worksiteId: 7 } });
+        const wrapper = mount(Worksite, { props: { worksiteId: '01j9xq3m7v8k2d4f6g8h0jkmnp' } });
         await flushPromises();
 
         expect(wrapper.get('[role="alert"]').text()).toContain('No se pudo conectar con el servidor.');

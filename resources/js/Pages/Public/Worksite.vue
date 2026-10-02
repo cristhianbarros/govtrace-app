@@ -15,7 +15,7 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import { fetchWorksite } from '@/services/api.js';
 
 const props = defineProps({
-    worksiteId: { type: Number, required: true },
+    worksiteId: { type: String, required: true }, // it. 46c: su identificador público
 });
 
 const page = usePage();

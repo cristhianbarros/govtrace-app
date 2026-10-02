@@ -68,7 +68,7 @@ afterEach(function () {
 function queuedReport(): int
 {
     test()->flushSession();
-    $reportId = sendReport(test()->veedor)->assertCreated()->json('id');
+    $reportId = createdReportId(sendReport(test()->veedor));
     tenancy()->end();
 
     return $reportId;
