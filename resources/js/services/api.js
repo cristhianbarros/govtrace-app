@@ -75,7 +75,7 @@ export const fetchProfile = async () => (await dataOf(http.get('/organization/pr
 export const saveProfile = (form) => dataOf(http.post('/organization/profile', form));
 
 /** US-043-MON: el log de la organización, { data, meta }. */
-export const fetchAuditLog = (page) => dataOf(http.get('/audit', { params: { page } }));
+export const fetchAuditLog = (page, filters = {}) => dataOf(http.get('/audit', { params: { page, ...filters } }));
 
 /** US-035 */
 export const fetchWorksites = async () => (await dataOf(http.get('/worksites'))).data;
@@ -124,7 +124,7 @@ export const fetchParameters = () => dataOf(http.get('/admin/parameters/data'));
 export const updateParameter = (key, value) => dataOf(http.put(`/admin/parameters/${key}`, { value }));
 
 /** US-043-MON: todo el log, { data, meta }. */
-export const fetchGlobalAuditLog = (page) => dataOf(http.get('/admin/audit/data', { params: { page } }));
+export const fetchGlobalAuditLog = (page, filters = {}) => dataOf(http.get('/admin/audit/data', { params: { page, ...filters } }));
 
 /** US-014: la última sincronización con SECOP II, o null. */
 export const fetchSecopHealth = async () => (await dataOf(http.get('/admin/secop-health/data'))).data;

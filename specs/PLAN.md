@@ -2502,7 +2502,7 @@ El usuario pidió seguir con lo que no espera a nadie: la deuda técnica y los h
 
 **46 — El gobierno de la plataforma y la defensa en profundidad.** Tres preguntas del usuario el 2026-10-02, mientras probaba la 45f. Aprobó el orden: "Sí, agrégalas al plan en ese orden."
 
-**Orden aprobado por el usuario el 2026-10-02:** 46a (✅), 46b (✅), 46c (✅) y 46d; después, 46e.
+**Orden aprobado por el usuario el 2026-10-02:** 46a (✅), 46b (✅), 46c (✅) y 46d (✅); después, 46e.
 
 **46a — Los Super Administradores: más de uno, y nunca ninguno** (historia nueva, US-063-USR). El usuario: "podría darse el caso que el sistema quede sin super administrador y que la aplicación tenga cierta dependencia de eso."
 - **Hoy:**
@@ -2646,6 +2646,14 @@ El usuario pidió seguir con lo que no espera a nadie: la deuda técnica y los h
   - sin búsqueda de texto libre en los valores: los filtros cubren las preguntas de "quién hizo qué y cuándo".
 - **Done-when:** los escenarios de la enmienda de `features/US-043-MON.feature` en verde; `make ux-check` sin retroceso.
 - **Modelo:** Sonnet medium. Es una consulta y su pantalla, sobre un registro que ya existe; los permisos (quién ve qué) no cambian.
+
+✅ **46d cumplida (2026-10-02), con Sonnet medium.**
+- **Filtros** (`App\Application\Audit\AuditFilters`, `AuditLogQuery`): fecha (desde y hasta, días de Colombia), quién lo hizo (parte del nombre, sin importar mayúsculas), tipo de acción y, solo en el panel global, organización. Se combinan, viajan como parámetros de la consulta y la paginación los conserva. Un filtro inválido responde 422 con su mensaje; un Administrador que pide otra organización sigue viendo solo la suya.
+- **Tipos de acción** (`AuditLabels::GROUPS`): organizaciones y obras, evidencias e informes, cuentas e invitaciones, configuración y sellado; se eligen de una lista. La respuesta trae sus opciones (`options`).
+- **Frases:** cada entrada dice, por ejemplo, "Ana Directora desactivó a un Super Administrador (luis@govtrace.org)", con el antes y el después desplegables ("Ver el antes y el después").
+- **Etiquetas:** un test recorre las acciones que el código registra y exige etiqueta y tipo. Faltaba `super_admin.created` (la consola); ya está.
+- **Pantalla:** el formulario sobre la lista, "Quitar filtros" solo con alguno activo, y "Ninguna entrada cumple esos filtros." cuando no hay resultados.
+- **Prueba:** Pest, 6 casos nuevos en `AuditLogQueryTest`; Vitest, 7 casos nuevos en `AuditLog.test.js`; `make e2e` 52 de 52 (filtra y quita filtros en el flujo del Administrador); `make ux-check` sin retroceso; `make trace-check` 376 de 376.
 
 **46e — Los rostros en las fotos, difuminados en el celular** (enmienda de R-PRIV-05 y de US-009; también la foto del informe ciudadano, US-059-LEG). **Aprobada** por el usuario el 2026-10-02: "R-PRIV-05 Amendment (Faces in photos): Approved. We must blur faces to comply with Ley 1581, as faces are biometric personal data. Log this as iteration 46e."
 - **Por qué en el celular:** la foto se sella tal como la envía el celular, y la descarga pública es ese mismo archivo. Difuminar en el servidor rompería la verificación. Se difumina antes de calcular la huella: lo que se sella es la foto ya difuminada, y el original nunca sale del teléfono.

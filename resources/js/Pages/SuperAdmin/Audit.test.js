@@ -16,7 +16,7 @@ describe('Registro de auditoría global', () => {
         const wrapper = mount(Audit);
         await flushPromises();
 
-        expect(fetchGlobalAuditLog).toHaveBeenCalledWith(1);
+        expect(fetchGlobalAuditLog).toHaveBeenCalledWith(1, {});
         expect(wrapper.get('[data-test="audit-entry"]').text()).toContain('Veeduría Ciénaga');
     });
 });

@@ -13,7 +13,7 @@ describe('Registro de auditoría de la organización', () => {
         const wrapper = mount(Audit);
         await flushPromises();
 
-        expect(fetchAuditLog).toHaveBeenCalledWith(1);
+        expect(fetchAuditLog).toHaveBeenCalledWith(1, {});
         expect(wrapper.get('h1').text()).toBe('Registro de auditoría');
     });
 });
