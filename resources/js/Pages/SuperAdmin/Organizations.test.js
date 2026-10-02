@@ -384,3 +384,18 @@ describe('Reportar en su nombre (it. 43g, V7)', () => {
     });
 });
 
+// It. 46b: el PDF de la resolución o del certificado de la solicitud aprobada queda con la organización.
+describe('El documento de inscripción (it. 46b)', () => {
+    it('El PDF de una solicitud aprobada queda con la organización: and it is downloaded from its row', async () => {
+        const wrapper = await openOrganizations([{ ...smr, has_registration_document: true }]);
+
+        const link = wrapper.findAll('a').find((candidate) => candidate.text() === 'Documento de inscripción (PDF)');
+        expect(link.attributes('href')).toBe('/admin/organizations/tenant-smr/registration-document');
+    });
+
+    it('shows no link when there is no document', async () => {
+        const wrapper = await openOrganizations([{ ...smr, has_registration_document: false }]);
+
+        expect(wrapper.findAll('a').some((candidate) => candidate.text() === 'Documento de inscripción (PDF)')).toBe(false);
+    });
+});

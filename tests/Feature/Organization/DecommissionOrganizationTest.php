@@ -352,6 +352,23 @@ it('keeps the files downloadable until the retention ends, and then says why the
     publicGet("/public/evidences/{$evidenceId}/proof")->assertOk();
 });
 
+// It. 46b: el PDF de inscripción de su solicitud de alta quedó con la organización, bajo su prefijo.
+it('purges the registration document with the evidence files, 5 years after the decommission', function () {
+    $path = "{$this->tenant->id}/registro/inscripcion.pdf";
+    Storage::disk('evidencias')->put($path, "%PDF-1.7\n%%EOF\n");
+    $this->tenant->update(['registration_document_path' => $path]);
+    decommission()->assertOk();
+
+    Carbon::setTestNow(CarbonImmutable::parse('2026-09-29 12:00:00')->addYears(4)->addMonths(11));
+    runRetentionPolicy();
+    expect(Storage::disk('evidencias')->exists($path))->toBeTrue();
+
+    Carbon::setTestNow(CarbonImmutable::parse('2026-09-29 12:00:00')->addYears(5)->addDay());
+    runRetentionPolicy();
+    expect(Storage::disk('evidencias')->exists($path))->toBeFalse()
+        ->and($this->tenant->fresh()->registration_document_path)->toBeNull();
+});
+
 it('purges the files of each organization once, and records it in the audit log', function () {
     decommission()->assertOk();
     Carbon::setTestNow('2031-09-30 12:00:00');

@@ -183,7 +183,21 @@ export async function findProof(sha256, reportId) {
 }
 
 // It. 43k (V10, US-062-ALT): una veeduría pide su alta desde el Inicio; el Super Administrador la decide.
-export const requestOrganization = (data) => dataOf(http.post('/organization-requests', data));
+/** It. 46b: con el PDF de la resolución o del certificado, así que viaja como formulario con archivos. */
+export const requestOrganization = (data) => {
+    const form = new FormData();
+    for (const [key, value] of Object.entries(data)) {
+        if (value instanceof Blob) {
+            form.append(key, value);
+        } else if (value !== null && value !== undefined) {
+            form.append(key, typeof value === 'boolean' ? (value ? '1' : '0') : value);
+        }
+    }
+    return dataOf(http.post('/organization-requests', form));
+};
 export const fetchOrganizationRequests = async () => (await dataOf(http.get('/admin/organization-requests/data'))).data;
 export const rejectOrganizationRequest = (id, reason) => dataOf(http.post(`/admin/organization-requests/${id}/reject`, { reason }));
+// It. 46b: lo que dicen los datos abiertos del RUES de una solicitud, o de un NIT o una inscripción.
+export const fetchOrganizationRequestRues = (id) => dataOf(http.get(`/admin/organization-requests/${id}/rues`));
+export const lookupRues = (query) => dataOf(http.get('/admin/rues', { params: query }));
 

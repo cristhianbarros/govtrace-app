@@ -3,7 +3,7 @@
 import { flushPromises, mount } from '@vue/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import NewOrganization from './NewOrganization.vue';
-import { registerOrganization } from '@/services/api.js';
+import { lookupRues, registerOrganization } from '@/services/api.js';
 
 vi.mock('@inertiajs/vue3', async () => await import('@/testing/inertia.js'));
 vi.mock('@/services/api.js');
@@ -142,5 +142,37 @@ describe('Desde una solicitud de alta (it. 43k, V10)', () => {
         await flushPromises();
 
         expect(registerOrganization).toHaveBeenCalledWith(expect.objectContaining({ name: 'Veeduría Ciudadana de La Pradera', subdomain: 'la-pradera', administrator_email: 'contacto@lapradera.org', request_id: 1 }));
+    });
+});
+
+// It. 46b (US-001): antes de registrarla, lo que dicen los datos abiertos del RUES de ese NIT o esa matrícula.
+describe('Consultar el RUES (it. 46b)', () => {
+    it('Al dar de alta una organización se consulta el RUES por su NIT: shows its legal name, chamber and state', async () => {
+        lookupRues.mockResolvedValue({
+            status: 'found',
+            message: null,
+            data_date: '2026-09-15',
+            records: [{ name: 'VEEDURIA CIUDADANA SANTA MARTA', nit: '900123456', legal_form: 'LAS DEMÁS ORGANIZACIONES CIVILES,CORPORACIONES,FUNDACIONES', status: 'ACTIVA', chamber: 'SANTA MARTA', registration: '123', registered_on: '2020-01-10' }],
+        });
+        const wrapper = mount(NewOrganization);
+
+        await wrapper.get('input#nit').setValue('900123456-8');
+        await wrapper.findAll('button').find((button) => button.text() === 'Consultar en el RUES').trigger('click');
+        await flushPromises();
+
+        expect(lookupRues).toHaveBeenCalledWith({ nit: '900123456-8', registration_number: '', registration_authority: '' });
+        const rues = wrapper.get('[data-test="rues"]');
+        expect(rues.text()).toContain('VEEDURIA CIUDADANA SANTA MARTA');
+        expect(rues.text()).toContain('SANTA MARTA');
+        expect(rues.text()).toContain('ACTIVA');
+    });
+
+    it('asks for a NIT or a registration before consulting', async () => {
+        const wrapper = mount(NewOrganization);
+
+        await wrapper.findAll('button').find((button) => button.text() === 'Consultar en el RUES').trigger('click');
+
+        expect(lookupRues).not.toHaveBeenCalled();
+        expect(wrapper.get('[data-test="rues"]').text()).toContain('Escriba el NIT o la inscripción para consultarla en el RUES.');
     });
 });

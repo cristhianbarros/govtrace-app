@@ -63,7 +63,7 @@ it('Cualquiera lee la política de tratamiento de datos: on the central domain a
     $this->get("{$host}/privacidad")->assertOk()->assertInertia(fn (AssertableInertia $page) => $page
         ->component('Public/Privacy')
         ->where('policy.version', DataPolicy::VERSION)
-        ->where('policy.effective_date', '01/10/2026')
+        ->where('policy.effective_date', '02/10/2026')
         ->where('policy.controller.name', 'Fundación GovTrace')
         ->where('policy.controller.email', 'datos@govtrace.org')
         ->where('policy.missing', []));

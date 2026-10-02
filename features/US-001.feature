@@ -126,3 +126,10 @@ Característica: Alta de una organización con validación legal y subdominio
   Escenario: Una organización puede tener su NIT y su inscripción
     Cuando registro una organización con NIT "900123456-8" y con su inscripción
     Entonces quedan los dos, y el panel los muestra
+
+  @complexity:low
+  Escenario: Al dar de alta una organización se consulta el RUES por su NIT
+    Dado que en los datos abiertos del RUES el NIT "900123456-8" es de "VEEDURIA CIUDADANA SANTA MARTA", activa
+    Cuando escribo ese NIT en la nueva organización y pido consultarlo en el RUES
+    Entonces veo su razón social, su cámara y el estado de su matrícula
+    Y al registrarla, el log de auditoría guarda lo que dijo el RUES

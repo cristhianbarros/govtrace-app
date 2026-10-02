@@ -12,13 +12,21 @@ criterios_aceptacion:
     - "El nombre, con las reglas del alta (3 a 150 caracteres); el correo, válido; la resolución y la Personería, con las reglas de la inscripción (R-LEG-06)"
     - "No es autorregistro: solo el Super Administrador da el alta (US-001)"
     - "Una solicitud decidida se borra a los 30 días"
+    - "(It. 46b, 2026-10-02, decidido por el usuario) La solicitud lleva el PDF de la resolución o del certificado de inscripción: solo PDF, hasta 10 MB, guardado privado. Se borra con la solicitud si se rechaza; si se aprueba, queda con la organización"
+    - "(It. 46b) Al revisar una solicitud, GovTrace consulta los datos abiertos del RUES (Confecámaras, datos.gov.co c82u-588k): por la matrícula, si la inscribió una cámara de comercio. Muestra la razón social, la cámara, la matrícula, su estado y la fecha de los datos: la del extracto mensual (una veeduría inscrita después todavía no está) y la de la última actualización de ese registro en el RUES, que puede ser de hace años. Una inscrita en una personería no está en esos datos: se revisa con el PDF"
+    - "(It. 46b) La decisión es del Super Administrador; el log de auditoría la guarda junto con lo que dijo el RUES en ese momento"
   manejo_errores:
     - {caso: "Sin autorización", mensaje: "Para enviar la solicitud, autorice el tratamiento de sus datos personales."}
     - {caso: "Demasiadas solicitudes desde la misma conexión", resultado: "429 con el motivo"}
+    - {caso: "Sin PDF, un archivo que no es PDF o uno de más de 10 MB", mensaje: "Adjunte la resolución o el certificado de inscripción en PDF, de hasta 10 MB."}
+    - {caso: "El RUES no responde", mensaje: "No se pudo consultar el RUES ahora. Puede decidir con el PDF, o volver a intentarlo más tarde."}
   requisitos_ux:
     - "Cuatro campos, letra de 16 px y botones de 44 px; la política de datos enlazada junto a la casilla"
   casos_edge:
     - "Un robot que llena el campo oculto recibe la misma respuesta, pero su solicitud no se guarda"
+    - "(It. 46b) Una veeduría inscrita en una personería: 'Inscrita en una personería: los datos abiertos del RUES no la traen. Revise el PDF de la resolución.'"
+    - "(It. 46b) La misma matrícula puede existir en varias cámaras: se muestran las de la cámara que escribió la veeduría, o todas si ninguna coincide"
+    - "(It. 46b) Solo el Super Administrador descarga el PDF"
 validacion_smart:
   specific: true
   measurable: true

@@ -167,14 +167,14 @@ Entra en `http://govtrace.localhost:8080/login` y llegarás a `/admin/organizati
 Hay dos caminos.
 
 **a) La veeduría pide su alta** (it. 43k):
-1. En el Inicio (`http://govtrace.localhost:8080`), sin sesión, **¿Su veeduría quiere publicar en GovTrace?**: *Nombre de la veeduría*, *Correo de contacto*, *Número de la resolución de la Personería* y *Personería que la expidió*; autorizar el tratamiento de los datos y **Enviar solicitud**.
-2. Como Super Administrador, en el menú **Solicitudes de alta** (con el número de pendientes):
+1. En el Inicio (`http://govtrace.localhost:8080`), sin sesión, **¿Su veeduría quiere publicar en GovTrace?**: *Nombre de la veeduría*, *Correo de contacto*, *Número de la resolución o de la matrícula*, *Personería o cámara de comercio que la registró* y el PDF de la resolución o del certificado (sirve `tests/fixtures/evidence/acta.pdf`); autorizar el tratamiento de los datos y **Enviar solicitud**.
+2. Como Super Administrador, en el menú **Solicitudes de alta** (con el número de pendientes), cada solicitud trae **lo que dice el RUES** (it. 46b: los datos abiertos de Confecámaras; una veeduría inscrita en una personería no está ahí, y se revisa el PDF) y el enlace **Descargar el PDF que adjuntó**:
    - **Aprobar y dar de alta** abre el formulario de la nueva organización con los datos de la solicitud; se completan los del punto b) y se guarda;
    - o **Rechazar**, con el motivo, y **Confirmar rechazo**: el motivo le llega por correo a la veeduría (en Mailpit).
 
 **b) El Super Administrador la crea directamente:**
 1. `/admin/organizations/new` (**+ Nueva organización**).
-2. Nombre, NIT con dígito de verificación (por ejemplo `900123456-8`) y subdominio (por ejemplo `veeduria-smr`).
+2. Nombre, NIT con dígito de verificación (por ejemplo `900123456-8`) y subdominio (por ejemplo `veeduria-smr`). **Consultar en el RUES** muestra lo que dicen los datos abiertos de ese NIT o esa matrícula (it. 46b).
 3. Nombre y correo de su **Administrador inicial**.
 4. Al guardar se crea su base de datos y su dominio: `http://veeduria-smr.govtrace.localhost:8080`.
 

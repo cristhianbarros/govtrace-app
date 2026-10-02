@@ -94,7 +94,11 @@ class RegisterOrganization
             actorType: 'super_admin',
             actorId: $actor ? (string) $actor->getKey() : null,
             actorName: $actor?->name,
-            after: ['nit' => $nit?->value(), 'name' => $name->value, 'subdomain' => $domainName, ...($registration ? ['registration' => $registration->describe()] : [])],
+            after: [
+                'nit' => $nit?->value(), 'name' => $name->value, 'subdomain' => $domainName, ...($registration ? ['registration' => $registration->describe()] : []),
+                // It. 46b: lo que el Super Administrador vio del RUES antes de registrarla, o null si no lo consultó.
+                'rues' => RuesLookup::seen($nit?->value(), $registration?->number, $registration?->authority),
+            ],
         );
 
         // US-013, edge "sincronización inmediata al dar de alta": no

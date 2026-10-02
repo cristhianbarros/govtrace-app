@@ -71,12 +71,23 @@ describe('Más imágenes en el Inicio (it. 40f)', () => {
 });
 
 describe('Una veeduría pide su alta (it. 43k, V10)', () => {
-    async function fillRequest(wrapper, { authorize = true } = {}) {
+    // It. 46b: la resolución o el certificado de inscripción, en PDF.
+    const RESOLUTION = new File(['%PDF-1.7'], 'resolucion.pdf', { type: 'application/pdf' });
+    const NEEDS_THE_PDF = 'Adjunte la resolución o el certificado de inscripción en PDF, de hasta 10 MB.';
+
+    async function attach(form, file) {
+        const input = form.get('input#request-document');
+        Object.defineProperty(input.element, 'files', { value: file ? [file] : [], configurable: true });
+        await input.trigger('change');
+    }
+
+    async function fillRequest(wrapper, { authorize = true, document = RESOLUTION } = {}) {
         const form = wrapper.get('form[data-test="organization-request"]');
         await form.get('input#request-name').setValue('Veeduría Ciudadana de La Pradera');
         await form.get('input#request-email').setValue('contacto@lapradera.org');
         await form.get('input#request-resolution').setValue('Resolución 045 de 2026');
         await form.get('input#request-authority').setValue('Personería de Medellín');
+        await attach(form, document);
         if (authorize) {
             await form.get('input#request-authorization').setValue(true);
         }
@@ -96,6 +107,7 @@ describe('Una veeduría pide su alta (it. 43k, V10)', () => {
             contact_email: 'contacto@lapradera.org',
             registration_number: 'Resolución 045 de 2026',
             registration_authority: 'Personería de Medellín',
+            document: RESOLUTION,
             data_authorization: true,
             website: '',
         });
@@ -109,6 +121,35 @@ describe('Una veeduría pide su alta (it. 43k, V10)', () => {
 
         expect(requestOrganization).not.toHaveBeenCalled();
         expect(form.get('[role="alert"]').text()).toBe('Para enviar la solicitud, autorice el tratamiento de sus datos personales.');
+    });
+
+    it('La solicitud necesita el PDF de la resolución o del certificado de inscripción: without it, nothing is sent', async () => {
+        const wrapper = mount(Home, { props: { organizations: [] } });
+
+        const form = await fillRequest(wrapper, { document: null });
+
+        expect(requestOrganization).not.toHaveBeenCalled();
+        expect(form.get('#request-document-hint').text()).toBe(NEEDS_THE_PDF);
+    });
+
+    it.each([
+        ['a file that is not a PDF', new File(['hola'], 'foto.jpg', { type: 'image/jpeg' })],
+        ['a PDF of more than 10 MB', Object.defineProperty(new File(['%PDF-1.7'], 'grande.pdf', { type: 'application/pdf' }), 'size', { value: 10 * 1024 * 1024 + 1 })],
+    ])('does not send %s', async (_case, file) => {
+        const wrapper = mount(Home, { props: { organizations: [] } });
+
+        const form = await fillRequest(wrapper, { document: file });
+
+        expect(requestOrganization).not.toHaveBeenCalled();
+        expect(form.get('#request-document-hint').text()).toBe(NEEDS_THE_PDF);
+    });
+
+    it('asks for the resolution or the registration of a personería or a chamber of commerce, and only takes PDF', () => {
+        const form = mount(Home, { props: { organizations: [] } }).get('form[data-test="organization-request"]');
+
+        expect(form.get('label[for="request-resolution"]').text()).toBe('Número de la resolución o de la matrícula');
+        expect(form.get('label[for="request-authority"]').text()).toBe('Personería o cámara de comercio que la registró');
+        expect(form.get('input#request-document').attributes('accept')).toBe('application/pdf,.pdf');
     });
 
     it('links the data policy beside the checkbox, and hides from people the field only robots fill', () => {

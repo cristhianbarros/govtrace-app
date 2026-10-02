@@ -4,6 +4,18 @@ Al 2026-10-02. Empezó sobre `77e6030` (iteración 39) y se actualizó en las it
 
 ✅ hecho y probado · ⚠️ a medias · ⬜ falta · 🔒 espera algo externo · ❓ decisión tuya
 
+## Dónde quedó (2026-10-02, noche)
+
+| Iteración | Qué | PR |
+|---|---|---|
+| 45g | Los tokens de acceso fuera de los registros, y el respaldo que espera a la base al arrancar | #90 |
+| 46b | La validación asistida de una veeduría: el PDF de su inscripción y lo que dicen los datos abiertos del RUES (US-062-ALT, US-001) | este |
+
+- **Tests:** Pest 1023, Vitest 522, `make e2e` 52 de 52, trace-check 364 de 364, `make ux-check` sin retroceso.
+- **Lo que dice el RUES, y lo que no:** trae lo inscrito en las cámaras de comercio, también las veedurías (382, 336 activas). Las inscritas en una personería no están, y para ellas el Super Administrador revisa el PDF. Es una ayuda para decidir: si el RUES no responde, se decide igual.
+- **Riesgo que queda:** el PDF no se analiza contra malware. Se descarga como adjunto, en un sandbox, y solo lo abre el Super Administrador.
+- **Lo que sigue:** 46c (identificadores públicos), 46d (auditoría con filtros, con Sonnet) y 46e (los rostros difuminados en el celular, aprobada).
+
 ## Dónde quedó (2026-10-02, tarde)
 
 | Iteración | Qué | PR |
@@ -330,8 +342,8 @@ Desde el checkpoint base, primero lo que corta un flujo, después lo que lo deja
 | — | **Tú:** la cuenta de AWS y el perfil de KMS (sección 5) | Desbloquea las siguientes | 🔒 |
 | 7 | **It. 42b, staging en AWS** con testnet | La prueba real | 🔒 |
 | 8 | **37b:** KMS, y después la red principal | Producción | 🔒 |
-| 9 | **It. 46a, los Super Administradores** | La dependencia de un solo Super Administrador | ⬜ |
-| 10 | **It. 46b, la validación asistida con el RUES** | El alta, hoy 100 % manual | ⬜ |
+| 9 | **It. 46a, los Super Administradores** | La dependencia de un solo Super Administrador | ✅ #88 |
+| 10 | **It. 46b, la validación asistida con el RUES** | El alta, hoy 100 % manual | ✅ |
 | 11 | **It. 46c, identificadores públicos** | Los IDs que se pueden recorrer | ⬜ |
 
 **Decisiones tuyas (❓):**

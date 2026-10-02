@@ -3,6 +3,7 @@
 // lo corta queda como fixme con su número; la iteración que lo cierra lo
 // vuelve un test de verdad. El sello no entra aquí: la red Stellar lo prueba
 // make test-stellar, y la evidencia sellada llega con el fixture.
+import { fileURLToPath } from 'node:url';
 import { expect, test } from '@playwright/test';
 import { CENTRAL, PEOPLE, WORKSITE, latestLinkTo, latestMailAbout, logIn, logOut, orgUrl } from './support.js';
 
@@ -15,6 +16,9 @@ const ALTA = {
     password: 'Veeduria#2026Alta',
 };
 
+// It. 46b: la resolución o el certificado de inscripción, en PDF.
+const RESOLUTION = fileURLToPath(new URL('../../fixtures/evidence/acta.pdf', import.meta.url));
+
 test.describe.configure({ mode: 'serial' });
 
 test('V10: una veeduría pide su alta desde el Inicio de GovTrace, y el Super Administrador la decide (it. 43k)', async ({ page }) => {
@@ -24,8 +28,9 @@ test('V10: una veeduría pide su alta desde el Inicio de GovTrace, y el Super Ad
     const form = page.locator('form[data-test="organization-request"]');
     await form.getByLabel('Nombre de la veeduría').fill(name);
     await form.getByLabel('Correo de contacto').fill(contact);
-    await form.getByLabel('Número de la resolución de la Personería').fill('Resolución 045 de 2026');
-    await form.getByLabel('Personería que la expidió').fill('Personería de Medellín');
+    await form.getByLabel('Número de la resolución o de la matrícula').fill('Resolución 045 de 2026');
+    await form.getByLabel('Personería o cámara de comercio que la registró').fill('Personería de Medellín');
+    await form.getByLabel('Resolución o certificado de inscripción (PDF)').setInputFiles(RESOLUTION);
     await form.getByLabel('Autorizo el tratamiento de mis datos personales según la política.').check();
     await form.getByRole('button', { name: 'Enviar solicitud' }).click();
     await expect(page.getByRole('status')).toHaveText(`Recibimos su solicitud. El equipo de GovTrace la revisará y le escribirá a ${contact}.`);
@@ -35,6 +40,11 @@ test('V10: una veeduría pide su alta desde el Inicio de GovTrace, y el Super Ad
     await page.waitForURL('**/admin/organizations');
     await page.goto(`${CENTRAL}/admin/organization-requests`);
     const request = page.locator('[data-test="organization-request"]').filter({ hasText: name });
+    // It. 46b: una veeduría inscrita en una personería no está en los datos abiertos del RUES; se revisa el PDF que adjuntó.
+    await expect(request.locator('[data-test="rues"]')).toContainText('Inscrita en una personería');
+    const pdf = await page.request.get(CENTRAL + (await request.getByRole('link', { name: 'Descargar el PDF que adjuntó' }).getAttribute('href')));
+    expect(pdf.headers()['content-type']).toBe('application/pdf');
+    expect((await pdf.body()).subarray(0, 5).toString()).toBe('%PDF-');
     await request.getByRole('link', { name: 'Aprobar y dar de alta' }).click();
     await page.waitForURL('**/admin/organizations/new?request=*');
     await expect(page.locator('input#name')).toHaveValue(name);

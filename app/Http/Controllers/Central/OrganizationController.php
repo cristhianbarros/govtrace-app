@@ -7,6 +7,8 @@ use App\Application\Organization\OrganizationAdministrators;
 use App\Application\Organization\OrganizationRequests;
 use App\Application\Organization\ReactivateOrganization;
 use App\Application\Organization\RegisterOrganizationWithAdministrator;
+use App\Application\Organization\RegistrationDocuments;
+use App\Application\Organization\RuesLookup;
 use App\Application\Organization\SuspendOrganization;
 use App\Application\Organization\UpdateOrganizationLegalData;
 use App\Domain\Organization\Exceptions\OrganizationValidationException;
@@ -17,6 +19,7 @@ use App\Infrastructure\Tenancy\Tenant;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * The Super Administrador's panel (it. 19): the organizations list, the
@@ -39,6 +42,8 @@ class OrganizationController extends Controller
                     'name' => $tenant->name,
                     'subdomain' => $tenant->domains()->first()?->domain,
                     'status' => $tenant->statusLabel(),
+                    // It. 46b: el PDF de la solicitud de alta aprobada.
+                    'has_registration_document' => $tenant->registration_document_path !== null,
                     // It. 43a (V16): quién la administra y en qué va su invitación. Una
                     // dada de baja ya no tiene su base de datos de usuarios.
                     'administrators' => $tenant->status === OrganizationStatus::Decommissioned->value ? [] : $administrators->of($tenant),
@@ -85,6 +90,26 @@ class OrganizationController extends Controller
         $domain = $tenant->domains()->first()->domain;
 
         return response()->json(['message' => "Organización registrada. El subdominio {$domain} ya está activo."], 201);
+    }
+
+    /** It. 46b: el PDF de la resolución o del certificado de la solicitud aprobada. */
+    public function registrationDocument(string $tenant): StreamedResponse
+    {
+        $organization = Tenant::query()->findOrFail($tenant);
+
+        return RegistrationDocuments::download($organization->registration_document_path, "Inscripción {$organization->name}");
+    }
+
+    /** It. 46b (US-001): lo que dice el RUES de un NIT o una inscripción, antes de registrar la organización. */
+    public function rues(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'nit' => ['nullable', 'string', 'max:20'],
+            'registration_number' => ['nullable', 'string', 'max:100'],
+            'registration_authority' => ['nullable', 'string', 'max:150'],
+        ]);
+
+        return response()->json((new RuesLookup)->of($data['nit'] ?? null, $data['registration_number'] ?? null, $data['registration_authority'] ?? null));
     }
 
     public function show(string $tenant): JsonResponse
