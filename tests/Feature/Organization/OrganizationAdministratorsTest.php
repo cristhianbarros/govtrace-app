@@ -53,7 +53,7 @@ it('shows who administers each organization and how their invitation is going', 
 
     $pending = (new AssignInitialAdministrator)->handle($this->tenant, 'Marta Ospina', 'marta@veeduria.org');
     expect(listedOrganization()['administrators'])->toBe([
-        ['id' => $pending->id, 'name' => 'Marta Ospina', 'email' => 'marta@veeduria.org', 'status' => 'pending', 'label' => 'Invitación pendiente'],
+        ['id' => $pending->public_id, 'name' => 'Marta Ospina', 'email' => 'marta@veeduria.org', 'status' => 'pending', 'label' => 'Invitación pendiente'],
     ]);
 
     $this->tenant->run(fn () => User::query()->whereKey($pending->id)->update(['invitation_expires_at' => now()->subHour()]));
@@ -68,7 +68,7 @@ it('Reenviar la invitación del Administrador inicial: a new link, the old one s
     $oldHash = $this->tenant->run(fn () => User::query()->findOrFail($administrator->id)->invitation_token_hash);
     $this->tenant->run(fn () => User::query()->whereKey($administrator->id)->update(['invitation_expires_at' => now()->subHour()]));
 
-    asTheSuperAdmin('POST', "/admin/organizations/{$this->tenant->id}/administrators/{$administrator->id}/invitation/resend")
+    asTheSuperAdmin('POST', "/admin/organizations/{$this->tenant->id}/administrators/{$administrator->public_id}/invitation/resend")
         ->assertOk()
         ->assertJson(['message' => 'Invitación reenviada a marta@veeduria.org. El nuevo enlace vence en 48 horas.']);
 
@@ -86,7 +86,7 @@ it('Reenviar la invitación del Administrador inicial: a new link, the old one s
 it('revokes an invitation sent to a wrong address, so another one can be assigned', function () {
     $wrong = (new AssignInitialAdministrator)->handle($this->tenant, 'Marta Ospina', 'marta@veduria.org');
 
-    asTheSuperAdmin('POST', "/admin/organizations/{$this->tenant->id}/administrators/{$wrong->id}/invitation/revoke")->assertOk();
+    asTheSuperAdmin('POST', "/admin/organizations/{$this->tenant->id}/administrators/{$wrong->public_id}/invitation/revoke")->assertOk();
 
     expect(listedOrganization()['administrators'])->toBe([])
         ->and(AuditLog::query()->where('action', 'invitation.revoked')->where('actor_type', 'super_admin')->exists())->toBeTrue();
@@ -118,7 +118,7 @@ it('does not resend nor revoke the account of an active Administrador, nor of a 
         return $user;
     });
 
-    asTheSuperAdmin('POST', "/admin/organizations/{$this->tenant->id}/administrators/{$veedor->id}/invitation/revoke")->assertNotFound();
+    asTheSuperAdmin('POST', "/admin/organizations/{$this->tenant->id}/administrators/{$veedor->public_id}/invitation/revoke")->assertNotFound();
 });
 
 it('is only for the Super Administrador', function () {

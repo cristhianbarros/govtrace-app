@@ -4,7 +4,7 @@ bloque: "Alineación con el proceso actual — A2"
 criterios_aceptacion:
   escenarios_exito:
     - "En cada obra, 'Informar a esta veeduría': el ciudadano escribe su correo, autoriza el tratamiento de sus datos y recibe un código de 6 dígitos"
-    - "Con el código, su mensaje (20 a 2000 caracteres) y una foto opcional, el informe llega a la veeduría; le llega un correo con el número de su informe"
+    - "Con el código, su mensaje (20 a 2000 caracteres) y una foto opcional, el informe llega a la veeduría; le llega un correo con la referencia de su informe (it. 46c: 8 caracteres de su identificador público, como 7KQ3-M9XD, y no un número consecutivo)"
     - "El Administrador ve en 'Informes ciudadanos' la obra, la fecha, el mensaje y la foto, sin el correo de quien lo envió"
     - "El Administrador responde desde GovTrace (al ciudadano le llega la respuesta por correo) o lo descarta; los dos quedan en el log de auditoría"
   validaciones_reglas:

@@ -44,8 +44,9 @@ class ReviewInbox
 
         return $reports
             ->map(fn (Report $report) => [
-                'id' => $report->id,
-                'worksite_id' => $report->worksite_id,
+                // It. 46c (US-064-SEC): identificadores públicos.
+                'id' => $report->public_id,
+                'worksite_id' => $report->worksite?->public_id,
                 'worksite' => $worksites[$report->worksite_id] ?? null,
                 'observer' => $report->user?->name,
                 'classification' => $report->classification->value,
@@ -54,7 +55,7 @@ class ReviewInbox
                 'received_at' => $report->received_at->toIso8601String(),
                 'suspicious_capture_time' => $report->suspicious_capture_time,
                 'files' => $report->evidences->map(fn (Evidence $evidence) => [
-                    'id' => $evidence->id,
+                    'id' => $evidence->public_id,
                     'kind' => $evidence->kind,
                     'sha256' => $evidence->sha256,
                 ])->all(),
@@ -109,7 +110,7 @@ class ReviewInbox
             $municipality = $municipalities->get($first?->municipality_code);
 
             return [$worksite->id => [
-                'id' => $worksite->id,
+                'id' => $worksite->public_id,
                 'name' => $worksite->name ?? $first?->object,
                 'municipality' => $municipality !== null ? PlaceName::forDisplay($municipality) : null,
             ]];

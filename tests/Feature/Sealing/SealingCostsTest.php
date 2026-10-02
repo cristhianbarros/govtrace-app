@@ -215,7 +215,7 @@ it('records the fee also when a resend finds the seal already on the network', f
     $veedor = reportingMember($this->smr, 'carlos@correo.co');
     reportableContract('CO1.PCCNTR.1234567');
     worksiteWithContracts($this->smr, ['CO1.PCCNTR.1234567'], santaMartaWorksiteLocation());
-    $reportId = sendReport($veedor)->assertCreated()->json('id');
+    $reportId = createdReportId(sendReport($veedor));
     tenancy()->end();
 
     // La red recibe el envío y lo sella, pero la respuesta no llega: el reenvío encuentra "Hash ya registrado".

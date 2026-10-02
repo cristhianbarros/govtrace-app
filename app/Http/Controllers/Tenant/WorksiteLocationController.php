@@ -33,7 +33,7 @@ class WorksiteLocationController extends Controller
             ]);
         }
 
-        (new CorrectWorksiteLocation)->handle($request->user('tenant'), Worksite::query()->findOrFail($worksite), $newLocation);
+        (new CorrectWorksiteLocation)->handle($request->user('tenant'), Worksite::byPublicId($worksite), $newLocation);
 
         $radiusMeters = Parameters::current('geofence_radius_meters');
 

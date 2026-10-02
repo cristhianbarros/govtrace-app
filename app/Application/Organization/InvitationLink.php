@@ -27,7 +27,7 @@ final class InvitationLink
         ])->save();
 
         $domain = tenant()->domains()->first()->domain;
-        $user->notify(new WelcomeNotification(TenantUrl::to($domain, "set-password/{$user->id}?token={$token->plain}"), $validityHours));
+        $user->notify(new WelcomeNotification(TenantUrl::to($domain, "set-password/{$user->public_id}?token={$token->plain}"), $validityHours));
 
         return $validityHours;
     }

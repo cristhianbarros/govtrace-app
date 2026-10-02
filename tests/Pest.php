@@ -5,9 +5,11 @@ use App\Domain\Organization\Roles;
 use App\Domain\Organization\User as OrganizationUser;
 use App\Domain\Reports\Report;
 use App\Domain\Worksites\Worksite;
+use App\Infrastructure\Tenancy\Domain;
 use App\Infrastructure\Tenancy\Tenant;
 use App\Jobs\ConfirmSeal;
 use App\Jobs\SealReport;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
@@ -203,7 +205,9 @@ function sealedReport(Tenant $tenant, OrganizationUser $veedor, array $overrides
     // Cada organización es otro subdominio y otra sesión, como en un navegador.
     test()->flushSession();
 
-    $reportId = sendReport($veedor, $overrides, $tenant->domains()->value('domain'))->assertCreated()->json('id');
+    // It. 46c: el API responde con el identificador público; el job y los tests usan el número.
+    $publicId = sendReport($veedor, $overrides, $tenant->domains()->value('domain'))->assertCreated()->json('id');
+    $reportId = $tenant->run(fn () => Report::idOf($publicId));
 
     app()->call([new SealReport($tenant->id, $reportId), 'handle']);
     app()->call([new ConfirmSeal($tenant->id, $reportId), 'handle']);
@@ -221,13 +225,38 @@ function inbox(OrganizationUser $member, string $host = 'veeduria-smr.govtrace.l
 }
 
 /**
- * POST /reports/{id}/publish, /reject or /withdraw (US-036, US-037).
+ * POST /reports/{public id}/publish, /reject or /withdraw (US-036, US-037).
+ * Takes the number of the report, as sealedReport() gives it (it. 46c).
  *
  * @param  array<string, mixed>  $data
  */
 function editorialDecision(OrganizationUser $member, string $decision, int $reportId, array $data = [], string $host = 'veeduria-smr.govtrace.localhost'): TestResponse
 {
-    return test()->actingAs($member, 'tenant')->postJson("http://{$host}/reports/{$reportId}/{$decision}", $data);
+    $report = publicIdOf(Report::class, $reportId, $host);
+
+    return test()->actingAs($member, 'tenant')->postJson("http://{$host}/reports/{$report}/{$decision}", $data);
+}
+
+/** It. 46c: the number of the report a POST /reports created — the API answers with its public id. */
+function createdReportId(TestResponse $response, string $host = 'veeduria-smr.govtrace.localhost'): int
+{
+    $publicId = $response->assertCreated()->json('id');
+
+    return Domain::query()->where('domain', $host)->firstOrFail()->tenant->run(fn () => Report::idOf($publicId));
+}
+
+/**
+ * It. 46c (US-064-SEC): the public id of a record of the organization at
+ * $host, for the URLs the tests build from its number.
+ *
+ * @param  class-string<Model>  $model
+ */
+function publicIdOf(string $model, int $id, string $host = 'veeduria-smr.govtrace.localhost'): string
+{
+    $tenant = Domain::query()->where('domain', $host)->firstOrFail()->tenant;
+    $publicId = $tenant->run(fn () => $model::query()->whereKey($id)->value('public_id'));
+
+    return $publicId ?? throw new RuntimeException("No {$model} {$id} at {$host}");
 }
 
 /**

@@ -134,7 +134,7 @@ it('El mapa público de una organización suspendida sigue disponible con aviso'
 
     // Las 3 evidencias publicadas, con su sello para verificarlas.
     $timeline = $this->tenant->run(fn () => (new PublicTimeline)->handle($this->worksite->id));
-    expect(array_column($timeline, 'report_id'))->toEqualCanonicalizing($published)
+    expect(array_column($timeline, 'report_id'))->toEqualCanonicalizing(array_map(fn (int $id) => publicIdOf(Report::class, $id), $published))
         ->and(array_filter(array_column(array_column($timeline, 'seal'), 'merkle_root')))->toHaveCount(3);
 
     // El sitio público responde, y cada pantalla pública recibe el aviso (it. 26 lo muestra en el mapa).
@@ -171,7 +171,7 @@ it('Los reportes pendientes se envían si la organización se reactiva dentro de
     organizationDecision('suspend')->assertOk();
     organizationDecision('reactivate')->assertOk();
 
-    $reportId = sendReport($this->veedor, ['captured_at' => now()->subDays(3)->toIso8601String()])->assertCreated()->json('id');
+    $reportId = createdReportId(sendReport($this->veedor, ['captured_at' => now()->subDays(3)->toIso8601String()]));
 
     expect($this->tenant->run(fn () => Report::query()->findOrFail($reportId)->suspicious_capture_time))->toBeFalse();
 });

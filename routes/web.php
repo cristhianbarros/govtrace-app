@@ -4,6 +4,7 @@ use App\Application\Organization\OrganizationRequests;
 use App\Application\Organization\PublicDirectory;
 use App\Application\Privacy\DataPolicy;
 use App\Domain\Organization\OrganizationRequest;
+use App\Domain\Shared\PublicId;
 use App\Http\Controllers\Auth\ChangePasswordController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Central\AuditController;
@@ -20,7 +21,9 @@ use App\Http\Controllers\Central\SecopSyncNowController;
 use App\Http\Controllers\Central\SetPasswordController;
 use App\Http\Controllers\Central\SuperAdministratorController;
 use App\Http\Controllers\Central\UsageController;
+use App\Http\Controllers\LegacyLinkController;
 use App\Http\Middleware\EnsureSuperAdministratorIsActive;
+use App\Models\User as SuperAdmin;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -45,8 +48,10 @@ foreach (config('tenancy.central_domains') as $domain) {
         Route::get('/reset-password/{token}', [PasswordResetController::class, 'resetForm'])->name('password.reset');
         Route::post('/reset-password', [PasswordResetController::class, 'reset'])->name('password.update');
         // It. 46a (US-063-USR): el enlace de la invitación de un Super Administrador.
-        Route::get('/set-password/{user}', [SetPasswordController::class, 'show'])->whereNumber('user')->name('set-password.show');
-        Route::post('/set-password/{user}', [SetPasswordController::class, 'store'])->whereNumber('user')->middleware('throttle:6,1')->name('set-password.store');
+        Route::get('/set-password/{user}', [SetPasswordController::class, 'show'])->where('user', PublicId::PATTERN)->name('set-password.show');
+        // It. 46c (US-064-SEC): la invitación que llegó por correo antes del cambio, con el número del usuario.
+        Route::get('/set-password/{number}', [LegacyLinkController::class, 'invitation'])->whereNumber('number')->defaults('model', SuperAdmin::class)->defaults('to', 'set-password.show')->middleware('throttle:30,1')->name('legacy.set-password.show');
+        Route::post('/set-password/{user}', [SetPasswordController::class, 'store'])->where('user', PublicId::PATTERN)->middleware('throttle:6,1')->name('set-password.store');
 
         // It. 45a: 'auth.session' cierra la sesión si la contraseña cambió desde que se abrió.
         // It. 46a: un Super Administrador desactivado por otro no sigue actuando con su sesión abierta.
@@ -64,28 +69,28 @@ foreach (config('tenancy.central_domains') as $domain) {
             // It. 43k (V10): con ?request=, precargada con una solicitud de alta.
             Route::get('/admin/organizations/new', fn (Request $request) => Inertia::render('SuperAdmin/NewOrganization', [
                 'request' => $request->filled('request')
-                    ? (new OrganizationRequests)->prefill(OrganizationRequest::query()->where('status', 'pending')->findOrFail($request->integer('request')))
+                    ? (new OrganizationRequests)->prefill(OrganizationRequest::query()->where('status', 'pending')->where('public_id', $request->string('request'))->firstOrFail())
                     : null,
             ]))->name('admin.organizations.new');
             Route::get('/admin/organization-requests', [OrganizationRequestController::class, 'show'])->name('admin.organization-requests.show');
             Route::get('/admin/organization-requests/data', [OrganizationRequestController::class, 'index'])->name('admin.organization-requests.index');
             // It. 46b: lo que dice el RUES de cada solicitud, y el PDF que adjuntó.
-            Route::get('/admin/organization-requests/{organizationRequest}/rues', [OrganizationRequestController::class, 'rues'])->whereNumber('organizationRequest')->middleware('throttle:60,1')->name('admin.organization-requests.rues');
-            Route::get('/admin/organization-requests/{organizationRequest}/document', [OrganizationRequestController::class, 'document'])->whereNumber('organizationRequest')->name('admin.organization-requests.document');
+            Route::get('/admin/organization-requests/{organizationRequest}/rues', [OrganizationRequestController::class, 'rues'])->where('organizationRequest', PublicId::PATTERN)->middleware('throttle:60,1')->name('admin.organization-requests.rues');
+            Route::get('/admin/organization-requests/{organizationRequest}/document', [OrganizationRequestController::class, 'document'])->where('organizationRequest', PublicId::PATTERN)->name('admin.organization-requests.document');
             Route::get('/admin/rues', [OrganizationController::class, 'rues'])->middleware('throttle:60,1')->name('admin.rues');
             Route::get('/admin/organizations/{tenant}/registration-document', [OrganizationController::class, 'registrationDocument'])->name('admin.organizations.registration-document');
-            Route::post('/admin/organization-requests/{organizationRequest}/reject', [OrganizationRequestController::class, 'reject'])->whereNumber('organizationRequest')->name('admin.organization-requests.reject');
+            Route::post('/admin/organization-requests/{organizationRequest}/reject', [OrganizationRequestController::class, 'reject'])->where('organizationRequest', PublicId::PATTERN)->name('admin.organization-requests.reject');
             Route::get('/admin/organizations/data', [OrganizationController::class, 'index'])->name('admin.organizations.index');
             Route::post('/admin/organizations', [OrganizationController::class, 'store'])->name('admin.organizations.store');
             Route::get('/admin/organizations/{tenant}', [OrganizationController::class, 'show'])->name('admin.organizations.detail');
             Route::put('/admin/organizations/{tenant}/nit', [OrganizationController::class, 'updateNit'])->name('admin.organizations.update-nit');
             // It. 43a (V2): su Administrador — asignarlo si no tiene, y reenviar o revocar su invitación.
             Route::post('/admin/organizations/{tenant}/administrators', [OrganizationAdministratorController::class, 'store'])->name('admin.organizations.administrators.store');
-            Route::post('/admin/organizations/{tenant}/administrators/{user}/invitation/resend', [OrganizationAdministratorController::class, 'resend'])->whereNumber('user')->name('admin.organizations.administrators.resend');
-            Route::post('/admin/organizations/{tenant}/administrators/{user}/invitation/revoke', [OrganizationAdministratorController::class, 'revoke'])->whereNumber('user')->name('admin.organizations.administrators.revoke');
+            Route::post('/admin/organizations/{tenant}/administrators/{user}/invitation/resend', [OrganizationAdministratorController::class, 'resend'])->where('user', PublicId::PATTERN)->name('admin.organizations.administrators.resend');
+            Route::post('/admin/organizations/{tenant}/administrators/{user}/invitation/revoke', [OrganizationAdministratorController::class, 'revoke'])->where('user', PublicId::PATTERN)->name('admin.organizations.administrators.revoke');
             // It. 43j (V3): varios administradores; el que se fue, desactivado, sin dejar la organización sin uno activo.
-            Route::post('/admin/organizations/{tenant}/administrators/{user}/deactivate', [OrganizationAdministratorController::class, 'deactivate'])->whereNumber('user')->name('admin.organizations.administrators.deactivate');
-            Route::post('/admin/organizations/{tenant}/administrators/{user}/reactivate', [OrganizationAdministratorController::class, 'reactivate'])->whereNumber('user')->name('admin.organizations.administrators.reactivate');
+            Route::post('/admin/organizations/{tenant}/administrators/{user}/deactivate', [OrganizationAdministratorController::class, 'deactivate'])->where('user', PublicId::PATTERN)->name('admin.organizations.administrators.deactivate');
+            Route::post('/admin/organizations/{tenant}/administrators/{user}/reactivate', [OrganizationAdministratorController::class, 'reactivate'])->where('user', PublicId::PATTERN)->name('admin.organizations.administrators.reactivate');
             Route::post('/admin/organizations/{tenant}/suspend', [OrganizationController::class, 'suspend'])->name('admin.organizations.suspend');
             Route::post('/admin/organizations/{tenant}/reactivate', [OrganizationController::class, 'reactivate'])->name('admin.organizations.reactivate');
             // US-003b: la baja definitiva, con doble confirmación.
@@ -124,10 +129,10 @@ foreach (config('tenancy.central_domains') as $domain) {
             Route::get('/admin/super-administrators', [SuperAdministratorController::class, 'show'])->name('admin.super-administrators.show');
             Route::get('/admin/super-administrators/data', [SuperAdministratorController::class, 'index'])->name('admin.super-administrators.index');
             Route::post('/admin/super-administrators', [SuperAdministratorController::class, 'store'])->middleware('throttle:20,1')->name('admin.super-administrators.store');
-            Route::post('/admin/super-administrators/{user}/invitation/resend', [SuperAdministratorController::class, 'resend'])->whereNumber('user')->name('admin.super-administrators.resend');
-            Route::post('/admin/super-administrators/{user}/invitation/revoke', [SuperAdministratorController::class, 'revoke'])->whereNumber('user')->name('admin.super-administrators.revoke');
-            Route::post('/admin/super-administrators/{user}/deactivate', [SuperAdministratorController::class, 'deactivate'])->whereNumber('user')->name('admin.super-administrators.deactivate');
-            Route::post('/admin/super-administrators/{user}/reactivate', [SuperAdministratorController::class, 'reactivate'])->whereNumber('user')->name('admin.super-administrators.reactivate');
+            Route::post('/admin/super-administrators/{user}/invitation/resend', [SuperAdministratorController::class, 'resend'])->where('user', PublicId::PATTERN)->name('admin.super-administrators.resend');
+            Route::post('/admin/super-administrators/{user}/invitation/revoke', [SuperAdministratorController::class, 'revoke'])->where('user', PublicId::PATTERN)->name('admin.super-administrators.revoke');
+            Route::post('/admin/super-administrators/{user}/deactivate', [SuperAdministratorController::class, 'deactivate'])->where('user', PublicId::PATTERN)->name('admin.super-administrators.deactivate');
+            Route::post('/admin/super-administrators/{user}/reactivate', [SuperAdministratorController::class, 'reactivate'])->where('user', PublicId::PATTERN)->name('admin.super-administrators.reactivate');
         });
     });
 }

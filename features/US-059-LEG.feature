@@ -15,7 +15,7 @@ Característica: Informar a la veeduría de lo que vi en una obra
     Entonces me llega un correo con un código de 6 dígitos
     Cuando envío el código, mi mensaje y una foto
     Entonces veo "Su informe llegó a la veeduría. Si lo atiende, le responde a su correo."
-    Y me llega un correo con el número de mi informe
+    Y me llega un correo con la referencia de mi informe
 
   @complexity:medium @negative
   Escenario: Sin un código válido no se recibe el informe

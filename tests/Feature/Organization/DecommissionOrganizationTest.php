@@ -217,8 +217,8 @@ it('Tras la baja, el mapa sale de línea pero las evidencias siguen verificables
 
     // El mapa no está disponible: ni la página, ni sus datos, ni la vista de una obra.
     publicGet('/')->assertOk()->assertInertia(fn (Assert $page) => $page->component('Public/Offline')->where('organizationNotice', DECOMMISSIONED_NOTICE));
-    publicGet("/worksite/{$this->worksite->id}")->assertInertia(fn (Assert $page) => $page->component('Public/Offline'));
-    foreach (['/public/worksites', '/public/worksites/filters', "/public/worksites/{$this->worksite->id}"] as $path) {
+    publicGet("/worksite/{$this->worksite->public_id}")->assertInertia(fn (Assert $page) => $page->component('Public/Offline'));
+    foreach (['/public/worksites', '/public/worksites/filters', "/public/worksites/{$this->worksite->public_id}"] as $path) {
         publicGet($path)->assertStatus(410)->assertJson(['message' => MAP_OFFLINE]);
     }
 
@@ -340,7 +340,7 @@ it('lists the organization as "Dada de baja" in the global panel', function () {
 });
 
 it('keeps the files downloadable until the retention ends, and then says why they are gone', function () {
-    $evidenceId = $this->tenant->run(fn () => Evidence::query()->min('id'));
+    $evidenceId = $this->tenant->run(fn () => Evidence::query()->orderBy('id')->value('public_id'));
     decommission()->assertOk();
 
     publicGet("/public/evidences/{$evidenceId}/download")->assertOk();

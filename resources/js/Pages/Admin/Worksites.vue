@@ -91,7 +91,7 @@ const where = (worksite) =>
 
 // It. 45f: abre la corrección de la obra que nombra el enlace de la Bandeja.
 async function openFromLink() {
-    const id = Number(new URLSearchParams(window.location.search).get('corregir'));
+    const id = new URLSearchParams(window.location.search).get('corregir'); // it. 46c: su identificador público
     const worksite = (worksites.value ?? []).find((candidate) => candidate.id === id);
     if (worksite) {
         correct(worksite);

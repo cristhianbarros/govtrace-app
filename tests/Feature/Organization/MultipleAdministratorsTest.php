@@ -98,20 +98,20 @@ it('lets each Administrador see the administrators of the organization', functio
 
     expect(asMember($this->marta, 'GET', '/administrators')->assertOk()->json('data'))
         ->toMatchArray([
-            ['id' => $this->marta->id, 'name' => 'Miembro de prueba', 'email' => 'marta@veeduria.org', 'status' => 'active', 'label' => 'Activo'],
+            ['id' => $this->marta->public_id, 'name' => 'Miembro de prueba', 'email' => 'marta@veeduria.org', 'status' => 'active', 'label' => 'Activo'],
             1 => ['id' => freshAdministratorId('ana@veeduria.org'), 'name' => 'Ana Pérez', 'email' => 'ana@veeduria.org', 'status' => 'pending', 'label' => 'Invitación pendiente'],
         ]);
 });
 
-function freshAdministratorId(string $email): int
+function freshAdministratorId(string $email): string
 {
-    return test()->tenant->run(fn () => User::query()->where('email', $email)->value('id'));
+    return test()->tenant->run(fn () => User::query()->where('email', $email)->value('public_id')); // it. 46c
 }
 
 it('El Super Administrador desactiva a un Administrador que se fue: its next request is refused, and the log keeps it', function () {
     $ana = reportingMember($this->tenant, 'ana@veeduria.org', Roles::Administrator);
 
-    fromThePanel('POST', "/admin/organizations/{$this->tenant->id}/administrators/{$this->marta->id}/deactivate")
+    fromThePanel('POST', "/admin/organizations/{$this->tenant->id}/administrators/{$this->marta->public_id}/deactivate")
         ->assertOk()
         ->assertJson(['message' => 'Administrador desactivado. Su sesión quedó cerrada y ya no puede entrar.']);
 
@@ -125,7 +125,7 @@ it('El Super Administrador reactiva a un Administrador', function () {
     reportingMember($this->tenant, 'ana@veeduria.org', Roles::Administrator);
     $this->tenant->run(fn () => User::query()->whereKey($this->marta->id)->update(['is_active' => false]));
 
-    fromThePanel('POST', "/admin/organizations/{$this->tenant->id}/administrators/{$this->marta->id}/reactivate")
+    fromThePanel('POST', "/admin/organizations/{$this->tenant->id}/administrators/{$this->marta->public_id}/reactivate")
         ->assertOk()
         ->assertJson(['message' => 'Administrador reactivado. Ya puede entrar otra vez.']);
 
@@ -136,7 +136,7 @@ it('El Super Administrador reactiva a un Administrador', function () {
 it('No se desactiva al único Administrador activo: a pending invitation does not count', function () {
     (new AssignInitialAdministrator)->handle($this->tenant, 'Ana Pérez', 'ana@veeduria.org');
 
-    fromThePanel('POST', "/admin/organizations/{$this->tenant->id}/administrators/{$this->marta->id}/deactivate")
+    fromThePanel('POST', "/admin/organizations/{$this->tenant->id}/administrators/{$this->marta->public_id}/deactivate")
         ->assertStatus(409)
         ->assertJson(['message' => ONLY_ACTIVE_ADMINISTRATOR]);
 
@@ -146,7 +146,7 @@ it('No se desactiva al único Administrador activo: a pending invitation does no
 it('Un Administrador no desactiva administradores: the team screen only reaches veedores', function () {
     $ana = reportingMember($this->tenant, 'ana@veeduria.org', Roles::Administrator);
 
-    asMember($this->marta, 'POST', "/observers/{$ana->id}/deactivate")->assertNotFound();
+    asMember($this->marta, 'POST', "/observers/{$ana->public_id}/deactivate")->assertNotFound();
 
     expect(freshMember($this->tenant, $ana->id)->is_active)->toBeTrue();
 });

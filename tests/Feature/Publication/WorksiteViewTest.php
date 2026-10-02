@@ -81,7 +81,7 @@ function calle30Evidences(): array
 
 function calle30View(): array
 {
-    return publicGet('/public/worksites/'.test()->worksite->id)->assertOk()->json('data');
+    return publicGet('/public/worksites/'.test()->worksite->public_id)->assertOk()->json('data');
 }
 
 it('Línea de tiempo cargada al hacer clic en el pin: the contract and the 3 published evidences, by date', function () {
@@ -101,7 +101,7 @@ it('Línea de tiempo cargada al hacer clic en el pin: the contract and the 3 pub
             'cancelled' => false,
         ])
         // La más reciente primero.
-        ->and(array_column($view['timeline'], 'report_id'))->toBe(array_reverse($published));
+        ->and(array_column($view['timeline'], 'report_id'))->toBe(array_map(fn (int $id) => publicIdOf(Report::class, $id), array_reverse($published)));
 
     // Fecha y hora, clasificación, comentario, miniaturas y lo que usa "Verificar Sello Blockchain".
     $card = $view['timeline'][0];
@@ -135,7 +135,7 @@ it('Las evidencias ocultas no aparecen', function () {
 it('Las coordenadas de cada evidencia se muestran aproximadas: to about 100 m, never the exact ones', function () {
     publishedReport($this->tenant, $this->veedor, $this->administrator, ['latitude' => 11.240812, 'longitude' => -74.199034]);
 
-    $response = publicGet('/public/worksites/'.$this->worksite->id)->assertOk();
+    $response = publicGet('/public/worksites/'.$this->worksite->public_id)->assertOk();
 
     expect($response->json('data.timeline.0.approximate_location'))->toBe(['lat' => 11.241, 'lng' => -74.199])
         ->and($response->getContent())->not->toContain('11.240812')
@@ -147,13 +147,14 @@ it('Una evidencia retirada queda como lápida: without its photos, comment or pl
     editorialDecision($this->administrator, 'withdraw', $published[1], ['reason' => 'Aparece un menor de edad identificable'])->assertOk();
 
     $timeline = calle30View()['timeline'];
-    $tombstone = collect($timeline)->firstWhere('report_id', $published[1]);
+    $withdrawn = publicIdOf(Report::class, $published[1]);
+    $tombstone = collect($timeline)->firstWhere('report_id', $withdrawn);
 
     expect($timeline)->toHaveCount(3)
         ->and($tombstone)->not->toHaveKeys(['files', 'comment', 'approximate_location'])
         ->and($tombstone['notice'])->toBe(PublicTimeline::TOMBSTONE_NOTICE)
         ->and($tombstone['seal']['merkle_root'])->not->toBeNull()
-        ->and($tombstone['receipt_url'])->toBe("/public/reports/{$published[1]}/receipt");
+        ->and($tombstone['receipt_url'])->toBe("/public/reports/{$withdrawn}/receipt");
 });
 
 // Reglas derivadas ------------------------------------------------------
@@ -175,9 +176,9 @@ it('serves no photo of a PDF, nor of a hidden or withdrawn evidence', function (
     $withdrawn = publishedReport($this->tenant, $this->veedor, $this->administrator);
     editorialDecision($this->administrator, 'withdraw', $withdrawn, ['reason' => 'Solicitud del afectado'])->assertOk();
 
-    $evidenceOf = fn (int $reportId) => $this->tenant->run(fn () => Report::query()->findOrFail($reportId)->evidences()->value('id'));
+    $evidenceOf = fn (int $reportId) => $this->tenant->run(fn () => Report::query()->findOrFail($reportId)->evidences()->value('public_id'));
 
-    expect(collect(calle30View()['timeline'])->firstWhere('report_id', $pdf)['files'][0])->not->toHaveKey('photo_url');
+    expect(collect(calle30View()['timeline'])->firstWhere('report_id', publicIdOf(Report::class, $pdf))['files'][0])->not->toHaveKey('photo_url');
     foreach ([$pdf, $hidden, $withdrawn] as $reportId) {
         publicGet("/public/evidences/{$evidenceOf($reportId)}/photo")->assertNotFound();
     }

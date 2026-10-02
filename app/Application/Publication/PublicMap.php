@@ -32,7 +32,7 @@ class PublicMap
      * and municipality (one of its contracts there).
      *
      * @param  array{status?: string, from?: string, to?: string, min_value?: int|float|string, municipality?: string}  $filters
-     * @return list<array{id: int, lat: float, lng: float, color_pin: string}>
+     * @return list<array{id: string, lat: float, lng: float, color_pin: string}>
      */
     public function pins(array $filters = []): array
     {
@@ -46,7 +46,7 @@ class PublicMap
      * with the map (R-MAP-02).
      *
      * @param  array{status?: string, from?: string, to?: string, min_value?: int|float|string, municipality?: string}  $filters
-     * @return list<array{id: int, name: ?string, municipality: ?string, color_pin: string}>
+     * @return list<array{id: string, name: ?string, municipality: ?string, color_pin: string}>
      */
     public function listing(array $filters = []): array
     {
@@ -61,7 +61,7 @@ class PublicMap
         ], $candidates);
     }
 
-    /** @return list<array{pin: array{id: int, lat: float, lng: float, color_pin: string}, name: ?string, municipality: ?string}> */
+    /** @return list<array{pin: array{id: string, lat: float, lng: float, color_pin: string}, name: ?string, municipality: ?string}> */
     private function candidates(array $filters): array
     {
         $worksites = Worksite::query()->whereNotNull('latitude')->with('contracts')->orderBy('id')->get();
@@ -95,7 +95,9 @@ class PublicMap
                 $first = $contracts->get($worksite->contracts->sortBy('id')->first()?->secop_contract_id);
 
                 return [
-                    'pin' => ['id' => $worksite->id, 'lat' => $place->latitude, 'lng' => $place->longitude, 'color_pin' => $color->value],
+                    // It. 46c (US-064-SEC): el pin lleva el identificador público de la obra, no su número.
+                    'worksite' => $worksite->id,
+                    'pin' => ['id' => $worksite->public_id, 'lat' => $place->latitude, 'lng' => $place->longitude, 'color_pin' => $color->value],
                     'budget' => $own->sum(fn (Contract $contract) => (float) $contract->value),
                     'municipalities' => $own->pluck('municipality_code')->filter()->all(),
                     'name' => $worksite->name ?? $first?->object,
@@ -103,7 +105,7 @@ class PublicMap
                 ];
             })
             ->filter(fn (array $candidate) => ! isset($filters['status']) || $candidate['pin']['color_pin'] === $filters['status'])
-            ->filter(fn (array $candidate) => $withEvidenceInRange === null || isset($withEvidenceInRange[$candidate['pin']['id']]))
+            ->filter(fn (array $candidate) => $withEvidenceInRange === null || isset($withEvidenceInRange[$candidate['worksite']]))
             ->filter(fn (array $candidate) => ! isset($filters['min_value']) || $candidate['budget'] > (float) $filters['min_value'])
             ->filter(fn (array $candidate) => ! isset($filters['municipality']) || in_array($filters['municipality'], $candidate['municipalities'], true))
             ->map(fn (array $candidate) => ['pin' => $candidate['pin'], 'name' => $candidate['name'], 'municipality' => $candidate['municipality']])

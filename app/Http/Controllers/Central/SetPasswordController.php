@@ -30,7 +30,7 @@ class SetPasswordController extends Controller
 
     public function show(Request $request, string $user): InertiaResponse
     {
-        $invited = SuperAdmin::query()->find($user);
+        $invited = SuperAdmin::query()->where('public_id', $user)->first();
         $token = $request->string('token')->toString();
 
         if ($invited === null || ! (new SuperAdministrators)->isValidInvitation($invited, $token)) {
@@ -42,7 +42,7 @@ class SetPasswordController extends Controller
             'email' => $invited->email,
             'name' => $invited->name === Str::before($invited->email, '@') ? '' : $invited->name,
             'token' => $token,
-            'action' => "/set-password/{$invited->id}",
+            'action' => "/set-password/{$invited->public_id}",
             'declaration' => false,
             'nameHint' => self::NAME_HINT,
             'dataPolicyUrl' => '/privacidad',
@@ -61,7 +61,7 @@ class SetPasswordController extends Controller
             'name.max' => 'Su nombre puede tener hasta 120 caracteres.',
         ]);
 
-        $invited = SuperAdmin::query()->find($user);
+        $invited = SuperAdmin::query()->where('public_id', $user)->first();
         $superAdministrators = new SuperAdministrators;
 
         if ($invited === null || ! $superAdministrators->isValidInvitation($invited, $data['token'])) {

@@ -10,6 +10,7 @@ use App\Domain\Organization\OrganizationTerritory;
 use App\Domain\Organization\Roles;
 use App\Domain\Organization\User as OrganizationUser;
 use App\Domain\Reports\Evidence;
+use App\Domain\Reports\Report;
 use App\Infrastructure\Tenancy\Tenant;
 use Database\Seeders\DivipolaSeeder;
 use Illuminate\Support\Arr;
@@ -97,9 +98,9 @@ it('lists the published evidences, the ones that can be withdrawn', function () 
 
     $rows = asAdministrator('GET', '/inbox?status=published')->assertOk()->json('data');
 
-    expect(array_column($rows, 'id'))->toBe([$published])
+    expect(array_column($rows, 'id'))->toBe([publicIdOf(Report::class, $published)])
         ->and($rows[0]['actions'])->toBe(['withdraw'])
-        ->and(array_column(asAdministrator('GET', '/inbox')->json('data'), 'id'))->toBe([$hidden]);
+        ->and(array_column(asAdministrator('GET', '/inbox')->json('data'), 'id'))->toBe([publicIdOf(Report::class, $hidden)]);
 });
 
 it('lets the Administrador see the file of an evidence to review it, and nobody else', function () {
@@ -108,12 +109,12 @@ it('lets the Administrador see the file of an evidence to review it, and nobody 
     $reportId = sealedReport($this->tenant, $this->veedor);
     $evidence = $this->tenant->run(fn () => Evidence::query()->where('report_id', $reportId)->sole());
 
-    $response = $this->actingAs($this->administrator, 'tenant')->get("http://veeduria-smr.govtrace.localhost/evidences/{$evidence->id}/file");
+    $response = $this->actingAs($this->administrator, 'tenant')->get("http://veeduria-smr.govtrace.localhost/evidences/{$evidence->public_id}/file");
 
     $response->assertOk()->assertHeader('Content-Type', 'image/jpeg');
     expect(hash('sha256', $response->streamedContent()))->toBe($evidence->sha256);
 
-    $this->actingAs($this->veedor, 'tenant')->get("http://veeduria-smr.govtrace.localhost/evidences/{$evidence->id}/file")->assertForbidden();
+    $this->actingAs($this->veedor, 'tenant')->get("http://veeduria-smr.govtrace.localhost/evidences/{$evidence->public_id}/file")->assertForbidden();
 });
 
 // Veedores (US-005) -------------------------------------------------------
@@ -238,7 +239,7 @@ it('lists the worksites of the organization with their official location and the
     $gaira = worksiteWithContracts($this->tenant, ['CO1.PCCNTR.1111111', 'CO1.PCCNTR.3333333'], [11.2, -74.23]);
 
     expect(asAdministrator('GET', '/worksites')->assertOk()->json('data'))->toBe([[
-        'id' => $gaira->id,
+        'id' => $gaira->public_id,
         'name' => null, // sin nombre hasta que el Administrador la agrupe (US-045-INT)
         'latitude' => 11.2,
         'longitude' => -74.23,

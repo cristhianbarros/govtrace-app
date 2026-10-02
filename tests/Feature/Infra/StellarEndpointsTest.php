@@ -1,6 +1,7 @@
 <?php
 
 use App\Application\Organization\RegisterOrganization;
+use App\Domain\Shared\PublicId;
 use App\Infrastructure\Stellar\StellarRpc;
 use App\Infrastructure\Tenancy\Tenant;
 use Illuminate\Http\Client\Request;
@@ -55,5 +56,5 @@ it('gives the browser only the public RPC: the private one never reaches a page 
         ->not->toContain('privado.rpc.example');
 })->with([
     'el validador' => ['/verify', 'Public/Validator'],
-    'la vista de una obra' => ['/worksite/1', 'Public/Worksite'],
+    'la vista de una obra' => [fn () => '/worksite/'.PublicId::generate(), 'Public/Worksite'],
 ]);

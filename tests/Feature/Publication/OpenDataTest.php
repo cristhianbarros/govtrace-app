@@ -103,7 +103,7 @@ it('Descarga de datos abiertos: 10 records with every field', function (string $
         expect(array_keys($record))->toBe(OPEN_DATA_FIELDS);
     }
 
-    $first = collect($records)->firstWhere('reporte', $format === 'json' ? $this->published[0] : (string) $this->published[0]);
+    $first = collect($records)->firstWhere('reporte', publicIdOf(Report::class, $this->published[0])); // it. 46c
     [$seal, $report, $pseudonym] = $this->tenant->run(fn () => [
         ReportSeal::query()->where('report_id', $this->published[0])->sole(),
         Report::query()->findOrFail($this->published[0]),
@@ -144,10 +144,11 @@ it('Los datos abiertos protegen la privacidad del veedor', function () {
 });
 
 it('Las evidencias no publicadas no se incluyen: none of the 3 hidden nor the withdrawn one', function () {
-    $ids = array_map('intval', array_column(openDataRecords('csv'), 'reporte'));
+    $ids = array_column(openDataRecords('csv'), 'reporte');
+    $publicIdsOf = fn (array $reports) => array_map(fn (int $id) => publicIdOf(Report::class, $id), $reports);
 
-    expect($ids)->toEqualCanonicalizing($this->published)
-        ->and(array_intersect($ids, [...$this->hidden, $this->withdrawn]))->toBe([]);
+    expect($ids)->toEqualCanonicalizing($publicIdsOf($this->published))
+        ->and(array_intersect($ids, $publicIdsOf([...$this->hidden, $this->withdrawn])))->toBe([]);
 });
 
 // Reglas de US-052-RPT ---------------------------------------------------------------

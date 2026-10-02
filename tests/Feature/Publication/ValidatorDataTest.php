@@ -4,6 +4,8 @@ use App\Application\Organization\ConfigureTerritory;
 use App\Application\Organization\RegisterOrganization;
 use App\Application\Sealing\SealingNetwork;
 use App\Domain\Organization\Roles;
+use App\Domain\Reports\Report;
+use App\Domain\Shared\PublicId;
 use App\Infrastructure\Tenancy\Tenant;
 use Database\Seeders\DivipolaSeeder;
 use Illuminate\Http\UploadedFile;
@@ -58,7 +60,8 @@ function validatorPhoto(string $name): UploadedFile
 
 function proofOf(string $sha256, ?int $reportId = null)
 {
-    return publicGet("/public/proofs/{$sha256}".($reportId ? "?report={$reportId}" : ''));
+    // It. 46c: el modo contextual nombra el reporte por su identificador público.
+    return publicGet("/public/proofs/{$sha256}".($reportId ? '?report='.publicIdOf(Report::class, $reportId) : ''));
 }
 
 it('gives the proof of a published file by its hash, and where it stands', function () {
@@ -68,7 +71,7 @@ it('gives the proof of a published file by its hash, and where it stands', funct
 
     $answer = proofOf($sha256)->assertOk()->json('data');
 
-    expect($answer['report_id'])->toBe($reportId)
+    expect($answer['report_id'])->toBe(publicIdOf(Report::class, $reportId))
         ->and($answer['visibility'])->toBe('published')
         ->and($answer['proof'])->toMatchArray(['format' => 'govtrace-proof/1', 'file' => ['name' => 'evidencia-'.substr($sha256, 0, 12).'.jpg', 'sha256' => $sha256]])
         ->and($answer['proof']['stellar']['contract_id'])->toBe(FakeSealingNetwork::CONTRACT_ID);
@@ -107,7 +110,7 @@ it('looks only in the given report, for the contextual mode', function () {
     $reportId = publishedReport($this->tenant, $this->veedor, $this->administrator, ['files' => [$photo]]);
     $other = publishedReport($this->tenant, $this->veedor, $this->administrator, ['files' => [validatorPhoto('otra')]]);
 
-    proofOf(sha256Of($photo), $reportId)->assertOk()->assertJsonPath('data.report_id', $reportId);
+    proofOf(sha256Of($photo), $reportId)->assertOk()->assertJsonPath('data.report_id', publicIdOf(Report::class, $reportId));
     proofOf(sha256Of($photo), $other)->assertNotFound();
 });
 
@@ -126,7 +129,7 @@ it('El validador no exige registro: serves /verify without a session, with what 
 });
 
 it('gives the view of a worksite the same, for the contextual mode of each card', function () {
-    $this->withoutVite()->get('http://veeduria-smr.govtrace.localhost/worksite/1')
+    $this->withoutVite()->get('http://veeduria-smr.govtrace.localhost/worksite/'.PublicId::generate())
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page->component('Public/Worksite')->has('stellar.contracts')->where('stellar.rpc_url', 'https://soroban-testnet.stellar.org'));
 });

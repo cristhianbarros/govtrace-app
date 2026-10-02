@@ -190,7 +190,7 @@ it('seals a report end to end on the local network, up to "Sellada" with a real 
     worksiteWithContracts($tenant, ['CO1.PCCNTR.1234567'], santaMartaWorksiteLocation());
 
     try {
-        $reportId = sendReport($veedor)->assertCreated()->json('id');
+        $reportId = createdReportId(sendReport($veedor));
 
         app()->call([new SealReport($tenant->id, $reportId), 'handle']);
         for ($attempt = 0; $attempt < 30; $attempt++) {

@@ -6,8 +6,14 @@ use App\Application\Privacy\DataPolicy;
 use App\Application\Publication\PublicStats;
 use App\Application\Publication\StellarForBrowser;
 use App\Domain\Organization\Roles;
+use App\Domain\Organization\User as OrganizationUser;
+use App\Domain\Reports\Evidence;
+use App\Domain\Reports\Report;
+use App\Domain\Shared\PublicId;
+use App\Domain\Worksites\Worksite;
 use App\Http\Controllers\Auth\ChangePasswordController;
 use App\Http\Controllers\Auth\PasswordResetController;
+use App\Http\Controllers\LegacyLinkController;
 use App\Http\Controllers\Tenant\AdministratorController;
 use App\Http\Controllers\Tenant\AuditController;
 use App\Http\Controllers\Tenant\CitizenReportController;
@@ -75,7 +81,9 @@ Route::middleware([
     // US-003b: el mapa sale de línea con la baja de la organización; el resto, no.
     Route::middleware(EnsureMapIsOnline::class.':screen')->group(function () {
         Route::get('/', fn () => Inertia::render('Public/Map'))->name('public.map');
-        Route::get('/worksite/{worksite}', fn (int $worksite) => Inertia::render('Public/Worksite', ['worksiteId' => $worksite, 'stellar' => StellarForBrowser::props()]))->whereNumber('worksite')->name('public.worksite');
+        Route::get('/worksite/{worksite}', fn (string $worksite) => Inertia::render('Public/Worksite', ['worksiteId' => $worksite, 'stellar' => StellarForBrowser::props()]))->where('worksite', PublicId::PATTERN)->name('public.worksite');
+        // It. 46c (US-064-SEC): un enlace viejo, con el número de la obra, redirige al nuevo.
+        Route::get('/worksite/{number}', LegacyLinkController::class)->whereNumber('number')->defaults('model', Worksite::class)->defaults('to', 'public.worksite')->middleware('throttle:30,1')->name('legacy.public.worksite');
         // US-051-RPT: las estadísticas del territorio.
         Route::get('/stats', fn () => Inertia::render('Public/Stats'))->name('public.stats');
     });
@@ -86,8 +94,10 @@ Route::middleware([
         Route::get('/public/worksites/filters', [PublicWorksiteController::class, 'filters'])->name('public.worksites.filters');
         // It. 40c: el mapa como lista, al abrirla (la carga del mapa no cambia, R-MAP-02).
         Route::get('/public/worksites/list', [PublicWorksiteController::class, 'listing'])->name('public.worksites.list');
-        Route::get('/public/worksites/{worksite}', [PublicWorksiteController::class, 'show'])->whereNumber('worksite')->name('public.worksites.show');
-        Route::get('/public/evidences/{evidence}/photo', [PublicEvidenceController::class, 'photo'])->whereNumber('evidence')->name('public.evidences.photo');
+        Route::get('/public/worksites/{worksite}', [PublicWorksiteController::class, 'show'])->where('worksite', PublicId::PATTERN)->name('public.worksites.show');
+        Route::get('/public/evidences/{evidence}/photo', [PublicEvidenceController::class, 'photo'])->where('evidence', PublicId::PATTERN)->name('public.evidences.photo');
+        Route::get('/public/worksites/{number}', LegacyLinkController::class)->whereNumber('number')->defaults('model', Worksite::class)->defaults('to', 'public.worksites.show')->middleware('throttle:30,1')->name('legacy.public.worksites.show');
+        Route::get('/public/evidences/{number}/photo', LegacyLinkController::class)->whereNumber('number')->defaults('model', Evidence::class)->defaults('to', 'public.evidences.photo')->middleware('throttle:30,1')->name('legacy.public.evidences.photo');
         Route::get('/public/stats', fn (PublicStats $stats) => response()->json($stats->handle()))->name('public.stats.data');
     });
     // US-059-LEG (it. 44f): el ciudadano informa a la veeduría, con su correo verificado por un código.
@@ -116,17 +126,23 @@ Route::middleware([
     // US-025 / US-026: el recibo de lo publicado (y retirado), y cada
     // archivo publicado con su prueba de inclusión (it. 23).
     Route::middleware('throttle:public')->group(function () {
-        Route::get('/public/reports/{report}/receipt', [ReceiptController::class, 'public'])->whereNumber('report')->name('public.reports.receipt');
-        Route::get('/public/evidences/{evidence}/download', [PublicEvidenceController::class, 'download'])->whereNumber('evidence')->name('public.evidences.download');
-        Route::get('/public/evidences/{evidence}/proof', [PublicEvidenceController::class, 'proof'])->whereNumber('evidence')->name('public.evidences.proof');
+        Route::get('/public/reports/{report}/receipt', [ReceiptController::class, 'public'])->where('report', PublicId::PATTERN)->name('public.reports.receipt');
+        Route::get('/public/evidences/{evidence}/download', [PublicEvidenceController::class, 'download'])->where('evidence', PublicId::PATTERN)->name('public.evidences.download');
+        Route::get('/public/evidences/{evidence}/proof', [PublicEvidenceController::class, 'proof'])->where('evidence', PublicId::PATTERN)->name('public.evidences.proof');
+        // It. 46c: los enlaces viejos del recibo, la descarga y la prueba, que pudieron compartirse.
+        Route::get('/public/reports/{number}/receipt', LegacyLinkController::class)->whereNumber('number')->defaults('model', Report::class)->defaults('to', 'public.reports.receipt')->middleware('throttle:30,1')->name('legacy.public.reports.receipt');
+        Route::get('/public/evidences/{number}/download', LegacyLinkController::class)->whereNumber('number')->defaults('model', Evidence::class)->defaults('to', 'public.evidences.download')->middleware('throttle:30,1')->name('legacy.public.evidences.download');
+        Route::get('/public/evidences/{number}/proof', LegacyLinkController::class)->whereNumber('number')->defaults('model', Evidence::class)->defaults('to', 'public.evidences.proof')->middleware('throttle:30,1')->name('legacy.public.evidences.proof');
         Route::get('/public/proofs/{sha256}', [PublicProofController::class, 'show'])->name('public.proofs.show');
     });
     Route::post('/login', [LoginController::class, 'store'])->name('tenant.login');
 
     // US-030: el enlace de US-002 (Administrador inicial) o US-005
     // (invitación de veedor) — mismo token, misma pantalla.
-    Route::get('/set-password/{user}', [SetPasswordController::class, 'show'])->whereNumber('user')->name('tenant.set-password.show');
-    Route::post('/set-password/{user}', [SetPasswordController::class, 'store'])->whereNumber('user')->name('tenant.set-password.store');
+    Route::get('/set-password/{user}', [SetPasswordController::class, 'show'])->where('user', PublicId::PATTERN)->name('tenant.set-password.show');
+    Route::post('/set-password/{user}', [SetPasswordController::class, 'store'])->where('user', PublicId::PATTERN)->name('tenant.set-password.store');
+    // It. 46c: la invitación que llegó por correo antes del cambio, con el número del usuario.
+    Route::get('/set-password/{number}', [LegacyLinkController::class, 'invitation'])->whereNumber('number')->defaults('model', OrganizationUser::class)->defaults('to', 'tenant.set-password.show')->middleware('throttle:30,1')->name('legacy.tenant.set-password.show');
 
     // US-039-USR: restablecer la contraseña con un enlace por correo.
     Route::get('/forgot-password', [PasswordResetController::class, 'requestForm'])->name('tenant.password.request');
@@ -159,16 +175,16 @@ Route::middleware([
             Route::post('/administrators/invite', [AdministratorController::class, 'invite'])->name('administrators.invite');
 
             // US-035: corregir la ubicación oficial de una obra de la organización.
-            Route::patch('/worksites/{worksite}/location', [WorksiteLocationController::class, 'update'])->name('worksites.location.update');
+            Route::patch('/worksites/{worksite}/location', [WorksiteLocationController::class, 'update'])->where('worksite', PublicId::PATTERN)->name('worksites.location.update');
             // US-045-INT: agrupar varios contratos en una ficha de obra.
             Route::post('/worksites/group', [WorksiteGroupController::class, 'store'])->name('worksites.group');
             // US-056-LEG (it. 44b): el expediente de una obra, para el derecho de petición y la denuncia.
-            Route::get('/worksites/{worksite}/dossier.zip', WorksiteDossierController::class)->whereNumber('worksite')->name('worksites.dossier');
+            Route::get('/worksites/{worksite}/dossier.zip', WorksiteDossierController::class)->where('worksite', PublicId::PATTERN)->name('worksites.dossier');
             // US-059-LEG (it. 44f): los informes de los ciudadanos, sin su correo.
             Route::get('/citizen-reports', [CitizenReportInboxController::class, 'index'])->name('citizen-reports.index');
-            Route::get('/citizen-reports/{report}/photo', [CitizenReportInboxController::class, 'photo'])->whereNumber('report')->name('citizen-reports.photo');
-            Route::post('/citizen-reports/{report}/answer', [CitizenReportInboxController::class, 'answer'])->whereNumber('report')->name('citizen-reports.answer');
-            Route::post('/citizen-reports/{report}/discard', [CitizenReportInboxController::class, 'discard'])->whereNumber('report')->name('citizen-reports.discard');
+            Route::get('/citizen-reports/{report}/photo', [CitizenReportInboxController::class, 'photo'])->where('report', PublicId::PATTERN)->name('citizen-reports.photo');
+            Route::post('/citizen-reports/{report}/answer', [CitizenReportInboxController::class, 'answer'])->where('report', PublicId::PATTERN)->name('citizen-reports.answer');
+            Route::post('/citizen-reports/{report}/discard', [CitizenReportInboxController::class, 'discard'])->where('report', PublicId::PATTERN)->name('citizen-reports.discard');
 
             // US-042-SEC: autorizar al Super Administrador a reportar en nombre de la organización (30 días).
             Route::get('/authorizations/super-admin', [SuperAdminAuthorizationController::class, 'show'])->name('authorizations.super-admin.show');
@@ -183,10 +199,10 @@ Route::middleware([
             // US-036 / US-037: la bandeja de entrada y las decisiones
             // editoriales, de a una evidencia (no hay publicación masiva).
             Route::get('/inbox', [EditorialController::class, 'inbox'])->name('inbox');
-            Route::post('/reports/{report}/publish', [EditorialController::class, 'publish'])->whereNumber('report')->name('reports.publish');
-            Route::post('/reports/{report}/reject', [EditorialController::class, 'reject'])->whereNumber('report')->name('reports.reject');
-            Route::post('/reports/{report}/withdraw', [EditorialController::class, 'withdraw'])->whereNumber('report')->name('reports.withdraw');
-            Route::get('/evidences/{evidence}/file', [EvidenceFileController::class, 'show'])->whereNumber('evidence')->name('evidences.file');
+            Route::post('/reports/{report}/publish', [EditorialController::class, 'publish'])->where('report', PublicId::PATTERN)->name('reports.publish');
+            Route::post('/reports/{report}/reject', [EditorialController::class, 'reject'])->where('report', PublicId::PATTERN)->name('reports.reject');
+            Route::post('/reports/{report}/withdraw', [EditorialController::class, 'withdraw'])->where('report', PublicId::PATTERN)->name('reports.withdraw');
+            Route::get('/evidences/{evidence}/file', [EvidenceFileController::class, 'show'])->where('evidence', PublicId::PATTERN)->name('evidences.file');
 
             // El panel del Administrador (it. 18): cada pantalla pide sus datos al JSON de abajo.
             foreach ([
@@ -197,11 +213,11 @@ Route::middleware([
                 Route::get("/admin/{$screen}", fn () => Inertia::render($component))->name("admin.{$screen}");
             }
             Route::get('/observers', [ObserverController::class, 'index'])->name('observers.index');
-            Route::post('/observers/{observer}/deactivate', [ObserverController::class, 'deactivate'])->whereNumber('observer')->name('observers.deactivate');
-            Route::post('/observers/{observer}/reactivate', [ObserverController::class, 'reactivate'])->whereNumber('observer')->name('observers.reactivate');
+            Route::post('/observers/{observer}/deactivate', [ObserverController::class, 'deactivate'])->where('observer', PublicId::PATTERN)->name('observers.deactivate');
+            Route::post('/observers/{observer}/reactivate', [ObserverController::class, 'reactivate'])->where('observer', PublicId::PATTERN)->name('observers.reactivate');
             // US-040-USR: reenviar o revocar una invitación pendiente.
-            Route::post('/observers/{observer}/invitation/resend', [ObserverController::class, 'resendInvitation'])->whereNumber('observer')->name('observers.invitation.resend');
-            Route::post('/observers/{observer}/invitation/revoke', [ObserverController::class, 'revokeInvitation'])->whereNumber('observer')->name('observers.invitation.revoke');
+            Route::post('/observers/{observer}/invitation/resend', [ObserverController::class, 'resendInvitation'])->where('observer', PublicId::PATTERN)->name('observers.invitation.resend');
+            Route::post('/observers/{observer}/invitation/revoke', [ObserverController::class, 'revokeInvitation'])->where('observer', PublicId::PATTERN)->name('observers.invitation.revoke');
             Route::get('/territory', [TerritoryController::class, 'show'])->name('territory.show');
             Route::get('/territory/search', [TerritoryController::class, 'search'])->name('territory.search');
             Route::put('/territory', [TerritoryController::class, 'update'])->name('territory.update');
@@ -227,7 +243,7 @@ Route::middleware([
             // US-010 / US-023: "Mis Reportes", y el recibo de cada uno.
             Route::get('/my-reports', fn () => Inertia::render('Veedor/MyReports'))->name('reports.mine.show');
             Route::get('/me/reports', [MyReportsController::class, 'index'])->name('reports.mine');
-            Route::get('/reports/{report}/receipt', [ReceiptController::class, 'mine'])->whereNumber('report')->name('reports.receipt');
+            Route::get('/reports/{report}/receipt', [ReceiptController::class, 'mine'])->where('report', PublicId::PATTERN)->name('reports.receipt');
 
             // US-016: "Buscar Obra". US-019: las obras cercanas.
             Route::get('/contracts/search', ContractSearchController::class)->name('contracts.search');

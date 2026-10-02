@@ -3,6 +3,7 @@
 namespace App\Application\Sealing;
 
 use App\Domain\Audit\AuditLog;
+use App\Domain\Reports\Report;
 use App\Domain\Sealing\ReportSeal;
 use App\Domain\Sealing\SealStatus;
 use App\Infrastructure\Tenancy\Tenant;
@@ -16,18 +17,18 @@ use App\Models\User as SuperAdmin;
  */
 final class SealingFailures
 {
-    /** @return list<array{organization_id: string, organization: string, report_id: int, failed_at: string, attempts: int, last_error: string|null}> */
+    /** @return list<array{organization_id: string, organization: string, report_id: string, failed_at: string, attempts: int, last_error: string|null}> */
     public function all(): array
     {
         $failures = [];
 
         foreach (Tenant::query()->get() as $tenant) {
             $tenant->run(function () use ($tenant, &$failures) {
-                foreach (ReportSeal::query()->where('status', SealStatus::Failed)->get() as $seal) {
+                foreach (ReportSeal::query()->where('status', SealStatus::Failed)->with('report')->get() as $seal) {
                     $failures[] = [
                         'organization_id' => $tenant->id,
                         'organization' => $tenant->displayName(),
-                        'report_id' => $seal->report_id,
+                        'report_id' => $seal->report->public_id, // it. 46c (US-064-SEC)
                         'failed_at' => $seal->failed_at->timezone('America/Bogota')->toIso8601String(),
                         'attempts' => $seal->attempts,
                         'last_error' => $seal->last_error,
@@ -46,7 +47,7 @@ final class SealingFailures
      * Back to "En Cola" with five fresh attempts, one audit entry each. A
      * seal no longer in "Falla de Sellado" is left as it is.
      *
-     * @param  list<array{organization_id: string, report_id: int}>  $seals
+     * @param  list<array{organization_id: string, report_id: string}>  $seals  the public id of each report (it. 46c)
      * @return int how many went back to the queue
      */
     public function requeue(array $seals, SuperAdmin $actor): int
@@ -57,7 +58,7 @@ final class SealingFailures
             Tenant::query()->findOrFail($organizationId)->run(function () use ($organizationId, $ofOrganization, $actor, &$requeued) {
                 $failed = ReportSeal::query()
                     ->where('status', SealStatus::Failed)
-                    ->whereIn('report_id', $ofOrganization->pluck('report_id'))
+                    ->whereIn('report_id', Report::query()->whereIn('public_id', $ofOrganization->pluck('report_id'))->select('id'))
                     ->get();
 
                 foreach ($failed as $seal) {

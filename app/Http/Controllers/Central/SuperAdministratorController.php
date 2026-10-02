@@ -45,24 +45,24 @@ class SuperAdministratorController extends Controller
         return response()->json(['message' => "Invitación enviada a {$data['email']}. El enlace vence en {$hours} horas."], 201);
     }
 
-    public function resend(Request $request, int $user): JsonResponse
+    public function resend(Request $request, string $user): JsonResponse
     {
-        $hours = (new SuperAdministrators)->resend($this->actor($request), $user);
+        $hours = (new SuperAdministrators)->resend($this->actor($request), SuperAdmin::idOf($user));
 
         return response()->json(['message' => "Le enviamos un enlace nuevo. Vence en {$hours} horas; el anterior ya no sirve."]);
     }
 
-    public function revoke(Request $request, int $user): JsonResponse
+    public function revoke(Request $request, string $user): JsonResponse
     {
-        $email = (new SuperAdministrators)->revoke($this->actor($request), $user);
+        $email = (new SuperAdministrators)->revoke($this->actor($request), SuperAdmin::idOf($user));
 
         return response()->json(['message' => "Invitación a {$email} revocada. El enlace ya no sirve."]);
     }
 
-    public function deactivate(Request $request, int $user): JsonResponse
+    public function deactivate(Request $request, string $user): JsonResponse
     {
         try {
-            (new SuperAdministrators)->deactivate($this->actor($request), $user);
+            (new SuperAdministrators)->deactivate($this->actor($request), SuperAdmin::idOf($user));
         } catch (DomainException $refused) {
             return response()->json(['message' => $refused->getMessage()], 422);
         }
@@ -70,9 +70,9 @@ class SuperAdministratorController extends Controller
         return response()->json(['message' => 'Ya no puede entrar al panel global. Lo que hizo queda en el registro de auditoría.']);
     }
 
-    public function reactivate(Request $request, int $user): JsonResponse
+    public function reactivate(Request $request, string $user): JsonResponse
     {
-        (new SuperAdministrators)->reactivate($this->actor($request), $user);
+        (new SuperAdministrators)->reactivate($this->actor($request), SuperAdmin::idOf($user));
 
         return response()->json(['message' => 'Puede entrar otra vez al panel global.']);
     }

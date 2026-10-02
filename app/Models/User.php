@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Domain\Auth\Notifications\ResetPasswordLink;
+use App\Domain\Shared\HasPublicId;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -22,7 +23,7 @@ class User extends Authenticatable
     // el contexto de una organización (p. ej. para avisarle que la
     // patrocinadora se quedó sin XLM, it. 13) iría a la tabla "users" de esa
     // organización: sus veedores.
-    use CentralConnection, HasFactory, Notifiable;
+    use CentralConnection, HasFactory, HasPublicId, Notifiable;
 
     /**
      * It. 46a (US-063-USR): a Super Administrador who can act — active, and

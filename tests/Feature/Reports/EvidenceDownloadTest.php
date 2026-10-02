@@ -77,12 +77,12 @@ function photoWithMetadata(string $payload, string $fill = ''): UploadedFile
 /** @return array<string, mixed> the public timeline card of the report */
 function timelineCard(int $reportId): ?array
 {
-    return collect(test()->tenant->run(fn () => (new PublicTimeline)->handle(test()->worksite->id)))->firstWhere('report_id', $reportId);
+    return collect(test()->tenant->run(fn () => (new PublicTimeline)->handle(test()->worksite->id)))->firstWhere('report_id', publicIdOf(Report::class, $reportId));
 }
 
 function evidenceIdsOf(int $reportId): array
 {
-    return test()->tenant->run(fn () => Report::query()->findOrFail($reportId)->evidences()->orderBy('id')->pluck('id')->all());
+    return test()->tenant->run(fn () => Report::query()->findOrFail($reportId)->evidences()->orderBy('id')->pluck('public_id')->all()); // it. 46c: las URL llevan su identificador público
 }
 
 it('Descarga del archivo exacto y su prueba: the same binary that was sealed, without EXIF, and its inclusion proof', function () {
@@ -184,7 +184,7 @@ it('links each published card to its receipt, and each file to its download and 
 
     $card = timelineCard($reportId);
 
-    expect($card['receipt_url'])->toBe("/public/reports/{$reportId}/receipt")
+    expect($card['receipt_url'])->toBe('/public/reports/'.publicIdOf(Report::class, $reportId).'/receipt')
         ->and($card['files'][0])->toMatchArray([
             'download_url' => "/public/evidences/{$evidenceId}/download",
             'proof_url' => "/public/evidences/{$evidenceId}/proof",

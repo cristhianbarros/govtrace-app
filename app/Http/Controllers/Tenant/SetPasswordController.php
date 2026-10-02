@@ -34,7 +34,7 @@ class SetPasswordController extends Controller
      */
     public function show(Request $request, string $user): InertiaResponse
     {
-        $account = User::query()->find($user);
+        $account = User::query()->where('public_id', $user)->first();
         $token = $request->string('token')->toString();
 
         if ($account === null || ! (new AcceptInvitation)->isValid($account, $token)) {
@@ -50,7 +50,7 @@ class SetPasswordController extends Controller
             // It. 45c: el nombre que ya tiene; vacío si es solo el comienzo de su correo (el de la invitación).
             'name' => $account->name === Str::before($account->email, '@') ? '' : $account->name,
             'token' => $token,
-            'action' => "/set-password/{$account->id}",
+            'action' => "/set-password/{$account->public_id}",
             // US-057-LEG: un veedor declara, al activar su cuenta, que no tiene impedimentos para serlo.
             'declaration' => DeclareImpediments::isAskedOf($account),
             // US-058-LEG: la política que autoriza al crear su cuenta (Ley 1581 de 2012).
@@ -72,7 +72,7 @@ class SetPasswordController extends Controller
             'name.max' => 'Su nombre puede tener hasta 120 caracteres.',
         ]);
 
-        $account = User::query()->find($user);
+        $account = User::query()->where('public_id', $user)->first();
         $accept = new AcceptInvitation;
 
         try {

@@ -47,7 +47,7 @@ function storedReport(Tenant $tenant, int $reportId): Report
 }
 
 it('records how far from the official location of its worksite a report was taken', function () {
-    $reportId = sendReport($this->veedor)->assertCreated()->json('id');
+    $reportId = createdReportId(sendReport($this->veedor));
 
     $report = storedReport($this->tenant, $reportId);
 
@@ -59,7 +59,7 @@ it('records that the first report of a worksite without location fixed it, at 0 
     reportableContract('CO1.PCCNTR.7654321');
     worksiteWithContracts($this->tenant, ['CO1.PCCNTR.7654321'], null);
 
-    $reportId = sendReport($this->veedor, ['secop_contract_id' => 'CO1.PCCNTR.7654321'])->assertCreated()->json('id');
+    $reportId = createdReportId(sendReport($this->veedor, ['secop_contract_id' => 'CO1.PCCNTR.7654321']));
 
     $report = storedReport($this->tenant, $reportId);
 
@@ -68,7 +68,7 @@ it('records that the first report of a worksite without location fixed it, at 0 
 });
 
 it('never lets those facts change once recorded', function (string $field, mixed $value) {
-    $reportId = sendReport($this->veedor)->assertCreated()->json('id');
+    $reportId = createdReportId(sendReport($this->veedor));
 
     $this->tenant->run(fn () => Report::query()->findOrFail($reportId)->update([$field => $value]));
 })->with([

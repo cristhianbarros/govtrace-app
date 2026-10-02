@@ -34,7 +34,7 @@ class MyReportsController extends Controller
             $firstContract = $report->worksite->contracts->sortBy('secop_contract_id')->first()?->secop_contract_id;
 
             return [
-                'id' => $report->id,
+                'id' => $report->public_id, // it. 46c
                 'captured_at' => $report->captured_at->toIso8601String(),
                 'classification' => $report->classification->value,
                 // La ficha completa (R-INT-05): su nombre, o el objeto de su contrato.
@@ -42,7 +42,7 @@ class MyReportsController extends Controller
                 'technical_status' => $report->seal->status->veedorLabel(),
                 'editorial_status' => $editorial['status'],
                 'rejection_reason' => $editorial['reason'],
-                'receipt_url' => "/reports/{$report->id}/receipt",
+                'receipt_url' => "/reports/{$report->public_id}/receipt",
             ];
         })->values()]);
     }

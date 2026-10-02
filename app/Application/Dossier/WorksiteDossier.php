@@ -44,7 +44,7 @@ class WorksiteDossier
 
         return [
             'organization' => ['name' => $tenant->name, 'identification' => $this->identification($tenant), 'url' => TenantUrl::to($domain, '/')],
-            'worksite' => ['id' => $worksite->id, 'name' => $worksite->name ?? $contracts->first()?->object ?? 'Obra sin nombre'],
+            'worksite' => ['id' => $worksite->public_id, 'name' => $worksite->name ?? $contracts->first()?->object ?? 'Obra sin nombre'],
             'condition' => (new WorksiteCondition)->of($worksite, $contracts),
             'contracts' => $contracts->map(fn (Contract $contract) => $this->contract($contract))->all(),
             'evidences' => $reports->values()->map(fn (Report $report, int $index) => $this->evidence($report, $index + 1))->all(),
@@ -79,11 +79,11 @@ class WorksiteDossier
     {
         $seal = $report->seal;
         $place = $report->location()->approximate(); // R-PRIV-02: el lugar, a unos 100 m
-        $folder = 'evidencias/'.$report->captured_at->timezone(self::TIMEZONE)->format('Y-m-d').'-reporte-'.$report->id;
+        $folder = 'evidencias/'.$report->captured_at->timezone(self::TIMEZONE)->format('Y-m-d').'-reporte-'.$report->public_id;
 
         return [
             'number' => $number,
-            'report_id' => $report->id,
+            'report_id' => $report->public_id, // it. 46c
             'captured_at' => $this->dateTime($report->captured_at),
             'classification' => $report->classification->value,
             'comment' => $report->comment,

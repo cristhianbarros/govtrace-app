@@ -39,7 +39,7 @@ it('takes the scheme and the port of APP_URL for the Administrador inicial welco
 
     $administrator = (new AssignInitialAdministrator)->handle($this->tenant, 'Ana Administradora', 'ana@veeduria-smr.org');
 
-    Notification::assertSentTo($administrator, WelcomeNotification::class, fn (WelcomeNotification $mail) => str_starts_with($mail->url, "{$prefix}/set-password/{$administrator->id}?token="));
+    Notification::assertSentTo($administrator, WelcomeNotification::class, fn (WelcomeNotification $mail) => str_starts_with($mail->url, "{$prefix}/set-password/{$administrator->public_id}?token="));
 })->with([
     'local, con puerto' => ['http://govtrace.localhost:8080', 'http://veeduria-smr.govtrace.localhost:8080'],
     'producción, con https' => ['https://govtrace.localhost', 'https://veeduria-smr.govtrace.localhost'],
@@ -56,7 +56,7 @@ it('takes the scheme and the port of APP_URL for a veedor invitation and its res
     (new ResendInvitation)->handle($administrator, $veedor);
 
     Notification::assertSentToTimes($veedor, WelcomeNotification::class, 2);
-    Notification::assertSentTo($veedor, WelcomeNotification::class, fn (WelcomeNotification $mail) => str_starts_with($mail->url, "{$prefix}/set-password/{$veedor->id}?token="));
+    Notification::assertSentTo($veedor, WelcomeNotification::class, fn (WelcomeNotification $mail) => str_starts_with($mail->url, "{$prefix}/set-password/{$veedor->public_id}?token="));
 })->with([
     'local, con puerto' => ['http://govtrace.localhost:8080', 'http://veeduria-smr.govtrace.localhost:8080'],
     'producción, con https' => ['https://govtrace.localhost', 'https://veeduria-smr.govtrace.localhost'],

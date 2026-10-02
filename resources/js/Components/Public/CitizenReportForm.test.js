@@ -10,6 +10,9 @@ import { requestCitizenCode, sendCitizenReport } from '@/services/api.js';
 vi.mock('@/services/api.js');
 vi.mock('@/lib/evidence/prepare.js');
 
+// It. 46c (US-064-SEC): la obra, por su identificador público.
+const WORKSITE = '01j9xq3m7v8k2d4f6g8h0jkmnp';
+
 const MESSAGE = 'La obra lleva dos semanas sin trabajadores y el cerramiento se cayó.';
 const button = (wrapper, text) => wrapper.findAll('button').find((candidate) => candidate.text() === text);
 
@@ -30,10 +33,10 @@ describe('Informar a esta veeduría', () => {
         const clean = new File(['sin-exif'], 'obra.jpg', { type: 'image/jpeg' });
         prepareEvidence.mockResolvedValue({ kind: 'photo', file: clean, sha256: 'ab'.repeat(32) });
         sendCitizenReport.mockResolvedValue({ message: 'Su informe llegó a la veeduría. Si lo atiende, le responde a su correo.', number: 12 });
-        const wrapper = mount(CitizenReportForm, { props: { worksiteId: 7 } });
+        const wrapper = mount(CitizenReportForm, { props: { worksiteId: WORKSITE } });
 
         await askForTheCode(wrapper);
-        expect(requestCitizenCode).toHaveBeenCalledWith({ email: 'vecina@correo.co', worksite_id: 7, data_authorization: true });
+        expect(requestCitizenCode).toHaveBeenCalledWith({ email: 'vecina@correo.co', worksite_id: WORKSITE, data_authorization: true });
         expect(wrapper.text()).toContain('Le enviamos un código de 6 dígitos a vecina@correo.co. Vence en 10 minutos.');
 
         await wrapper.get('input#citizen-code').setValue('123456');
@@ -46,14 +49,14 @@ describe('Informar a esta veeduría', () => {
         await flushPromises();
 
         const form = sendCitizenReport.mock.calls[0][0];
-        expect(Object.fromEntries(['email', 'code', 'worksite_id', 'message'].map((field) => [field, form.get(field)]))).toEqual({ email: 'vecina@correo.co', code: '123456', worksite_id: '7', message: MESSAGE });
+        expect(Object.fromEntries(['email', 'code', 'worksite_id', 'message'].map((field) => [field, form.get(field)]))).toEqual({ email: 'vecina@correo.co', code: '123456', worksite_id: WORKSITE, message: MESSAGE });
         expect(form.get('photo').name).toBe('obra.jpg');
         expect(wrapper.get('[role="status"]').text()).toContain('Su informe llegó a la veeduría.');
         expect(wrapper.text()).toContain('Su informe es el n.º 12.');
     });
 
     it('Sin autorizar el tratamiento de datos no se pide el código: nothing is sent, and it says why', async () => {
-        const wrapper = mount(CitizenReportForm, { props: { worksiteId: 7 } });
+        const wrapper = mount(CitizenReportForm, { props: { worksiteId: WORKSITE } });
 
         await wrapper.get('input#citizen-email').setValue('vecina@correo.co');
         await button(wrapper, 'Enviarme el código').trigger('click');
@@ -64,7 +67,7 @@ describe('Informar a esta veeduría', () => {
     });
 
     it('asks for a message of 20 characters or more, and a code of 6 digits, before sending', async () => {
-        const wrapper = mount(CitizenReportForm, { props: { worksiteId: 7 } });
+        const wrapper = mount(CitizenReportForm, { props: { worksiteId: WORKSITE } });
         await askForTheCode(wrapper);
 
         await wrapper.get('input#citizen-code').setValue('12');
@@ -77,7 +80,7 @@ describe('Informar a esta veeduría', () => {
 
     it('Sin un código válido no se recibe el informe: it shows what the server says', async () => {
         sendCitizenReport.mockRejectedValue({ response: { status: 422, data: { message: 'El código no es válido o ya venció. Pida uno nuevo.', errors: { code: ['El código no es válido o ya venció. Pida uno nuevo.'] } } } });
-        const wrapper = mount(CitizenReportForm, { props: { worksiteId: 7 } });
+        const wrapper = mount(CitizenReportForm, { props: { worksiteId: WORKSITE } });
         await askForTheCode(wrapper);
 
         await wrapper.get('input#citizen-code').setValue('000000');

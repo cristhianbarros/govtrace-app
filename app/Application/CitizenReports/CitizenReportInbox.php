@@ -23,12 +23,14 @@ class CitizenReportInbox
     {
         return CitizenReport::query()->with('worksite')->latest('id')->get()
             ->map(fn (CitizenReport $report) => [
-                'id' => $report->id,
-                'worksite_id' => $report->worksite_id,
+                // It. 46c (US-064-SEC): identificadores públicos.
+                'id' => $report->public_id,
+                'reference' => $report->reference(), // la que recibió el ciudadano
+                'worksite_id' => $report->worksite?->public_id,
                 'worksite' => CitizenReportDesk::nameOf($report->worksite),
                 'received_at' => $report->created_at->toIso8601String(),
                 'message' => $report->message,
-                'photo_url' => $report->photo_path ? "/citizen-reports/{$report->id}/photo" : null,
+                'photo_url' => $report->photo_path ? "/citizen-reports/{$report->public_id}/photo" : null,
                 'status' => $report->status,
                 'status_label' => CitizenReport::STATUS_LABELS[$report->status],
                 'answer' => $report->answer,
@@ -40,7 +42,7 @@ class CitizenReportInbox
         $report = $this->pending($id);
         $report->update(['status' => 'answered', 'answer' => trim($answer), 'handled_at' => now(), 'handled_by' => $administrator->id]);
 
-        Notification::route('mail', $report->email)->notify(new CitizenReportAnswered($report->id, tenant()->displayName(), $report->answer));
+        Notification::route('mail', $report->email)->notify(new CitizenReportAnswered($report->reference(), tenant()->displayName(), $report->answer));
         $this->audit('citizen_report.answered', $administrator, $report);
     }
 

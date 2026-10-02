@@ -4,6 +4,7 @@ use App\Application\Organization\InviteObserver;
 use App\Application\Organization\RegisterOrganization;
 use App\Domain\Organization\Roles;
 use App\Domain\Organization\User as OrganizationUser;
+use App\Domain\Shared\PublicId;
 use App\Infrastructure\Tenancy\Tenant;
 use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -74,20 +75,20 @@ it('after logging in from the screen, loads the dashboard of the role as a full 
 
 it('serves the activation screen of a valid invitation link', function () {
     $this->withoutVite()
-        ->get("http://veeduria-smr.govtrace.localhost/set-password/{$this->veedor->id}?token={$this->plainToken}")
+        ->get("http://veeduria-smr.govtrace.localhost/set-password/{$this->veedor->public_id}?token={$this->plainToken}")
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page->component('Auth/SetPassword')
             ->where('valid', true)
             ->where('email', 'carlos@correo.co')
             ->where('token', $this->plainToken)
-            ->where('action', "/set-password/{$this->veedor->id}"));
+            ->where('action', "/set-password/{$this->veedor->public_id}"));
 });
 
 it('Enlace de invitación vencido: the activation screen says so and offers no form', function () {
     $this->tenant->run(fn () => $this->veedor->forceFill(['invitation_expires_at' => now()->subHour()])->save());
 
     $this->withoutVite()
-        ->get("http://veeduria-smr.govtrace.localhost/set-password/{$this->veedor->id}?token={$this->plainToken}")
+        ->get("http://veeduria-smr.govtrace.localhost/set-password/{$this->veedor->public_id}?token={$this->plainToken}")
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page->component('Auth/SetPassword')
             ->where('valid', false)
@@ -102,9 +103,10 @@ it('does not tell whether an account exists: a wrong token or an unknown user lo
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page->component('Auth/SetPassword')->where('valid', false)->missing('email'));
 })->with([
-    'token equivocado' => ['/set-password/1?token=otro'],
-    'sin token' => ['/set-password/1'],
-    'usuario inexistente' => ['/set-password/999?token=otro'],
+    // It. 46c: el enlace nombra al usuario por su identificador público.
+    'token equivocado' => [fn () => '/set-password/'.test()->veedor->public_id.'?token=otro'],
+    'sin token' => [fn () => '/set-password/'.test()->veedor->public_id],
+    'usuario inexistente' => [fn () => '/set-password/'.PublicId::generate().'?token=otro'],
 ]);
 
 it('takes the veedor from the old dashboard address to "Nuevo Reporte"', function () {

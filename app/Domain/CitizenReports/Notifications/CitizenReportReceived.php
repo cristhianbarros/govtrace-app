@@ -9,7 +9,7 @@ use Illuminate\Notifications\Notification;
 class CitizenReportReceived extends Notification
 {
     public function __construct(
-        public readonly int $number,
+        public readonly string $number, // it. 46c: CitizenReport::reference()
         public readonly string $organization,
         public readonly string $worksite,
     ) {}

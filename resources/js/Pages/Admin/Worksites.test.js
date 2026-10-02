@@ -186,11 +186,13 @@ describe('El expediente de una obra (it. 44b)', () => {
     });
 
     // It. 45f: "Corregir ubicación" desde la Bandeja abre la corrección de esa obra.
+    // It. 46c (US-064-SEC): la obra se nombra por su identificador público.
     it('opens the correction of the worksite named in the link from the Bandeja', async () => {
-        window.history.replaceState({}, '', '/admin/worksites?corregir=3');
-        const other = { ...gaira, id: 4, latitude: 11.3, longitude: -74.1 };
+        const named = { ...gaira, id: '01j9xq3m7v8k2d4f6g8h0jkmnp' };
+        const other = { ...gaira, id: '01j9xq3m7v8k2d4f6g8h0jkmnq', latitude: 11.3, longitude: -74.1 };
+        window.history.replaceState({}, '', `/admin/worksites?corregir=${named.id}`);
 
-        const wrapper = await openWorksites([other, gaira]);
+        const wrapper = await openWorksites([other, named]);
 
         expect(wrapper.get('input#latitude').element.value).toBe('11.2');
         expect(wrapper.get('input#longitude').element.value).toBe('-74.23');

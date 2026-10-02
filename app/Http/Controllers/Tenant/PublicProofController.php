@@ -16,8 +16,8 @@ use Illuminate\Http\Request;
  * evidence not published (hidden, rejected) or withdrawn: its seal stays
  * verifiable, and the validator says where it stands. Only sealed ones.
  *
- * ?report={id} looks only in that report: the contextual mode compares a
- * copy against one evidence of the timeline.
+ * ?report={public id} looks only in that report: the contextual mode compares a
+ * copy against one evidence of the timeline (it. 46c: its public id, not its number).
  */
 class PublicProofController extends Controller
 {
@@ -28,7 +28,7 @@ class PublicProofController extends Controller
         $evidence = Evidence::query()
             ->where('sha256', $sha256)
             ->whereHas('report.seal', fn ($seal) => $seal->where('status', SealStatus::Sealed))
-            ->when($request->integer('report'), fn ($query, int $report) => $query->where('report_id', $report))
+            ->when($request->filled('report'), fn ($query) => $query->whereHas('report', fn ($report) => $report->where('public_id', $request->string('report'))))
             ->with('report.seal')
             ->orderBy('id')
             ->get()
@@ -43,7 +43,7 @@ class PublicProofController extends Controller
         abort_if($evidence === null, 404);
 
         return response()->json(['data' => [
-            'report_id' => $evidence->report_id,
+            'report_id' => $evidence->report->public_id,
             'visibility' => match ($evidence->report->editorial_status) {
                 EditorialStatus::Published => 'published',
                 EditorialStatus::Withdrawn => 'withdrawn',

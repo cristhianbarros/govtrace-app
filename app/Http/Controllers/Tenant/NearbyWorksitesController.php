@@ -25,7 +25,7 @@ class NearbyWorksitesController extends Controller
         $nearby = (new NearbyWorksites)->handle(new GeoPoint((float) $data['latitude'], (float) $data['longitude']));
 
         return response()->json(['data' => array_map(fn (array $suggestion) => [
-            'worksite_id' => $suggestion['worksite']->id,
+            'worksite_id' => $suggestion['worksite']->public_id, // it. 46c
             'name' => $suggestion['worksite']->name ?? $suggestion['contract']->object,
             'distance_meters' => $suggestion['distance_meters'],
             'contract' => $suggestion['contract']->only(['secop_contract_id', 'object', 'entity_name', 'contractor_name', 'process_number', 'status']),

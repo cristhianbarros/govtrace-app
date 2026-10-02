@@ -56,7 +56,7 @@ function mapPins(): array
 
 function pinOf(Worksite $worksite): ?string
 {
-    return collect(mapPins())->firstWhere('id', $worksite->id)['color_pin'] ?? null;
+    return collect(mapPins())->firstWhere('id', $worksite->public_id)['color_pin'] ?? null;
 }
 
 /** An anchored worksite of the contract, in Santa Marta; the contract as SECOP shows it, ending months from today. */
@@ -126,7 +126,7 @@ it('Las obras sin ubicación no tienen pin', function () {
     worksiteWithContracts($this->tenant, ['CO1.PCCNTR.7654321'], null);
     $anchored = anchoredWorksite('CO1.PCCNTR.1234567');
 
-    expect(array_column(mapPins(), 'id'))->toBe([$anchored->id]);
+    expect(array_column(mapPins(), 'id'))->toBe([$anchored->public_id]);
 });
 
 it('El mapa de una organización no muestra obras de otra: not even one with published evidence', function () {
@@ -146,7 +146,7 @@ it('El mapa de una organización no muestra obras de otra: not even one with pub
 
     // Las dos bases numeran sus fichas desde 1: se distingue por dónde está.
     expect($pins)->toHaveCount(1)
-        ->and($pins[0])->toBe(['id' => $own->id, 'lat' => 11.241, 'lng' => -74.199, 'color_pin' => 'green']);
+        ->and($pins[0])->toBe(['id' => $own->public_id, 'lat' => 11.241, 'lng' => -74.199, 'color_pin' => 'green']);
 });
 
 it('La carga inicial del mapa es liviana: only id, latitude, longitude and color of each pin', function () {
@@ -157,7 +157,7 @@ it('La carga inicial del mapa es liviana: only id, latitude, longitude and color
 
     expect($pins)->toHaveCount(1)
         ->and(array_keys($pins[0]))->toBe(['id', 'lat', 'lng', 'color_pin'])
-        ->and($pins[0])->toMatchArray(['id' => $worksite->id, 'color_pin' => 'yellow']);
+        ->and($pins[0])->toMatchArray(['id' => $worksite->public_id, 'color_pin' => 'yellow']);
 });
 
 // Reglas derivadas ------------------------------------------------------

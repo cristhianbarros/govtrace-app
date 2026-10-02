@@ -28,22 +28,22 @@ class EditorialController extends Controller
         return response()->json(['data' => (new ReviewInbox)->handle($status)]);
     }
 
-    public function publish(Request $request, int $report): JsonResponse
+    public function publish(Request $request, string $report): JsonResponse
     {
         return $this->respond(
-            fn () => (new EditorialDecisions)->publish($request->user('tenant'), $report),
+            fn () => (new EditorialDecisions)->publish($request->user('tenant'), Report::idOf($report)),
             ['message' => 'Evidencia publicada. Ya es visible en el mapa.'],
         );
     }
 
-    public function reject(Request $request, int $report): JsonResponse
+    public function reject(Request $request, string $report): JsonResponse
     {
-        return $this->respond(fn () => (new EditorialDecisions)->reject($request->user('tenant'), $report, $request->string('reason')->toString()));
+        return $this->respond(fn () => (new EditorialDecisions)->reject($request->user('tenant'), Report::idOf($report), $request->string('reason')->toString()));
     }
 
-    public function withdraw(Request $request, int $report): JsonResponse
+    public function withdraw(Request $request, string $report): JsonResponse
     {
-        return $this->respond(fn () => (new EditorialDecisions)->withdraw($request->user('tenant'), $report, $request->string('reason')->toString()));
+        return $this->respond(fn () => (new EditorialDecisions)->withdraw($request->user('tenant'), Report::idOf($report), $request->string('reason')->toString()));
     }
 
     /**

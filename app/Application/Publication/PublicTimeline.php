@@ -40,7 +40,8 @@ class PublicTimeline
     private function card(Report $report): array
     {
         $card = [
-            'report_id' => $report->id,
+            // It. 46c (US-064-SEC): identificadores públicos, en los datos y en cada enlace.
+            'report_id' => $report->public_id,
             'classification' => $report->classification->value,
             'captured_at' => $report->captured_at->toIso8601String(),
         ];
@@ -52,12 +53,12 @@ class PublicTimeline
                 'approximate_location' => $this->approximately($report->location()),
                 // US-026: cada archivo, con su descarga y su prueba de inclusión; una foto, además, para verla (US-029).
                 'files' => $report->evidences->map(fn (Evidence $evidence) => [
-                    'id' => $evidence->id,
+                    'id' => $evidence->public_id,
                     'kind' => $evidence->kind,
                     'sha256' => $evidence->sha256,
-                    ...($evidence->kind === EvidenceKind::Photo->value ? ['photo_url' => "/public/evidences/{$evidence->id}/photo"] : []),
-                    'download_url' => "/public/evidences/{$evidence->id}/download",
-                    'proof_url' => "/public/evidences/{$evidence->id}/proof",
+                    ...($evidence->kind === EvidenceKind::Photo->value ? ['photo_url' => "/public/evidences/{$evidence->public_id}/photo"] : []),
+                    'download_url' => "/public/evidences/{$evidence->public_id}/download",
+                    'proof_url' => "/public/evidences/{$evidence->public_id}/proof",
                 ])->all(),
             ];
 
@@ -66,7 +67,7 @@ class PublicTimeline
             ...$content,
             'seal' => $report->seal->only(['merkle_root', 'tx_hash', 'ledger']),
             // US-025: también el de una retirada, para auditoría.
-            'receipt_url' => "/public/reports/{$report->id}/receipt",
+            'receipt_url' => "/public/reports/{$report->public_id}/receipt",
         ];
     }
 

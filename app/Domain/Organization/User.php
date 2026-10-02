@@ -3,6 +3,7 @@
 namespace App\Domain\Organization;
 
 use App\Domain\Auth\Notifications\ResetPasswordLink;
+use App\Domain\Shared\HasPublicId;
 use App\Infrastructure\Tenancy\TenantUrl;
 use Illuminate\Auth\Authenticatable;
 use Illuminate\Auth\Passwords\CanResetPassword;
@@ -20,7 +21,7 @@ use Spatie\Permission\Traits\HasRoles;
  */
 class User extends Model implements AuthenticatableContract, CanResetPasswordContract
 {
-    use Authenticatable, CanResetPassword, HasRoles, Notifiable;
+    use Authenticatable, CanResetPassword, HasPublicId, HasRoles, Notifiable;
 
     /**
      * Every role here uses this guard (config/auth.php "tenant" guard) —

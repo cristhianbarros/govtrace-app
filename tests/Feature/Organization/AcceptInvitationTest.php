@@ -39,7 +39,7 @@ afterEach(function () {
 });
 
 it('activates the account and logs the user in immediately', function () {
-    $response = $this->post("http://{$this->domain}/set-password/{$this->veedor->id}", [
+    $response = $this->post("http://{$this->domain}/set-password/{$this->veedor->public_id}", [
         'token' => $this->plainToken,
         'password' => 'Veeduria#2026',
         'password_confirmation' => 'Veeduria#2026',
@@ -62,7 +62,7 @@ it('activates the account and logs the user in immediately', function () {
 it('rejects an expired invitation link', function () {
     $this->tenant->run(fn () => $this->veedor->forceFill(['invitation_expires_at' => now()->subMinute()])->save());
 
-    $response = $this->post("http://{$this->domain}/set-password/{$this->veedor->id}", [
+    $response = $this->post("http://{$this->domain}/set-password/{$this->veedor->public_id}", [
         'token' => $this->plainToken,
         'password' => 'Veeduria#2026',
         'password_confirmation' => 'Veeduria#2026',
@@ -73,7 +73,7 @@ it('rejects an expired invitation link', function () {
 });
 
 it('rejects a password that does not meet the minimum rules', function (string $password) {
-    $response = $this->post("http://{$this->domain}/set-password/{$this->veedor->id}", [
+    $response = $this->post("http://{$this->domain}/set-password/{$this->veedor->public_id}", [
         'token' => $this->plainToken,
         'password' => $password,
         'password_confirmation' => $password,

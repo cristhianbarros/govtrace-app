@@ -88,7 +88,7 @@ it('Reenviar una invitación: a new link with the configured validity, and the a
     Carbon::setTestNow('2026-09-30 09:00:00');
     Parameters::set('invitation_validity_hours', '24', now()->startOfSecond()); // US-038-CFG, vigente desde ya
 
-    asInvitingAdministrator('POST', "/observers/{$this->invited->id}/invitation/resend")
+    asInvitingAdministrator('POST', "/observers/{$this->invited->public_id}/invitation/resend")
         ->assertOk()
         ->assertJson(['message' => 'Invitación reenviada a carlos@correo.co. El nuevo enlace vence en 24 horas.']);
 
@@ -112,7 +112,7 @@ it('Reenviar una invitación: a new link with the configured validity, and the a
 it('Un enlace revocado no permite activar la cuenta', function () {
     [$link] = invitationLinks();
 
-    asInvitingAdministrator('POST', "/observers/{$this->invited->id}/invitation/revoke")
+    asInvitingAdministrator('POST', "/observers/{$this->invited->public_id}/invitation/revoke")
         ->assertOk()
         ->assertJson(['message' => 'Invitación revocada. El enlace enviado a carlos@correo.co ya no es válido.']);
 
@@ -133,7 +133,7 @@ it('Un enlace revocado no permite activar la cuenta', function () {
 it('resends an invitation that already expired, with a working link again', function () {
     Carbon::setTestNow('2026-10-02 12:00:00'); // 48 h después: vencida
 
-    asInvitingAdministrator('POST', "/observers/{$this->invited->id}/invitation/resend")->assertOk();
+    asInvitingAdministrator('POST', "/observers/{$this->invited->public_id}/invitation/resend")->assertOk();
 
     openInvitation(invitationLinks()[1])->assertInertia(fn (Assert $page) => $page->where('valid', true));
     setPasswordWith(invitationLinks()[1])->assertRedirect(); // entra, a su panel
@@ -141,7 +141,7 @@ it('resends an invitation that already expired, with a working link again', func
 });
 
 it('frees the email of a revoked invitation, so it can be invited again', function () {
-    asInvitingAdministrator('POST', "/observers/{$this->invited->id}/invitation/revoke")->assertOk();
+    asInvitingAdministrator('POST', "/observers/{$this->invited->public_id}/invitation/revoke")->assertOk();
 
     expect(asInvitingAdministrator('GET', '/observers')->json('data'))->toBe([]);
     asInvitingAdministrator('POST', '/observers/invite', ['email' => 'carlos@correo.co'])->assertCreated();
@@ -150,7 +150,7 @@ it('frees the email of a revoked invitation, so it can be invited again', functi
 it('only resends or revokes a pending invitation: an active veedor has none', function (string $action) {
     $active = reportingMember($this->tenant, 'lucia@correo.co');
 
-    asInvitingAdministrator('POST', "/observers/{$active->id}/invitation/{$action}")
+    asInvitingAdministrator('POST', "/observers/{$active->public_id}/invitation/{$action}")
         ->assertUnprocessable()
         ->assertJsonValidationErrors(['status' => 'El veedor no tiene una invitación pendiente.']);
 
@@ -161,12 +161,12 @@ it('lets only the Administrador resend or revoke', function (string $action) {
     $veedor = reportingMember($this->tenant, 'lucia@correo.co');
 
     $this->actingAs($veedor, 'tenant')
-        ->postJson("http://veeduria-smr.govtrace.localhost/observers/{$this->invited->id}/invitation/{$action}")
+        ->postJson("http://veeduria-smr.govtrace.localhost/observers/{$this->invited->public_id}/invitation/{$action}")
         ->assertForbidden();
 
     expect($this->tenant->run(fn () => $this->invited->fresh()?->invitation_token_hash))->not->toBeNull();
 })->with(['resend', 'revoke']);
 
 it('does not find an Administrador among the veedores', function () {
-    asInvitingAdministrator('POST', "/observers/{$this->administrator->id}/invitation/revoke")->assertNotFound();
+    asInvitingAdministrator('POST', "/observers/{$this->administrator->public_id}/invitation/revoke")->assertNotFound();
 });

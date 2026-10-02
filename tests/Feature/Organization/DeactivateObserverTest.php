@@ -62,7 +62,7 @@ afterEach(function () {
 /** POST /observers/{id}/{deactivate|reactivate}, como $member. */
 function observerDecision(OrganizationUser $member, string $decision, OrganizationUser $observer): TestResponse
 {
-    return test()->actingAs($member, 'tenant')->postJson("http://veeduria-smr.govtrace.localhost/observers/{$observer->id}/{$decision}");
+    return test()->actingAs($member, 'tenant')->postJson("http://veeduria-smr.govtrace.localhost/observers/{$observer->public_id}/{$decision}");
 }
 
 function freshObserver(OrganizationUser $observer): OrganizationUser
@@ -188,6 +188,6 @@ it('lists the veedores with their id, so the panel can act on each one', functio
     $declaredAt = $this->tenant->run(fn () => $this->veedor->fresh()->impediments_declared_at->toIso8601String());
 
     expect($this->actingAs($this->administrator, 'tenant')->getJson('http://veeduria-smr.govtrace.localhost/observers')->json('data'))->toBe([
-        ['id' => $this->veedor->id, 'email' => 'carlos@correo.co', 'status' => 'Inactivo', 'impediments_declared_at' => $declaredAt],
+        ['id' => $this->veedor->public_id, 'email' => 'carlos@correo.co', 'status' => 'Inactivo', 'impediments_declared_at' => $declaredAt],
     ]);
 });

@@ -4,6 +4,7 @@ use App\Application\Organization\ConfigureTerritory;
 use App\Application\Organization\RegisterOrganization;
 use App\Application\Publication\PublicTimeline;
 use App\Domain\Organization\Roles;
+use App\Domain\Reports\Report;
 use App\Domain\Sealing\ReportSeal;
 use App\Domain\Sealing\SealStatus;
 use App\Infrastructure\Tenancy\Tenant;
@@ -46,7 +47,7 @@ it('publishes a file and a proof that the independent verifier checks against th
     $worksite = worksiteWithContracts($tenant, ['CO1.PCCNTR.1234567'], santaMartaWorksiteLocation());
 
     try {
-        $reportId = sendReport($veedor)->assertCreated()->json('id');
+        $reportId = createdReportId(sendReport($veedor));
         tenancy()->end();
 
         app()->call([new SealReport($tenant->id, $reportId), 'handle']);
@@ -61,7 +62,7 @@ it('publishes a file and a proof that the independent verifier checks against th
         editorialDecision($administrator, 'publish', $reportId)->assertOk();
         auth('tenant')->logout();
         $seal = $tenant->run(fn () => ReportSeal::query()->where('report_id', $reportId)->sole());
-        $file = collect($tenant->run(fn () => (new PublicTimeline)->handle($worksite->id)))->firstWhere('report_id', $reportId)['files'][0];
+        $file = collect($tenant->run(fn () => (new PublicTimeline)->handle($worksite->id)))->firstWhere('report_id', $tenant->run(fn () => Report::query()->findOrFail($reportId)->public_id))['files'][0]; // it. 46c
 
         $download = $this->get(VERIFY_HOST.$file['download_url'])->assertOk();
         $proof = $this->get(VERIFY_HOST.$file['proof_url'])->assertOk();

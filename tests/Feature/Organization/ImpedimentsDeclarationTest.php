@@ -74,7 +74,7 @@ function invited(Closure $invite): array
 function activate(User $member, string $token, array $extra = []): TestResponse
 {
     // US-058-LEG (it. 44e): quien activa su cuenta autoriza además el tratamiento de sus datos.
-    return test()->post(DECLARATION_HOST."/set-password/{$member->id}", ['token' => $token, 'password' => 'Veeduria#2026', 'password_confirmation' => 'Veeduria#2026', 'data_authorization' => true, ...$extra]);
+    return test()->post(DECLARATION_HOST."/set-password/{$member->public_id}", ['token' => $token, 'password' => 'Veeduria#2026', 'password_confirmation' => 'Veeduria#2026', 'data_authorization' => true, ...$extra]);
 }
 
 /** A veedor whose account predates the declaration: active, and never asked. */
@@ -96,7 +96,7 @@ function declaredAt(User $member): ?string
 it('El veedor declara sus impedimentos al activar su cuenta: the screen asks for it, and the account is activated with its date', function () {
     [$veedor, $token] = invited(fn () => (new InviteObserver)->handle('carlos@correo.co'));
 
-    $this->get(DECLARATION_HOST."/set-password/{$veedor->id}?token={$token}")
+    $this->get(DECLARATION_HOST."/set-password/{$veedor->public_id}?token={$token}")
         ->assertInertia(fn (AssertableInertia $page) => $page->component('Auth/SetPassword')->where('valid', true)->where('declaration', true));
     tenancy()->end();
 
@@ -124,7 +124,7 @@ it('El Administrador activa su cuenta sin declarar impedimentos de veedor: it is
     [$administrator, $token] = invited(fn () => (new AssignInitialAdministrator)->handle($this->tenant, 'Marta Ospina', 'marta@veeduria.org'));
     tenancy()->end();
 
-    $this->get(DECLARATION_HOST."/set-password/{$administrator->id}?token={$token}")
+    $this->get(DECLARATION_HOST."/set-password/{$administrator->public_id}?token={$token}")
         ->assertInertia(fn (AssertableInertia $page) => $page->where('valid', true)->where('declaration', false));
     tenancy()->end();
 

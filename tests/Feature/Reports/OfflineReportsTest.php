@@ -73,7 +73,7 @@ it('Ubicación y hora se congelan al capturar: the ones of the capture, and the 
     $capturedAt = now()->subHours(33)->startOfSecond();
 
     $this->flushSession();
-    $reportId = sendReport($this->veedor, ['latitude' => $latitude, 'longitude' => $longitude, 'captured_at' => $capturedAt->toIso8601String()])->assertCreated()->json('id');
+    $reportId = createdReportId(sendReport($this->veedor, ['latitude' => $latitude, 'longitude' => $longitude, 'captured_at' => $capturedAt->toIso8601String()]));
     tenancy()->end();
 
     // Dentro de la organización: Eloquent necesita su conexión para leer la fecha.
@@ -97,7 +97,7 @@ it('El contrato se anula mientras el reporte esperaba en la cola: accepted, queu
 
     // El miércoles llega el reporte.
     $this->flushSession();
-    $reportId = sendReport($this->veedor, ['captured_at' => $monday->toIso8601String()])->assertCreated()->json('id');
+    $reportId = createdReportId(sendReport($this->veedor, ['captured_at' => $monday->toIso8601String()]));
     tenancy()->end();
 
     expect(editorialStatusOf($this->tenant, $reportId))->toBe('Oculto')

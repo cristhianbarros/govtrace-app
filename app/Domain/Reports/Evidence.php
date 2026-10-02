@@ -3,6 +3,7 @@
 namespace App\Domain\Reports;
 
 use App\Domain\Reports\Exceptions\EvidenceIsImmutable;
+use App\Domain\Shared\HasPublicId;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -12,6 +13,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class Evidence extends Model
 {
+    use HasPublicId;
+
     protected $table = 'evidences';
 
     protected $fillable = ['report_id', 'kind', 'mime_type', 'size_bytes', 'sha256', 'storage_path', 'leaf_index', 'merkle_proof'];

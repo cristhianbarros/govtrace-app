@@ -54,7 +54,7 @@ class SuperAdministrators
             };
 
             return [
-                'id' => $superAdmin->id,
+                'id' => $superAdmin->public_id, // it. 46c: su identificador público
                 'name' => $superAdmin->name,
                 'email' => $superAdmin->email,
                 'status' => $status,
@@ -182,7 +182,7 @@ class SuperAdministrators
         $token = InvitationToken::generate();
         $hours = (int) (Parameters::current('invitation_validity_hours') ?? 48);
         $invited->forceFill(['invitation_token_hash' => $token->hash, 'invitation_expires_at' => now()->addHours($hours)])->save();
-        $invited->notify(new WelcomeNotification(url("/set-password/{$invited->id}?token={$token->plain}"), $hours));
+        $invited->notify(new WelcomeNotification(url("/set-password/{$invited->public_id}?token={$token->plain}"), $hours));
 
         return $hours;
     }

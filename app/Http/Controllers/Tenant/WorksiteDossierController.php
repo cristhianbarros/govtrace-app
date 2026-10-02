@@ -19,9 +19,10 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
  */
 class WorksiteDossierController extends Controller
 {
-    public function __invoke(Request $request, int $worksite, WorksiteDossier $dossiers, DossierArchive $archive): BinaryFileResponse
+    public function __invoke(Request $request, string $worksite, WorksiteDossier $dossiers, DossierArchive $archive): BinaryFileResponse
     {
-        $dossier = $dossiers->of(Worksite::query()->findOrFail($worksite));
+        $record = Worksite::byPublicId($worksite);
+        $dossier = $dossiers->of($record);
         ['path' => $path, 'files' => $files] = $archive->build($dossier);
         $administrator = $request->user('tenant');
 
@@ -31,7 +32,7 @@ class WorksiteDossierController extends Controller
             actorType: 'organization_admin',
             actorId: (string) $administrator->id,
             actorName: $administrator->name,
-            after: ['worksite_id' => $dossier['worksite']['id'], 'worksite' => $dossier['worksite']['name'], 'evidences' => count($dossier['evidences']), 'files' => $files],
+            after: ['worksite_id' => $record->id, 'worksite' => $dossier['worksite']['name'], 'evidences' => count($dossier['evidences']), 'files' => $files],
         );
 
         $name = 'expediente-'.Str::slug($dossier['worksite']['name']).'-'.now()->timezone('America/Bogota')->toDateString().'.zip';

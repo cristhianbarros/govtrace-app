@@ -2,6 +2,7 @@
 
 namespace App\Domain\CitizenReports;
 
+use App\Domain\Shared\HasPublicId;
 use App\Domain\Worksites\Worksite;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -13,6 +14,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class CitizenReport extends Model
 {
+    use HasPublicId;
+
     public const STATUS_LABELS = ['new' => 'Nuevo', 'answered' => 'Atendido', 'discarded' => 'Descartado'];
 
     protected $fillable = ['worksite_id', 'email', 'email_hash', 'message', 'photo_path', 'status', 'answer', 'handled_at', 'handled_by', 'data_authorized_at', 'data_policy_version'];
@@ -24,6 +27,16 @@ class CitizenReport extends Model
         'handled_at' => 'datetime',
         'data_authorized_at' => 'datetime',
     ];
+
+    /**
+     * It. 46c (US-064-SEC): how the citizen refers to the report, on screen and
+     * in its emails — 8 characters of the random part of its public id
+     * ("7KQ3-M9XD"), not its consecutive number, which tells how many arrived.
+     */
+    public function reference(): string
+    {
+        return implode('-', str_split(strtoupper(substr($this->public_id, -8)), 4));
+    }
 
     public function worksite(): BelongsTo
     {

@@ -85,7 +85,7 @@ function groupContracts(OrganizationUser $member, string $name, array $secopCont
 function reportedWorksiteOf(string $secopContractId): int
 {
     test()->flushSession();
-    $reportId = sendReport(test()->veedor, ['secop_contract_id' => $secopContractId])->assertCreated()->json('id');
+    $reportId = createdReportId(sendReport(test()->veedor, ['secop_contract_id' => $secopContractId]));
     tenancy()->end();
 
     return test()->tenant->run(fn () => Report::query()->findOrFail($reportId)->worksite_id);
@@ -100,8 +100,8 @@ it('Agrupación de dos contratos: the public view shows both, and a report on ei
 
     expect($view->json('data.name'))->toBe('Acueducto Gaira')
         ->and(array_column($view->json('data.contracts'), 'secop_contract_id'))->toBe(['CO1.PCCNTR.1111111', 'CO1.PCCNTR.3333333'])
-        ->and(reportedWorksiteOf('CO1.PCCNTR.1111111'))->toBe($worksiteId)
-        ->and(reportedWorksiteOf('CO1.PCCNTR.3333333'))->toBe($worksiteId);
+        ->and(reportedWorksiteOf('CO1.PCCNTR.1111111'))->toBe($this->tenant->run(fn () => Worksite::idOf($worksiteId)))
+        ->and(reportedWorksiteOf('CO1.PCCNTR.3333333'))->toBe($this->tenant->run(fn () => Worksite::idOf($worksiteId)));
 });
 
 it('El pin toma el peor estado de los contratos agrupados: one in deadline and one overdue still in execution', function () {
@@ -110,7 +110,7 @@ it('El pin toma el peor estado de los contratos agrupados: one in deadline and o
 
     groupContracts($this->administrator, 'Acueducto Gaira', ['CO1.PCCNTR.1111111', 'CO1.PCCNTR.3333333'])->assertCreated();
 
-    $pin = collect(publicGet('/public/worksites')->assertOk()->json('data'))->firstWhere('id', $gaira->id);
+    $pin = collect(publicGet('/public/worksites')->assertOk()->json('data'))->firstWhere('id', $gaira->public_id);
     expect($pin['color_pin'])->toBe('red');
 });
 
@@ -152,6 +152,7 @@ it('keeps the worksite that has reports, with its place: it takes the other cont
     $grouped = groupContracts($this->administrator, 'Acueducto Gaira', ['CO1.PCCNTR.3333333', 'CO1.PCCNTR.1111111'])
         ->assertCreated()
         ->json('data.id');
+    $grouped = $this->tenant->run(fn () => Worksite::idOf($grouped)); // it. 46c: el API da su identificador público
 
     $worksite = $this->tenant->run(fn () => Worksite::query()->with('contracts')->findOrFail($grouped));
     expect($grouped)->toBe($first)
@@ -179,7 +180,7 @@ it('logs the grouping in the audit log, and the Administrador sees the name in t
     $entry = AuditLog::query()->where('organization_id', $this->tenant->id)->where('action', 'worksite.contracts_grouped')->sole();
     expect($entry->actor_type)->toBe('organization_admin')
         ->and($entry->actor_id)->toBe((string) $this->administrator->id)
-        ->and($entry->after)->toBe(['worksite_id' => $worksiteId, 'name' => 'Acueducto Gaira', 'secop_contract_ids' => ['CO1.PCCNTR.1111111', 'CO1.PCCNTR.3333333']]);
+        ->and($entry->after)->toBe(['worksite_id' => $this->tenant->run(fn () => Worksite::idOf($worksiteId)), 'name' => 'Acueducto Gaira', 'secop_contract_ids' => ['CO1.PCCNTR.1111111', 'CO1.PCCNTR.3333333']]);
 
     $this->actingAs($this->administrator, 'tenant')->getJson('http://veeduria-smr.govtrace.localhost/worksites')
         ->assertOk()

@@ -179,6 +179,7 @@ Suma los impedimentos del veedor (it. 44c) y los datos de inscripción de una ve
 - **R-SEC-04** — Los logos SVG se aceptan, pero se limpian de contenido ejecutable — US-007
 - **R-SEC-05** — El servidor registra su hora de recepción y marca los reportes cuya hora de captura está más de 5 minutos en el futuro (tolerancia por latencia y desfase del reloj del teléfono) o es anterior a los 7 días de vigencia offline; la marca la ven el Admin de Organización y el Super Admin — US-008, US-036
 - **R-SEC-06** — El servidor calcula su propia raíz de Merkle y las pruebas; ignora la raíz del teléfono — US-020b
+- **R-SEC-08** — (it. 46c) Las URL y el API identifican las obras, los reportes, las evidencias, los informes ciudadanos, los usuarios y las solicitudes de alta con un identificador público (ULID), no con su número consecutivo: el número revela el volumen y deja recorrer lo público en orden. Las llaves numéricas internas no cambian, porque la referencia de la obra sellada se calcula con ellas (R-BLK-02). Los enlaces públicos viejos y las invitaciones ya enviadas redirigen (301) al nuevo; un reporte guardado sin conexión se recibe igual, porque nombra la obra por su contrato de SECOP. Un enlace viejo redirige solo si lo que nombra ya es público, y una invitación solo con su token válido: el número no vuelve a abrir el recorrido. El informe de un ciudadano se nombra con una referencia corta de su identificador público — US-064-SEC
 
 ### Configuración
 

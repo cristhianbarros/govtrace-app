@@ -10,7 +10,7 @@ import { requestCitizenCode, sendCitizenReport } from '@/services/api.js';
 import { errorMessage } from '@/services/errors.js';
 
 const props = defineProps({
-    worksiteId: { type: Number, required: true },
+    worksiteId: { type: String, required: true }, // it. 46c: su identificador público
 });
 
 const MIN_MESSAGE = 20;
