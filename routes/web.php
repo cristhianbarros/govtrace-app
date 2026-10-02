@@ -17,7 +17,10 @@ use App\Http\Controllers\Central\SealingController;
 use App\Http\Controllers\Central\SealingCostsController;
 use App\Http\Controllers\Central\SecopHealthController;
 use App\Http\Controllers\Central\SecopSyncNowController;
+use App\Http\Controllers\Central\SetPasswordController;
+use App\Http\Controllers\Central\SuperAdministratorController;
 use App\Http\Controllers\Central\UsageController;
+use App\Http\Middleware\EnsureSuperAdministratorIsActive;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -41,9 +44,13 @@ foreach (config('tenancy.central_domains') as $domain) {
         Route::post('/forgot-password', [PasswordResetController::class, 'sendLink'])->name('password.email');
         Route::get('/reset-password/{token}', [PasswordResetController::class, 'resetForm'])->name('password.reset');
         Route::post('/reset-password', [PasswordResetController::class, 'reset'])->name('password.update');
+        // It. 46a (US-063-USR): el enlace de la invitación de un Super Administrador.
+        Route::get('/set-password/{user}', [SetPasswordController::class, 'show'])->whereNumber('user')->name('set-password.show');
+        Route::post('/set-password/{user}', [SetPasswordController::class, 'store'])->whereNumber('user')->middleware('throttle:6,1')->name('set-password.store');
 
         // It. 45a: 'auth.session' cierra la sesión si la contraseña cambió desde que se abrió.
-        Route::middleware(['auth:web', 'auth.session'])->group(function () {
+        // It. 46a: un Super Administrador desactivado por otro no sigue actuando con su sesión abierta.
+        Route::middleware(['auth:web', 'auth.session', EnsureSuperAdministratorIsActive::class])->group(function () {
             // It. 40b (V1): cerrar sesión, como en cada organización.
             Route::post('/logout', [LoginController::class, 'destroy'])->name('logout');
             // It. 40c (V11): cambiar la contraseña con la sesión abierta.
@@ -108,6 +115,14 @@ foreach (config('tenancy.central_domains') as $domain) {
             // US-053-RPT: el resumen de uso por organización.
             Route::get('/admin/usage', fn () => Inertia::render('SuperAdmin/Usage'))->name('admin.usage.show');
             Route::get('/admin/usage/data', UsageController::class)->name('admin.usage.data');
+            // It. 46a (US-063-USR): varios Super Administradores, y nunca ninguno.
+            Route::get('/admin/super-administrators', [SuperAdministratorController::class, 'show'])->name('admin.super-administrators.show');
+            Route::get('/admin/super-administrators/data', [SuperAdministratorController::class, 'index'])->name('admin.super-administrators.index');
+            Route::post('/admin/super-administrators', [SuperAdministratorController::class, 'store'])->middleware('throttle:20,1')->name('admin.super-administrators.store');
+            Route::post('/admin/super-administrators/{user}/invitation/resend', [SuperAdministratorController::class, 'resend'])->whereNumber('user')->name('admin.super-administrators.resend');
+            Route::post('/admin/super-administrators/{user}/invitation/revoke', [SuperAdministratorController::class, 'revoke'])->whereNumber('user')->name('admin.super-administrators.revoke');
+            Route::post('/admin/super-administrators/{user}/deactivate', [SuperAdministratorController::class, 'deactivate'])->whereNumber('user')->name('admin.super-administrators.deactivate');
+            Route::post('/admin/super-administrators/{user}/reactivate', [SuperAdministratorController::class, 'reactivate'])->whereNumber('user')->name('admin.super-administrators.reactivate');
         });
     });
 }

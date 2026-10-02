@@ -168,6 +168,15 @@ describe('Su nombre (it. 45c)', () => {
         expect(wrapper.text()).toContain('Lo ve su veeduría. En el sitio público no aparece su nombre: los reportes llevan un seudónimo.');
     });
 
+    // It. 46a: un Super Administrador también activa su cuenta aquí; su nombre no lo ve una veeduría.
+    it('says who will see the name when the screen tells it, as for a Super Administrador', () => {
+        const hint = 'Lo ven los demás Super Administradores, y queda en el registro de auditoría.';
+        const wrapper = mount(SetPassword, { props: { ...validLink, nameHint: hint } });
+
+        expect(wrapper.text()).toContain(hint);
+        expect(wrapper.text()).not.toContain('Lo ve su veeduría.');
+    });
+
     it('starts with the name the account already has', () => {
         expect(mount(SetPassword, { props: { ...validLink, name: 'Carlos Rojas' } }).get('input#name').element.value).toBe('Carlos Rojas');
     });

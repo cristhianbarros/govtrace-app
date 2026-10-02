@@ -5,6 +5,7 @@ namespace App\Application\Privacy;
 use App\Domain\Audit\AuditLog;
 use App\Domain\Organization\Roles;
 use App\Domain\Organization\User;
+use App\Models\User as SuperAdmin;
 
 /**
  * US-058-LEG (it. 44e): la política de tratamiento de datos personales (Ley
@@ -48,6 +49,20 @@ class DataPolicy
             )),
             'hosting' => config('privacy.hosting'),
         ];
+    }
+
+    /** It. 46a (US-063-USR): a Super Administrador authorizes too, when activating the account an invitation created. */
+    public function authorizeSuperAdministrator(SuperAdmin $superAdmin): void
+    {
+        $superAdmin->forceFill(['data_authorized_at' => now(), 'data_policy_version' => self::VERSION])->save();
+
+        AuditLog::record(
+            action: 'privacy.data_authorized',
+            actorType: 'super_admin',
+            actorId: (string) $superAdmin->id,
+            actorName: $superAdmin->name,
+            after: ['user_id' => $superAdmin->id, 'email' => $superAdmin->email, 'policy_version' => self::VERSION],
+        );
     }
 
     /** Inside the organization: the member authorizes, when activating their account. */

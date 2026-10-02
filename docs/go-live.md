@@ -48,7 +48,8 @@ Lo que depende del operador (quién opera GovTrace, el dominio, la cuenta de AWS
 - ⬜ **El primer Super Administrador:** el panel no lo crea. Desde la consola del servidor, `php artisan admin:create <correo> --name="…"` (la contraseña se pregunta sin eco, o se genera y se muestra una vez; nunca va en la línea de comandos). En Docker, `make admin EMAIL=<correo>`.
 - ⬜ **Migraciones y DIVIPOLA:** `php artisan migrate --force`, `php artisan tenants:migrate --force` y `php artisan db:seed --class=DivipolaSeeder`.
 - ⬜ **El worker de la cola y el calendario corriendo.** Tras cada despliegue, `php artisan queue:restart`: el worker guarda en memoria el código con que arrancó, y sin reiniciarlo seguiría sellando con el anterior. Las horas del calendario son UTC (deuda aceptada): la sincronización de las 02:00 son las 21:00 en Colombia.
-- ⬜ **Correo SMTP real** para las alertas, y `ALERT_WEBHOOK_URL`, si se usa Slack o Discord.
+- ⬜ **Al menos dos Super Administradores activos** (it. 46a, US-063-USR). Después del primero, el segundo se invita desde el panel, en **Super Administradores**. Mientras haya uno solo, el panel lo avisa en todas sus pantallas. `make admin` sigue siendo la vía para recuperar el acceso si todos lo pierden.
+- ⬜ **Correo SMTP real** para las alertas, y **`ALERT_WEBHOOK_URL`** (Slack o Discord). Con el webhook, las alertas críticas llegan aunque ningún Super Administrador pueda leer su correo (it. 46a).
 - ⬜ **La política de tratamiento de datos** (it. 44e, Ley 1581 de 2012):
   - un abogado revisa el texto de `/privacidad` (`resources/js/Pages/Public/Privacy.vue`) y decide quién es el responsable del tratamiento (D-V2-10);
   - sus datos van en `PRIVACY_CONTROLLER_*`, y `PRIVACY_HOSTING` dice dónde están los servidores;

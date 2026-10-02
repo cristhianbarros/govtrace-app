@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Application\Organization\OrganizationRequests;
+use App\Application\Platform\SuperAdministrators;
 use App\Domain\Organization\Roles;
 use App\Domain\Reports\PendingReview;
 use App\Domain\Sealing\ReportSeal;
@@ -69,6 +70,8 @@ class HandleInertiaRequests extends Middleware
             'inboxPending' => fn () => $this->inboxPending($request),
             // It. 43k (V10): cuántas solicitudes de alta esperan al Super Administrador, para su menú.
             'organizationRequestsPending' => fn () => ! tenancy()->initialized && $request->user('web') ? OrganizationRequests::pendingCount() : null,
+            // It. 46a (US-063-USR): con uno solo activo, el panel global lo avisa en todas sus pantallas.
+            'superAdministratorsActive' => fn () => ! tenancy()->initialized && $request->user('web') ? SuperAdministrators::activeCount() : null,
         ];
     }
 

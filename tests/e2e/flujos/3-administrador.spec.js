@@ -17,7 +17,9 @@ test('Entra y llega a su Bandeja, con las evidencias por revisar', async ({ page
     await enter(page);
 
     await expect(page.getByRole('heading', { name: 'Bandeja de entrada', exact: true })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Publicar' })).toHaveCount(2);
+    // Las dos del fixture por revisar. El reporte que el Super Administrador crea en nombre de la
+    // organización (V7, flujo 2) también llega si la red local ya lo selló: no se cuenta aquí.
+    await expect(page.locator('article').filter({ hasText: 'Enviada por Veedor E2E' }).getByRole('button', { name: 'Publicar' })).toHaveCount(2);
 });
 
 test('Cada evidencia de la Bandeja dice de qué obra es y qué veedor la envió (V4)', async ({ page }) => {

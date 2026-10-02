@@ -111,6 +111,14 @@ export const revokeAdministratorInvitation = (id, userId) => dataOf(http.post(`/
 export const deactivateAdministrator = (id, userId) => dataOf(http.post(`/admin/organizations/${id}/administrators/${userId}/deactivate`));
 export const reactivateAdministrator = (id, userId) => dataOf(http.post(`/admin/organizations/${id}/administrators/${userId}/reactivate`));
 
+// It. 46a (US-063-USR): varios Super Administradores, y nunca ninguno.
+export const fetchSuperAdministrators = async () => (await dataOf(http.get('/admin/super-administrators/data'))).data;
+export const inviteSuperAdministrator = (name, email) => dataOf(http.post('/admin/super-administrators', { name, email }));
+export const resendSuperAdministratorInvitation = (userId) => dataOf(http.post(`/admin/super-administrators/${userId}/invitation/resend`));
+export const revokeSuperAdministratorInvitation = (userId) => dataOf(http.post(`/admin/super-administrators/${userId}/invitation/revoke`));
+export const deactivateSuperAdministrator = (userId) => dataOf(http.post(`/admin/super-administrators/${userId}/deactivate`));
+export const reactivateSuperAdministrator = (userId) => dataOf(http.post(`/admin/super-administrators/${userId}/reactivate`));
+
 /** US-038-CFG: { configurable, fixed } */
 export const fetchParameters = () => dataOf(http.get('/admin/parameters/data'));
 export const updateParameter = (key, value) => dataOf(http.put(`/admin/parameters/${key}`, { value }));

@@ -19,6 +19,7 @@ describe('SuperAdminLayout', () => {
             ['Sellado', '/admin/sealing'],
             ['SECOP', '/admin/secop-health'],
             ['Uso', '/admin/usage'],
+            ['Super Administradores', '/admin/super-administrators'], // it. 46a
             ['Parámetros', '/admin/parameters'],
             ['Auditoría', '/admin/audit'],
         ]);
@@ -34,7 +35,7 @@ describe('SuperAdminLayout', () => {
         expect(tabs.findAll('a').map((tab) => tab.text())).toEqual(['Organizaciones', 'Sellado', 'SECOP']);
         expect(tabs.get('a[aria-current="page"]').text()).toBe('Organizaciones');
         await tabs.get('button[aria-haspopup="menu"]').trigger('click');
-        expect(wrapper.get('[data-test="more"]').findAll('a').map((link) => link.text())).toEqual(['Solicitudes de alta', 'Uso', 'Parámetros', 'Auditoría']);
+        expect(wrapper.get('[data-test="more"]').findAll('a').map((link) => link.text())).toEqual(['Solicitudes de alta', 'Uso', 'Super Administradores', 'Parámetros', 'Auditoría']);
         wrapper.unmount();
         page.url = '/admin/inbox';
     });
@@ -46,5 +47,27 @@ describe('SuperAdminLayout', () => {
         expect(wrapper.get('[data-test="sidebar"] a[href="/admin/organization-requests"]').attributes('aria-label')).toBe('Solicitudes de alta, 2 pendientes');
         page.props.organizationRequestsPending = null;
     });
-});
 
+    // It. 46a (US-063-USR): con un solo Super Administrador activo, todas las pantallas lo avisan.
+    const ONE_LEFT = 'Solo hay un Super Administrador activo. Si pierde el acceso, nadie podrá dar de alta veedurías ni atender las alertas. Invite a otro.';
+
+    it('El panel avisa cuando queda un solo Super Administrador activo: with a link to invite another one', () => {
+        page.props.superAdministratorsActive = 1;
+        const wrapper = mount(SuperAdminLayout, { props: { title: 'Organizaciones' } });
+
+        const warning = wrapper.get('[data-test="one-super-admin"]');
+        expect(warning.attributes('role')).toBe('status');
+        expect(warning.text()).toContain(ONE_LEFT);
+        expect(warning.get('a').attributes('href')).toBe('/admin/super-administrators');
+        expect(warning.get('a').text()).toBe('Invitar a otro Super Administrador');
+        page.props.superAdministratorsActive = null;
+    });
+
+    it('does not warn while two or more are active', () => {
+        page.props.superAdministratorsActive = 2;
+        const wrapper = mount(SuperAdminLayout, { props: { title: 'Organizaciones' } });
+
+        expect(wrapper.find('[data-test="one-super-admin"]').exists()).toBe(false);
+        page.props.superAdministratorsActive = null;
+    });
+});

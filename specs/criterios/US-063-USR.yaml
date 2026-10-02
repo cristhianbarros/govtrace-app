@@ -1,0 +1,34 @@
+story_id: "US-063-USR"
+titulo_historia: "Como plataforma quiero tener más de un Super Administrador, para no depender de una sola persona, y nunca quedar sin uno activo"
+bloque: "46 — El gobierno de la plataforma"
+criterios_aceptacion:
+  escenarios_exito:
+    - "Un Super Administrador invita a otro desde 'Super Administradores': le llega la invitación para crear su contraseña y aparece como 'Invitación pendiente'"
+    - "El invitado abre el enlace, escribe su nombre y su contraseña, autoriza el tratamiento de sus datos y entra al panel global"
+    - "Un Super Administrador desactiva a otro que se fue (ya no entra, y su sesión abierta se cierra en la siguiente petición) y lo reactiva si vuelve"
+    - "Reenviar o revocar una invitación pendiente"
+    - "Cada cambio queda en el log de auditoría: quién, a quién y cuándo (R-AUD-04)"
+  validaciones_reglas:
+    - "Nunca quedan cero Super Administradores activos: no se desactiva al último, ni aunque dos se desactiven el uno al otro al mismo tiempo"
+    - "Un Super Administrador no se desactiva a sí mismo"
+    - "Una invitación pendiente no cuenta como activo"
+    - "El correo no puede estar ya registrado como Super Administrador (R-USR-01)"
+    - "Solo un Super Administrador gestiona Super Administradores"
+    - "Las alertas les llegan solo a los Super Administradores activos"
+  manejo_errores:
+    - {caso: "Desactivarse a sí mismo", mensaje: "No puede desactivar su propia cuenta. Pídale a otro Super Administrador que lo haga."}
+    - {caso: "Desactivar al último activo", mensaje: "No se puede desactivar al único Super Administrador activo. Invite a otro y espere a que active su cuenta."}
+    - {caso: "El correo ya está registrado", mensaje: "El correo electrónico ya se encuentra registrado en el sistema."}
+  requisitos_ux:
+    - "Con un solo Super Administrador activo, el panel global lo avisa en todas sus pantallas: 'Solo hay un Super Administrador activo. Si pierde el acceso, nadie podrá dar de alta veedurías ni atender las alertas. Invite a otro.', con el enlace a 'Super Administradores'"
+    - "Desactivar y revocar piden confirmar"
+    - "Cada Super Administrador ve cuál es su propia cuenta ('Usted'), sin 'Desactivar'"
+  casos_edge:
+    - "Al quedar uno solo activo, llega la alerta 'GovTrace: queda un solo Super Administrador activo' a los activos y al webhook"
+    - "`make admin` sigue creando Super Administradores desde la consola: es la vía para recuperar el acceso"
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true

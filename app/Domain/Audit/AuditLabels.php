@@ -12,6 +12,17 @@ final class AuditLabels
     private const ACTIONS = [
         'organization.registered' => 'Dio de alta la organización',
         'organization.administrator_assigned' => 'Asignó el Administrador inicial',
+        // It. 43j (V3): faltaban.
+        'organization.administrator_invited' => 'Invitó a otro administrador',
+        'organization.administrator_deactivated' => 'Desactivó a un administrador',
+        'organization.administrator_reactivated' => 'Reactivó a un administrador',
+        // It. 46a (US-063-USR).
+        'super_admin.invited' => 'Invitó a un Super Administrador',
+        'super_admin.invitation_resent' => 'Reenvió la invitación de un Super Administrador',
+        'super_admin.invitation_revoked' => 'Revocó la invitación de un Super Administrador',
+        'super_admin.activated' => 'Activó su cuenta de Super Administrador',
+        'super_admin.deactivated' => 'Desactivó a un Super Administrador',
+        'super_admin.reactivated' => 'Reactivó a un Super Administrador',
         'organization_request.approved' => 'Aprobó una solicitud de alta',
         'organization_request.rejected' => 'Rechazó una solicitud de alta',
         'organization.legal_data_updated' => 'Cambió los datos legales (NIT o inscripción)',

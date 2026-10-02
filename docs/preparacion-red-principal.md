@@ -137,7 +137,7 @@ Con el **dominio y la cuenta de AWS** ya se puede trabajar contra testnet, aunqu
 Con **el RPC, la tesorería y lo legal**, la salida a la red principal, paso a paso en [`docs/go-live.md`](go-live.md):
 
 4. El despliegue: `CONFIRM_MAINNET=yes make network-deploy NETWORK=mainnet`, con la llave de la tesorería solo para ese comando.
-5. La aplicación: el entorno desde `.env.production.example`, las migraciones, la DIVIPOLA, el primer Super Administrador (`make admin`), el worker y el calendario.
+5. La aplicación: el entorno desde `.env.production.example`, las migraciones, la DIVIPOLA, el primer Super Administrador (`make admin`) y el segundo desde el panel (it. 46a), el worker y el calendario.
 6. La prueba de humo: un reporte real hasta "Sellada", revisado en Stellar Expert, en el validador y en el verificador independiente, y el contrato en `tools/verify/contracts.json`.
 7. Los respaldos fuera del sitio, la restauración de prueba con datos reales y el monitor externo.
 

@@ -2505,6 +2505,31 @@ El usuario pidió seguir con lo que no espera a nadie: la deuda técnica y los h
 - **Done-when:** los escenarios de `features/US-063-USR.feature` en verde, el flujo en `tests/e2e/flujos/2-super-administrador.spec.js`, `make ux-check` sin retroceso.
 - **Modelo:** Opus xhigh. Control de acceso a toda la plataforma.
 
+✅ **46a cumplida (2026-10-02).**
+- **Esquema** (base central, `2026_10_02_000100`): `users.is_active`, `invitation_token_hash`, `invitation_expires_at`, `data_authorized_at` y `data_policy_version`; `password` pasa a opcional mientras la invitación no se responde. Los Super Administradores que ya existían quedan activos.
+- **Las reglas** (`App\Application\Platform\SuperAdministrators`):
+  - invitar, con la misma invitación por correo de los administradores (`WelcomeNotification`, `invitation_validity_hours`), en `/set-password/{id}?token=` del dominio central;
+  - activar la cuenta: nombre, contraseña y la autorización del tratamiento de datos (`DataPolicy::authorizeSuperAdministrator`);
+  - desactivar y reactivar; reenviar y revocar una invitación;
+  - nadie se desactiva a sí mismo; desactivar bloquea las cuentas activas (`lockForUpdate`), así que de dos que se desactivan el uno al otro al mismo tiempo solo una desactivación se cumple. Probado con una carrera real, con otro proceso (`tests/Support/deactivate_super_admin_in_parallel.php`), como la de First-Touch;
+  - al quedar uno solo, la alerta `OnlyOneSuperAdministrator`, por correo y webhook.
+- **La sesión de un desactivado** se cierra en su siguiente petición (`EnsureSuperAdministratorIsActive`), y el ingreso lo rechaza con su propio mensaje: "Su cuenta se encuentra desactivada. Comuníquese con otro Super Administrador de GovTrace."
+- **Las alertas** (`SuperAdminAlerts`, `CheckSealingQueue`, `SealReport`, `CheckOrganizationActivity`) les llegan solo a los Super Administradores activos (`SuperAdmin::active()`): antes, a todos.
+- **La pantalla** "Super Administradores", en Configuración: quiénes son, "Usted" en la propia cuenta y sin "Desactivar", invitar, y las acciones con confirmación. Con uno solo activo, todas las pantallas del panel lo avisan, con el enlace para invitar a otro.
+- **La activación** reutiliza la pantalla de los miembros (`Auth/SetPassword`), con una prop nueva, `nameHint`: el nombre de un Super Administrador no lo ve una veeduría.
+- **El registro de auditoría** nombra las acciones nuevas (`super_admin.*`) y las de la 43j que faltaban (`organization.administrator_invited`, `_deactivated`, `_reactivated`).
+- **`docs/go-live.md`:** al menos dos Super Administradores activos y `ALERT_WEBHOOK_URL` configurado.
+- **De paso:**
+  - la prueba E2E de la Bandeja contaba los botones "Publicar" de toda la Bandeja; el reporte que el Super Administrador crea en nombre de la organización (V7) llega también si la red local ya lo selló, y la hacía fallar según el tiempo. Ahora cuenta solo las dos del fixture;
+  - el recorrido de UX contaba el campo trampa de los robots del Inicio (oculto, fuera de la página y con `aria-hidden`) como un botón pequeño. Ya no, y "Solicitudes de alta" (43k) entra al recorrido.
+- ❓ **Decisiones por defecto, tal como estaban en el plan:** nadie se desactiva a sí mismo; el doble factor sigue como decisión aparte.
+- **Prueba:**
+  - Pest: 17 casos nuevos (`SuperAdministratorsTest`), con la carrera real; las suites de correo, ingreso, plataforma, sellado, organizaciones, auditoría e infraestructura, 550 de 550;
+  - Vitest: la pantalla (8 casos), el aviso del panel (2) y la pista del nombre (1), vistos en rojo antes;
+  - `make e2e`: 52 de 52, con el flujo nuevo (invitar, activar en otro navegador, desactivar y reactivar);
+  - `make ux-check`: las dos pantallas nuevas sin violaciones de axe, sin letra ni botones pequeños; la línea base, reescrita;
+  - `make trace-check`: 355 de 355.
+
 **46b — La validación asistida de una veeduría** (enmiendas de US-062-ALT y US-001). El usuario: "como sabe un super administrador que una veeduria es 100% legal… si existe algún end point o si netamente el proceso es 100% manual."
 - **Hoy:** el formato y la unicidad son automáticos (el dígito de verificación de la DIAN, la inscripción no repetida); que la veeduría exista y esté vigente lo revisa el Super Administrador a mano, sin consultar ninguna fuente.
 - **Las fuentes oficiales** (revisadas el 2026-10-02):
@@ -2535,6 +2560,19 @@ El usuario pidió seguir con lo que no espera a nadie: la deuda técnica y los h
   - las URL públicas viejas, con número, redirigen (301) a la nueva, porque pudieron compartirse.
 - **Done-when:** ninguna ruta de la app lleva en la URL un id numérico de esas tablas (un test que recorra las rutas), y los enlaces viejos redirigen; `make e2e` y `make trace-check` en verde.
 - **Modelo:** Opus xhigh. Migra datos en todas las organizaciones, cambia URL que pudieron compartirse y no puede romper lo sellado.
+
+**46d — La auditoría con filtros, en frases** (enmienda de US-043-MON). El usuario, el 2026-10-02: "Podrías hacer una mejora en la interfaz de auditoria. Actualmente, no permite realizar filtros de ningún tipo."
+- **Hoy:** el registro pasa de 20 en 20, lo más reciente primero, sin ningún filtro. Cada entrada muestra la acción, quién y cuándo, y los valores de antes y después en crudo (`clave: valor`, con JSON).
+- **Qué cambia:**
+  - filtros por fecha (desde y hasta), por quién lo hizo, por tipo de acción y, en el panel global, por organización; combinables, con "Quitar filtros";
+  - los filtros viajan como parámetros de la consulta y la paginación los respeta;
+  - cada entrada en una frase clara ("Ana Directora desactivó a Luis Gómez"), con el detalle de antes y después desplegable;
+  - toda acción que se registra tiene su etiqueta: un test recorre las acciones del código. Hoy faltan, por ejemplo, las de la 43j.
+- ❓ **Decisiones por defecto:**
+  - el tipo de acción se elige de una lista agrupada (organizaciones, evidencias, cuentas, configuración, sellado), no se escribe;
+  - sin búsqueda de texto libre en los valores: los filtros cubren las preguntas de "quién hizo qué y cuándo".
+- **Done-when:** los escenarios de la enmienda de `features/US-043-MON.feature` en verde; `make ux-check` sin retroceso.
+- **Modelo:** Sonnet medium. Es una consulta y su pantalla, sobre un registro que ya existe; los permisos (quién ve qué) no cambian.
 
 ## Pivote a Stellar (2026-09-28)
 

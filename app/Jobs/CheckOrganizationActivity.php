@@ -38,7 +38,8 @@ class CheckOrganizationActivity implements ShouldQueue
             }
 
             if (Cache::add("organization-inactive:{$tenant->id}:{$last->getTimestamp()}", $now->toIso8601String())) {
-                Notification::send(SuperAdmin::all(), new OrganizationInactive($tenant->displayName(), (int) $last->diffInDays($now), $last));
+                // It. 46a: solo los Super Administradores activos.
+                Notification::send(SuperAdmin::query()->active()->get(), new OrganizationInactive($tenant->displayName(), (int) $last->diffInDays($now), $last));
             }
         }
     }

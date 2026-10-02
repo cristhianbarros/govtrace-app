@@ -52,7 +52,8 @@ class CheckSealingQueue implements ShouldQueue
         }
 
         if ($affected !== []) {
-            Notification::send(SuperAdmin::all(), new SealingQueueStalled($affected));
+            // It. 46a: solo los Super Administradores activos.
+            Notification::send(SuperAdmin::query()->active()->get(), new SealingQueueStalled($affected));
         }
     }
 }
