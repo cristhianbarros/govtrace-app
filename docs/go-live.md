@@ -4,6 +4,8 @@ La salida de GovTrace a la red principal de Stellar. Lo que se preparó sin dato
 
 ✅ listo · ⬜ pendiente, con su iteración
 
+Lo que depende del operador (quién opera GovTrace, el dominio, la cuenta de AWS, el proveedor de RPC, la tesorería en XLM y lo legal), paso a paso: [`docs/preparacion-red-principal.md`](preparacion-red-principal.md).
+
 ## 1. Red principal de Stellar (R-CFG-01, D13)
 
 - ✅ **El despliegue:** `make network-deploy NETWORK=mainnet` hace el mismo camino que se probó de punta a punta en testnet (`make network-deploy-check`).
