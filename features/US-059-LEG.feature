@@ -29,6 +29,13 @@ Característica: Informar a la veeduría de lo que vi en una obra
     Cuando pido un código sin autorizar el tratamiento de mis datos
     Entonces veo "Para informar a la veeduría, autorice el tratamiento de sus datos personales."
 
+  # It. 46e (R-PRIV-05 reescrita).
+  @complexity:medium
+  Escenario: Los rostros de la foto del informe ciudadano se difuminan en el celular
+    Dado que voy a informar a la veeduría con una foto donde se ve a una persona
+    Cuando adjunto la foto
+    Entonces la reviso, ya difuminada, antes de enviarla
+
   @complexity:medium @negative
   Escenario: La foto del informe llega sin metadatos
     Cuando envío mi informe con una foto que conserva su ubicación en los metadatos

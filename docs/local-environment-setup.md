@@ -62,7 +62,7 @@ Recorre los cuatro perfiles con la interfaz de las it. 40 y 43. Todo se hace con
    - **Informar a esta veeduría** (it. 44f), en cualquier obra:
      - el ciudadano escribe su correo y autoriza el tratamiento de sus datos;
      - el código de 6 dígitos sale al correo de desarrollo, y `make invites` lo muestra;
-     - con el código, su mensaje y una foto, el informe le llega a la veeduría, en "Informes ciudadanos", sin el correo. La veeduría le responde desde allí.
+     - con el código, su mensaje y una foto, el informe le llega a la veeduría, en "Informes ciudadanos", sin el correo. La veeduría le responde desde allí. La foto se revisa antes, con los rostros difuminados (it. 46e): para probarlo sirve `tests/fixtures/evidence/rostro-pintura.jpg`, *La Gioconda*.
    - **El validador, el momento más vistoso:**
      - en una foto de la obra, **Descargar archivo original** y **Descargar su prueba**;
      - en **Validar un archivo**, soltar la foto: ✅ *Archivo Auténtico e Inmutable*, con su fecha y su ledger;

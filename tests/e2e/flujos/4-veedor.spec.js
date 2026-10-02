@@ -1,10 +1,14 @@
 // It. 40a — el flujo del veedor de campo (docs/mapa-funcional.md, sección 2).
 // Enviar un reporte, con y sin señal, lo prueba offline.spec.js.
+import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { expect, test } from '@playwright/test';
 import { ORG, PASSWORD, PEOPLE, WORKSITE, logIn, logOut } from './support.js';
 
-const PHOTO = fileURLToPath(new URL('../../fixtures/evidence/foto.jpg', import.meta.url));
+// It. 46e: un rostro que no es de una persona real (La Gioconda, de dominio público), y el paisaje de su fondo.
+const FACE = fileURLToPath(new URL('../../fixtures/evidence/rostro-pintura.jpg', import.meta.url));
+const NO_FACE = fileURLToPath(new URL('../../fixtures/evidence/sin-rostro.jpg', import.meta.url));
+const SUCCESS = 'Reporte recibido con éxito.';
 
 test.describe.configure({ mode: 'serial' });
 
@@ -52,9 +56,91 @@ test('Arma un reporte: la obra, lo que vio y la foto', async ({ page }) => {
     await page.locator('[data-test="contract-result"]').first().click();
     await expect(page.getByText(/Precisión del GPS/)).toBeVisible();
     await page.getByLabel('Avance').check();
-    await page.locator('input[type="file"]').first().setInputFiles(PHOTO);
+    await page.locator('input[type="file"]').first().setInputFiles(NO_FACE);
 
+    // It. 46e: la foto se revisa antes de adjuntarla; en esta no hay nadie.
+    await expect(page.locator('[data-test="faces-found"]')).toHaveText('No encontramos rostros.', { timeout: 30_000 });
+    await page.getByRole('button', { name: 'Usar esta foto', exact: true }).click();
     await expect(page.getByRole('button', { name: 'Enviar Reporte' })).toBeEnabled();
+});
+
+/**
+ * The fine detail of a part of an image: the mean difference of brightness
+ * between neighbouring pixels. A blurred face keeps its colours (dark hair,
+ * light skin) but loses its detail — the eyes, the mouth.
+ */
+async function fineDetail(page, sources, area) {
+    return page.evaluate(
+        async ({ sources, area }) => {
+            const detail = async (src) => {
+                const image = new Image();
+                image.src = src;
+                await image.decode();
+                const canvas = document.createElement('canvas');
+                canvas.width = image.naturalWidth;
+                canvas.height = image.naturalHeight;
+                const context = canvas.getContext('2d');
+                context.drawImage(image, 0, 0);
+                const { data } = context.getImageData(area.x, area.y, area.width, area.height);
+                const brightness = (x, y) => {
+                    const i = (y * area.width + x) * 4;
+                    return 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+                };
+                let total = 0;
+                let count = 0;
+                for (let y = 0; y < area.height - 1; y++) {
+                    for (let x = 0; x < area.width - 1; x++) {
+                        total += Math.abs(brightness(x + 1, y) - brightness(x, y)) + Math.abs(brightness(x, y + 1) - brightness(x, y));
+                        count += 2;
+                    }
+                }
+                return total / count;
+            };
+            return Promise.all(sources.map(detail));
+        },
+        { sources, area },
+    );
+}
+
+test('Los rostros de una foto se difuminan en el celular antes de calcular su huella (it. 46e)', async ({ page }) => {
+    // La Bandeja muestra la evidencia cuando el worker la sella en la red local: puede tardar.
+    test.setTimeout(240_000);
+    const comment = `Rostro difuminado E2E ${Date.now()}`;
+    await enter(page);
+    await page.getByLabel('Buscar Obra').fill('Parque de pruebas');
+    await page.locator('[data-test="contract-result"]').first().click();
+    await expect(page.getByText(/Precisión del GPS/)).toBeVisible();
+    await page.getByLabel('Retraso').check();
+    await page.getByLabel('Comentario (opcional)').fill(comment);
+
+    // El detector, en el celular, encuentra el rostro y lo difumina; una zona más, a mano, con un toque.
+    await page.locator('input[type="file"]').first().setInputFiles(FACE);
+    await expect(page.locator('[data-test="faces-found"]')).toHaveText('Encontramos 1 rostro y lo difuminamos.', { timeout: 30_000 });
+    await page.locator('canvas[role="img"]').click({ position: { x: 15, y: 15 } });
+    await expect(page.getByText('Zonas difuminadas a mano: 1')).toBeVisible();
+    await page.getByRole('button', { name: 'Usar esta foto', exact: true }).click();
+    await page.getByRole('button', { name: 'Enviar Reporte' }).click();
+    await expect(page.getByText(SUCCESS)).toBeVisible();
+    await logOut(page);
+
+    // La Administradora la ve en la Bandeja cuando queda sellada, con lo que se difuminó.
+    await logIn(page, ORG, PEOPLE.admin);
+    await page.waitForURL('**/admin/inbox');
+    const card = page.locator('article').filter({ hasText: comment });
+    await expect(async () => {
+        await page.reload();
+        await expect(card).toBeVisible({ timeout: 3_000 });
+    }).toPass({ timeout: 180_000 });
+    await expect(card.locator('[data-test="blurring"]')).toHaveText('2 zonas difuminadas en el celular');
+
+    // El archivo que se guardó y se selló: el rostro, sin detalle; lo demás, como era.
+    const stored = await card.locator('img').first().getAttribute('src');
+    const original = `data:image/jpeg;base64,${readFileSync(FACE).toString('base64')}`;
+    const [faceBefore, faceAfter] = await fineDetail(page, [original, stored], { x: 250, y: 190, width: 80, height: 130 });
+    const [restBefore, restAfter] = await fineDetail(page, [original, stored], { x: 30, y: 700, width: 120, height: 120 });
+    expect(faceAfter).toBeLessThan(faceBefore * 0.4);
+    // Lo demás cambia apenas por volver a codificar el JPEG.
+    expect(Math.abs(restAfter - restBefore)).toBeLessThan(restBefore * 0.3);
 });
 
 test('Sigue sus reportes: su estado, el motivo de un rechazo y el recibo', async ({ page }) => {

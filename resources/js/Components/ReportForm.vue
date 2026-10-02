@@ -50,7 +50,7 @@ const missing = computed(() => {
         items.push('decir qué vio en la obra');
     }
     if (preparingFiles.value) {
-        items.push('esperar a que las fotos terminen de prepararse');
+        items.push('terminar de revisar las fotos'); // it. 46e: cada foto se revisa antes de adjuntarla
     } else if (cannotUpload(evidences.value) !== null) {
         items.push('adjuntar al menos una foto o un PDF');
     }
@@ -76,6 +76,8 @@ function submit() {
             longitude: String(position.longitude),
             accuracy_meters: String(position.accuracy),
             captured_at: position.capturedAt,
+            // It. 46e: lo que se difuminó en cada foto (null en un PDF), para la Bandeja.
+            blurs: JSON.stringify(evidences.value.map((evidence) => evidence.blurs ?? null)),
         },
         files: evidences.value.map((evidence) => evidence.file),
         hashes: evidences.value.map((evidence) => evidence.sha256),

@@ -116,10 +116,10 @@ it('rejects a video', function () {
     expect(storedEvidences($this->tenant))->toBeEmpty();
 });
 
-it('Las fotos no se difuminan: stores the photo byte for byte, without blurring faces or plates', function () {
-    // R-PRIV-05: nada se difumina ni se reprocesa en el servidor; lo que se
-    // guarda (y se sella) es exactamente lo que el teléfono envió. Decide
-    // el Administrador al revisar (US-036, it. 15).
+it('El servidor guarda la foto tal como llegó del celular, ya difuminada: byte for byte, without re-encoding it', function () {
+    // R-PRIV-05 (reescrita en la it. 46e): los rostros se difuminan en el
+    // celular, antes de la huella. El servidor no reprocesa nada: lo que se
+    // guarda (y se sella) es exactamente lo que el teléfono envió.
     $photo = evidencePhoto('rostros-y-placa.jpg');
     $original = file_get_contents($photo->getRealPath());
 

@@ -48,7 +48,8 @@ it('sends a Content-Security-Policy with the map images and the public Stellar R
 
         expect($csp)->toMatchArray([
             'default-src' => "'self'",
-            'script-src' => "'self'",
+            // It. 46e: WebAssembly, y solo eso (no eval): TF.js lo intenta para enteros de 64 bits al cargar el detector de rostros.
+            'script-src' => "'self' 'wasm-unsafe-eval'",
             'style-src' => "'self' 'unsafe-inline'",
             'img-src' => "'self' data: blob: https://tile.openstreetmap.org",
             // Solo el origen del RPC: la ruta, con el token del proveedor, no hace falta aquí.
@@ -130,8 +131,8 @@ it('lets the Vite dev server in while it runs, in development only', function ()
         unlink($hot);
     }
 
-    expect($local['script-src'])->toBe("'self' http://localhost:5173")
+    expect($local['script-src'])->toBe("'self' 'wasm-unsafe-eval' http://localhost:5173")
         ->and($local['style-src'])->toBe("'self' 'unsafe-inline' http://localhost:5173")
         ->and($local['connect-src'])->toContain('ws://localhost:5173')
-        ->and($production['script-src'])->toBe("'self'");
+        ->and($production['script-src'])->toBe("'self' 'wasm-unsafe-eval'");
 });

@@ -7,12 +7,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import NewReport from './NewReport.vue';
 import ContractSearch from '@/Components/ContractSearch.vue';
 import EvidencePicker from '@/Components/EvidencePicker.vue';
+import { loadDetector } from '@/lib/evidence/faces.js';
 import { configureOutbox, outboxState } from '@/composables/useOutbox.js';
 import { createOutbox, memoryStore } from '@/lib/outbox.js';
 import { fetchNearbyWorksites, sendReport } from '@/services/api.js';
 import { page } from '@/testing/inertia.js';
 
 vi.mock('@inertiajs/vue3', async () => await import('@/testing/inertia.js'));
+vi.mock('@/lib/evidence/faces.js', () => ({ loadDetector: vi.fn(async () => ({})) }));
 vi.mock('@/services/api.js', () => ({ searchContracts: vi.fn(async () => []), sendReport: vi.fn(), logout: vi.fn(), fetchNearbyWorksites: vi.fn() }));
 
 const GPS_DENIED =
@@ -21,7 +23,7 @@ const SUCCESS = 'Reporte recibido con éxito. Su evidencia ha sido encolada para
 
 const contract = { secop_contract_id: 'CO1.PCCNTR.1234567', object: 'Pavimentación Calle 30', entity_name: 'Alcaldía Distrital de Santa Marta' };
 const reading = (accuracy) => ({ coords: { latitude: 11.2419, longitude: -74.199, accuracy }, timestamp: Date.parse('2026-09-28T15:00:00Z') });
-const evidence = (n) => ({ kind: 'photo', file: new File([`foto ${n}`], `foto${n}.jpg`, { type: 'image/jpeg' }), sha256: String(n).repeat(64) });
+const evidence = (n) => ({ kind: 'photo', file: new File([`foto ${n}`], `foto${n}.jpg`, { type: 'image/jpeg' }), sha256: String(n).repeat(64), blurs: { faces: n, dismissed: 0, manual: 1 } });
 
 /** El GPS del teléfono: cada llamada responde con la siguiente lectura (o el error). */
 function phoneGps(...answers) {
@@ -80,6 +82,8 @@ describe('Nuevo Reporte', () => {
         expect(sent.get('captured_at')).toBe('2026-09-28T15:00:00.000Z');
         expect(sent.getAll('files[]').map((file) => file.name)).toEqual(['foto1.jpg', 'foto2.jpg']);
         expect(sent.getAll('hashes[]')).toEqual(['1'.repeat(64), '2'.repeat(64)]);
+        // It. 46e: lo que se difuminó en cada foto, para la Bandeja.
+        expect(JSON.parse(sent.get('blurs'))).toEqual([{ faces: 1, dismissed: 0, manual: 1 }, { faces: 2, dismissed: 0, manual: 1 }]);
         expect(wrapper.text()).toContain(SUCCESS);
     });
 
@@ -365,5 +369,35 @@ describe('Qué vio en la obra (it. 40c)', () => {
         expect(question.text()).toContain('La obra avanza: hay trabajo o cambios desde la última vez.');
         expect(question.text()).toContain('Va más lenta de lo previsto, o está detenida por ahora.');
         expect(question.text()).toContain('No hay nadie trabajando y la obra parece dejada.');
+    });
+});
+
+// It. 46e: con señal, el detector de rostros se descarga al abrir la pantalla, para tenerlo sin señal.
+describe('El detector de rostros, listo antes de la foto (it. 46e)', () => {
+    it('downloads it when the screen opens with signal, and not without it', async () => {
+        mount(NewReport);
+        await flushPromises();
+        expect(loadDetector).toHaveBeenCalledTimes(1);
+
+        loadDetector.mockClear();
+        Object.defineProperty(navigator, 'onLine', { value: false, configurable: true });
+        mount(NewReport);
+        await flushPromises();
+        expect(loadDetector).not.toHaveBeenCalled();
+        Object.defineProperty(navigator, 'onLine', { value: true, configurable: true });
+    });
+});
+
+// It. 46e: mientras una foto espera su revisión, el formulario dice qué hacer.
+describe('Una foto por revisar (it. 46e)', () => {
+    it('asks to finish reviewing the photos before sending', async () => {
+        const wrapper = await onWorksite(reading(15));
+        await fillReport(wrapper);
+
+        wrapper.findComponent(EvidencePicker).vm.$emit('update:processing', true);
+        await flushPromises();
+
+        expect(wrapper.text()).toContain('terminar de revisar las fotos');
+        expect(wrapper.text()).not.toContain('terminen de prepararse');
     });
 });

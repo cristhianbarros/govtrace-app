@@ -3,6 +3,7 @@
 // correo de desarrollo (MAIL_MAILER=log escribe cada correo en storage/logs/mail.log).
 import { closeSync, fstatSync, openSync, readSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { expect } from '@playwright/test';
 
 const organization = new URL(process.env.E2E_BASE_URL ?? 'http://veeduria-e2e.govtrace.localhost:8080');
 const apex = organization.hostname.replace(/^veeduria-e2e\./, '');
@@ -21,6 +22,14 @@ export const PEOPLE = {
     undeclared: 'e2e.sin-declarar@correo.co',
 };
 export const WORKSITE = 'Parque de pruebas sin conexión';
+
+/** It. 46e (R-PRIV-05): each photo is reviewed, its faces already blurred, before it is attached. */
+export async function attachPhoto(page, path) {
+    await page.locator('input[type="file"]').first().setInputFiles(path);
+    await page.getByRole('button', { name: 'Usar esta foto', exact: true }).click();
+    // Con varias pruebas a la vez, el JPEG tarda más en un navegador sin GPU: más que los 5 s de siempre.
+    await expect(page.getByRole('button', { name: 'Usar esta foto', exact: true })).toHaveCount(0, { timeout: 30_000 });
+}
 
 /** It. 46c (US-064-SEC): the page of the e2e worksite, named by its public id, not its number. */
 export async function worksiteUrl(request) {

@@ -14,6 +14,7 @@ import VeedorNav from '@/Components/VeedorNav.vue';
 import { capturePosition } from '@/lib/geolocation.js';
 import { saveOffline, startOutboxSync } from '@/composables/useOutbox.js';
 import { registerServiceWorker } from '@/lib/pwa.js';
+import { loadDetector } from '@/lib/evidence/faces.js';
 import { MESSAGES, OutboxFull } from '@/lib/outbox.js';
 import { reportFormData } from '@/lib/report.js';
 import { fetchNearbyWorksites, sendReport } from '@/services/api.js';
@@ -89,9 +90,15 @@ async function keepOffline(report, message = MESSAGES.saved) {
 }
 
 // US-018: al abrir "Nuevo Reporte", lo que quedó pendiente se intenta subir.
+// It. 46e: con señal, el detector de rostros se descarga de una vez: el Service
+// Worker lo guarda, y la primera foto sin señal también se revisa. Si falla, la
+// foto se revisará a mano.
 onMounted(() => {
     registerServiceWorker();
     startOutboxSync();
+    if (navigator.onLine !== false) {
+        loadDetector().catch(() => {});
+    }
 });
 
 function startOver() {

@@ -11,14 +11,17 @@ Al 2026-10-02. Empezó sobre `77e6030` (iteración 39) y se actualizó en las it
 | 45g | Los tokens de acceso fuera de los registros, y el respaldo que espera a la base al arrancar | #90 |
 | 46b | La validación asistida de una veeduría: el PDF de su inscripción y lo que dicen los datos abiertos del RUES (US-062-ALT, US-001) | #91 |
 | 46c | Identificadores públicos que no se pueden recorrer (US-064-SEC, R-SEC-08) | #92 |
-| 46d | La auditoría con filtros y en frases (US-043-MON) | este |
+| 46d | La auditoría con filtros y en frases (US-043-MON) | #93 |
+| 46e | Los rostros de las fotos, difuminados en el celular antes de la huella (R-PRIV-05, US-009, US-059-LEG) | este |
 
-- **Tests:** Pest 1055, Vitest 522, `make e2e` 52 de 52, trace-check 376 de 376, `make ux-check` sin retroceso.
+- **Tests:** Pest 1064, Vitest 562, `make e2e` 53 de 53, trace-check 383 de 383, `make ux-check` sin retroceso.
+- **46e, en una frase:** cada foto se revisa antes de adjuntarla, con los rostros que encontró el detector ya difuminados (BlazeFace, en el celular, alojado en GovTrace). Se difumina a mano lo demás, y lo que se sella es la foto difuminada. La Bandeja dice cuántas zonas se difuminaron y avisa si se quitó un difuminado propuesto.
+- **Bloque 46, cerrado:** 46a a 46e.
 - **46c, en una frase:** las URL y el API llevan un ULID en vez del número de las obras, los reportes, las evidencias, los informes ciudadanos, los usuarios y las solicitudes de alta. Lo sellado no cambia, porque la referencia de la obra en Stellar sigue saliendo del número. Los enlaces viejos redirigen solo si lo que nombran ya es público, y una invitación solo con su token.
 - ❓ **Decisión tuya, antes de la red principal:** los enlaces viejos con número se pueden quitar si no hay enlaces compartidos de antes de la 46c (`docs/go-live.md`).
 - **Lo que dice el RUES, y lo que no:** trae lo inscrito en las cámaras de comercio, también las veedurías (382, 336 activas). Las inscritas en una personería no están, y para ellas el Super Administrador revisa el PDF. Es una ayuda para decidir: si el RUES no responde, se decide igual.
 - **Riesgo que queda:** el PDF no se analiza contra malware. Se descarga como adjunto, en un sandbox, y solo lo abre el Super Administrador.
-- **Lo que sigue:** 46e (los rostros difuminados en el celular, aprobada; vuelve a Opus xhigh).
+- **Lo que sigue:** las decisiones pendientes de la red principal (`docs/go-live.md`) y 42b, que espera la cuenta de AWS.
 
 ## Dónde quedó (2026-10-02, tarde)
 

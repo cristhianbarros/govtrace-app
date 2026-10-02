@@ -11,14 +11,20 @@ criterios_aceptacion:
     - "Peso máximo de 10 MB por archivo"
     - "Tipos permitidos: fotografías y PDF (sin video)"
     - "Los metadatos propios del PDF (autor, software, fechas) se limpian en la app antes de calcular el hash (R-PRIV-04)"
-    - "Las fotos NO se difuminan: rostros y placas se publican tal cual y la organización decide al revisar (US-036) (R-PRIV-05)"
+    - "(It. 46e, R-PRIV-05 reescrita) Los rostros se difuminan en el celular antes de calcular la huella: un detector en el navegador los propone y los difumina por defecto; quien adjunta difumina a mano otras zonas (un rostro lejano, una placa) y puede quitar un recuadro que no es un rostro. El difuminado es definitivo; el original nunca sale del teléfono"
+    - "(It. 46e) El servidor guarda la foto byte a byte, como llegó; registra cuántos rostros se difuminaron, cuántas zonas a mano y cuántos difuminados propuestos se quitaron, y la Bandeja lo dice"
+    - "(It. 46e) Si el detector no carga (sin señal la primera vez, un teléfono sin memoria), la foto se revisa a mano y el reporte se puede enviar"
     - "Antes de calcular el hash, la app optimiza cada foto en el teléfono: lado mayor de 1920 px, formato JPEG, calidad 80 %. Se sella exactamente el archivo optimizado; la re-codificación elimina el EXIF y convierte formatos como HEIC (R-PRIV-06)"
   manejo_errores:
     - {caso: "El hash recalculado por el servidor no coincide con el del teléfono", mensaje: "Alerta de seguridad: El archivo fue alterado o corrompido durante la transmisión (el hash del servidor no coincide con el de su celular). Por favor, intente de nuevo."}
   requisitos_ux:
     - "La app no permite mezclar fotos y PDF en un mismo reporte"
     - "(It. 40d, 2026-09-30) Dos botones: 'Tomar foto' abre la cámara trasera; 'Elegir de la galería o un PDF', el selector"
-  casos_edge: []
+    - "(It. 46e) Un aviso junto a los botones: 'Si en la foto aparecen personas, sobre todo niños, sus rostros se difuminan antes de enviarla.'"
+    - "(It. 46e) Cada foto se revisa antes de adjuntarla: se ve ya difuminada, con lo que encontró el detector en una frase; tocar la foto difumina esa zona, y tocar una zona difuminada a mano la quita; botones grandes 'Usar esta foto' y 'No usar esta foto'"
+  casos_edge:
+    - "(It. 46e) El detector ve mejor los rostros cercanos (a menos de unos 2 m); se revisa la foto entera y también por cuartos, para ver rostros más pequeños. Lo que no vea, se difumina a mano"
+    - "(It. 46e) Una versión anterior de la app que no envía los datos del difuminado: el reporte se recibe igual, y la Bandeja no dice nada del difuminado"
 validacion_smart:
   specific: true
   measurable: true

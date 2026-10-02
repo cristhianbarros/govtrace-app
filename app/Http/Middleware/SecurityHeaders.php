@@ -52,7 +52,9 @@ class SecurityHeaders
 
         $directives = [
             'default-src' => ["'self'"],
-            'script-src' => ["'self'", $dev],
+            // It. 46e (R-PRIV-05): el detector de rostros (TF.js) compila WebAssembly al cargar
+            // (long.js, enteros de 64 bits). 'wasm-unsafe-eval' permite solo eso, no eval de JavaScript.
+            'script-src' => ["'self'", "'wasm-unsafe-eval'", $dev],
             'style-src' => ["'self'", "'unsafe-inline'", $dev],
             'img-src' => ["'self'", 'data:', 'blob:', self::MAP_TILES],
             'connect-src' => ["'self'", self::origin(config('stellar.public_rpc_url')), $dev, $dev === null ? null : preg_replace('#^http#', 'ws', $dev)],

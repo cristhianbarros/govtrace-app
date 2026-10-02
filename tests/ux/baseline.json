@@ -1,10 +1,10 @@
 {
   "escritorio/admin-audit": {
     "axe": {},
-    "textUnder16": 69,
+    "textUnder16": 66,
     "textUnder14": 0,
     "smallTargets": 0,
-    "targets": 13
+    "targets": 23
   },
   "escritorio/admin-authorization": {
     "axe": {},
@@ -50,7 +50,7 @@
   },
   "escritorio/admin-summary": {
     "axe": {},
-    "textUnder16": 17,
+    "textUnder16": 16,
     "textUnder14": 0,
     "smallTargets": 0,
     "targets": 12
@@ -127,17 +127,17 @@
   },
   "escritorio/superadmin-auditoria": {
     "axe": {},
-    "textUnder16": 82,
+    "textUnder16": 76,
     "textUnder14": 0,
     "smallTargets": 0,
-    "targets": 11
+    "targets": 37
   },
   "escritorio/superadmin-nueva-organizacion": {
     "axe": {},
     "textUnder16": 0,
     "textUnder14": 0,
-    "smallTargets": 6,
-    "targets": 18
+    "smallTargets": 5,
+    "targets": 19
   },
   "escritorio/superadmin-organizaciones": {
     "axe": {},
@@ -172,7 +172,7 @@
     "textUnder16": 0,
     "textUnder14": 0,
     "smallTargets": 0,
-    "targets": 11
+    "targets": 14
   },
   "escritorio/superadmin-super-administradores": {
     "axe": {},
@@ -216,12 +216,19 @@
     "smallTargets": 10,
     "targets": 10
   },
+  "escritorio/veedor-revisar-foto": {
+    "axe": {},
+    "textUnder16": 0,
+    "textUnder14": 0,
+    "smallTargets": 5,
+    "targets": 22
+  },
   "movil/admin-audit": {
     "axe": {},
-    "textUnder16": 77,
+    "textUnder16": 72,
     "textUnder14": 0,
     "smallTargets": 0,
-    "targets": 7
+    "targets": 17
   },
   "movil/admin-authorization": {
     "axe": {},
@@ -267,7 +274,7 @@
   },
   "movil/admin-summary": {
     "axe": {},
-    "textUnder16": 25,
+    "textUnder16": 24,
     "textUnder14": 0,
     "smallTargets": 0,
     "targets": 6
@@ -344,17 +351,17 @@
   },
   "movil/superadmin-auditoria": {
     "axe": {},
-    "textUnder16": 84,
+    "textUnder16": 77,
     "textUnder14": 0,
     "smallTargets": 0,
-    "targets": 7
+    "targets": 33
   },
   "movil/superadmin-nueva-organizacion": {
     "axe": {},
     "textUnder16": 0,
     "textUnder14": 0,
     "smallTargets": 7,
-    "targets": 14
+    "targets": 15
   },
   "movil/superadmin-organizaciones": {
     "axe": {},
@@ -389,7 +396,7 @@
     "textUnder16": 0,
     "textUnder14": 0,
     "smallTargets": 0,
-    "targets": 7
+    "targets": 10
   },
   "movil/superadmin-super-administradores": {
     "axe": {},
@@ -432,5 +439,12 @@
     "textUnder14": 0,
     "smallTargets": 10,
     "targets": 10
+  },
+  "movil/veedor-revisar-foto": {
+    "axe": {},
+    "textUnder16": 0,
+    "textUnder14": 0,
+    "smallTargets": 5,
+    "targets": 22
   }
 }
