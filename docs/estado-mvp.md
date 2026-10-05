@@ -10,7 +10,7 @@ Al 2026-10-04. Empezó sobre `77e6030` (iteración 39) y se actualizó en las it
 |---|---|
 | 46g: la verificación en dos pasos del Super Administrador, construida e inactiva (US-065-SEC, R-SEC-09) | este |
 
-- **Tests:** Pest: `SuperAdminTwoFactorTest` 16 de 16 y las suites de ingreso, plataforma, auditoría y privacidad (la suite completa corre antes de fusionar), Vitest 580, `make e2e` 54 de 54 con el interruptor apagado, trace-check 401 de 401, `make ux-check` sin retroceso.
+- **Tests:** Pest 1101, Vitest 580, `make e2e` 54 de 54 con el interruptor apagado, trace-check 401 de 401, `make ux-check` sin retroceso.
 - **46g, en una frase:** el Super Administrador puede entrar con su contraseña y un código de su app autenticadora (TOTP), con 8 códigos de recuperación y restablecimiento desde la consola. Está apagado hasta que el operador ponga `SUPER_ADMIN_TWO_FACTOR=true` en el servidor. Costo recurrente: 0 USD.
 - ❓ **Decisión tuya:** cuándo activarla. Recomiendo antes de la red principal (`docs/go-live.md`).
 
