@@ -8,6 +8,14 @@ Al 2026-10-04. Empezó sobre `77e6030` (iteración 39) y se actualizó en las it
 
 | Qué | PR |
 |---|---|
+| 46h: el ciudadano adjunta de 1 a 3 fotos, con las mismas opciones del veedor (US-059-LEG) | este |
+
+- **Tests:** Pest 1108, Vitest 595, `make e2e` 54 de 54, trace-check 404 de 404, `make ux-check` sin retroceso.
+- **46h, en una frase:** el informe ciudadano usa el selector del veedor: "Tomar foto" (cámara trasera) y "Elegir de la galería", de 1 a 3 fotos, cada una revisada con los rostros difuminados. La veeduría las ve numeradas. Al borrar un informe descartado, se borran todas.
+- **Compresión de PDF:** pospuesta por el usuario; queda para la versión 2.
+
+| Qué | PR |
+|---|---|
 | 46g: la verificación en dos pasos del Super Administrador, construida e inactiva (US-065-SEC, R-SEC-09) | este |
 
 - **Tests:** Pest 1101, Vitest 580, `make e2e` 54 de 54 con el interruptor apagado, trace-check 401 de 401, `make ux-check` sin retroceso.

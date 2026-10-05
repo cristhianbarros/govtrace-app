@@ -27,6 +27,11 @@ final class CitizenReportRefused extends DomainException
         return new self('Solo se acepta una foto en JPEG, de hasta 10 MB.', 422, 'photo');
     }
 
+    public static function tooManyPhotos(int $max): self
+    {
+        return new self("Un informe admite hasta {$max} fotos.", 422, 'photo');
+    }
+
     public static function photoWithMetadata(): self
     {
         return new self('La foto conserva metadatos, como la ubicación del teléfono. Elíjala desde esta página, que los quita.', 422, 'photo');

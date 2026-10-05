@@ -18,12 +18,14 @@ class CitizenReport extends Model
 
     public const STATUS_LABELS = ['new' => 'Nuevo', 'answered' => 'Atendido', 'discarded' => 'Descartado'];
 
-    protected $fillable = ['worksite_id', 'email', 'email_hash', 'message', 'photo_path', 'status', 'answer', 'handled_at', 'handled_by', 'data_authorized_at', 'data_policy_version'];
+    protected $fillable = ['worksite_id', 'email', 'email_hash', 'message', 'photo_paths', 'status', 'answer', 'handled_at', 'handled_by', 'data_authorized_at', 'data_policy_version'];
 
     protected $hidden = ['email', 'email_hash'];
 
     protected $casts = [
         'email' => 'encrypted',
+        // It. 46h: de 1 a 3 fotos; vacío si no trae.
+        'photo_paths' => 'array',
         'handled_at' => 'datetime',
         'data_authorized_at' => 'datetime',
     ];
@@ -37,6 +39,8 @@ class CitizenReport extends Model
     {
         return implode('-', str_split(strtoupper(substr($this->public_id, -8)), 4));
     }
+
+    public const MAX_PHOTOS = 3;
 
     public function worksite(): BelongsTo
     {

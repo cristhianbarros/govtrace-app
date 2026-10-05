@@ -87,7 +87,7 @@ El sitio tiene tres pestañas: **Obras**, **Estadísticas** y **Validar**. Al pi
 - **"¿Sabe de un problema en esta obra?":** los canales oficiales de la Contraloría General de la República (línea 199, el 01 8000 y SIPAR en línea), con lo que puede hacer cualquier ciudadano (it. 44a).
 - **"Informar a esta veeduría"** (US-059-LEG, it. 44f):
   1. El ciudadano escribe su correo, autoriza el tratamiento de sus datos y recibe un **código de 6 dígitos**. Vale 10 minutos y admite 5 intentos.
-  2. Con el código, escribe lo que vio, entre 20 y 2.000 caracteres, y una foto opcional (JPEG, hasta 10 MB, sin metadatos), que revisa antes de enviar, con los rostros ya difuminados (it. 46e).
+  2. Con el código, escribe lo que vio, entre 20 y 2.000 caracteres, y de 1 a 3 fotos opcionales (JPEG, hasta 10 MB cada una, sin metadatos), con las mismas opciones del veedor: **Tomar foto**, que abre la cámara trasera, y **Elegir de la galería**. Revisa cada una antes de enviar, con los rostros ya difuminados (it. 46e, 46h).
   3. Le llega un correo con la referencia de su informe, como `7KQ3-M9XD` (it. 46c: no un número consecutivo, que decía cuántos había). La veeduría le responde desde GovTrace **sin ver su correo**, que se guarda cifrado.
   - Límites: 3 informes por correo al día, 1 por obra, y límites por conexión.
   - El informe no se sella, no se publica y no cambia el estado de la obra.

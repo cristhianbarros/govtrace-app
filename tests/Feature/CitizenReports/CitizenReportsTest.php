@@ -19,6 +19,7 @@ use Illuminate\Notifications\AnonymousNotifiable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Testing\TestResponse;
 
 /*
@@ -118,7 +119,7 @@ it('El ciudadano informa a la veeduría con su correo verificado: a code by mail
     requestCode()->assertOk()->assertJson(['message' => 'Le enviamos un código de 6 dígitos a '.CITIZEN.'. Vence en 10 minutos.']);
     expect(mailedCode())->toMatch('/^\d{6}$/');
 
-    $response = sendCitizenReport(['photo' => citizenPhoto()])->assertCreated()->assertJson(['message' => RECEIVED]);
+    $response = sendCitizenReport(['photos' => [citizenPhoto()]])->assertCreated()->assertJson(['message' => RECEIVED]);
 
     $report = $this->tenant->run(fn () => CitizenReport::query()->sole());
     // It. 46c (US-064-SEC): una referencia corta, de su identificador público, y no su número consecutivo.
@@ -126,7 +127,7 @@ it('El ciudadano informa a la veeduría con su correo verificado: a code by mail
         ->and($report->reference())->toMatch('/^[0-9A-HJKMNP-TV-Z]{4}-[0-9A-HJKMNP-TV-Z]{4}$/')
         ->and($report->worksite_id)->toBe($this->worksite->id)
         ->and($report->status)->toBe('new')
-        ->and($report->photo_path)->not->toBeNull()
+        ->and($report->photo_paths)->toHaveCount(1)
         ->and($report->data_policy_version)->toBe(DataPolicy::VERSION);
     Notification::assertSentOnDemand(CitizenReportReceived::class, fn (CitizenReportReceived $notification, array $channels, AnonymousNotifiable $notifiable) => $notifiable->routes['mail'] === CITIZEN && $notification->number === $report->reference());
 });
@@ -164,7 +165,7 @@ it('Sin autorizar el tratamiento de datos no se pide el código', function () {
 it('La foto del informe llega sin metadatos: one with the location of the phone, another format or too large is refused', function (Closure $photo, string $message) {
     requestCode()->assertOk();
 
-    sendCitizenReport(['photo' => $photo()])->assertUnprocessable()->assertJsonValidationErrors(['photo' => $message]);
+    sendCitizenReport(['photos' => [$photo()]])->assertUnprocessable()->assertJsonValidationErrors(['photo' => $message]);
 })->with([
     'con GPS' => [fn () => citizenPhotoWithLocation(), 'La foto conserva metadatos, como la ubicación del teléfono. Elíjala desde esta página, que los quita.'],
     'un PDF' => [fn () => UploadedFile::fake()->create('acta.pdf', 100, 'application/pdf'), 'Solo se acepta una foto en JPEG, de hasta 10 MB.'],
@@ -221,17 +222,17 @@ it('El informe ciudadano no se sella ni se publica: no seal, not on the map, the
 
 it('La veeduría recibe los informes sin ver el correo del ciudadano: the worksite, the date, the message and the photo', function () {
     requestCode()->assertOk();
-    sendCitizenReport(['photo' => citizenPhoto()])->assertCreated();
+    sendCitizenReport(['photos' => [citizenPhoto()]])->assertCreated();
 
     $response = adminCitizenReports()->assertOk();
     $row = $response->json('data.0');
     expect($row)->toMatchArray(['worksite' => 'Pavimentación Calle 30', 'message' => 'La obra lleva dos semanas sin trabajadores y el cerramiento se cayó.', 'status' => 'new', 'status_label' => 'Nuevo'])
-        ->and($row['photo_url'])->toBe("/citizen-reports/{$row['id']}/photo")
+        ->and($row['photo_urls'])->toBe(["/citizen-reports/{$row['id']}/photos/1"])
         // It. 46c: la referencia corta que recibió el ciudadano, para hablar del mismo informe.
         ->and($row['reference'])->toBe($this->tenant->run(fn () => CitizenReport::query()->sole()->reference()))
         ->and($response->getContent())->not->toContain(CITIZEN);
 
-    $this->actingAs($this->administrator, 'tenant')->get(CITIZEN_HOST.$row['photo_url'])->assertOk()->assertHeader('Content-Type', 'image/jpeg');
+    $this->actingAs($this->administrator, 'tenant')->get(CITIZEN_HOST.$row['photo_urls'][0])->assertOk()->assertHeader('Content-Type', 'image/jpeg');
 
     // El correo, cifrado en la base: nadie lo lee en claro.
     expect($this->tenant->run(fn () => DB::table('citizen_reports')->value('email')))->not->toContain('vecina');
@@ -277,4 +278,82 @@ it('Solo el Administrador ve los informes: not a veedor, nor a visitor', functio
 
 it('does not take a report for a worksite that does not exist', function () {
     requestCode(['worksite_id' => 999999])->assertUnprocessable()->assertJsonValidationErrors(['worksite_id']);
+});
+
+// It. 46h (US-059-LEG): de 1 a 3 fotos.
+
+function citizenPhotoNumber(int $number): UploadedFile
+{
+    return UploadedFile::fake()->createWithContent("obra-{$number}.jpg", file_get_contents(base_path('tests/fixtures/evidence/foto.jpg'))."\x00ciudadano-{$number}");
+}
+
+it('El ciudadano adjunta de 1 a 3 fotos a su informe: the Administrador sees them all, in order, and each one opens', function () {
+    requestCode()->assertOk();
+    sendCitizenReport(['photos' => [citizenPhotoNumber(1), citizenPhotoNumber(2), citizenPhotoNumber(3)]])->assertCreated();
+
+    $row = adminCitizenReports()->json('data.0');
+
+    expect($row['photo_urls'])->toBe(array_map(fn (int $n) => "/citizen-reports/{$row['id']}/photos/{$n}", [1, 2, 3]))
+        ->and($this->tenant->run(fn () => CitizenReport::query()->sole()->photo_paths))->toHaveCount(3);
+    foreach ($row['photo_urls'] as $url) {
+        $this->actingAs($this->administrator, 'tenant')->get(CITIZEN_HOST.$url)->assertOk()->assertHeader('Content-Type', 'image/jpeg');
+    }
+    $this->actingAs($this->administrator, 'tenant')->get(CITIZEN_HOST."/citizen-reports/{$row['id']}/photos/4")->assertNotFound();
+});
+
+it('Un informe con más de 3 fotos se rechaza: a 4th one is refused, and nothing is kept', function () {
+    requestCode()->assertOk();
+
+    sendCitizenReport(['photos' => array_map(citizenPhotoNumber(...), [1, 2, 3, 4])])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['photo' => 'Un informe admite hasta 3 fotos.']);
+
+    expect($this->tenant->run(fn () => CitizenReport::query()->count()))->toBe(0);
+});
+
+it('refuses the whole report when one of its photos carries metadata, and stores none of them', function () {
+    requestCode()->assertOk();
+
+    sendCitizenReport(['photos' => [citizenPhotoNumber(1), citizenPhotoWithLocation()]])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['photo' => 'La foto conserva metadatos, como la ubicación del teléfono. Elíjala desde esta página, que los quita.']);
+
+    expect($this->tenant->run(fn () => CitizenReport::query()->count()))->toBe(0)
+        ->and(Storage::disk('evidencias')->allFiles())->toBe([]);
+});
+
+it('still receives the single photo that an earlier version of the page sends', function () {
+    requestCode()->assertOk();
+    sendCitizenReport(['photo' => citizenPhoto()])->assertCreated();
+
+    expect($this->tenant->run(fn () => CitizenReport::query()->sole()->photo_paths))->toHaveCount(1);
+});
+
+it('keeps no photo for a report without one', function () {
+    requestCode()->assertOk();
+    sendCitizenReport()->assertCreated();
+
+    expect(adminCitizenReports()->json('data.0.photo_urls'))->toBe([])
+        ->and($this->tenant->run(fn () => CitizenReport::query()->sole()->photo_paths))->toBe([]);
+});
+
+it('gives the photo of a report that already existed its place in the list', function () {
+    $migration = include database_path('migrations/tenant/2026_10_05_000200_make_citizen_report_photos_a_list.php');
+
+    $paths = $this->tenant->run(function () use ($migration) {
+        $migration->down();
+        $id = DB::table('citizen_reports')->insertGetId([
+            'worksite_id' => $this->worksite->id, 'email' => 'x', 'email_hash' => 'x', 'message' => 'Una foto de antes', 'photo_path' => 'org/citizen-reports/abc.jpg',
+            'status' => 'new', 'data_authorized_at' => now(), 'data_policy_version' => 'v1', 'public_id' => strtolower((string) Str::ulid()), 'created_at' => now(), 'updated_at' => now(),
+        ]);
+        DB::table('citizen_reports')->insert([
+            'worksite_id' => $this->worksite->id, 'email' => 'x', 'email_hash' => 'y', 'message' => 'Sin foto', 'photo_path' => null,
+            'status' => 'new', 'data_authorized_at' => now(), 'data_policy_version' => 'v1', 'public_id' => strtolower((string) Str::ulid()), 'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $migration->up();
+
+        return DB::table('citizen_reports')->orderBy('id')->pluck('photo_paths')->map(fn ($json) => json_decode($json, true))->all();
+    });
+
+    expect($paths)->toBe([['org/citizen-reports/abc.jpg'], []]);
 });

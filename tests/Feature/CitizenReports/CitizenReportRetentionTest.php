@@ -44,10 +44,12 @@ afterEach(function () {
 });
 
 /** A report of a citizen, in $status since $daysAgo days. */
-function citizenReport(string $status, int $daysAgo, ?string $photo = null): int
+function citizenReport(string $status, int $daysAgo, string|array|null $photos = null): int
 {
-    return test()->tenant->run(function () use ($status, $daysAgo, $photo) {
-        if ($photo) {
+    $photos = (array) $photos;
+
+    return test()->tenant->run(function () use ($status, $daysAgo, $photos) {
+        foreach ($photos as $photo) {
             Storage::disk('evidencias')->put($photo, 'foto');
         }
 
@@ -56,7 +58,7 @@ function citizenReport(string $status, int $daysAgo, ?string $photo = null): int
             'email' => 'vecina@correo.co',
             'email_hash' => hash('sha256', 'vecina@correo.co'),
             'message' => 'La valla está en el piso.',
-            'photo_path' => $photo,
+            'photo_paths' => $photos,
             'status' => $status,
             'answer' => $status === 'answered' ? 'Gracias, vamos a documentarlo.' : null,
             'handled_at' => $status === 'new' ? null : now()->subDays($daysAgo),
@@ -82,6 +84,19 @@ it('deletes a discarded report 30 days after it was discarded, with its photo', 
         ->and(citizenReportRow($recent))->not->toBeNull();
     $this->tenant->run(fn () => expect(Storage::disk('evidencias')->exists('citizen-reports/old.jpg'))->toBeFalse()
         ->and(Storage::disk('evidencias')->exists('citizen-reports/recent.jpg'))->toBeTrue());
+});
+
+it('deletes every photo of a discarded report with it, not only the first', function () {
+    $old = citizenReport('discarded', 31, ['citizen-reports/a.jpg', 'citizen-reports/b.jpg', 'citizen-reports/c.jpg']);
+    $recent = citizenReport('discarded', 29, ['citizen-reports/d.jpg', 'citizen-reports/e.jpg']);
+
+    (new PurgeCitizenReports)->handle();
+
+    expect(citizenReportRow($old))->toBeNull()
+        ->and(citizenReportRow($recent))->not->toBeNull();
+    $this->tenant->run(function () {
+        expect(Storage::disk('evidencias')->allFiles())->toBe(['citizen-reports/d.jpg', 'citizen-reports/e.jpg']);
+    });
 });
 
 it('erases the email of an answered report 30 days after the answer, and keeps the report', function () {

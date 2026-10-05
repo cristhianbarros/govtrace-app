@@ -203,3 +203,47 @@ describe('Los rostros, difuminados antes de adjuntar (it. 46e)', () => {
     });
 });
 
+// It. 46h (US-059-LEG): el mismo selector para el ciudadano — de 1 a 3 fotos, sin PDF.
+describe('El selector del ciudadano (it. 46h)', () => {
+    const citizenPicker = () => {
+        const wrapper = mount(EvidencePicker, {
+            props: { modelValue: [], max: 3, photosOnly: true, label: 'Fotos (opcional): hasta 3', 'onUpdate:modelValue': (value) => wrapper.setProps({ modelValue: value }) },
+        });
+        return wrapper;
+    };
+
+    it('El ciudadano tiene las mismas opciones del veedor: the camera and the gallery, photos only, with its own label', () => {
+        const wrapper = citizenPicker();
+
+        expect(wrapper.text()).toContain('Fotos (opcional): hasta 3');
+        expect(wrapper.text()).toContain('Tomar foto');
+        expect(wrapper.text()).toContain('Elegir de la galería');
+        expect(wrapper.text()).not.toContain('PDF');
+        expect(wrapper.get('input[data-test="camera"]').attributes('capture')).toBe('environment');
+        expect(wrapper.get('input[type="file"]:not([data-test])').attributes('accept')).toBe('image/*');
+        expect(wrapper.find('[data-test="faces-warning"]').exists()).toBe(true);
+    });
+
+    it('attaches up to 3 reviewed photos, and refuses the 4th', async () => {
+        const wrapper = citizenPicker();
+
+        await choose(wrapper, [1, 2, 3, 4].map(photo));
+        await useEachPhoto(wrapper);
+
+        expect(wrapper.props('modelValue')).toHaveLength(3);
+        expect(draftPhoto).toHaveBeenCalledTimes(3);
+        expect(wrapper.text()).toContain('Un informe admite máximo 3 fotos.');
+        expect(wrapper.get('input[data-test="camera"]').attributes('disabled')).toBeDefined();
+    });
+
+    it('refuses a PDF', async () => {
+        const wrapper = citizenPicker();
+
+        await choose(wrapper, [pdf()]);
+
+        expect(wrapper.props('modelValue')).toEqual([]);
+        expect(prepareEvidence).not.toHaveBeenCalled();
+        expect(wrapper.text()).toContain('Solo se aceptan fotos en JPEG; los PDF, los videos y otros archivos no están permitidos aquí.');
+    });
+});
+

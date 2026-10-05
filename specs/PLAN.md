@@ -2502,7 +2502,7 @@ El usuario pidió seguir con lo que no espera a nadie: la deuda técnica y los h
 
 **46 — El gobierno de la plataforma y la defensa en profundidad.** Tres preguntas del usuario el 2026-10-02, mientras probaba la 45f. Aprobó el orden: "Sí, agrégalas al plan en ese orden."
 
-**Orden aprobado por el usuario el 2026-10-02:** 46a (✅), 46b (✅), 46c (✅), 46d (✅) y 46e (✅).
+**Orden aprobado por el usuario el 2026-10-02:** 46a (✅), 46b (✅), 46c (✅), 46d (✅) y 46e (✅). Después: 46g (✅, inactiva) y 46h (✅).
 
 **46a — Los Super Administradores: más de uno, y nunca ninguno** (historia nueva, US-063-USR). El usuario: "podría darse el caso que el sistema quede sin super administrador y que la aplicación tenga cierta dependencia de eso."
 - **Hoy:**
@@ -2771,6 +2771,20 @@ El usuario pidió seguir con lo que no espera a nadie: la deuda técnica y los h
   - `make e2e`: 54 de 54 con el interruptor apagado;
   - en un Chromium de verdad, con el interruptor encendido un momento: configurarla con el código QR, los 8 códigos, salir, un código equivocado, el bueno, y un código de recuperación; axe (WCAG 2.2 AA) sin violaciones en las tres pantallas;
   - `make ux-check`: sin retroceso; `make trace-check`: 401 de 401.
+
+✅ **46h cumplida (2026-10-05), con Sonnet medium.** Enmienda de US-059-LEG. El usuario: "para el ciudadano la idea es que tenga las mismas opciones del veedor", y, de 1 a 3 fotos.
+- **Las opciones del veedor:** el informe ciudadano usa el mismo selector (`EvidencePicker`, con las opciones `max`, `photosOnly` y `label`): "📷 Tomar foto", que abre la cámara trasera, y "Elegir de la galería", sin PDF. Cada foto pasa por la revisión de la 46e, con los rostros difuminados, de a una y con la protección contra el doble toque.
+- **De 1 a 3 fotos:** el servidor guarda una lista (`photo_paths`) en vez de una foto. La migración (`2026_10_05_000200`) deja la foto de cada informe que ya existía como la primera de su lista. Una 4.ª foto se rechaza ("Un informe admite máximo 3 fotos."), y si una foto no vale, el informe no guarda ninguna.
+- **Las versiones anteriores de la página** que envían una sola (`photo`) se siguen recibiendo.
+- **La veeduría** ve hasta 3 fotos por informe, numeradas, y cada una se abre por separado en `/citizen-reports/{informe}/photos/{1-3}`: el número es el lugar en la lista, no un número de registro (R-SEC-08).
+- **El borrado** de un informe descartado, a los 30 días, borra todas sus fotos. Tiene su prueba.
+- ❓ **Decisiones por defecto:** no se guarda cuántos rostros se difuminaron en el informe ciudadano (como en la 46e; la veeduría no los publica, y se puede agregar); las fotos del ciudadano nunca se publican.
+- **Límite que queda:** el nombre del archivo de una foto sale de su huella dentro de la organización; si dos informes llevan exactamente la misma foto, comparten archivo, y descartar uno borraría la del otro. Es raro, y ya era así con una foto; queda anotado.
+- **Prueba:**
+  - Pest: 7 casos nuevos (las 3 fotos y su orden, la 4.ª rechazada, una foto con metadatos que anula el informe, la versión anterior, un informe sin fotos, la migración) y el borrado de todas las fotos;
+  - Vitest: las reglas, el selector del ciudadano, el formulario (3 fotos revisadas y enviadas en orden, quitar una) y la pantalla de la veeduría;
+  - `make e2e`: 54 de 54; el ciudadano adjunta 2 fotos desde la galería (una con rostro, otra sin), la veeduría las ve y cada una abre;
+  - `make ux-check`: sin retroceso; `make trace-check`: 404 de 404.
 
 ## Pivote a Stellar (2026-09-28)
 

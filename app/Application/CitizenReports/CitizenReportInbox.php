@@ -30,7 +30,8 @@ class CitizenReportInbox
                 'worksite' => CitizenReportDesk::nameOf($report->worksite),
                 'received_at' => $report->created_at->toIso8601String(),
                 'message' => $report->message,
-                'photo_url' => $report->photo_path ? "/citizen-reports/{$report->public_id}/photo" : null,
+                // It. 46h: de 1 a 3 fotos, por su lugar en la lista (1, 2, 3), no por un número de registro.
+                'photo_urls' => array_map(fn (int $index) => "/citizen-reports/{$report->public_id}/photos/".($index + 1), array_keys($report->photo_paths)),
                 'status' => $report->status,
                 'status_label' => CitizenReport::STATUS_LABELS[$report->status],
                 'answer' => $report->answer,

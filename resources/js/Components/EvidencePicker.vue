@@ -12,8 +12,16 @@ import { draftPhoto, finishPhoto, kindOf, prepareEvidence } from '@/lib/evidence
 const evidences = defineModel({ type: Array, default: () => [] });
 const processing = defineModel('processing', { type: Boolean, default: false });
 
+// It. 46h (US-059-LEG): el mismo selector sirve al ciudadano, con de 1 a 3 fotos y sin PDF.
+const props = defineProps({
+    max: { type: Number, default: 5 },
+    photosOnly: { type: Boolean, default: false },
+    label: { type: String, default: 'Evidencia: de 1 a 5 fotos o un PDF' },
+});
+const limits = computed(() => ({ max: props.max, photosOnly: props.photosOnly }));
+
 const errors = ref([]);
-const accept = computed(() => acceptedTypes(evidences.value));
+const accept = computed(() => acceptedTypes(evidences.value, limits.value));
 
 // Las fotos elegidas, esperando su revisión; se revisan de a una. Cada borrador
 // lleva su canvas: no hace falta que sea reactivo por dentro.
@@ -31,7 +39,7 @@ async function onChoose(event) {
     for (const file of files) {
         const kind = kindOf(file);
         // Las fotos que esperan revisión ya cuentan para el máximo.
-        const refused = cannotAdd([...attached, ...toReview.value.map(() => ({ kind: 'photo' }))], kind);
+        const refused = cannotAdd([...attached, ...toReview.value.map(() => ({ kind: 'photo' }))], kind, 0, limits.value);
         if (refused) {
             addError(refused);
             continue;
@@ -42,7 +50,7 @@ async function onChoose(event) {
                 continue;
             }
             const evidence = await prepareEvidence(file);
-            const tooLarge = cannotAdd(attached, kind, evidence.file.size);
+            const tooLarge = cannotAdd(attached, kind, evidence.file.size, limits.value);
             if (tooLarge) {
                 addError(tooLarge);
                 continue;
@@ -72,7 +80,7 @@ async function usePhoto(review) {
     finishing.value = true;
     try {
         const evidence = await finishPhoto(reviewing.value, review);
-        const tooLarge = cannotAdd(evidences.value, 'photo', evidence.file.size);
+        const tooLarge = cannotAdd(evidences.value, 'photo', evidence.file.size, limits.value);
         if (tooLarge) {
             addError(tooLarge);
         } else {
@@ -101,7 +109,7 @@ const kilobytes = (bytes) => `${Math.max(1, Math.round(bytes / 1024))} KB`;
 
 <template>
     <div class="flex flex-col gap-2">
-        <span class="text-sm font-semibold text-slate-700">Evidencia: de 1 a 5 fotos o un PDF</span>
+        <span class="text-sm font-semibold text-slate-700">{{ label }}</span>
         <p data-test="faces-warning" class="text-sm text-slate-700">Si en la foto aparecen personas, sobre todo niños, sus rostros se difuminan antes de enviarla.</p>
 
         <!-- It. 40d: elegir es claro, y la cámara, a un toque (capture: abre la trasera). -->
@@ -110,7 +118,7 @@ const kilobytes = (bytes) => `${Math.max(1, Math.round(bytes / 1024))} KB`;
                 class="flex min-h-14 items-center justify-center gap-2 rounded-lg border-2 border-dashed border-slate-300 bg-white px-3 py-3 text-base font-semibold text-slate-800"
                 :class="{ 'opacity-50': !accept || processing }"
             >
-                {{ reviewing ? 'Revise la foto de abajo' : processing ? 'Revisando la foto…' : 'Elegir de la galería o un PDF' }}
+                {{ reviewing ? 'Revise la foto de abajo' : processing ? 'Revisando la foto…' : photosOnly ? 'Elegir de la galería' : 'Elegir de la galería o un PDF' }}
                 <input type="file" multiple class="sr-only" :accept="accept" :disabled="!accept || processing" @change="onChoose" />
             </label>
             <label

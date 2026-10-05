@@ -4,8 +4,8 @@ bloque: "Alineación con el proceso actual — A2"
 criterios_aceptacion:
   escenarios_exito:
     - "En cada obra, 'Informar a esta veeduría': el ciudadano escribe su correo, autoriza el tratamiento de sus datos y recibe un código de 6 dígitos"
-    - "Con el código, su mensaje (20 a 2000 caracteres) y una foto opcional, el informe llega a la veeduría; le llega un correo con la referencia de su informe (it. 46c: 8 caracteres de su identificador público, como 7KQ3-M9XD, y no un número consecutivo)"
-    - "El Administrador ve en 'Informes ciudadanos' la obra, la fecha, el mensaje y la foto, sin el correo de quien lo envió"
+    - "Con el código, su mensaje (20 a 2000 caracteres) y de 1 a 3 fotos opcionales (it. 46h), el informe llega a la veeduría; le llega un correo con la referencia de su informe (it. 46c: 8 caracteres de su identificador público, como 7KQ3-M9XD, y no un número consecutivo)"
+    - "El Administrador ve en 'Informes ciudadanos' la obra, la fecha, el mensaje y sus fotos (hasta 3, cada una se abre por separado), sin el correo de quien lo envió"
     - "El Administrador responde desde GovTrace (al ciudadano le llega la respuesta por correo) o lo descarta; los dos quedan en el log de auditoría"
   validaciones_reglas:
     - "R-LEG-09: un informe ciudadano no se sella ni se publica; no cambia el estado de la obra"
@@ -17,8 +17,11 @@ criterios_aceptacion:
     - "Código equivocado o vencido: 'El código no es válido o ya venció. Pida uno nuevo.'; 5 intentos fallidos lo anulan"
     - "Más de 3 informes del mismo correo en un día, o 2 de la misma obra: 429 con el motivo"
     - "Una foto con metadatos, de otro formato o de más de 10 MB se rechaza con el motivo"
+    - "(It. 46h) Un informe admite hasta 3 fotos: la 4.ª se rechaza con 'Un informe admite máximo 3 fotos.'; si una foto se rechaza, el informe no guarda ninguna"
+    - "(It. 46h) El borrado de un informe descartado, a los 30 días, borra todas sus fotos"
     - "(It. 46e, R-PRIV-05) La foto opcional pasa por la misma revisión que la del veedor: los rostros se difuminan en el celular antes de enviarla"
   requisitos_ux:
+    - "(It. 46h) El ciudadano tiene las mismas opciones del veedor: 'Tomar foto' abre la cámara trasera, y 'Elegir de la galería'; solo fotos, sin PDF, y cada foto se revisa antes de adjuntarla, de a una"
     - "Dos pasos en la misma obra: el correo, y después el código y el mensaje; botones de 44 px y letra de 16 px"
   casos_edge:
     - "Pedir un código nuevo anula el anterior"

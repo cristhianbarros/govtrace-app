@@ -182,7 +182,7 @@ Route::middleware([
             Route::get('/worksites/{worksite}/dossier.zip', WorksiteDossierController::class)->where('worksite', PublicId::PATTERN)->name('worksites.dossier');
             // US-059-LEG (it. 44f): los informes de los ciudadanos, sin su correo.
             Route::get('/citizen-reports', [CitizenReportInboxController::class, 'index'])->name('citizen-reports.index');
-            Route::get('/citizen-reports/{report}/photo', [CitizenReportInboxController::class, 'photo'])->where('report', PublicId::PATTERN)->name('citizen-reports.photo');
+            Route::get('/citizen-reports/{report}/photos/{position}', [CitizenReportInboxController::class, 'photo'])->where('report', PublicId::PATTERN)->whereIn('position', ['1', '2', '3'])->name('citizen-reports.photo');
             Route::post('/citizen-reports/{report}/answer', [CitizenReportInboxController::class, 'answer'])->where('report', PublicId::PATTERN)->name('citizen-reports.answer');
             Route::post('/citizen-reports/{report}/discard', [CitizenReportInboxController::class, 'discard'])->where('report', PublicId::PATTERN)->name('citizen-reports.discard');
 

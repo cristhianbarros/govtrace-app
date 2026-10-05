@@ -20,12 +20,13 @@ class CitizenReportInboxController extends Controller
         return response()->json(['data' => $inbox->list()]);
     }
 
-    public function photo(string $report): StreamedResponse
+    /** It. 46h: la foto número $position (de 1 a 3) del informe. */
+    public function photo(string $report, int $position): StreamedResponse
     {
-        $path = CitizenReport::byPublicId($report)->photo_path;
+        $path = CitizenReport::byPublicId($report)->photo_paths[$position - 1] ?? null;
         abort_if($path === null, 404);
 
-        return Storage::disk('evidencias')->response($path, "informe-{$report}.jpg", ['Content-Type' => 'image/jpeg', 'Cache-Control' => 'no-store, private']);
+        return Storage::disk('evidencias')->response($path, "informe-{$report}-{$position}.jpg", ['Content-Type' => 'image/jpeg', 'Cache-Control' => 'no-store, private']);
     }
 
     public function answer(Request $request, string $report, CitizenReportInbox $inbox): JsonResponse
