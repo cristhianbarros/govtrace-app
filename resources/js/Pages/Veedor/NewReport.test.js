@@ -56,10 +56,14 @@ async function fillReport(wrapper, { classification = 'Retraso', comment = 'Obra
 const submitButton = (wrapper) => wrapper.get('button[type="submit"]');
 
 beforeEach(() => {
+    // El reloj, fijo unos minutos después de la captura de ejemplo: la bandeja de salida descarta lo
+    // capturado hace más de 7 días, y con la fecha real estos reportes "vencían" una semana después.
+    vi.useFakeTimers({ toFake: ['Date'], now: new Date('2026-09-28T15:05:00Z') });
     sendReport.mockReset();
     configureOutbox({ store: memoryStore() });
 });
 afterEach(() => {
+    vi.useRealTimers();
     delete window.navigator.geolocation;
 });
 
