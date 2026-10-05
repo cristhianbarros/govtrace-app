@@ -43,6 +43,13 @@ defineProps({
             <div v-if="sections" class="mx-auto w-full md:max-w-3xl lg:max-w-5xl">
                 <SectionTabs />
             </div>
+            <!-- Navegación de la pantalla, arriba y siempre a la vista: nadie tiene que bajar hasta el final para
+                 cambiar de pestaña. Con barra lateral (los paneles), en el computador la reemplaza la barra. -->
+            <nav v-if="$slots.nav" aria-label="Navegación" class="-mx-4 border-t border-white/20 bg-white text-slate-900" :class="{ 'md:hidden': $slots.sidebar }">
+                <div class="mx-auto flex w-full" :class="$slots.sidebar ? '' : 'md:max-w-3xl lg:max-w-5xl'">
+                    <slot name="nav" />
+                </div>
+            </nav>
         </header>
 
         <!-- It. 40c: con barra lateral (los paneles), en el computador la navegación va a la izquierda. -->
@@ -78,18 +85,5 @@ defineProps({
                 </div>
             </div>
         </footer>
-
-        <!-- Optional bottom navigation: fixed and thumb-reachable on phones. On a computer it is not needed
-             there (with a sidebar, it goes; without one, it stays at the end instead of covering content). -->
-        <nav
-            v-if="$slots.nav"
-            aria-label="Navegación"
-            class="sticky bottom-0 border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)]"
-            :class="$slots.sidebar ? 'md:hidden' : 'md:static'"
-        >
-            <div class="mx-auto flex w-full md:max-w-3xl lg:max-w-5xl">
-                <slot name="nav" />
-            </div>
-        </nav>
     </div>
 </template>

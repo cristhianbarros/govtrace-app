@@ -1,5 +1,5 @@
 <script setup>
-// It. 40c: la navegación de un panel en el celular, al alcance del pulgar:
+// It. 40c: la navegación de un panel en el celular, arriba, siempre a la vista:
 // las pantallas principales como pestañas con su ícono y su nombre (nunca
 // solo uno de los dos), y "Más" para el resto. En el computador la
 // reemplaza la barra lateral (PanelSidebar).
@@ -31,7 +31,7 @@ document.addEventListener('click', closeOnOutsideClick);
 onBeforeUnmount(() => document.removeEventListener('click', closeOnOutsideClick));
 
 const tabClass = (active) =>
-    `flex min-h-16 flex-1 flex-col items-center justify-center gap-0.5 border-t-4 text-sm font-semibold ${active ? 'border-brand-700 text-brand-800' : 'border-transparent text-slate-600'}`;
+    `flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 border-b-4 text-sm font-semibold ${active ? 'border-brand-700 text-brand-800' : 'border-transparent text-slate-600'}`;
 </script>
 
 <template>
@@ -54,7 +54,7 @@ const tabClass = (active) =>
             Más
         </button>
 
-        <div v-if="open" data-test="more" role="menu" class="absolute bottom-full right-2 mb-2 w-64 rounded-lg bg-white p-2 shadow-lg ring-1 ring-slate-200">
+        <div v-if="open" data-test="more" role="menu" class="absolute right-2 top-full mt-1 z-20 w-64 rounded-lg bg-white p-2 shadow-lg ring-1 ring-slate-200">
             <Link
                 v-for="screen in others"
                 :key="screen.href"

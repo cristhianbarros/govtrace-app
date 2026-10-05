@@ -19,10 +19,12 @@ describe('AppLayout', () => {
         expect(wrapper.find('main').html()).toContain('<p>content</p>');
     });
 
-    it('renders the bottom navigation only when the nav slot is provided', () => {
+    it('renders the navigation only when the nav slot is provided, at the top inside the sticky header', () => {
         page.props = { organization: null, account: null };
         expect(mount(AppLayout).find('nav').exists()).toBe(false);
-        expect(mount(AppLayout, { slots: { nav: '<a>Inicio</a>' } }).find('nav').exists()).toBe(true);
+        const wrapper = mount(AppLayout, { slots: { nav: '<a>Inicio</a>' } });
+        expect(wrapper.find('header nav').exists()).toBe(true);
+        expect(wrapper.find('footer nav').exists()).toBe(false);
     });
 
     it('shows the organization logo next to the title, when it has one (US-007)', () => {

@@ -61,6 +61,7 @@ async function leave() {
     <div v-else-if="account" ref="root" class="relative ml-auto">
         <button
             type="button"
+            data-test="account-menu"
             aria-haspopup="menu"
             :aria-expanded="open"
             class="flex min-h-11 items-center gap-2 rounded-xl px-2 text-base font-semibold hover:bg-brand-700 focus-visible:outline-2 focus-visible:outline-white"

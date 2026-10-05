@@ -20,6 +20,11 @@ describe('VeedorNav', () => {
         expect(wrapper.findAll('a svg')).toHaveLength(2);
     });
 
+    it('marks the open tab with a line under it, since the tabs are at the top', () => {
+        const wrapper = mount(VeedorNav, { props: { current: '/my-reports' } });
+        expect(wrapper.get('a[aria-current="page"]').classes()).toContain('border-b-4');
+    });
+
     it('no longer has "Salir", which lives in the account menu of the header', () => {
         expect(mount(VeedorNav, { props: { current: '/reports/new' } }).find('button').exists()).toBe(false);
     });

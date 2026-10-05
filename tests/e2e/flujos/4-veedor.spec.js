@@ -156,7 +156,7 @@ test('Sigue sus reportes: su estado, el motivo de un rechazo y el recibo', async
 
 test('Cambia su contraseña con la sesión abierta, desde el menú de su cuenta (V11)', async ({ page }) => {
     await enter(page);
-    await page.locator('header button[aria-haspopup="menu"]').click();
+    await page.locator('[data-test="account-menu"]').click();
     await page.getByRole('menuitem', { name: 'Cambiar contraseña' }).click();
     await page.waitForURL('**/account/password');
     await expect(page.getByRole('heading', { name: 'Cambiar contraseña', exact: true })).toBeVisible();
