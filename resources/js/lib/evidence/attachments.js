@@ -11,13 +11,27 @@ export const MESSAGES = {
     tooLarge: 'Cada archivo puede pesar máximo 10 MB.',
     mixed: 'Un reporte lleva de 1 a 5 fotos o un único PDF; no se pueden mezclar.',
     tooManyPhotos: `Un reporte admite máximo ${MAX_PHOTOS} fotos.`,
+    // It. 46h: el ciudadano adjunta fotos y nada más.
+    photosOnly: 'Solo se aceptan fotos en JPEG; los PDF, los videos y otros archivos no están permitidos aquí.',
 };
+
+/**
+ * It. 46h (US-059-LEG): el selector sirve al veedor (de 1 a 5 fotos o un PDF) y al
+ * ciudadano (de 1 a 3 fotos, sin PDF).
+ *
+ * @typedef {{ max?: number, photosOnly?: boolean }} Limits
+ */
+const DEFAULTS = { max: MAX_PHOTOS, photosOnly: false };
 
 /**
  * Por qué un archivo de tipo `kind` ("photo", "pdf" o null) no se puede
  * sumar a los ya adjuntos; null si se puede. `size`, una vez preparado.
  */
-export function cannotAdd(attached, kind, size = 0) {
+export function cannotAdd(attached, kind, size = 0, limits = DEFAULTS) {
+    const { max, photosOnly } = { ...DEFAULTS, ...limits };
+    if (photosOnly && kind !== 'photo') {
+        return MESSAGES.photosOnly;
+    }
     if (kind === null) {
         return MESSAGES.unsupported;
     }
@@ -27,8 +41,8 @@ export function cannotAdd(attached, kind, size = 0) {
     if (attached.some((evidence) => evidence.kind !== kind) || (kind === 'pdf' && attached.length > 0)) {
         return MESSAGES.mixed;
     }
-    if (attached.length >= MAX_PHOTOS) {
-        return MESSAGES.tooManyPhotos;
+    if (attached.length >= max) {
+        return max === MAX_PHOTOS ? MESSAGES.tooManyPhotos : `Un informe admite máximo ${max} fotos.`;
     }
     return null;
 }
@@ -36,9 +50,10 @@ export function cannotAdd(attached, kind, size = 0) {
 export const cannotUpload = (attached) => (attached.length === 0 ? MESSAGES.required : null);
 
 /** Lo que ofrece el selector: fotos o un PDF; con fotos, solo fotos; con el PDF o 5 fotos, nada. */
-export function acceptedTypes(attached) {
-    if (attached.some((evidence) => evidence.kind === 'pdf') || attached.length >= MAX_PHOTOS) {
+export function acceptedTypes(attached, limits = DEFAULTS) {
+    const { max, photosOnly } = { ...DEFAULTS, ...limits };
+    if (attached.some((evidence) => evidence.kind === 'pdf') || attached.length >= max) {
         return '';
     }
-    return attached.length > 0 ? 'image/*' : 'image/*,application/pdf';
+    return attached.length > 0 || photosOnly ? 'image/*' : 'image/*,application/pdf';
 }

@@ -5,8 +5,7 @@
 // mensaje y una foto opcional, que el navegador limpia como la del veedor.
 // El informe no se sella ni se publica.
 import { computed, ref } from 'vue';
-import PhotoReview from '@/Components/PhotoReview.vue';
-import { draftPhoto, finishPhoto } from '@/lib/evidence/prepare.js';
+import EvidencePicker from '@/Components/EvidencePicker.vue';
 import { requestCitizenCode, sendCitizenReport } from '@/services/api.js';
 import { errorMessage } from '@/services/errors.js';
 
@@ -21,9 +20,8 @@ const email = ref('');
 const authorized = ref(false);
 const code = ref('');
 const message = ref('');
-const photo = ref(null);
-const reviewing = ref(null); // it. 46e: la foto, antes de aceptarla, con sus rostros difuminados
-const photoInput = ref(null);
+const photos = ref([]); // it. 46h: de 1 a 3, ya revisadas y con los rostros difuminados (EvidencePicker)
+const preparing = ref(false);
 const busy = ref(false);
 const notice = ref(null);
 const refused = ref(null);
@@ -50,34 +48,6 @@ async function askForCode() {
     }
 }
 
-async function choosePhoto(event) {
-    const [file] = event.target.files ?? [];
-    photo.value = null;
-    reviewing.value = file ? await draftPhoto(file) : null;
-}
-
-async function usePhoto(review) {
-    const draft = reviewing.value;
-    if (draft === null) {
-        return;
-    }
-    reviewing.value = null; // un doble toque no la prepara dos veces
-    busy.value = true; // ni se envía el informe mientras la foto se termina de preparar
-    try {
-        photo.value = (await finishPhoto(draft, review)).file;
-    } finally {
-        busy.value = false;
-    }
-}
-
-function discardPhoto() {
-    reviewing.value = null;
-    photo.value = null;
-    if (photoInput.value) {
-        photoInput.value.value = '';
-    }
-}
-
 async function send() {
     refused.value = !/^\d{6}$/.test(code.value.trim())
         ? 'Escriba el código de 6 dígitos que le llegó al correo.'
@@ -92,8 +62,8 @@ async function send() {
     form.append('code', code.value.trim());
     form.append('worksite_id', String(props.worksiteId));
     form.append('message', message.value.trim());
-    if (photo.value) {
-        form.append('photo', photo.value);
+    for (const photo of photos.value) {
+        form.append('photos[]', photo.file);
     }
     busy.value = true;
     try {
@@ -146,11 +116,10 @@ const BUTTON = 'min-h-12 rounded-xl bg-brand-700 px-4 py-3 text-base font-semibo
             <label for="citizen-message" class="font-semibold">¿Qué vio en la obra?</label>
             <textarea id="citizen-message" v-model="message" rows="4" :maxlength="MAX_MESSAGE" :class="FIELD"></textarea>
             <p class="text-sm text-slate-700">{{ remaining }} caracteres disponibles.</p>
-            <label for="citizen-photo" class="font-semibold">Una foto (opcional)</label>
-            <input id="citizen-photo" ref="photoInput" type="file" accept="image/*" class="text-base" @change="choosePhoto" />
-            <p class="text-sm text-slate-700">Se le quitan la ubicación y los datos del teléfono antes de enviarla, y los rostros de las personas se difuminan.</p>
-            <PhotoReview v-if="reviewing" :draft="reviewing" @use="usePhoto" @discard="discardPhoto" />
-            <button type="button" :disabled="busy || reviewing !== null" :class="BUTTON" @click="send">Enviar a la veeduría</button>
+            <!-- It. 46h: el mismo selector del veedor — la cámara y la galería, y cada foto se revisa con los rostros ya difuminados. -->
+            <EvidencePicker v-model="photos" v-model:processing="preparing" :max="3" photos-only label="Fotos (opcional): hasta 3" />
+            <p class="text-sm text-slate-700">Se les quitan la ubicación y los datos del teléfono antes de enviarlas, y los rostros de las personas se difuminan.</p>
+            <button type="button" :disabled="busy || preparing" :class="BUTTON" @click="send">Enviar a la veeduría</button>
             <button type="button" class="inline-flex min-h-11 items-center self-start font-semibold underline" @click="startOver">Pedir otro código</button>
         </template>
 

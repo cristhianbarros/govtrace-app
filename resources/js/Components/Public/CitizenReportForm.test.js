@@ -9,7 +9,7 @@ import { draftPhoto, finishPhoto } from '@/lib/evidence/prepare.js';
 import { requestCitizenCode, sendCitizenReport } from '@/services/api.js';
 
 vi.mock('@/services/api.js');
-vi.mock('@/lib/evidence/prepare.js');
+vi.mock('@/lib/evidence/prepare.js', async (importOriginal) => ({ ...(await importOriginal()), draftPhoto: vi.fn(), finishPhoto: vi.fn(), prepareEvidence: vi.fn() }));
 vi.mock('@/lib/evidence/blur.js', async (importOriginal) => ({ ...(await importOriginal()), renderPreview: vi.fn() }));
 
 // It. 46c (US-064-SEC): la obra, por su identificador público.
@@ -30,6 +30,14 @@ beforeEach(() => {
     requestCitizenCode.mockResolvedValue({ message: 'Le enviamos un código de 6 dígitos a vecina@correo.co. Vence en 10 minutos.' });
 });
 
+/** Elegir fotos de la galería, en el selector que usa también el veedor (it. 46h). */
+async function attach(wrapper, files) {
+    const input = wrapper.get('input[type="file"]:not([data-test])');
+    Object.defineProperty(input.element, 'files', { value: files, configurable: true });
+    await input.trigger('change');
+    await flushPromises();
+}
+
 describe('Informar a esta veeduría', () => {
     it('El ciudadano informa a la veeduría con su correo verificado: the code by mail, then the code, the message and a clean photo', async () => {
         const clean = new File(['sin-exif'], 'obra.jpg', { type: 'image/jpeg' });
@@ -44,10 +52,7 @@ describe('Informar a esta veeduría', () => {
 
         await wrapper.get('input#citizen-code').setValue('123456');
         await wrapper.get('textarea#citizen-message').setValue(MESSAGE);
-        const input = wrapper.get('input#citizen-photo');
-        Object.defineProperty(input.element, 'files', { value: [new File(['con-exif'], 'foto.jpg', { type: 'image/jpeg' })] });
-        await input.trigger('change');
-        await flushPromises();
+        await attach(wrapper, [new File(['con-exif'], 'foto.jpg', { type: 'image/jpeg' })]);
         wrapper.findComponent(PhotoReview).vm.$emit('use', { dismissed: [], manual: [] });
         await flushPromises();
         await button(wrapper, 'Enviar a la veeduría').trigger('click');
@@ -55,7 +60,7 @@ describe('Informar a esta veeduría', () => {
 
         const form = sendCitizenReport.mock.calls[0][0];
         expect(Object.fromEntries(['email', 'code', 'worksite_id', 'message'].map((field) => [field, form.get(field)]))).toEqual({ email: 'vecina@correo.co', code: '123456', worksite_id: WORKSITE, message: MESSAGE });
-        expect(form.get('photo').name).toBe('obra.jpg');
+        expect(form.getAll('photos[]').map((photo) => photo.name)).toEqual(['obra.jpg']);
         expect(wrapper.get('[role="status"]').text()).toContain('Su informe llegó a la veeduría.');
         expect(wrapper.text()).toContain('Su informe es el n.º 12.');
     });
@@ -100,12 +105,7 @@ describe('Informar a esta veeduría', () => {
 
 // It. 46e — R-PRIV-05 reescrita: la foto del informe pasa por la misma revisión.
 describe('La foto del informe, difuminada (it. 46e)', () => {
-    async function attach(wrapper) {
-        const input = wrapper.get('input#citizen-photo');
-        Object.defineProperty(input.element, 'files', { value: [new File(['con-rostro'], 'vecinos.jpg', { type: 'image/jpeg' })] });
-        await input.trigger('change');
-        await flushPromises();
-    }
+    const attachOne = (wrapper) => attach(wrapper, [new File(['con-rostro'], 'vecinos.jpg', { type: 'image/jpeg' })]);
 
     it('Los rostros de la foto del informe ciudadano se difuminan en el celular: the citizen reviews it, already blurred, before sending', async () => {
         const blurred = new File(['difuminada'], 'vecinos.jpg', { type: 'image/jpeg' });
@@ -117,7 +117,7 @@ describe('La foto del informe, difuminada (it. 46e)', () => {
         await wrapper.get('input#citizen-code').setValue('123456');
         await wrapper.get('textarea#citizen-message').setValue(MESSAGE);
 
-        await attach(wrapper);
+        await attachOne(wrapper);
         expect(wrapper.findComponent(PhotoReview).props('draft').faces).toHaveLength(1);
         expect(button(wrapper, 'Enviar a la veeduría').attributes('disabled')).toBeDefined();
 
@@ -127,7 +127,7 @@ describe('La foto del informe, difuminada (it. 46e)', () => {
         await button(wrapper, 'Enviar a la veeduría').trigger('click');
         await flushPromises();
 
-        expect(sendCitizenReport.mock.calls[0][0].get('photo')).toBe(blurred);
+        expect(sendCitizenReport.mock.calls[0][0].getAll('photos[]')).toEqual([blurred]);
     });
 
     it('sends no photo when the citizen chose not to use it', async () => {
@@ -135,12 +135,80 @@ describe('La foto del informe, difuminada (it. 46e)', () => {
         const wrapper = mount(CitizenReportForm, { props: { worksiteId: WORKSITE } });
         await askForTheCode(wrapper);
 
-        await attach(wrapper);
+        await attachOne(wrapper);
         wrapper.findComponent(PhotoReview).vm.$emit('discard');
         await flushPromises();
 
         expect(wrapper.findComponent(PhotoReview).exists()).toBe(false);
         expect(finishPhoto).not.toHaveBeenCalled();
-        expect(wrapper.get('input#citizen-photo').element.value).toBe('');
     });
 });
+
+// It. 46h (US-059-LEG): de 1 a 3 fotos, con las mismas opciones del veedor.
+describe('Las fotos del informe, de 1 a 3 (it. 46h)', () => {
+    const named = (n) => new File([`foto ${n}`], `obra${n}.jpg`, { type: 'image/jpeg' });
+
+    async function onTheCodeStep() {
+        draftPhoto.mockImplementation(async (file) => ({ name: file.name, canvas: {}, faces: [], detector: 'ok' }));
+        finishPhoto.mockImplementation(async (draft) => ({ kind: 'photo', file: new File([draft.name], draft.name, { type: 'image/jpeg' }), sha256: 'ab'.repeat(32), blurs: null }));
+        sendCitizenReport.mockResolvedValue({ message: 'Su informe llegó a la veeduría. Si lo atiende, le responde a su correo.', number: '7KQ3-M9XD' });
+        const wrapper = mount(CitizenReportForm, { props: { worksiteId: WORKSITE } });
+        await askForTheCode(wrapper);
+        await wrapper.get('input#citizen-code').setValue('123456');
+        await wrapper.get('textarea#citizen-message').setValue(MESSAGE);
+
+        return wrapper;
+    }
+
+    it('El ciudadano tiene las mismas opciones del veedor: the camera and the gallery, up to 3 photos, no PDF', async () => {
+        const wrapper = await onTheCodeStep();
+
+        expect(wrapper.text()).toContain('Fotos (opcional): hasta 3');
+        expect(wrapper.text()).toContain('Tomar foto');
+        expect(wrapper.text()).toContain('Elegir de la galería');
+        expect(wrapper.get('input[data-test="camera"]').attributes('capture')).toBe('environment');
+        expect(wrapper.text()).not.toContain('PDF');
+    });
+
+    it('El ciudadano adjunta de 1 a 3 fotos: reviews each one, and sends all three in order', async () => {
+        const wrapper = await onTheCodeStep();
+
+        await attach(wrapper, [named(1), named(2), named(3), named(4)]);
+        for (const position of [1, 2, 3]) {
+            expect(wrapper.findComponent(PhotoReview).props()).toMatchObject({ position, total: 3 });
+            expect(button(wrapper, 'Enviar a la veeduría').attributes('disabled')).toBeDefined();
+            wrapper.findComponent(PhotoReview).vm.$emit('use', { dismissed: [], manual: [] });
+            await flushPromises();
+        }
+        expect(wrapper.text()).toContain('Un informe admite máximo 3 fotos.');
+        await button(wrapper, 'Enviar a la veeduría').trigger('click');
+        await flushPromises();
+
+        expect(sendCitizenReport.mock.calls[0][0].getAll('photos[]').map((photo) => photo.name)).toEqual(['obra1.jpg', 'obra2.jpg', 'obra3.jpg']);
+    });
+
+    it('sends the report without photos when none was attached', async () => {
+        const wrapper = await onTheCodeStep();
+
+        await button(wrapper, 'Enviar a la veeduría').trigger('click');
+        await flushPromises();
+
+        expect(sendCitizenReport.mock.calls[0][0].getAll('photos[]')).toEqual([]);
+    });
+
+    it('lets the citizen remove an attached photo before sending', async () => {
+        const wrapper = await onTheCodeStep();
+        await attach(wrapper, [named(1), named(2)]);
+        for (const ignored of [1, 2]) {
+            wrapper.findComponent(PhotoReview).vm.$emit('use', { dismissed: [], manual: [] });
+            await flushPromises();
+        }
+
+        await wrapper.findAll('[data-test="remove-evidence"]')[0].trigger('click');
+        await button(wrapper, 'Enviar a la veeduría').trigger('click');
+        await flushPromises();
+
+        expect(sendCitizenReport.mock.calls[0][0].getAll('photos[]').map((photo) => photo.name)).toEqual(['obra2.jpg']);
+    });
+});
+

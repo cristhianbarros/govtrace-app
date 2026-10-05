@@ -62,7 +62,7 @@ Recorre los cuatro perfiles con la interfaz de las it. 40 y 43. Todo se hace con
    - **Informar a esta veeduría** (it. 44f), en cualquier obra:
      - el ciudadano escribe su correo y autoriza el tratamiento de sus datos;
      - el código de 6 dígitos sale al correo de desarrollo, y `make invites` lo muestra;
-     - con el código, su mensaje y una foto, el informe le llega a la veeduría, en "Informes ciudadanos", sin el correo. La veeduría le responde desde allí. La foto se revisa antes, con los rostros difuminados (it. 46e): para probarlo sirve `tests/fixtures/evidence/rostro-pintura.jpg`, *La Gioconda*.
+     - con el código, su mensaje y de 1 a 3 fotos (**Tomar foto** o **Elegir de la galería**), el informe le llega a la veeduría, en "Informes ciudadanos", sin el correo. La veeduría le responde desde allí. La foto se revisa antes, con los rostros difuminados (it. 46e): para probarlo sirve `tests/fixtures/evidence/rostro-pintura.jpg`, *La Gioconda*.
    - **El validador, el momento más vistoso:**
      - en una foto de la obra, **Descargar archivo original** y **Descargar su prueba**;
      - en **Validar un archivo**, soltar la foto: ✅ *Archivo Auténtico e Inmutable*, con su fecha y su ledger;
@@ -249,7 +249,7 @@ Cámara y ubicación: ver [arriba](#lo-que-hay-que-saber-antes-de-una-demostraci
 
 1. Sin sesión, en la página de una obra (`/worksite/{id}`): **Informar a esta veeduría**.
 2. *Su correo*, la autorización del tratamiento de los datos y **Enviarme el código**. El código de 6 dígitos llega a Mailpit (o con `make invites`); vale 10 minutos.
-3. Con el código, lo que vio (entre 20 y 2.000 caracteres) y una foto opcional: **Enviar a la veeduría**. Le llega un correo con el número de su informe.
+3. Con el código, lo que vio (entre 20 y 2.000 caracteres) y de 1 a 3 fotos opcionales: **Enviar a la veeduría**. Le llega un correo con el número de su informe.
 4. Como Administrador, en **Informes ciudadanos** (`/admin/citizen-reports`): el informe, sin el correo de quien lo envió. **Responder**, escribir la respuesta y **Enviar respuesta**: le llega al ciudadano por correo (en Mailpit).
 - Límites: 3 informes por correo al día y 1 por obra. El informe no se sella ni se publica.
 

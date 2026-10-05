@@ -1,7 +1,12 @@
 // It. 40a — el flujo del ciudadano (docs/mapa-funcional.md, sección 2): sin
 // cuenta, el mapa de la veeduría del fixture, una obra y sus evidencias.
+import { fileURLToPath } from 'node:url';
 import { expect, test } from '@playwright/test';
 import { CENTRAL, ORG, PEOPLE, WORKSITE, latestCodeTo, latestMailTo, logIn, onThisPort } from './support.js';
+
+// It. 46h: un rostro que no es de una persona real (La Gioconda, de dominio público), y un paisaje sin rostros.
+const FACE = fileURLToPath(new URL('../../fixtures/evidence/rostro-pintura.jpg', import.meta.url));
+const NO_FACE = fileURLToPath(new URL('../../fixtures/evidence/sin-rostro.jpg', import.meta.url));
 
 test.describe.configure({ mode: 'serial' });
 
@@ -90,6 +95,19 @@ test('Informa a la veeduría con su correo verificado, y la veeduría le respond
 
     await page.getByLabel('El código que le llegó al correo').fill(latestCodeTo(citizen));
     await page.getByLabel('¿Qué vio en la obra?').fill('Desde el lunes no hay nadie trabajando y la valla está en el piso.');
+
+    // It. 46h: las mismas opciones del veedor — la cámara y la galería — y de 1 a 3 fotos, cada una revisada.
+    await expect(page.getByText('Fotos (opcional): hasta 3')).toBeVisible();
+    await expect(page.getByText('Tomar foto')).toBeVisible();
+    await page.locator('input[type="file"]:not([data-test])').setInputFiles([FACE, NO_FACE]);
+    await expect(page.locator('[data-test="faces-found"]')).toHaveText('Encontramos 1 rostro y lo difuminamos.', { timeout: 30_000 });
+    await expect(page.getByText('Revise la foto antes de adjuntarla (1 de 2)')).toBeVisible();
+    await page.getByRole('button', { name: 'Usar esta foto', exact: true }).click();
+    await expect(page.locator('[data-test="faces-found"]')).toHaveText('No encontramos rostros.', { timeout: 30_000 });
+    await page.getByRole('button', { name: 'Usar esta foto', exact: true }).click();
+    await expect(page.getByRole('button', { name: 'Usar esta foto', exact: true })).toHaveCount(0, { timeout: 30_000 });
+    await expect(page.locator('[data-test="remove-evidence"]')).toHaveCount(2);
+
     await page.getByRole('button', { name: 'Enviar a la veeduría' }).click();
     await expect(page.getByRole('status')).toContainText('Su informe llegó a la veeduría.');
     expect(latestMailTo(citizen)).toContain('Recibimos su informe');
@@ -101,6 +119,11 @@ test('Informa a la veeduría con su correo verificado, y la veeduría le respond
     const report = page.locator('[data-test="citizen-report"]').filter({ hasText: 'la valla está en el piso' });
     await expect(report).toContainText(WORKSITE);
     await expect(page.locator('main')).not.toContainText(citizen);
+    // It. 46h: las dos fotos llegan, y cada una abre.
+    await expect(report.locator('img')).toHaveCount(2);
+    for (const photo of await report.locator('a[target="_blank"]').all()) {
+        expect((await page.request.get(await photo.getAttribute('href'))).headers()['content-type']).toBe('image/jpeg');
+    }
     await report.getByRole('button', { name: 'Responder' }).click();
     await report.getByLabel('Respuesta para el ciudadano').fill('Gracias. Esta semana va un veedor a documentarlo.');
     await report.getByRole('button', { name: 'Enviar respuesta' }).click();

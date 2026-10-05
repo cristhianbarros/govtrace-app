@@ -67,9 +67,12 @@ onMounted(load);
                     </header>
                     <p class="text-sm text-slate-600">Informe n.º {{ report.reference }} · {{ formatDateTime(report.received_at) }}</p>
                     <p class="whitespace-pre-line">{{ report.message }}</p>
-                    <a v-if="report.photo_url" :href="report.photo_url" target="_blank" rel="noopener" class="self-start">
-                        <img :src="report.photo_url" alt="Foto que envió el ciudadano" class="size-32 rounded-lg object-cover" />
-                    </a>
+                    <!-- It. 46h: de 1 a 3 fotos. -->
+                    <div v-if="report.photo_urls.length" class="flex flex-wrap gap-2">
+                        <a v-for="(url, index) in report.photo_urls" :key="url" :href="url" target="_blank" rel="noopener">
+                            <img :src="url" :alt="`Foto ${index + 1} de ${report.photo_urls.length} que envió el ciudadano`" class="size-32 rounded-lg object-cover" />
+                        </a>
+                    </div>
                     <p v-if="report.answer" class="rounded-lg bg-slate-50 p-2"><strong>Respuesta:</strong> {{ report.answer }}</p>
 
                     <template v-if="report.status === 'new'">

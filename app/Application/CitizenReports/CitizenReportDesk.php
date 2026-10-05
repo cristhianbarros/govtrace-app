@@ -61,7 +61,8 @@ class CitizenReportDesk
         Notification::route('mail', self::normalized($email))->notify(new CodeMail($code, tenant()->displayName(), CitizenReportCode::VALID_MINUTES));
     }
 
-    public function receive(string $email, string $code, Worksite $worksite, string $message, ?UploadedFile $photo): CitizenReport
+    /** @param  list<UploadedFile>  $photos  from 1 to 3, or none (it. 46h) */
+    public function receive(string $email, string $code, Worksite $worksite, string $message, array $photos = []): CitizenReport
     {
         $this->assertReceiving();
         $hash = self::fingerprint($email);
@@ -74,11 +75,13 @@ class CitizenReportDesk
         if ((clone $today)->where('worksite_id', $worksite->id)->exists()) {
             throw CitizenReportRefused::alreadyToday();
         }
-        if ($photo) {
-            $this->assertCleanPhoto($photo);
+        if (count($photos) > CitizenReport::MAX_PHOTOS) {
+            throw CitizenReportRefused::tooManyPhotos(CitizenReport::MAX_PHOTOS);
         }
+        // Todas se revisan antes de guardar una: un informe con una foto mala no deja ninguna.
+        array_map($this->assertCleanPhoto(...), $photos);
 
-        $report = DB::transaction(function () use ($pending, $hash, $email, $worksite, $message, $photo) {
+        $report = DB::transaction(function () use ($pending, $hash, $email, $worksite, $message, $photos) {
             $pending->update(['used_at' => now()]);
 
             return CitizenReport::query()->create([
@@ -86,7 +89,7 @@ class CitizenReportDesk
                 'email' => self::normalized($email),
                 'email_hash' => $hash,
                 'message' => trim($message),
-                'photo_path' => $photo ? $this->store($photo) : null,
+                'photo_paths' => array_map($this->store(...), $photos),
                 'data_authorized_at' => $pending->data_authorized_at,
                 'data_policy_version' => DataPolicy::VERSION,
             ]);

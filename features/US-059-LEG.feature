@@ -29,6 +29,24 @@ Característica: Informar a la veeduría de lo que vi en una obra
     Cuando pido un código sin autorizar el tratamiento de mis datos
     Entonces veo "Para informar a la veeduría, autorice el tratamiento de sus datos personales."
 
+  # It. 46h: de 1 a 3 fotos, con las mismas opciones del veedor.
+  @complexity:medium
+  Escenario: El ciudadano adjunta de 1 a 3 fotos a su informe
+    Cuando envío mi informe con 3 fotos, cada una revisada y con los rostros difuminados
+    Entonces la veeduría las ve las 3, en orden, y cada una se abre por separado
+
+  @complexity:low @negative
+  Escenario: Un informe con más de 3 fotos se rechaza
+    Cuando intento adjuntar una 4.ª foto
+    Entonces veo "Un informe admite máximo 3 fotos."
+
+  @complexity:low
+  Escenario: El ciudadano tiene las mismas opciones del veedor
+    Cuando voy a adjuntar fotos a mi informe
+    Entonces veo "Tomar foto", que abre la cámara trasera
+    Y veo "Elegir de la galería"
+    Y no se aceptan PDF ni videos
+
   # It. 46e (R-PRIV-05 reescrita).
   @complexity:medium
   Escenario: Los rostros de la foto del informe ciudadano se difuminan en el celular

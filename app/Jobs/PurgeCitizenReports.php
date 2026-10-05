@@ -32,8 +32,8 @@ class PurgeCitizenReports implements ShouldQueue
             [$deleted, $erased] = $tenant->run(function () use ($limit) {
                 $discarded = CitizenReport::query()->where('status', 'discarded')->where('handled_at', '<', $limit)->get();
                 foreach ($discarded as $report) {
-                    if ($report->photo_path) {
-                        Storage::disk('evidencias')->delete($report->photo_path);
+                    if ($report->photo_paths !== []) {
+                        Storage::disk('evidencias')->delete($report->photo_paths);
                     }
                     $report->delete();
                 }

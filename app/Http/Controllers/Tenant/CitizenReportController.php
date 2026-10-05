@@ -40,14 +40,16 @@ class CitizenReportController extends Controller
             'code' => ['required', 'string'],
             'worksite_id' => ['required', 'string', 'exists:tenant.worksites,public_id'], // it. 46c: su identificador público
             'message' => ['required', 'string', 'min:20', 'max:2000'],
-            'photo' => ['nullable', 'file'],
+            'photos' => ['nullable', 'array'],
+            'photos.*' => ['file'],
+            'photo' => ['nullable', 'file'], // una versión anterior de la página envía una sola
         ], [
             'message.min' => 'Cuéntele a la veeduría qué vio: al menos 20 caracteres.',
             'message.max' => 'El mensaje puede tener máximo 2000 caracteres.',
         ]);
 
         return $this->refusing(function () use ($desk, $data, $request) {
-            $report = $desk->receive($data['email'], $data['code'], Worksite::byPublicId($data['worksite_id']), $data['message'], $request->file('photo'));
+            $report = $desk->receive($data['email'], $data['code'], Worksite::byPublicId($data['worksite_id']), $data['message'], array_values(array_filter([...$request->file('photos', []), $request->file('photo')])));
 
             return response()->json(['message' => 'Su informe llegó a la veeduría. Si lo atiende, le responde a su correo.', 'number' => $report->reference()], 201);
         });
