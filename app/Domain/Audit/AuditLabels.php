@@ -56,6 +56,10 @@ final class AuditLabels
         'super_admin.authorization_revoked' => 'Revocó la autorización al Super Administrador',
         'report.created_by_super_admin' => 'Creó un reporte en nombre de la organización',
         'super_admin.created' => 'Creó un Super Administrador desde la consola del servidor',
+        // It. 46g (US-065-SEC).
+        'super_admin.two_factor_enabled' => 'Configuró su verificación en dos pasos',
+        'super_admin.recovery_code_used' => 'Entró con un código de recuperación',
+        'super_admin.two_factor_reset' => 'Restableció la verificación en dos pasos de un Super Administrador',
     ];
 
     /** It. 46d: the action types of the filter, in the order they are offered. */

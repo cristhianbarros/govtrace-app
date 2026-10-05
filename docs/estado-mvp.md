@@ -4,6 +4,16 @@ Al 2026-10-04. Empezó sobre `77e6030` (iteración 39) y se actualizó en las it
 
 ✅ hecho y probado · ⚠️ a medias · ⬜ falta · 🔒 espera algo externo · ❓ decisión tuya
 
+## Dónde quedó (2026-10-05)
+
+| Qué | PR |
+|---|---|
+| 46g: la verificación en dos pasos del Super Administrador, construida e inactiva (US-065-SEC, R-SEC-09) | este |
+
+- **Tests:** Pest: `SuperAdminTwoFactorTest` 16 de 16 y las suites de ingreso, plataforma, auditoría y privacidad (la suite completa corre antes de fusionar), Vitest 580, `make e2e` 54 de 54 con el interruptor apagado, trace-check 401 de 401, `make ux-check` sin retroceso.
+- **46g, en una frase:** el Super Administrador puede entrar con su contraseña y un código de su app autenticadora (TOTP), con 8 códigos de recuperación y restablecimiento desde la consola. Está apagado hasta que el operador ponga `SUPER_ADMIN_TWO_FACTOR=true` en el servidor. Costo recurrente: 0 USD.
+- ❓ **Decisión tuya:** cuándo activarla. Recomiendo antes de la red principal (`docs/go-live.md`).
+
 ## Dónde quedó (2026-10-04)
 
 | Qué | PR |
@@ -222,7 +232,7 @@ El MVP tiene que estar listo para producción, no solo funcionar. Esta es la var
 - 🔒 La llave de la selladora en AWS KMS (37b).
 - ✅ Dependencias auditadas en cada PR (`make audit`).
 - ⬜ Un análisis dinámico (OWASP ZAP) contra staging, sin hallazgos altos (it. 42).
-- ❓ Doble factor para el Super Administrador.
+- ✅ Verificación en dos pasos (TOTP) para el Super Administrador, construida e **inactiva** (it. 46g): ❓ cuándo activarla (`docs/go-live.md`).
 
 **Confiabilidad**
 - ✅ Respaldos cada hora, 30 días, con réplica fuera del sitio y restauración de prueba con límite de 4 h. 🔒 La restauración con datos reales (37b).
@@ -271,7 +281,7 @@ El MVP tiene que estar listo para producción, no solo funcionar. Esta es la var
 | ⚠️ | SECOP II de verdad | Los tests usan respuestas grabadas (R-TST-02). La sincronización contra la API real no se ha visto correr de punta a punta en un entorno desplegado: se comprueba en staging. |
 | ⬜ | Correo real | Hoy sale a un archivo (`make invites`). En staging, por SMTP (Amazon SES). |
 | ⬜ | **Protección de datos personales** | ❓ La SPEC no menciona la Ley 1581 de 2012. GovTrace trata correos, nombres y la ubicación exacta de cada reporte. Hace falta una política de tratamiento de datos publicada y la autorización de cada veedor al activar su cuenta. Primero es una decisión legal; después, una pantalla y el registro de esa autorización. |
-| ⬜ | Doble factor | ❓ No está en la SPEC. La cuenta del Super Administrador controla todas las organizaciones: recomiendo un segundo factor (TOTP) al menos para ella. |
+| ✅ | Doble factor | It. 46g (US-065-SEC, R-SEC-09): TOTP para el Super Administrador, inactivo hasta que el operador lo active (`SUPER_ADMIN_TWO_FACTOR`). ❓ Cuándo activarlo. |
 
 ## 3. Requisitos no funcionales
 
@@ -367,7 +377,7 @@ Desde el checkpoint base, primero lo que corta un flujo, después lo que lo deja
 | 11 | **It. 46c, identificadores públicos** | Los IDs que se pueden recorrer | ✅ |
 
 **Decisiones tuyas (❓):**
-- el segundo factor para el Super Administrador;
+- cuándo activar la verificación en dos pasos del Super Administrador (construida en la it. 46g, inactiva);
 - la política de datos personales (Ley 1581) y la autorización de los veedores;
 - la meta de accesibilidad y las decisiones de UX (sección 9 de `docs/ux-analisis.md`);
 - las decisiones de los flujos: la solicitud de alta, varios administradores, el autor en la Bandeja, el aviso diario y el contacto de la veeduría (sección 5 de `docs/mapa-funcional.md`);

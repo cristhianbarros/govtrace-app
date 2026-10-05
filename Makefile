@@ -21,7 +21,7 @@ HTTP_PORT ?= $(shell sed -n 's/^HTTP_PORT=\([0-9]*\).*/\1/p' .env.docker 2>/dev/
         stellar-up contract-test contract-deploy contract-smoke doctor test-stellar \
         contract-extend testnet-setup testnet-extend smoke-testnet secrets-check monitoring-check verify-check e2e \
         backup-now backup-list restore-drill backup-check storage-check storage-restore trace-check network-deploy network-extend network-deploy-check \
-        admin invites demo audit staging-check
+        admin admin-2fa-reset invites demo audit staging-check
 
 help: ## List available commands
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -103,6 +103,9 @@ ux-baseline: .env.docker ## Rewrite tests/ux/baseline.json after a UX improvemen
 admin: .env.docker ## The first Super Administrador of a new environment. Usage: make admin EMAIL=ana@x.co [NAME="Ana"] (asks for the password, or generates one)
 	@test -n "$(EMAIL)" || { echo "Uso: make admin EMAIL=ana@correo.co [NAME=\"Ana Directora\"]"; exit 1; }
 	@$(EXEC) php artisan admin:create "$(EMAIL)" $(if $(NAME),--name="$(NAME)")
+admin-2fa-reset: .env.docker ## It. 46g: reset the two-step verification of a Super Administrador who lost their phone. Usage: make admin-2fa-reset EMAIL=ana@x.co
+	@test -n "$(EMAIL)" || { echo "Uso: make admin-2fa-reset EMAIL=ana@correo.co"; exit 1; }
+	@$(EXEC) php artisan admin:two-factor-reset "$(EMAIL)"
 mail: ## The development mailbox (Mailpit, it. 38b): every mail the app sends, as the person gets it
 	@echo "  Correos de desarrollo -> http://mailpit.govtrace.localhost:$(HTTP_PORT)"
 invites: .env.docker ## The links of the latest mails (mail goes to a log in development): invitations, password recovery, and the codes of citizens (it. 44f)

@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers\Central;
 
+use App\Application\Auth\SuperAdminTwoFactor;
 use App\Application\Platform\SuperAdministrators;
 use App\Application\Privacy\DataPolicy;
 use App\Domain\Auth\Rules\StrongPassword;
 use App\Domain\Organization\Exceptions\InvitationRejected;
 use App\Http\Controllers\Controller;
+use App\Http\Support\TwoFactorSession;
 use App\Models\User as SuperAdmin;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -76,6 +78,13 @@ class SetPasswordController extends Controller
             $superAdministrators->accept($invited, $data['token'], $data['name'], $data['password']);
         } catch (InvitationRejected $rejected) {
             throw ValidationException::withMessages(['token' => $rejected->getMessage()]);
+        }
+
+        // It. 46g (R-SEC-09): con el segundo paso, configura su app antes de entrar.
+        if (SuperAdminTwoFactor::required()) {
+            TwoFactorSession::begin($request, $invited);
+
+            return Inertia::location(route('two-factor.show'));
         }
 
         Auth::guard('web')->login($invited);

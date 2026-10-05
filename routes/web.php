@@ -20,9 +20,11 @@ use App\Http\Controllers\Central\SecopHealthController;
 use App\Http\Controllers\Central\SecopSyncNowController;
 use App\Http\Controllers\Central\SetPasswordController;
 use App\Http\Controllers\Central\SuperAdministratorController;
+use App\Http\Controllers\Central\TwoFactorController;
 use App\Http\Controllers\Central\UsageController;
 use App\Http\Controllers\LegacyLinkController;
 use App\Http\Middleware\EnsureSuperAdministratorIsActive;
+use App\Http\Middleware\EnsureTwoFactorPassed;
 use App\Models\User as SuperAdmin;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -53,9 +55,18 @@ foreach (config('tenancy.central_domains') as $domain) {
         Route::get('/set-password/{number}', [LegacyLinkController::class, 'invitation'])->whereNumber('number')->defaults('model', SuperAdmin::class)->defaults('to', 'set-password.show')->middleware('throttle:30,1')->name('legacy.set-password.show');
         Route::post('/set-password/{user}', [SetPasswordController::class, 'store'])->where('user', PublicId::PATTERN)->middleware('throttle:6,1')->name('set-password.store');
 
+        // It. 46g (US-065-SEC, R-SEC-09): el segundo paso del Super Administrador, después de la
+        // contraseña. Solo existe si el operador lo activó (SUPER_ADMIN_TWO_FACTOR).
+        Route::get('/two-factor', [TwoFactorController::class, 'show'])->name('two-factor.show');
+        Route::post('/two-factor', [TwoFactorController::class, 'challenge'])->middleware('throttle:20,1')->name('two-factor.challenge');
+        Route::post('/two-factor/setup', [TwoFactorController::class, 'setup'])->middleware('throttle:20,1')->name('two-factor.setup');
+
         // It. 45a: 'auth.session' cierra la sesión si la contraseña cambió desde que se abrió.
         // It. 46a: un Super Administrador desactivado por otro no sigue actuando con su sesión abierta.
-        Route::middleware(['auth:web', 'auth.session', EnsureSuperAdministratorIsActive::class])->group(function () {
+        // It. 46g: con el segundo paso activo, una sesión que no lo pasó se cierra.
+        Route::middleware(['auth:web', 'auth.session', EnsureSuperAdministratorIsActive::class, EnsureTwoFactorPassed::class])->group(function () {
+            // It. 46g: los códigos de recuperación, una sola vez, al configurar la app.
+            Route::get('/two-factor/recovery-codes', [TwoFactorController::class, 'recoveryCodes'])->name('two-factor.recovery-codes');
             // It. 40b (V1): cerrar sesión, como en cada organización.
             Route::post('/logout', [LoginController::class, 'destroy'])->name('logout');
             // It. 40c (V11): cambiar la contraseña con la sesión abierta.

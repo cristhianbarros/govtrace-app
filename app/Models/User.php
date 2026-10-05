@@ -15,7 +15,7 @@ use Illuminate\Notifications\Notifiable;
 use Stancl\Tenancy\Database\Concerns\CentralConnection;
 
 #[Fillable(['name', 'email', 'password'])]
-#[Hidden(['password', 'remember_token'])]
+#[Hidden(['password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes'])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
@@ -56,6 +56,11 @@ class User extends Authenticatable
             'is_active' => 'boolean',
             'invitation_expires_at' => 'datetime',
             'data_authorized_at' => 'datetime',
+            // It. 46g (R-SEC-09): la clave, cifrada; de los códigos de recuperación, solo su huella.
+            'two_factor_secret' => 'encrypted',
+            'two_factor_recovery_codes' => 'array',
+            'two_factor_confirmed_at' => 'datetime',
+            'two_factor_last_step' => 'integer',
         ];
     }
 }

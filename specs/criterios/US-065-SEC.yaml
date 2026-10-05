@@ -1,0 +1,42 @@
+story_id: "US-065-SEC"
+titulo_historia: "Como plataforma quiero que el Super Administrador entre con su contraseña y un código de su app autenticadora, para que una contraseña robada no baste"
+bloque: "46 — El gobierno de la plataforma"
+criterios_aceptacion:
+  escenarios_exito:
+    - "Mientras SUPER_ADMIN_TWO_FACTOR no esté activo (por defecto), el Super Administrador entra solo con su contraseña, como hoy"
+    - "Activa: la primera vez, después de la contraseña, configura su app: un código QR y la clave para escribirla a mano; confirma con un código de 6 dígitos; entra y ve 8 códigos de recuperación, una sola vez"
+    - "Activa y configurada: después de la contraseña, escribe el código de su app y entra al panel global"
+    - "Sin el teléfono: entra con un código de recuperación, que sirve una sola vez; la pantalla dice cuántos le quedan"
+    - "Un Super Administrador invitado configura su app al activar su cuenta, antes de entrar al panel"
+    - "Desde la consola del servidor (make admin-2fa-reset EMAIL=…) se restablece la de quien perdió el teléfono y los códigos: al entrar, la vuelve a configurar"
+  validaciones_reglas:
+    - "La activa el operador en el servidor, no se apaga desde el panel (R-SEC-09)"
+    - "Solo para el Super Administrador: los miembros de una organización entran como hoy"
+    - "Con solo la contraseña, el panel sigue cerrado: ninguna ruta del panel responde hasta el código"
+    - "El código vale en su ventana de 30 segundos (y la anterior y la siguiente, por el reloj del teléfono), y no sirve dos veces"
+    - "5 códigos equivocados bloquean 15 minutos (R-SEC-03)"
+    - "Hay 10 minutos para escribir el código después de la contraseña"
+    - "La clave se guarda cifrada con la llave de la aplicación; los códigos de recuperación, solo su huella"
+    - "Al activarla, una sesión abierta sin el segundo paso se cierra en su siguiente petición"
+    - "Configurarla, usar un código de recuperación y restablecerla quedan en el log de auditoría (R-AUD-04)"
+  manejo_errores:
+    - {caso: "Código equivocado, vencido o ya usado", mensaje: "El código no es válido o ya venció. Escriba el de 6 dígitos que muestra su app ahora."}
+    - {caso: "Código de recuperación equivocado o ya usado", mensaje: "Ese código de recuperación no es válido o ya se usó."}
+    - {caso: "5 códigos equivocados", mensaje: "Demasiados intentos fallidos. Tu cuenta ha sido bloqueada temporalmente durante 15 minutos."}
+    - {caso: "Pasaron más de 10 minutos desde la contraseña", mensaje: "Pasaron más de 10 minutos. Vuelva a escribir su contraseña."}
+    - {caso: "Una sesión abierta antes de activarla", mensaje: "Por seguridad, vuelva a entrar: ahora el panel global pide un código de su app autenticadora."}
+  requisitos_ux:
+    - "La configuración en tres pasos numerados: instalar una app (con ejemplos), escanear el código QR o escribir la clave, escribir el código"
+    - "El campo del código acepta solo números en el celular (inputmode numeric) y lo llena el sistema (autocomplete one-time-code)"
+    - "Los códigos de recuperación, grandes y legibles, con el aviso de guardarlos fuera del teléfono; se ven una sola vez"
+    - "'Usar un código de recuperación' a la vista en la pantalla del código"
+  casos_edge:
+    - "El reloj del teléfono adelantado o atrasado hasta 30 segundos: el código sirve igual"
+    - "Al activarla con Super Administradores sin configurar: cada uno la configura en su siguiente ingreso"
+    - "Restablecer a quien no la tenía: la consola lo dice y no cambia nada"
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true
