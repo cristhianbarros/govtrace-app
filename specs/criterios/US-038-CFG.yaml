@@ -4,10 +4,10 @@ origen: "analisis_completitud"
 clasificacion_gap: "⚡ Importante"
 criterios_aceptacion:
   escenarios_exito:
-    - "El Super Administrador edita desde el panel global: radio de geocerca (500 m por defecto), ventana de Terminados/Liquidados (12 meses), vigencia de invitaciones (48 h), umbral de saldo de la cuenta patrocinadora (50 XLM, D12) y hora de sincronización (02:00)"
+    - "El Super Administrador edita desde el panel global: radio de geocerca (500 m por defecto), ventana de Terminados/Liquidados (12 meses), vigencia de invitaciones (48 h), umbral de saldo de la cuenta patrocinadora (50 XLM, D12), hora de sincronización (02:00) y (it. 46f) distancia al municipio para fijar una obra (30 km)"
     - "Los cambios se aplican sin desplegar código"
   validaciones_reglas:
-    - "Precisión GPS, archivos por reporte y vigencia offline NO son configurables (fijos en el código)"
+    - "Precisión GPS, archivos por reporte y vigencia offline NO son configurables (fijos en el código); (it. 46f) tampoco la precisión del GPS para fijar la ubicación de una obra (20 m)"
     - "Ningún parámetro es configurable por organización"
     - "Cada cambio queda en el log de auditoría con valor anterior y nuevo (R-AUD-04)"
     - "Los reportes se validan con el valor vigente en el momento de la captura (R-AUD-05)"

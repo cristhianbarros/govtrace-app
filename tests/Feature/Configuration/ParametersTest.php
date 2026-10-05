@@ -13,7 +13,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-it('seeds the five known default parameters, with the sponsor balance threshold in XLM (D12)', function () {
+it('seeds the six known default parameters, with the sponsor balance threshold in XLM (D12)', function () {
     // D12 (2026-09-28): 50 XLM, ~200 sellos de 0,2435 XLM. Reemplaza al
     // umbral de 5 POL del diseño EVM.
     expect(Parameters::current('relayer_balance_alert_threshold_pol'))->toBeNull();
@@ -22,7 +22,9 @@ it('seeds the five known default parameters, with the sponsor balance threshold 
         ->and(Parameters::current('closed_contract_report_window_months'))->toBe('12')
         ->and(Parameters::current('invitation_validity_hours'))->toBe('48')
         ->and(Parameters::current('sponsor_balance_alert_threshold_xlm'))->toBe('50')
-        ->and(Parameters::current('secop_sync_hour'))->toBe('02:00');
+        ->and(Parameters::current('secop_sync_hour'))->toBe('02:00')
+        // It. 46f: la distancia al municipio para que el primer reporte fije la ubicación de una obra.
+        ->and(Parameters::current('anchor_municipality_radius_km'))->toBe('30');
 });
 
 it('returns the value that was in effect at a past moment, not the current one', function () {

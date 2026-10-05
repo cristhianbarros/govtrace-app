@@ -26,6 +26,54 @@ Característica: Crear un reporte de evidencia con ubicación GPS
     Entonces la ficha de obra de mi organización queda ubicada en 11.2408, -74.1990
     Y el contrato de SECOP no se modifica
 
+  @complexity:high @negative
+  Esquema del escenario: El primer reporte solo fija la ubicación cerca del municipio del contrato
+    Dado que la obra del contrato "CO1.PCCNTR.2222222" de "Santa Marta" no tiene ubicación en mi organización
+    Y la distancia al municipio para fijar una obra es 30 km
+    Y mi GPS indica una posición a <distancia> km de la cabecera de "Santa Marta" con precisión de 10 m
+    Cuando creo un reporte del contrato "CO1.PCCNTR.2222222" clasificado como "Avance" con 1 foto
+    Entonces el reporte es aceptado
+    Y la ubicación de la obra <resultado>
+
+    Ejemplos:
+      | distancia | resultado                     |
+      | 29        | queda fijada en mi posición   |
+      | 42.3      | queda por confirmar           |
+
+  @complexity:medium @negative
+  Escenario: El veedor sabe por qué la ubicación de la obra quedó por confirmar
+    Dado que la obra del contrato "CO1.PCCNTR.2222222" de "Santa Marta" no tiene ubicación en mi organización
+    Y mi GPS indica una posición a 42.3 km de la cabecera de "Santa Marta" con precisión de 10 m
+    Cuando creo un reporte del contrato "CO1.PCCNTR.2222222" clasificado como "Avance" con 1 foto
+    Entonces veo el mensaje "La ubicación de esta obra queda por confirmar: su reporte se tomó a 42.3 km de Santa Marta, y para fijar una obra hay que estar a menos de 30 km de su municipio. La veeduría la revisará."
+
+  @complexity:high @negative
+  Esquema del escenario: El primer reporte solo fija la ubicación con buena señal del GPS
+    Dado que la obra del contrato "CO1.PCCNTR.2222222" de "Santa Marta" no tiene ubicación en mi organización
+    Y mi GPS indica una posición cerca de la cabecera de "Santa Marta" con precisión de <precision> m
+    Cuando creo un reporte del contrato "CO1.PCCNTR.2222222" clasificado como "Avance" con 1 foto
+    Entonces el reporte es aceptado
+    Y la ubicación de la obra <resultado>
+
+    Ejemplos:
+      | precision | resultado                                                                                                                                                     |
+      | 20        | queda fijada en mi posición                                                                                                                                   |
+      | 21        | queda por confirmar, y veo "La ubicación de esta obra queda por confirmar: la señal del GPS tenía una precisión de 21 m, y para fijar una obra se necesitan 20 m o menos. La veeduría la revisará." |
+
+  @complexity:medium @edge
+  Escenario: Un contrato departamental se mide contra la cabecera más cercana de su departamento
+    Dado que la obra de un contrato de la Gobernación del Magdalena, sin municipio, no tiene ubicación en mi organización
+    Y mi GPS indica una posición a 5 km de la cabecera de "Ciénaga" con precisión de 10 m
+    Cuando creo un reporte de ese contrato
+    Entonces la ubicación de la obra queda fijada en mi posición
+
+  @complexity:medium @edge
+  Escenario: Mientras la ubicación esté por confirmar, el siguiente reporte lo vuelve a intentar
+    Dado que el primer reporte de la obra del contrato "CO1.PCCNTR.2222222" dejó su ubicación por confirmar
+    Cuando otro veedor envía un reporte de esa obra desde cerca de "Santa Marta" con precisión de 10 m
+    Entonces el reporte es aceptado sin geocerca
+    Y la ubicación de la obra queda fijada en su posición
+
   @complexity:low @negative
   Escenario: La clasificación es obligatoria
     Dado que mi GPS indica una posición a 120 m de la obra con precisión de 15 m

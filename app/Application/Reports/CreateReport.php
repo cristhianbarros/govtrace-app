@@ -6,6 +6,7 @@ use App\Application\Sealing\QueueReportForSealing;
 use App\Domain\Configuration\Parameters;
 use App\Domain\Contracts\Contract;
 use App\Domain\Contracts\ContractArchive;
+use App\Domain\Geography\Municipality;
 use App\Domain\Organization\User;
 use App\Domain\Organization\WatchedTerritories;
 use App\Domain\Reports\Evidence;
@@ -21,6 +22,7 @@ use App\Domain\Reports\ReportComment;
 use App\Domain\Reports\SuspiciousCaptureTime;
 use App\Domain\Sealing\ReportSeal;
 use App\Domain\Sealing\SealStatus;
+use App\Domain\Worksites\FirstTouch;
 use App\Domain\Worksites\Worksite;
 use App\Domain\Worksites\WorksiteContract;
 use Carbon\CarbonInterface;
@@ -45,6 +47,10 @@ use Throwable;
  * primer reporte, el segundo espera a que el primero confirme y se valida
  * contra la ubicación que este fijó. Si la ficha ni siquiera existía,
  * la carrera la resuelve el índice único de worksite_contracts.
+ *
+ * It. 46f: First-Touch con guardas (FirstTouch). El primer reporte fija la
+ * ubicación solo cerca de la cabecera del municipio del contrato y con buena
+ * señal; si no, se recibe igual y la ubicación queda por confirmar.
  */
 class CreateReport
 {
@@ -67,11 +73,16 @@ class CreateReport
             $officialLocation = $worksite->location();
 
             // It. 45f: lo que la Bandeja dirá de su ubicación, sin las coordenadas del veedor.
-            $anchored = $officialLocation === null;
-            if ($anchored) {
-                $worksite->anchorAt($reading->point);
-                $distanceMeters = 0;
+            $firstTouch = null;
+            if ($officialLocation === null) {
+                $firstTouch = $this->firstTouch($contract, $reading, $input->capturedAt);
+                if ($firstTouch->fixesLocation()) {
+                    $worksite->anchorAt($reading->point);
+                }
+                $anchored = $firstTouch->fixesLocation();
+                $distanceMeters = $anchored ? 0 : null;
             } else {
+                $anchored = false;
                 $distanceMeters = (int) round((new Geofence($officialLocation, $radiusMeters))->assertContains($reading->point));
             }
 
@@ -89,6 +100,9 @@ class CreateReport
                 'suspicious_capture_time' => SuspiciousCaptureTime::applies($input->capturedAt, $receivedAt),
                 'anchored_worksite' => $anchored,
                 'distance_to_worksite_meters' => $distanceMeters,
+                'anchor_withheld' => $firstTouch?->withheld,
+                'reference_municipality_code' => $firstTouch?->seat?->code,
+                'distance_to_municipality_meters' => $firstTouch?->distanceToSeatMeters,
             ]);
 
             $this->storeEvidences($report, $evidenceSet);
@@ -178,6 +192,19 @@ class CreateReport
         }
 
         return $contract;
+    }
+
+    /** It. 46f: whether this first report may fix the location, with the distance to the municipality in force at capture (R-AUD-05). */
+    private function firstTouch(Contract $contract, GpsReading $reading, CarbonInterface $capturedAt): FirstTouch
+    {
+        $maxKilometers = (int) (Parameters::valueAt('anchor_municipality_radius_km', $capturedAt)
+            ?? throw new RuntimeException('Falta el parámetro anchor_municipality_radius_km.'));
+
+        return FirstTouch::judge(
+            $reading,
+            Municipality::seatFor($contract->municipality_code, $contract->department_code, $reading->point),
+            $maxKilometers * 1000,
+        );
     }
 
     /** The worksite grouping the contract, locked until the transaction ends; created if it doesn't exist yet. */

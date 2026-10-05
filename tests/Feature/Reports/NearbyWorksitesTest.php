@@ -134,3 +134,19 @@ it('Mi ubicación no viaja en la URL de la petición: it takes the location in t
         ->getJson('http://veeduria-smr.govtrace.localhost/worksites/nearby?latitude='.ME[0].'&longitude='.ME[1])
         ->assertStatus(405);
 });
+
+it('says in Spanish that the address is only for the app, when it is opened in the browser (it. 46f)', function () {
+    $message = 'Esta dirección no se abre en el navegador: la usa la app por dentro. Vuelva a la pantalla anterior.';
+    $this->flushSession();
+
+    $this->actingAs($this->veedor, 'tenant')
+        ->getJson('http://veeduria-smr.govtrace.localhost/worksites/nearby')
+        ->assertStatus(405)
+        ->assertExactJson(['message' => $message]);
+
+    $this->withoutVite()->actingAs($this->veedor, 'tenant')
+        ->get('http://veeduria-smr.govtrace.localhost/worksites/nearby')
+        ->assertStatus(405)
+        ->assertSee($message)
+        ->assertDontSee('The GET method is not supported');
+});

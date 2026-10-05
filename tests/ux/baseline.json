@@ -148,10 +148,10 @@
   },
   "escritorio/superadmin-parametros": {
     "axe": {},
-    "textUnder16": 12,
+    "textUnder16": 11,
     "textUnder14": 0,
     "smallTargets": 0,
-    "targets": 19
+    "targets": 21
   },
   "escritorio/superadmin-secop": {
     "axe": {},
@@ -351,7 +351,7 @@
   },
   "movil/superadmin-auditoria": {
     "axe": {},
-    "textUnder16": 77,
+    "textUnder16": 78,
     "textUnder14": 0,
     "smallTargets": 0,
     "targets": 33
@@ -372,10 +372,10 @@
   },
   "movil/superadmin-parametros": {
     "axe": {},
-    "textUnder16": 15,
+    "textUnder16": 12,
     "textUnder14": 0,
     "smallTargets": 0,
-    "targets": 15
+    "targets": 17
   },
   "movil/superadmin-secop": {
     "axe": {},

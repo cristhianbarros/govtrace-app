@@ -21,6 +21,13 @@ Característica: Corregir la ubicación oficial de una obra
       | arrastrando el pin                  |
       | escribiendo latitud y longitud      |
 
+  @complexity:medium
+  Escenario: Confirmar la ubicación que el primer reporte dejó por confirmar
+    Dado que el primer reporte de la obra "Pavimentación Calle 30" dejó su ubicación por confirmar en 11.6000, -74.2000
+    Cuando toco "Confirmar esta ubicación" en esa evidencia de la Bandeja
+    Entonces la ubicación oficial de la obra queda en 11.6000, -74.2000
+    Y el log registra mi ID, la fecha y hora, sin coordenadas anteriores, y las nuevas 11.6000, -74.2000
+
   @complexity:low @negative
   Escenario: Cada corrección queda en el log de auditoría
     Cuando corrijo la ubicación de "Acueducto Gaira" a 11.2408, -74.1990 y guardo

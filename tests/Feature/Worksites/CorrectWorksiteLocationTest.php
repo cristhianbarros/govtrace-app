@@ -124,3 +124,24 @@ it('rejects coordinates that do not exist', function () {
         ->assertUnprocessable()
         ->assertJsonValidationErrors('location');
 });
+
+it('Confirmar la ubicación que el primer reporte dejó por confirmar: fixes it at that point, with no previous coordinates in the log (it. 46f)', function () {
+    // El primer reporte se tomó a 42.3 km de Santa Marta: la obra quedó sin ubicación.
+    reportableContract('CO1.PCCNTR.2222222');
+    $unlocated = worksiteWithContracts($this->tenant, ['CO1.PCCNTR.2222222'], null);
+    $veedor = reportingMember($this->tenant, 'carlos@correo.co');
+    sendReport($veedor, ['secop_contract_id' => 'CO1.PCCNTR.2222222', 'latitude' => 11.6000, 'longitude' => -74.2000])->assertCreated();
+    tenancy()->end();
+    $this->flushSession();
+    expect($this->tenant->run(fn () => $unlocated->fresh()->location()))->toBeNull();
+
+    // "Confirmar esta ubicación" envía el punto de ese reporte.
+    correctLocation($this->administrator, 'veeduria-smr', $unlocated->id, 11.6000, -74.2000)->assertOk();
+
+    $location = $this->tenant->run(fn () => $unlocated->fresh()->location());
+    $entry = AuditLog::query()->where('action', 'worksite.location_corrected')->sole();
+    expect([$location->latitude, $location->longitude])->toBe([11.6, -74.2])
+        ->and($entry->actor_id)->toBe((string) $this->administrator->id)
+        ->and($entry->before)->toBe(['worksite_id' => $unlocated->id, 'latitude' => null, 'longitude' => null])
+        ->and($entry->after)->toBe(['worksite_id' => $unlocated->id, 'latitude' => 11.6, 'longitude' => -74.2]);
+});

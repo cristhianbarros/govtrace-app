@@ -1,6 +1,6 @@
-// Iteración 30, it. 40b — las pestañas de la app del veedor, al alcance del
-// pulgar. "Salir" pasó al menú de cuenta de la cabecera (AccountMenu.test.js),
-// donde siempre pregunta antes.
+// Iteración 30, it. 40b — las pestañas de la app del veedor, arriba y siempre
+// a la vista (2026-10-04). "Salir" pasó al menú de cuenta de la cabecera
+// (AccountMenu.test.js), donde siempre pregunta antes.
 import { mount } from '@vue/test-utils';
 import { describe, expect, it, vi } from 'vitest';
 import VeedorNav from './VeedorNav.vue';

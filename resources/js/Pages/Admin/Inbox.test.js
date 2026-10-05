@@ -6,7 +6,7 @@ import { flushPromises, mount } from '@vue/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { defineComponent, h } from 'vue';
 import Inbox from './Inbox.vue';
-import { decideOnEvidence, fetchInbox } from '@/services/api.js';
+import { correctWorksiteLocation, decideOnEvidence, fetchInbox } from '@/services/api.js';
 import { router } from '@/testing/inertia.js';
 
 vi.mock('@inertiajs/vue3', async () => await import('@/testing/inertia.js'));
@@ -284,6 +284,61 @@ describe('La ubicación de cada evidencia (it. 45f)', () => {
         await button(wrapper, 'Rechazar').trigger('click');
 
         expect(wrapper.find('[data-test="anchored-reject-warning"]').exists()).toBe(false);
+    });
+});
+
+// It. 46f — el primer reporte que no fijó la ubicación de su obra llega por confirmar.
+describe('La ubicación por confirmar (it. 46f)', () => {
+    const REASON = 'se tomó a 42.3 km de Santa Marta, y para fijar una obra hay que estar a menos de 30 km de su municipio';
+    const point = { latitude: 11.5851, longitude: -74.199829 };
+    const pending = (status = 'unlocated') =>
+        evidence({ location: { anchored_worksite: false, distance_meters: null, point, corrected: false, pending: { reason: REASON, status } } });
+
+    it('La evidencia cuyo primer reporte no fijó la ubicación llega por confirmar: the reason, the point on a small map, and both actions', async () => {
+        const wrapper = await openInbox([pending()]);
+
+        const box = wrapper.get('[data-test="location-pending"]');
+        expect(box.text()).toContain(`📍 Ubicación por confirmar: es el primer reporte de la obra, pero ${REASON}. La obra sigue sin ubicación oficial.`);
+        expect(box.get('[data-test="location-map"]').text()).toBe('11.5851, -74.199829');
+        expect(box.findAll('button').map((candidate) => candidate.text())).toEqual(['Confirmar esta ubicación']);
+        expect(box.get('a[data-test="correct-location"]').attributes('href')).toBe('/admin/worksites?corregir=1');
+        expect(wrapper.text()).not.toContain('📍 Este reporte fijó la ubicación oficial de la obra.');
+        expect(wrapper.text()).not.toContain('Tomada a');
+    });
+
+    it('Confirmar la ubicación que el primer reporte dejó por confirmar: sends that point, and says it was fixed there', async () => {
+        correctWorksiteLocation.mockResolvedValue({ message: 'La ubicación oficial de la obra ha sido ajustada. La nueva geocerca de 500m ya está activa para los veedores.' });
+        const wrapper = await openInbox([pending()]);
+
+        await button(wrapper, 'Confirmar esta ubicación').trigger('click');
+        await flushPromises();
+
+        expect(correctWorksiteLocation).toHaveBeenCalledWith(1, point);
+        const box = wrapper.get('[data-test="location-pending"]');
+        expect(box.get('[role="status"]').text()).toBe('La ubicación oficial de la obra ha sido ajustada. La nueva geocerca de 500m ya está activa para los veedores.');
+        expect(box.text()).toContain('Ubicación confirmada aquí.');
+        expect(box.find('button').exists()).toBe(false);
+    });
+
+    it('says why it could not confirm it, and lets try again', async () => {
+        correctWorksiteLocation.mockRejectedValue(new Error('Network Error'));
+        const wrapper = await openInbox([pending()]);
+
+        await button(wrapper, 'Confirmar esta ubicación').trigger('click');
+        await flushPromises();
+
+        expect(wrapper.get('[data-test="location-pending"] [role="alert"]').text()).toContain('No se pudo conectar con el servidor.');
+        expect(button(wrapper, 'Confirmar esta ubicación').exists()).toBe(true);
+    });
+
+    it('says when it was already confirmed there, or the worksite was located elsewhere', async () => {
+        const confirmed = await openInbox([pending('confirmed')]);
+        expect(confirmed.get('[data-test="location-pending"]').text()).toContain('Ubicación confirmada aquí.');
+        expect(confirmed.find('[data-test="location-pending"] button').exists()).toBe(false);
+
+        const elsewhere = await openInbox([pending('elsewhere')]);
+        expect(elsewhere.get('[data-test="location-pending"]').text()).toContain('La obra ya tiene ubicación oficial, en otro lugar.');
+        expect(elsewhere.find('[data-test="location-pending"] button').exists()).toBe(false);
     });
 });
 

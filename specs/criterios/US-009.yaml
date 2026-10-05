@@ -21,9 +21,11 @@ criterios_aceptacion:
     - "La app no permite mezclar fotos y PDF en un mismo reporte"
     - "(It. 40d, 2026-09-30) Dos botones: 'Tomar foto' abre la cámara trasera; 'Elegir de la galería o un PDF', el selector"
     - "(It. 46e) Un aviso junto a los botones: 'Si en la foto aparecen personas, sobre todo niños, sus rostros se difuminan antes de enviarla.'"
+    - "(2026-10-04, pedido por el usuario) Encima de la foto, un aviso llamativo: '¿Ve a alguien sin difuminar? Tóquelo en la foto.', y que el recuadro amarillo solo marca la zona: no aparece en la foto que se envía"
     - "(It. 46e) Cada foto se revisa antes de adjuntarla: se ve ya difuminada, con lo que encontró el detector en una frase; tocar la foto difumina esa zona, y tocar una zona difuminada a mano la quita; botones grandes 'Usar esta foto' y 'No usar esta foto'"
   casos_edge:
     - "(It. 46e) El detector ve mejor los rostros cercanos (a menos de unos 2 m); se revisa la foto entera y también por cuartos, para ver rostros más pequeños. Lo que no vea, se difumina a mano"
+    - "(It. 46f, 2026-10-04, pedido por el usuario) Los cuartos se reemplazan por una grilla de 4 × 4 ventanas que se solapan: en una foto de 1920 px se encuentran los rostros desde unos 48 px de ancho (hoy, desde unos 80 px)"
     - "(It. 46e) Una versión anterior de la app que no envía los datos del difuminado: el reporte se recibe igual, y la Bandeja no dice nada del difuminado"
 validacion_smart:
   specific: true

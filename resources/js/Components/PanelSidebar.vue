@@ -1,7 +1,7 @@
 <script setup>
 // It. 40c: la navegación de un panel en el computador — todas sus pantallas a
 // la vista, agrupadas, con su ícono y su nombre. En el celular la reemplazan
-// las pestañas de abajo (PanelTabs).
+// las pestañas de arriba (PanelTabs).
 import { Link, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import { isCurrentScreen } from '@/lib/navigation.js';

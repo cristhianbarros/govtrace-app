@@ -25,19 +25,22 @@ const contract = ref(null);
 const sending = ref(false);
 const serverErrors = ref([]);
 const sent = ref(false);
+const locationPending = ref(null); // it. 46f: por qué la ubicación de la obra quedó por confirmar
 
 function choose(selected) {
     contract.value = selected;
     sent.value = false;
+    locationPending.value = null;
 }
 
 async function submit(report) {
     sending.value = true;
     serverErrors.value = [];
     try {
-        await sendReportOnBehalf(props.organization.id, reportFormData(report));
+        const answer = await sendReportOnBehalf(props.organization.id, reportFormData(report));
         contract.value = null;
         sent.value = true;
+        locationPending.value = answer?.location_pending ?? null;
     } catch (error) {
         serverErrors.value = errorMessages(error);
     } finally {
@@ -57,6 +60,7 @@ async function submit(report) {
             <p v-if="sent" role="status" class="rounded-lg bg-emerald-50 p-3 text-base font-semibold text-emerald-800">
                 Reporte recibido en nombre de {{ organization.name }}. Se sella como los demás, y la veeduría lo revisa antes de publicarlo.
             </p>
+            <p v-if="locationPending" data-test="location-pending" class="rounded-lg bg-amber-50 p-3 text-base font-semibold text-amber-900 ring-1 ring-amber-200">{{ locationPending }}</p>
 
             <ContractSearch v-if="!contract" :search="search" @select="choose" />
             <ReportForm v-else :contract="contract" :sending="sending" :server-errors="serverErrors" @submit="submit" @change-worksite="contract = null" />

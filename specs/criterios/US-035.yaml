@@ -12,7 +12,8 @@ criterios_aceptacion:
   manejo_errores: []
   requisitos_ux:
     - "Mapa interactivo con pin arrastrable y campos de latitud/longitud"
-  casos_edge: []
+  casos_edge:
+    - {caso: "(It. 46f) El primer reporte de una obra no fijó su ubicación (lejos de su municipio o con mala señal) y la ubicación quedó por confirmar", resultado: "Desde la Bandeja, 'Confirmar esta ubicación' la fija en el punto de ese reporte: es una corrección más, con su registro en el log de auditoría (coordenadas anteriores vacías)"}
 validacion_smart:
   specific: true
   measurable: true

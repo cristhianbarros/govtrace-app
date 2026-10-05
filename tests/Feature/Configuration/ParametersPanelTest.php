@@ -126,6 +126,17 @@ it('Ajuste de un parámetro configurable: the system uses the new value without 
     'umbral de saldo de la patrocinadora' => ['sponsor_balance_alert_threshold_xlm', '50', '80', fn () => Parameters::current('sponsor_balance_alert_threshold_xlm') === '80'],
     // La próxima corrida de schedule:run (un proceso nuevo cada minuto) la programa a las 03:30.
     'hora de sincronización' => ['secop_sync_hour', '02:00', '03:30', fn () => nightlySyncExpression() === '30 3 * * *'],
+    // It. 46f: el primer reporte de una obra sin ubicación, a 40 km de Santa Marta: con 30 km quedaba por confirmar; con 50 km, la fija.
+    'distancia al municipio para fijar una obra' => ['anchor_municipality_radius_km', '30', '50', function () {
+        reportableContract('CO1.PCCNTR.2222222');
+        $worksite = worksiteWithContracts(test()->tenant, ['CO1.PCCNTR.2222222'], null);
+        [$latitude, $longitude] = pointMetersNorthOf([11.204679, -74.199829], 40_000);
+        test()->flushSession();
+        // Capturado ahora, después del cambio (R-AUD-05).
+        sendReport(test()->veedor, ['secop_contract_id' => 'CO1.PCCNTR.2222222', 'latitude' => $latitude, 'longitude' => $longitude, 'accuracy_meters' => 10, 'captured_at' => now()->toIso8601String()])->assertCreated();
+
+        return test()->tenant->run(fn () => $worksite->fresh()->location()) !== null;
+    }],
 ]);
 
 it('Los parámetros fijos no se pueden configurar', function (string $key, string $label) {
@@ -139,6 +150,7 @@ it('Los parámetros fijos no se pueden configurar', function (string $key, strin
     'precisión mínima del GPS' => ['gps_max_accuracy_meters', 'Precisión mínima del GPS'],
     'archivos por reporte' => ['files_per_report', 'Archivos por reporte'],
     'vigencia de reportes sin conexión' => ['offline_validity_days', 'Vigencia de reportes sin conexión'],
+    'precisión del GPS para fijar la ubicación de una obra' => ['anchor_max_accuracy_meters', 'Precisión del GPS para fijar la ubicación de una obra'],
 ]);
 
 it('Un Administrador de Organización no puede cambiar parámetros globales', function () {
@@ -175,6 +187,7 @@ it('shows each configurable parameter with its label, unit and current value', f
         ['key' => 'invitation_validity_hours', 'label' => 'Vigencia de invitaciones', 'unit' => 'h', 'value' => '48'],
         ['key' => 'sponsor_balance_alert_threshold_xlm', 'label' => 'Umbral de saldo de la patrocinadora', 'unit' => 'XLM', 'value' => '50'],
         ['key' => 'secop_sync_hour', 'label' => 'Hora de sincronización SECOP (hora de Colombia)', 'unit' => 'HH:MM', 'value' => '02:00'],
+        ['key' => 'anchor_municipality_radius_km', 'label' => 'Distancia al municipio para fijar una obra', 'unit' => 'km', 'value' => '30'],
     ]);
 });
 
@@ -191,6 +204,8 @@ it('rejects a value that does not fit the parameter', function (string $key, str
     ['invitation_validity_hours', '0', 'La vigencia de invitaciones debe ser un número entero de horas entre 1 y 720.'],
     ['sponsor_balance_alert_threshold_xlm', '-1', 'El umbral de saldo de la patrocinadora debe ser un número de XLM mayor que 0.'],
     ['secop_sync_hour', '25:00', 'La hora de sincronización SECOP debe tener el formato HH:MM, entre 00:00 y 23:59.'],
+    ['anchor_municipality_radius_km', '0', 'La distancia al municipio para fijar una obra debe ser un número entero de kilómetros entre 1 y 300.'],
+    ['anchor_municipality_radius_km', '301', 'La distancia al municipio para fijar una obra debe ser un número entero de kilómetros entre 1 y 300.'],
 ]);
 
 it('serves the parameters screen to the Super Administrador', function () {

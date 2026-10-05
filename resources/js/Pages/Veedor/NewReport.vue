@@ -29,6 +29,7 @@ const sending = ref(false);
 const serverErrors = ref([]);
 const sent = ref(false);
 const savedOffline = ref(false); // US-018 e it. 41: por qué quedó en la bandeja de salida (el mensaje), o false
+const locationPending = ref(null); // it. 46f: por qué la ubicación de la obra quedó por confirmar
 
 // US-019: las obras cercanas, desde donde está el veedor.
 const NO_NEARBY = '📍 No se encontraron obras a menos de 500m. Utilice el buscador para encontrarla por nombre o contrato.';
@@ -49,6 +50,7 @@ function chooseWorksite(selected) {
     contract.value = selected;
     sent.value = false;
     savedOffline.value = false;
+    locationPending.value = null;
 }
 
 async function submit(report) {
@@ -61,9 +63,10 @@ async function submit(report) {
             await keepOffline(report);
             return;
         }
-        await sendReport(reportFormData(report));
+        const answer = await sendReport(reportFormData(report));
         startOver();
         sent.value = true;
+        locationPending.value = answer?.location_pending ?? null;
     } catch (error) {
         if (error?.response?.status === 429) {
             // It. 41: pasado el límite por hora, a la bandeja de salida: se envía sola después.
@@ -115,6 +118,7 @@ function startOver() {
             <h1 class="text-xl font-semibold">Nuevo Reporte</h1>
 
             <p v-if="sent" role="status" class="rounded-lg bg-emerald-50 p-3 text-sm font-semibold text-emerald-800">{{ SUCCESS_MESSAGE }}</p>
+            <p v-if="locationPending" data-test="location-pending" role="status" class="rounded-lg bg-amber-50 p-3 text-sm font-semibold text-amber-900 ring-1 ring-amber-200">{{ locationPending }}</p>
             <p v-if="savedOffline" role="status" class="rounded-lg bg-amber-100 p-3 text-sm font-semibold text-amber-900">{{ savedOffline }}</p>
 
             <!-- 1. La obra: una cercana (US-019) o buscada (US-016) -->

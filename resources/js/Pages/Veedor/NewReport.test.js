@@ -87,6 +87,24 @@ describe('Nuevo Reporte', () => {
         expect(wrapper.text()).toContain(SUCCESS);
     });
 
+    it('says, after sending, why the location of the worksite was left to confirm (it. 46f)', async () => {
+        const pending = 'La ubicación de esta obra queda por confirmar: su reporte se tomó a 42.3 km de Santa Marta, y para fijar una obra hay que estar a menos de 30 km de su municipio. La veeduría la revisará.';
+        sendReport.mockResolvedValue({ id: 42, location_pending: pending });
+        const wrapper = await onWorksite(reading(15));
+
+        await fillReport(wrapper);
+        await wrapper.get('form').trigger('submit');
+        await flushPromises();
+
+        expect(wrapper.text()).toContain(SUCCESS);
+        expect(wrapper.get('[data-test="location-pending"]').text()).toBe(pending);
+
+        // El siguiente reporte empieza sin ese aviso.
+        wrapper.findComponent(ContractSearch).vm.$emit('select', contract);
+        await flushPromises();
+        expect(wrapper.find('[data-test="location-pending"]').exists()).toBe(false);
+    });
+
     it('Permiso de GPS denegado: the report cannot be created, and the veedor sees why', async () => {
         const wrapper = await onWorksite({ code: 1, PERMISSION_DENIED: 1 });
 

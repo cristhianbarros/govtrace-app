@@ -6,10 +6,13 @@
 // It. 45f: dónde se tomó, sin las coordenadas del veedor. La que fijó la
 // ubicación oficial de la obra (First-Touch) llega marcada, con ese punto y
 // el enlace para corregirlo en Obras (US-035).
+// It. 46f: la del primer reporte que no fijó la ubicación (lejos de su
+// municipio, o con mala señal) llega por confirmar: el motivo, el punto, y
+// confirmarla ahí mismo o corregirla en Obras.
 import { computed, ref } from 'vue';
 import LocationMap from '@/Components/LocationMap.vue';
 import { formatDateTime } from '@/lib/format.js';
-import { decideOnEvidence } from '@/services/api.js';
+import { correctWorksiteLocation, decideOnEvidence } from '@/services/api.js';
 import { errorMessage } from '@/services/errors.js';
 
 // It. 40e: el mismo color de cada clasificación que en el sitio público.
@@ -30,6 +33,7 @@ const ANCHORED = '📍 Este reporte fijó la ubicación oficial de la obra.';
 
 const location = computed(() => props.evidence.location ?? {});
 const anchored = computed(() => location.value.anchored_worksite === true && location.value.point !== null);
+const pending = computed(() => (location.value.pending && location.value.point !== null ? location.value.pending : null));
 const distance = computed(() =>
     !anchored.value && Number.isFinite(location.value.distance_meters) ? new Intl.NumberFormat('es-CO').format(location.value.distance_meters) : null,
 );
@@ -40,6 +44,20 @@ const dismissedBlurs = computed(() => blurred.value.reduce((total, blurring) => 
 const zonesLabel = computed(() => (blurredZones.value === 0 ? 'Sin zonas difuminadas en el celular' : `${blurredZones.value} ${blurredZones.value === 1 ? 'zona difuminada' : 'zonas difuminadas'} en el celular`));
 
 const correctHref = computed(() => `/admin/worksites?corregir=${props.evidence.worksite_id}`);
+
+// It. 46f: "Confirmar esta ubicación" fija la de la obra en el punto de este reporte (una corrección de US-035).
+const confirmation = ref({ status: 'idle' }); // idle | sending | done | failed
+const pendingStatus = computed(() => (confirmation.value.status === 'done' ? 'confirmed' : pending.value?.status));
+
+async function confirmLocation() {
+    confirmation.value = { status: 'sending' };
+    try {
+        const answer = await correctWorksiteLocation(props.evidence.worksite_id, location.value.point);
+        confirmation.value = { status: 'done', message: answer?.message };
+    } catch (failure) {
+        confirmation.value = { status: 'failed', message: errorMessage(failure) };
+    }
+}
 
 const withReason = {
     reject: { confirm: 'Confirmar rechazo', label: 'Motivo del rechazo (lo verá el veedor)', done: 'Evidencia rechazada. Su veedor verá el motivo.' },
@@ -120,6 +138,28 @@ async function decide(decision) {
                 :href="correctHref"
                 class="inline-flex min-h-11 items-center self-start rounded-xl border border-brand-200 bg-white px-3 font-semibold text-brand-800 hover:bg-brand-50"
             >Corregir ubicación</a>
+        </div>
+
+        <div v-if="pending" data-test="location-pending" class="flex flex-col gap-2 rounded-lg bg-amber-50 p-3 ring-1 ring-amber-200">
+            <p class="text-base font-semibold text-amber-900">📍 Ubicación por confirmar: es el primer reporte de la obra, pero {{ pending.reason }}. La obra sigue sin ubicación oficial.</p>
+            <LocationMap :model-value="location.point" readonly />
+            <p v-if="confirmation.status === 'done' && confirmation.message" role="status" class="text-base text-emerald-800">{{ confirmation.message }}</p>
+            <p v-if="confirmation.status === 'failed'" role="alert" class="rounded bg-red-50 p-2 text-base text-red-800">{{ confirmation.message }}</p>
+            <p v-if="pendingStatus === 'confirmed'" class="text-base font-semibold text-emerald-800">Ubicación confirmada aquí.</p>
+            <p v-else-if="pendingStatus === 'elsewhere'" class="text-base font-semibold text-slate-800">La obra ya tiene ubicación oficial, en otro lugar.</p>
+            <div v-else class="flex flex-wrap gap-2">
+                <button
+                    type="button"
+                    :disabled="confirmation.status === 'sending'"
+                    class="inline-flex min-h-11 items-center rounded-xl bg-brand-700 px-3 font-semibold text-white hover:bg-brand-800 disabled:opacity-40"
+                    @click="confirmLocation"
+                >Confirmar esta ubicación</button>
+                <a
+                    data-test="correct-location"
+                    :href="correctHref"
+                    class="inline-flex min-h-11 items-center rounded-xl border border-brand-200 bg-white px-3 font-semibold text-brand-800 hover:bg-brand-50"
+                >Corregir ubicación</a>
+            </div>
         </div>
 
         <p class="text-sm">{{ evidence.comment || 'Sin comentario.' }}</p>

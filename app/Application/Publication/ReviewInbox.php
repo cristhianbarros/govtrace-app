@@ -10,6 +10,7 @@ use App\Domain\Reports\EditorialStatus;
 use App\Domain\Reports\Evidence;
 use App\Domain\Reports\Report;
 use App\Domain\Sealing\SealStatus;
+use App\Domain\Worksites\PendingLocation;
 use App\Domain\Worksites\Worksite;
 use Illuminate\Support\Collection;
 
@@ -29,6 +30,10 @@ use Illuminate\Support\Collection;
  * of its worksite (First-Touch, R-GEO-01) comes marked, with that point —
  * the worksite's —; the others, how far from the worksite they were taken,
  * never the veedor's coordinates.
+ *
+ * It. 46f: a first report that did not fix the location (far from its
+ * municipality, or with a poor signal) comes "to confirm", with why and the
+ * point it proposes for the worksite.
  */
 class ReviewInbox
 {
@@ -71,25 +76,38 @@ class ReviewInbox
 
     /**
      * Where the report was taken, as the server recorded it on arrival. Only
-     * the report that fixed the location brings its point, which is the
-     * worksite's; and whether it was corrected afterwards (US-035).
+     * the first report of the worksite brings its point, which is (or was
+     * proposed as) the worksite's; and whether the location was corrected or
+     * confirmed afterwards (US-035).
      *
-     * @return array{anchored_worksite: bool, distance_meters: ?int, point: ?array{latitude: float, longitude: float}, corrected: bool}
+     * @return array{anchored_worksite: bool, distance_meters: ?int, point: ?array{latitude: float, longitude: float}, corrected: bool, pending: ?array{reason: string, status: string}}
      */
     private function location(Report $report): array
     {
-        if (! $report->anchored_worksite) {
-            return ['anchored_worksite' => false, 'distance_meters' => $report->distance_to_worksite_meters, 'point' => null, 'corrected' => false];
+        $pending = PendingLocation::reason($report);
+
+        if (! $report->anchored_worksite && $pending === null) {
+            return ['anchored_worksite' => false, 'distance_meters' => $report->distance_to_worksite_meters, 'point' => null, 'corrected' => false, 'pending' => null];
         }
 
         $point = ['latitude' => round((float) $report->latitude, 7), 'longitude' => round((float) $report->longitude, 7)];
         $official = $report->worksite?->location();
+        $atThisPoint = $official !== null && [round($official->latitude, 7), round($official->longitude, 7)] === array_values($point);
 
         return [
-            'anchored_worksite' => true,
+            'anchored_worksite' => $report->anchored_worksite,
             'distance_meters' => $report->distance_to_worksite_meters,
             'point' => $point,
-            'corrected' => $official !== null && [round($official->latitude, 7), round($official->longitude, 7)] !== array_values($point),
+            'corrected' => $report->anchored_worksite && ! $atThisPoint,
+            'pending' => $pending === null ? null : [
+                'reason' => $pending,
+                // unlocated: the worksite still has no location; confirmed: it was fixed here; elsewhere: somewhere else.
+                'status' => match (true) {
+                    $official === null => 'unlocated',
+                    $atThisPoint => 'confirmed',
+                    default => 'elsewhere',
+                },
+            ],
         ];
     }
 
