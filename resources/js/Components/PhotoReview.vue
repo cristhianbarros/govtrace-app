@@ -3,6 +3,7 @@
 // difuminada. El detector propone los rostros; quien la envía difumina a mano
 // lo que no vio (un rostro lejano, una placa) tocando la foto, y puede quitar
 // un recuadro que no es un rostro: la veeduría lo verá en la Bandeja.
+import { HandRaisedIcon } from '@heroicons/vue/24/solid';
 import { computed, onMounted, ref, watch } from 'vue';
 import { containsPoint, pointOnImage, renderPreview, zoneAround } from '@/lib/evidence/blur.js';
 
@@ -69,12 +70,20 @@ watch(zones, render);
             Revise la foto antes de adjuntarla<template v-if="total > 1"> ({{ position }} de {{ total }})</template>
         </h2>
         <p data-test="faces-found" class="text-base font-semibold" :class="draft.detector === 'ok' ? 'text-slate-800' : 'text-amber-900'">{{ found }}</p>
-        <p class="text-base text-slate-700">Si ve a una persona, sobre todo un niño, o una placa, toque la foto sobre ella para difuminarla. Toque otra vez una zona difuminada a mano para quitarla.</p>
+        <!-- Lo que el detector no vio lo difumina quien la envía, con un toque: el aviso se nota. -->
+        <div data-test="tap-to-blur" class="flex items-start gap-3 rounded-xl border-2 border-amber-500 bg-amber-50 p-3 text-amber-950">
+            <HandRaisedIcon aria-hidden="true" class="size-8 shrink-0 text-amber-600" />
+            <div class="flex flex-col gap-1">
+                <p class="font-display text-lg font-bold">¿Ve a alguien sin difuminar? Tóquelo en la foto.</p>
+                <p class="text-base">Si ve a una persona, sobre todo un niño, o una placa, toque la foto sobre ella para difuminarla. Toque otra vez una zona difuminada a mano para quitarla.</p>
+                <p data-test="outline-note" class="text-base font-semibold">El recuadro amarillo solo marca la zona: no aparece en la foto que se envía.</p>
+            </div>
+        </div>
 
         <canvas
             ref="preview"
             role="img"
-            aria-label="La foto como se enviará; las zonas difuminadas están marcadas en amarillo"
+            aria-label="La foto con las zonas difuminadas marcadas en amarillo. Toque la foto sobre un rostro para difuminarlo"
             class="h-auto w-full cursor-crosshair touch-manipulation rounded-lg bg-slate-100"
             @click="touch"
         ></canvas>
@@ -88,7 +97,7 @@ watch(zones, render);
                 </button>
             </li>
         </ul>
-        <p v-if="manual.length" class="text-base text-slate-700">Zonas difuminadas a mano: {{ manual.length }}</p>
+        <p v-if="manual.length" role="status" class="text-base font-semibold text-slate-800">Zonas difuminadas a mano: {{ manual.length }}</p>
 
         <details class="text-base">
             <summary class="inline-flex min-h-11 cursor-pointer items-center font-semibold text-brand-800">Difuminar una zona sin tocar la foto</summary>

@@ -34,6 +34,13 @@ describe('PhotoReview', () => {
         expect(wrapper.emitted('use')[0]).toEqual([{ dismissed: [], manual: [] }]);
     });
 
+    it('Un rostro que el detector no vio se difumina con un toque: el aviso es llamativo y aclara que el recuadro amarillo no viaja en la foto', () => {
+        const wrapper = review();
+
+        expect(wrapper.get('[data-test="tap-to-blur"]').text()).toContain('¿Ve a alguien sin difuminar? Tóquelo en la foto.');
+        expect(wrapper.get('[data-test="outline-note"]').text()).toBe('El recuadro amarillo solo marca la zona: no aparece en la foto que se envía.');
+    });
+
     it('says it in the singular for one face', () => {
         expect(review().get('[data-test="faces-found"]').text()).toBe('Encontramos 1 rostro y lo difuminamos.');
     });
