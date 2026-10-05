@@ -117,19 +117,13 @@
 }
 
 /*
- * It. 44d: en el celular la barra de navegación de abajo es fija. Al llegar a un
- * botón con el teclado, o al desplazarse hasta él, el navegador lo deja por
- * encima de la barra y no debajo (WCAG 2.2, 2.4.11: el foco no queda tapado).
- * Desde md: la barra se va o deja de ser fija.
+ * It. 44d, 2026-10-04: el encabezado es fijo y lleva las pestañas (unos 112 px
+ * con ellas). Al llegar a un botón con el teclado, o al desplazarse hasta él,
+ * el navegador lo deja por debajo del encabezado y no tapado por él (WCAG 2.2,
+ * 2.4.11: el foco no queda tapado).
  */
 html {
-    scroll-padding-bottom: 5.5rem;
-}
-
-@media (min-width: 48rem) {
-    html {
-        scroll-padding-bottom: 0;
-    }
+    scroll-padding-top: 7.5rem;
 }
 
 /*

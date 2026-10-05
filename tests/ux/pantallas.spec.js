@@ -33,11 +33,11 @@ const TARGETS = 'a[href], button, input:not([type=hidden]):not([type=radio]):not
 
 /** What the analysis measured, on the screen as it is now. */
 async function measure(page) {
-    // La barra de abajo es fija en el celular: según dónde esté desplazada la
-    // página, tapa un rato lo que pasa por debajo, y axe lo cuenta como un
-    // botón tapado (target-size), aunque basta desplazarse. Para medir, se deja
-    // al final de la página; la captura ya se tomó como la ve la persona.
-    await page.addStyleTag({ content: 'nav[aria-label="Navegación"] { position: static !important; }' });
+    // El encabezado es fijo, con las pestañas (2026-10-04): según dónde esté
+    // desplazada la página, tapa un rato lo que pasa por debajo, y axe lo cuenta
+    // como un botón tapado (target-size), aunque basta desplazarse. Para medir,
+    // se deja arriba de la página; la captura ya se tomó como la ve la persona.
+    await page.addStyleTag({ content: 'header, nav[aria-label="Navegación"] { position: static !important; }' });
     await page.addScriptTag({ path: AXE });
     const axe = await page.evaluate(async () => {
         const result = await window.axe.run(document, { runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'] } });

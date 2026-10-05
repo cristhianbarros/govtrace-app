@@ -111,7 +111,8 @@ export function onThisPort(link) {
 
 /** It. 40b: "Salir" vive en el menú de cuenta de la cabecera, y siempre pregunta antes. */
 export async function logOut(page) {
-    await page.locator('header button[aria-haspopup="menu"]').click();
+    // El de la cuenta: en un panel, "Más" también es un menú del encabezado.
+    await page.locator('[data-test="account-menu"]').click();
     await page.getByRole('menuitem', { name: 'Salir' }).click();
     await page.getByRole('button', { name: 'Sí, cerrar sesión' }).click();
     await page.waitForURL('**/login');
