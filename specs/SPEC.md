@@ -142,7 +142,7 @@ Suma los impedimentos del veedor (it. 44c) y los datos de inscripción de una ve
 
 ### Captura, geolocalización e integridad
 
-- **R-GEO-01** — Al crear un reporte (US-008) se capturan las coordenadas GPS del dispositivo y se guardan en la Evidencia. Si la obra no tiene coordenadas (Spatial-Null), las del primer reporte fijan su ubicación (First-Touch Anchoring, patrón human-in-the-loop). La ubicación vive en una FICHA DE OBRA propia de GovTrace, separada del contrato SECOP (que queda intacto, R-SEC-01 se cumple) — US-008, US-035
+- **R-GEO-01** — Al crear un reporte (US-008) se capturan las coordenadas GPS del dispositivo y se guardan en la Evidencia. Si la obra no tiene coordenadas (Spatial-Null), las del primer reporte fijan su ubicación (First-Touch Anchoring, patrón human-in-the-loop), solo si se tomó cerca de la cabecera del municipio del contrato (30 km por defecto, configurable) y con una precisión del GPS de 20 m o menos; si no, el reporte se recibe y la ubicación queda por confirmar en la Bandeja (it. 46f). La ubicación vive en una FICHA DE OBRA propia de GovTrace, separada del contrato SECOP (que queda intacto, R-SEC-01 se cumple) — US-008, US-035
 - **R-HASH-01** — El SHA-256 de cada archivo se calcula en el teléfono en el momento de la captura (Web Crypto API) y se guarda junto al archivo en IndexedDB. Al recibirlo, el backend recalcula el hash y lo compara antes de encolar el sellado — US-009, US-018, US-020b
 
 ### Sellado en blockchain

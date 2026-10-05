@@ -297,6 +297,7 @@ it('La evidencia que fijó la ubicación de la obra llega marcada: with that poi
         'distance_meters' => 0,
         'point' => ['latitude' => round($latitude, 7), 'longitude' => round($longitude, 7)],
         'corrected' => false,
+        'pending' => null,
     ]);
 });
 
@@ -317,7 +318,7 @@ it('Cada evidencia de la bandeja dice a qué distancia de la obra se tomó: and 
     $evidence = inboxEvidence($this->administrator, $this->hidden[0]);
     [$latitude] = pointMetersNorthOf(santaMartaWorksiteLocation(), 120);
 
-    expect($evidence['location'])->toBe(['anchored_worksite' => false, 'distance_meters' => 120, 'point' => null, 'corrected' => false])
+    expect($evidence['location'])->toBe(['anchored_worksite' => false, 'distance_meters' => 120, 'point' => null, 'corrected' => false, 'pending' => null])
         ->and(json_encode($evidence))->not->toContain((string) round($latitude, 4));
 });
 
@@ -331,4 +332,64 @@ it('Rechazar la evidencia que fijó la ubicación no la cambia: the worksite kee
 
     expect(editorialStatusOf($this->tenant, $reportId))->toBe('Rechazado')
         ->and($this->tenant->run(fn () => $this->unlocated->fresh()->location()))->toEqual($fixed);
+});
+
+/*
+ * It. 46f — el primer reporte que no fijó la ubicación de su obra (lejos de
+ * su municipio, o con mala señal) llega por confirmar, con su punto: es la
+ * ubicación que se propone para la obra.
+ */
+
+/** A worksite with no location, and its first report, sealed, taken 42.3 km north of the seat of Santa Marta. */
+function pendingReport(object $test): array
+{
+    reportableContract('CO1.PCCNTR.7654321');
+    $test->unlocated = worksiteWithContracts($test->tenant, ['CO1.PCCNTR.7654321'], null);
+    [$latitude, $longitude] = pointMetersNorthOf([11.204679, -74.199829], 42_300);
+
+    return [sealedReport($test->tenant, $test->veedor, ['secop_contract_id' => 'CO1.PCCNTR.7654321', 'latitude' => $latitude, 'longitude' => $longitude]), $latitude, $longitude];
+}
+
+function relocate(object $test, float $latitude, float $longitude): void
+{
+    $test->flushSession();
+    $test->actingAs($test->administrator, 'tenant')
+        ->patchJson("http://veeduria-smr.govtrace.localhost/worksites/{$test->unlocated->public_id}/location", ['latitude' => $latitude, 'longitude' => $longitude])
+        ->assertOk();
+    tenancy()->end();
+    $test->flushSession();
+}
+
+it('La evidencia cuyo primer reporte no fijó la ubicación llega por confirmar: with the reason and the point it proposes', function () {
+    [$reportId, $latitude, $longitude] = pendingReport($this);
+
+    expect(inboxEvidence($this->administrator, $reportId)['location'])->toEqual([
+        'anchored_worksite' => false,
+        'distance_meters' => null,
+        'point' => ['latitude' => round($latitude, 7), 'longitude' => round($longitude, 7)],
+        'corrected' => false,
+        'pending' => [
+            'reason' => 'se tomó a 42.3 km de Santa Marta, y para fijar una obra hay que estar a menos de 30 km de su municipio',
+            'status' => 'unlocated',
+        ],
+    ]);
+});
+
+it('says when the location to confirm was confirmed there, or the worksite was located elsewhere', function () {
+    [$reportId, $latitude, $longitude] = pendingReport($this);
+
+    relocate($this, round($latitude, 7), round($longitude, 7));
+    expect(inboxEvidence($this->administrator, $reportId)['location']['pending']['status'])->toBe('confirmed');
+
+    relocate($this, 11.2411, -74.1995);
+    expect(inboxEvidence($this->administrator, $reportId)['location']['pending']['status'])->toBe('elsewhere');
+});
+
+it('explains a poor GPS signal as the reason to confirm', function () {
+    reportableContract('CO1.PCCNTR.7654321');
+    $this->unlocated = worksiteWithContracts($this->tenant, ['CO1.PCCNTR.7654321'], null);
+    $reportId = sealedReport($this->tenant, $this->veedor, ['secop_contract_id' => 'CO1.PCCNTR.7654321', 'accuracy_meters' => 35]);
+
+    expect(inboxEvidence($this->administrator, $reportId)['location']['pending']['reason'])
+        ->toBe('la señal del GPS tenía una precisión de 35 m, y para fijar una obra se necesitan 20 m o menos');
 });

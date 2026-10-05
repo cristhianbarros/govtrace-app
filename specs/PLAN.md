@@ -2702,6 +2702,43 @@ El usuario pidió seguir con lo que no espera a nadie: la deuda técnica y los h
   - `make ux-check`: la revisión nueva, sin violaciones de axe ni letra pequeña; la línea base, reescrita;
   - `make trace-check`: 383 de 383.
 
+**46f — La primera ubicación de una obra, con guardas; y los rostros lejanos** (enmiendas de R-GEO-01, US-008, US-035, US-036, US-038-CFG y US-009). El usuario, el 2026-10-04, tras probar la 46e: "sólo opaca ciertos rostros que estén más cerca", y sobre la ubicación: "como veedor podría reportar una obra con una ubicación distinta. Por ejemplo, una del Colegio Mayor de Antioquia. ¿Cómo se podría evitar?". Eligió: "Hazlas juntas como 46f, con la combinación 1 + 3 + 2".
+- **Hueco:** el primer reporte de una obra sin ubicación la fija (First-Touch) sin ninguna revisión. Un punto equivocado, por error o a propósito, además deja fuera de la geocerca a los veedores que sí están en la obra, hasta que el Administrador lo corrige.
+- **Qué cambia en la ubicación:**
+  - **(1) Cerca de su municipio:** el primer reporte solo fija la ubicación si se tomó a menos de 30 km de la cabecera del municipio del contrato. Para un contrato departamental, sin municipio, se mide contra la cabecera más cercana de su departamento. Los 30 km son un parámetro nuevo del Super Administrador (`anchor_municipality_radius_km`, de 1 a 300 km), y rige el valor del momento de la captura, como el radio de la geocerca (R-AUD-05);
+  - **(3) Con buena señal:** además, la precisión del GPS debe ser de 20 m o menos. Para enviar un reporte siguen bastando 50 m. Es un parámetro fijo, y el panel lo muestra;
+  - **(2) Si no cumple, queda por confirmar:** el reporte se recibe igual, pero la obra sigue sin ubicación oficial. El veedor lee por qué: "La ubicación de esta obra queda por confirmar: su reporte se tomó a 42.3 km de Santa Marta, y para fijar una obra hay que estar a menos de 30 km de su municipio. La veeduría la revisará." En la Bandeja, esa evidencia llega marcada "Ubicación por confirmar", con el punto en un mapa pequeño, "Confirmar esta ubicación" (la fija ahí, con su registro en la auditoría, como una corrección de US-035) y "Corregir ubicación";
+  - un primer reporte que sí cumple fija la ubicación como hasta ahora, y la Bandeja lo sigue marcando (it. 45f);
+  - mientras la obra no tenga ubicación oficial, el reporte siguiente vuelve a intentarlo con las mismas reglas.
+- **Qué cambia en los rostros:** hoy se mira la foto entera y sus cuatro cuartos (5 pasadas del modelo). Medido con el modelo real sobre rostros de *La Gioconda* pegados en una foto de 1920 px, en 15 lugares (también el centro): se pierden todos los de menos de 64 px (a unos 15 m) y la mayoría de los de 64 px. Con la foto entera más una grilla de 4 × 4 ventanas que se solapan (17 pasadas), se encuentran todos desde 48 px y 9 de 15 a 40 px, sin falsos positivos en el paisaje sin rostros. Agregar más ventanas (30 pasadas) gana poco, y bajar el umbral de 0,75 a 0,6 casi nada, así que el umbral se queda.
+  - entre pasada y pasada se cede el turno al navegador, para que "Revisando la foto…" no se congele.
+- **Además, del mismo día:**
+  - "Obras cercanas" aparecía en `docs/local-environment-setup.md` como dirección (`/worksites/nearby`), pero solo responde a `POST` (it. 45f), y abierta en el navegador daba el error de Laravel en inglés. La documentación ya no la pone como dirección, y un método no permitido responde en español (405), en JSON o en una página;
+  - el aviso de la revisión de la foto y las pestañas arriba van en sus propios commits, antes de este.
+- ❓ **Decisiones por defecto:**
+  - 30 km y 20 m. Un municipio muy grande (Cumaribo) puede pedir una confirmación de más; el Super Administrador ajusta la distancia sin desplegar;
+  - lo que se compara es la cabecera del municipio (DIVIPOLA), no su límite: no hay polígonos de los municipios. Dentro del mismo municipio, la guarda es la Bandeja, que marca todo primer reporte;
+  - el reporte por confirmar se sella y se puede publicar como cualquiera: la Bandeja lo advierte, y el Administrador decide;
+  - el mensaje al veedor llega solo si el reporte se envía con señal. Uno que sale de la bandeja de salida (US-018) no lo muestra; la Bandeja sí.
+- **Done-when:** los escenarios nuevos de `features/US-008.feature`, `US-035`, `US-036`, `US-038-CFG` y `US-009` en verde, con sus tests vistos en rojo antes; la suite completa, `make e2e` (con una foto de rostros lejanos en un Chromium de verdad), `make ux-check` y `make trace-check` en verde.
+- **Modelo:** Opus xhigh. Una regla de ubicación que no se deshace en lo sellado y datos personales sensibles.
+
+✅ **46f cumplida (2026-10-04).** R-GEO-01 enmendada; enmiendas de US-008, US-035, US-036, US-038-CFG y US-009.
+- **Las guardas** (`App\Domain\Worksites\FirstTouch`): la cabecera es la del municipio del contrato o, en un contrato departamental, la más cercana de su departamento (`Municipality::seatFor`). Primero se mira la distancia y después la señal: si fallan las dos, el motivo es la distancia.
+- **Lo que guarda el reporte al llegar** (migración por organización `2026_10_04_000500`): por qué no fijó la ubicación (`anchor_withheld`), contra qué cabecera se midió y a qué distancia. Como el resto de lo enviado, no se puede cambiar.
+- **El motivo, en palabras** (`PendingLocation`): uno solo para el veedor y para la Bandeja, con la distancia que regía al capturar.
+- **La respuesta de `POST /reports`** sigue siendo solo `{id}` (R-BLK-01, lo exige `SealReportTest`). `location_pending` aparece solo cuando hay un aviso. También en el reporte del Super Administrador en nombre de una organización.
+- **"Confirmar esta ubicación"** usa la misma corrección de US-035 (`PATCH /worksites/{id}/location`) con el punto del reporte: queda en la auditoría con las coordenadas anteriores vacías. La tarjeta dice luego "Ubicación confirmada aquí." o, si la obra ya tiene otra, "La obra ya tiene ubicación oficial, en otro lugar."
+- **Los rostros:** la foto entera y la grilla de 4 × 4 (17 pasadas). Entre pasada y pasada se cede el turno al navegador. La medición con el modelo real se hizo en Node, sobre composiciones de *La Gioconda*; no quedó en el repositorio. Sí quedó `tests/fixtures/evidence/rostros-lejanos.jpg`, con tres rostros que la foto entera no ve.
+- **El 405, en español:** en JSON (`bootstrap/app.php`) y en una página (`resources/views/errors/405.blade.php`), para cualquier dirección que solo responde a otro método.
+- **Prueba:**
+  - Pest: `FirstTouchGuardsTest` (29 y 42.3 km, 20 y 21 m, el contrato departamental, el reintento, el valor vigente al capturar, lo que no se puede cambiar), la Bandeja, la confirmación con su auditoría, el parámetro y el 405;
+  - Vitest: la grilla y el rostro lejano con un modelo doble, la tarjeta de la Bandeja (confirmar, el error, ya confirmada, en otro lugar) y el aviso tras enviar;
+  - suite completa: Pest 1085, Vitest 571;
+  - `make e2e`: 54 de 54. En un Chromium de verdad, el modelo encuentra los tres rostros lejanos;
+  - `make ux-check`: sin retroceso. La línea base cambia solo en Parámetros (un parámetro más);
+  - `make trace-check`: 392 de 392.
+
 ## Pivote a Stellar (2026-09-28)
 
 El proyecto participa en **Stellar Apex**, así que la blockchain pasa de EVM/Polygon a **Stellar**, con Smart Contracts en **Soroban (Rust)**:

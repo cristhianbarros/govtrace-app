@@ -18,6 +18,7 @@ enum ConfigurableParameter: string
     case InvitationValidity = 'invitation_validity_hours';
     case SponsorBalanceThreshold = 'sponsor_balance_alert_threshold_xlm';
     case SecopSyncHour = 'secop_sync_hour';
+    case AnchorMunicipalityRadius = 'anchor_municipality_radius_km';
 
     public function label(): string
     {
@@ -27,6 +28,7 @@ enum ConfigurableParameter: string
             self::InvitationValidity => 'Vigencia de invitaciones',
             self::SponsorBalanceThreshold => 'Umbral de saldo de la patrocinadora',
             self::SecopSyncHour => 'Hora de sincronización SECOP (hora de Colombia)',
+            self::AnchorMunicipalityRadius => 'Distancia al municipio para fijar una obra',
         };
     }
 
@@ -38,6 +40,7 @@ enum ConfigurableParameter: string
             self::InvitationValidity => 'h',
             self::SponsorBalanceThreshold => 'XLM',
             self::SecopSyncHour => 'HH:MM',
+            self::AnchorMunicipalityRadius => 'km',
         };
     }
 
@@ -60,6 +63,8 @@ enum ConfigurableParameter: string
             self::SecopSyncHour => preg_match('/^([01]\d|2[0-3]):[0-5]\d$/', $value)
                 ? $value
                 : throw new ParameterValueRejected('La hora de sincronización SECOP debe tener el formato HH:MM, entre 00:00 y 23:59.'),
+            // It. 46f: hasta 300 km, para los municipios más extensos (Cumaribo).
+            self::AnchorMunicipalityRadius => self::integerBetween($value, 1, 300, 'La distancia al municipio para fijar una obra debe ser un número entero de kilómetros entre 1 y 300.'),
         };
     }
 

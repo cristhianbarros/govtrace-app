@@ -222,7 +222,8 @@ Los contratos vienen de SECOP II, una fuente externa que consulta el worker:
 
 Como veedor, en `/reports/new`:
 
-1. **📍 Obras cercanas** (`/worksites/nearby`) o **Buscar Obra** (`/contracts/search`).
+1. **📍 Obras cercanas** o **Buscar Obra**, los dos botones de arriba. Son pasos de la pantalla, no direcciones que se abran en el navegador: "Obras cercanas" envía la ubicación por dentro (`POST`), para que no quede en los registros del servidor (it. 45f).
+   - Si la obra aún no tiene ubicación, este primer reporte la fija, siempre que se tome a menos de 30 km de la cabecera del municipio del contrato y con una precisión del GPS de 20 m o menos. Si no, la ubicación queda por confirmar en la Bandeja (it. 46f).
 2. **¿Qué vio en la obra?** y la foto: **Tomar foto** (cámara trasera) o **Elegir de la galería o un PDF**. La ubicación la toma la app.
 3. **Enviar Reporte.** Mientras falte algo, junto al botón se lee qué. El reporte pasa a la cola de sellado.
 

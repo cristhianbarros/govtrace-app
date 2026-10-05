@@ -63,6 +63,23 @@ describe('Reportar en nombre de una organización (it. 43g, V7)', () => {
         expect(wrapper.get('[role="status"]').text()).toBe('Reporte recibido en nombre de Veeduría Ciudadana Santa Marta. Se sella como los demás, y la veeduría lo revisa antes de publicarlo.');
     });
 
+    it('says why the location of the worksite was left to confirm, when it was (it. 46f)', async () => {
+        preciseGps();
+        const pending = 'La ubicación de esta obra queda por confirmar: su reporte se tomó a 42.3 km de Santa Marta, y para fijar una obra hay que estar a menos de 30 km de su municipio. La veeduría la revisará.';
+        sendReportOnBehalf.mockResolvedValue({ id: 42, location_pending: pending });
+        const wrapper = open();
+
+        wrapper.findComponent(ContractSearch).vm.$emit('select', contract);
+        await flushPromises();
+        await wrapper.get('input[value="Avance"]').setValue(true);
+        wrapper.findComponent(EvidencePicker).vm.$emit('update:modelValue', [{ kind: 'photo', file: new File(['foto'], 'foto.jpg', { type: 'image/jpeg' }), sha256: 'a'.repeat(64) }]);
+        await flushPromises();
+        await wrapper.get('form').trigger('submit');
+        await flushPromises();
+
+        expect(wrapper.get('[data-test="location-pending"]').text()).toBe(pending);
+    });
+
     it('shows the message of US-042-SEC, and no form, when the authorization is not in force', () => {
         const wrapper = open({ authorizedUntil: null, refusal: REFUSED });
 

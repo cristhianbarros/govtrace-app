@@ -1,5 +1,5 @@
 // Iteración 18 — el marco del panel del Administrador: el nombre de la
-// organización y la navegación entre sus pantallas, al alcance del pulgar.
+// organización y la navegación entre sus pantallas, arriba y siempre a la vista.
 import { mount } from '@vue/test-utils';
 import { describe, expect, it, vi } from 'vitest';
 import AdminLayout from './AdminLayout.vue';

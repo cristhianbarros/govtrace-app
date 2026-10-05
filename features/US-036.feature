@@ -85,3 +85,12 @@ Característica: Bandeja de revisión y publicación de evidencias
     Entonces la confirmación avisa "Este reporte fijó la ubicación oficial de la obra. Rechazarlo no la cambia: si el lugar está mal, corríjalo en Obras."
     Y ofrece "Corregir ubicación"
     Y al confirmar el rechazo, la ubicación oficial de la obra sigue igual
+
+  @complexity:medium @edge
+  Escenario: La evidencia cuyo primer reporte no fijó la ubicación llega por confirmar
+    Dado que la obra "Pavimentación Calle 30" no tenía ubicación oficial
+    Y su primer reporte se tomó a 42.3 km de Santa Marta, así que no la fijó
+    Cuando ese reporte llega sellado a la bandeja
+    Entonces esa evidencia dice "📍 Ubicación por confirmar: es el primer reporte de la obra, pero se tomó a 42.3 km de Santa Marta, y para fijar una obra hay que estar a menos de 30 km de su municipio. La obra sigue sin ubicación oficial."
+    Y muestra ese punto en un mapa pequeño
+    Y ofrece "Confirmar esta ubicación" y "Corregir ubicación"

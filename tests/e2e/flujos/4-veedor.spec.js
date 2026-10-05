@@ -8,6 +8,8 @@ import { ORG, PASSWORD, PEOPLE, WORKSITE, logIn, logOut } from './support.js';
 // It. 46e: un rostro que no es de una persona real (La Gioconda, de dominio público), y el paisaje de su fondo.
 const FACE = fileURLToPath(new URL('../../fixtures/evidence/rostro-pintura.jpg', import.meta.url));
 const NO_FACE = fileURLToPath(new URL('../../fixtures/evidence/sin-rostro.jpg', import.meta.url));
+// It. 46f: tres rostros lejanos (unos 56 px en 1920), uno en el centro.
+const FAR_FACES = fileURLToPath(new URL('../../fixtures/evidence/rostros-lejanos.jpg', import.meta.url));
 const SUCCESS = 'Reporte recibido con éxito.';
 
 test.describe.configure({ mode: 'serial' });
@@ -101,6 +103,20 @@ async function fineDetail(page, sources, area) {
         { sources, area },
     );
 }
+
+test('Un rostro lejano también se difumina (it. 46f)', async ({ page }) => {
+    await enter(page);
+    await page.getByLabel('Buscar Obra').fill('Parque de pruebas');
+    await page.locator('[data-test="contract-result"]').first().click();
+    await expect(page.getByText(/Precisión del GPS/)).toBeVisible();
+
+    // El modelo de verdad, en un Chromium de verdad: la foto entera no los ve; la grilla de ventanas, sí.
+    await page.locator('input[type="file"]').first().setInputFiles(FAR_FACES);
+    await expect(page.locator('[data-test="faces-found"]')).toHaveText('Encontramos 3 rostros y los difuminamos.', { timeout: 30_000 });
+    await expect(page.locator('[data-test="detected-face"]')).toHaveCount(3);
+    await page.getByRole('button', { name: 'No usar esta foto', exact: true }).click();
+    await logOut(page);
+});
 
 test('Los rostros de una foto se difuminan en el celular antes de calcular su huella (it. 46e)', async ({ page }) => {
     // La Bandeja muestra la evidencia cuando el worker la sella en la red local: puede tardar.

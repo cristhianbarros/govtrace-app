@@ -21,6 +21,7 @@ Característica: Parámetros operativos configurables por el Super Administrador
       | vigencia de invitaciones            | 48 h     | 72 h     |
       | umbral de saldo de la patrocinadora | 50 XLM   | 80 XLM   |
       | hora de sincronización              | 02:00    | 03:30    |
+      | distancia al municipio para fijar una obra | 30 km | 50 km |
 
   @complexity:low @negative
   Esquema del escenario: Los parámetros fijos no se pueden configurar
@@ -32,6 +33,7 @@ Característica: Parámetros operativos configurables por el Super Administrador
       | precisión mínima del GPS         |
       | archivos por reporte             |
       | vigencia de reportes sin conexión |
+      | precisión del GPS para fijar la ubicación de una obra |
 
   @complexity:low @negative
   Escenario: Un Administrador de Organización no puede cambiar parámetros globales

@@ -8,6 +8,7 @@ use App\Domain\Contracts\Contract;
 use App\Domain\Organization\Exceptions\SuperAdminNotAuthorized;
 use App\Domain\Organization\SuperAdminAuthorization;
 use App\Domain\Reports\Exceptions\ReportValidationException;
+use App\Domain\Worksites\PendingLocation;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreReportRequest;
 use App\Infrastructure\Tenancy\Tenant;
@@ -66,7 +67,13 @@ class OrganizationReportController extends Controller
             throw ValidationException::withMessages([$e->field => $e->getMessage()]);
         }
 
-        return response()->json(['id' => $report->public_id], 201); // it. 46c
+        // It. 46f: si el primer reporte de la obra no fijó su ubicación, por qué; si no, solo el id.
+        $pending = PendingLocation::messageFor($report);
+
+        return response()->json([
+            'id' => $report->public_id, // it. 46c
+            ...($pending === null ? [] : ['location_pending' => $pending]),
+        ], 201);
     }
 
     private function authorizedUntil(Tenant $organization): ?string

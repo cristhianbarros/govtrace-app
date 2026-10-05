@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\MethodNotAllowedMessage;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Auth\AuthenticationException;
@@ -10,6 +11,7 @@ use Illuminate\Http\Request;
 use Spatie\Permission\Middleware\PermissionMiddleware;
 use Spatie\Permission\Middleware\RoleMiddleware;
 use Spatie\Permission\Middleware\RoleOrPermissionMiddleware;
+use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -51,5 +53,10 @@ return Application::configure(basePath: dirname(__DIR__))
         // lo dice en español; guarda sus reportes pendientes, que solo descarta ante un 422.
         $exceptions->render(fn (AuthenticationException $exception, Request $request) => $request->expectsJson()
             ? response()->json(['message' => 'Su sesión terminó. Vuelva a entrar con su correo y su contraseña.'], 401)
+            : null);
+
+        // It. 46f: una dirección que solo usa la app por dentro, abierta con otro método; la página es errors/405.
+        $exceptions->render(fn (MethodNotAllowedHttpException $exception, Request $request) => $request->expectsJson()
+            ? response()->json(['message' => MethodNotAllowedMessage::TEXT], 405, $exception->getHeaders())
             : null);
     })->create();

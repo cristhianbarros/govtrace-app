@@ -1,8 +1,21 @@
 # Estado del MVP: lo que falta, por área
 
-Al 2026-10-02. Empezó sobre `77e6030` (iteración 39) y se actualizó en las it. 41 y 42a y con los análisis de UX y de flujos. Para ir abordándolo: cada punto dice qué falta y, cuando depende de ti, qué hay que decidir.
+Al 2026-10-04. Empezó sobre `77e6030` (iteración 39) y se actualizó en las it. 41 y 42a y con los análisis de UX y de flujos. Para ir abordándolo: cada punto dice qué falta y, cuando depende de ti, qué hay que decidir.
 
 ✅ hecho y probado · ⚠️ a medias · ⬜ falta · 🔒 espera algo externo · ❓ decisión tuya
+
+## Dónde quedó (2026-10-04)
+
+| Qué | PR |
+|---|---|
+| El aviso de la revisión de la foto: "¿Ve a alguien sin difuminar? Tóquelo en la foto.", y que el recuadro amarillo no viaja en la foto | este |
+| Las pestañas del veedor y de los paneles, arriba y siempre a la vista | este |
+| 46f: la primera ubicación de una obra, con guardas; los rostros lejanos; el 405 en español | este |
+
+- **Tests:** Pest 1085, Vitest 571, `make e2e` 54 de 54, trace-check 392 de 392, `make ux-check` sin retroceso.
+- **46f, en una frase:** el primer reporte de una obra sin ubicación la fija solo a menos de 30 km de la cabecera del municipio del contrato y con 20 m de precisión o mejor. Si no, la Bandeja la deja por confirmar, con un botón para confirmarla. El detector de rostros mira además una grilla de 4 × 4 ventanas, y encuentra rostros desde unos 48 px en vez de 80.
+- ❓ **Decisión tuya:** el campo de la foto del informe ciudadano es el del navegador, sin cámara directa. La propuesta es darle los mismos dos botones del veedor: "📷 Tomar foto", que abre la cámara trasera, y "Elegir de la galería".
+- **Límite que queda:** dentro del mismo municipio, la única guarda es la Bandeja, que marca todo primer reporte. No hay polígonos de los municipios, solo sus cabeceras.
 
 ## Dónde quedó (2026-10-02, noche)
 

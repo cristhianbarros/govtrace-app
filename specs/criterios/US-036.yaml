@@ -18,6 +18,7 @@ criterios_aceptacion:
     - "(It. 45f, 2026-10-02, decidido por el usuario) La evidencia que fijó la ubicación oficial de su obra (First-Touch, R-GEO-01) llega marcada: '📍 Este reporte fijó la ubicación oficial de la obra.', con el punto en un mapa pequeño y el enlace 'Corregir ubicación', que abre la corrección de esa obra (US-035). Si la ubicación ya se corrigió, la marca agrega 'Después se corrigió.'"
     - "(It. 45f) Las demás evidencias dicen a qué distancia de la obra se tomaron ('Tomada a 120 m de la obra.'), la que midió el servidor al recibirlas contra la ubicación oficial de ese momento. Nunca se muestran las coordenadas del veedor: solo las del reporte que fijó la ubicación, que son las de la obra"
   casos_edge:
+    - "(It. 46f) La evidencia cuyo primer reporte no fijó la ubicación llega marcada: '📍 Ubicación por confirmar: es el primer reporte de la obra, pero [el motivo]. La obra sigue sin ubicación oficial.', con el punto en un mapa pequeño, 'Confirmar esta ubicación' y 'Corregir ubicación'. Confirmada, dice 'Ubicación confirmada aquí.'; si la obra ya tiene otra ubicación, 'La obra ya tiene ubicación oficial, en otro lugar.'"
     - "(It. 45f) Rechazar la evidencia que fijó la ubicación no la cambia: la confirmación lo avisa ('Este reporte fijó la ubicación oficial de la obra. Rechazarlo no la cambia: si el lugar está mal, corríjalo en Obras.') y ofrece 'Corregir ubicación'"
     - "(It. 45f) Los reportes recibidos antes de la it. 45f no traen la marca ni la distancia: no se reconstruyen"
 validacion_smart:

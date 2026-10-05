@@ -9,6 +9,7 @@ use App\Domain\Reports\Exceptions\EvidenceIsImmutable;
 use App\Domain\Sealing\ReportSeal;
 use App\Domain\Sealing\SealStatus;
 use App\Domain\Shared\HasPublicId;
+use App\Domain\Worksites\AnchorWithheld;
 use App\Domain\Worksites\Worksite;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -36,6 +37,8 @@ class Report extends Model
         'captured_at', 'received_at', 'suspicious_capture_time',
         // It. 45f: whether it fixed the official location of its worksite, and how far from it it was taken.
         'anchored_worksite', 'distance_to_worksite_meters',
+        // It. 46f: the first report of a worksite without location — why it did not fix it, measured from which seat.
+        'anchor_withheld', 'reference_municipality_code', 'distance_to_municipality_meters',
     ];
 
     protected $fillable = [
@@ -51,6 +54,8 @@ class Report extends Model
         'suspicious_capture_time' => 'boolean',
         'anchored_worksite' => 'boolean',
         'distance_to_worksite_meters' => 'integer',
+        'anchor_withheld' => AnchorWithheld::class,
+        'distance_to_municipality_meters' => 'integer',
         'editorial_status' => EditorialStatus::class,
         'editorial_decided_at' => 'datetime',
     ];

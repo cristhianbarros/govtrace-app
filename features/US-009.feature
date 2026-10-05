@@ -83,6 +83,21 @@ Característica: Adjuntar fotos o PDF con privacidad y hash en el teléfono
     Cuando toco la foto sobre la placa
     Entonces esa zona queda difuminada en la foto que se envía
 
+  # 2026-10-04, pedido por el usuario: el aviso se nota, y el recuadro amarillo no viaja en la foto.
+  @complexity:low
+  Escenario: Un rostro que el detector no vio se difumina con un toque
+    Cuando reviso una foto antes de adjuntarla
+    Entonces encima de la foto leo, destacado, "¿Ve a alguien sin difuminar? Tóquelo en la foto."
+    Y leo "El recuadro amarillo solo marca la zona: no aparece en la foto que se envía."
+
+  # It. 46f: una grilla de 4 × 4 ventanas, además de la foto entera.
+  @complexity:medium @edge
+  Escenario: Un rostro lejano también se difumina
+    Dado que adjunto una foto de 1920 px de ancho donde, lejos, se ven personas
+    Y sus rostros miden unos 50 px de ancho, también en el centro de la foto
+    Cuando reviso la foto antes de adjuntarla
+    Entonces la app los encontró y ya están difuminados
+
   @complexity:medium @edge
   Escenario: Quito un recuadro que no es un rostro, y la Bandeja lo marca
     Dado que el detector propuso un rostro donde no lo hay
