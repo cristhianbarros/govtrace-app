@@ -3,6 +3,7 @@
 namespace App\Application\Auth;
 
 use App\Domain\Auth\Exceptions\AuthenticationRejected;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
@@ -22,13 +23,23 @@ class AuthenticateUser
 
     public function handle(string $guard, string $email, string $password): void
     {
+        Auth::guard($guard)->login($this->verify($guard, $email, $password));
+    }
+
+    /**
+     * Every rule, without signing in: it. 46g signs the Super Administrador
+     * in only after the second step (TwoFactorSession).
+     */
+    public function verify(string $guard, string $email, string $password): Authenticatable
+    {
         $key = $this->throttleKey($guard, $email);
 
         if (RateLimiter::tooManyAttempts($key, self::MAX_ATTEMPTS)) {
             throw AuthenticationRejected::tooManyAttempts();
         }
 
-        if (! Auth::guard($guard)->attempt(['email' => $email, 'password' => $password])) {
+        $credentials = ['email' => $email, 'password' => $password];
+        if (! Auth::guard($guard)->validate($credentials)) {
             RateLimiter::hit($key, self::DECAY_SECONDS);
 
             if (RateLimiter::tooManyAttempts($key, self::MAX_ATTEMPTS)) {
@@ -38,23 +49,26 @@ class AuthenticateUser
             throw AuthenticationRejected::invalidCredentials();
         }
 
-        $user = Auth::guard($guard)->user();
+        $user = Auth::guard($guard)->getLastAttempted();
 
         // US-003a / US-003b: nobody of a suspended or decommissioned organization gets in.
         if ($guard === 'tenant' && tenant() && ($rejected = AuthenticationRejected::forOrganization(tenant()->freshStatus()))) {
-            Auth::guard($guard)->logout();
-
             throw $rejected;
         }
 
         if (! ($user->is_active ?? true)) {
-            Auth::guard($guard)->logout();
-
             // It. 46a: a Super Administrador answers to another one, not to an organization.
             throw $guard === 'web' ? AuthenticationRejected::superAdministratorDeactivated() : AuthenticationRejected::accountDeactivated();
         }
 
+        // Como attempt(): si el costo del hash cambió, la contraseña se vuelve a guardar con el nuevo.
+        if (config('hashing.rehash_on_login', true)) {
+            Auth::guard($guard)->getProvider()->rehashPasswordIfRequired($user, $credentials);
+        }
+
         RateLimiter::clear($key);
+
+        return $user;
     }
 
     private function throttleKey(string $guard, string $email): string

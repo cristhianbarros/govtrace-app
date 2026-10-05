@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Application\Auth\AuthenticateUser;
 use App\Domain\Auth\Exceptions\AuthenticationRejected;
 use App\Http\Controllers\Controller;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
@@ -31,11 +32,18 @@ abstract class LoginController extends Controller
         ]);
 
         try {
-            (new AuthenticateUser)->handle($this->guard(), $credentials['email'], $credentials['password']);
+            $user = (new AuthenticateUser)->verify($this->guard(), $credentials['email'], $credentials['password']);
         } catch (AuthenticationRejected $e) {
             throw ValidationException::withMessages(['email' => $e->getMessage()]);
         }
 
+        return $this->signIn($request, $user);
+    }
+
+    /** The password was right. It. 46g: the global panel may still ask for a second step. */
+    protected function signIn(Request $request, Authenticatable $user): SymfonyResponse
+    {
+        Auth::guard($this->guard())->login($user);
         $request->session()->regenerate();
 
         // Una visita completa, no una de Inertia: la sesión y su token CSRF

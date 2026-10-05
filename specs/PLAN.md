@@ -2739,6 +2739,39 @@ El usuario pidió seguir con lo que no espera a nadie: la deuda técnica y los h
   - `make ux-check`: sin retroceso. La línea base cambia solo en Parámetros (un parámetro más);
   - `make trace-check`: 392 de 392.
 
+**46g — La verificación en dos pasos del Super Administrador, inactiva** (historia nueva, US-065-SEC; regla R-SEC-09). El usuario, el 2026-10-05, después de revisar los costos: "aplícalo solo para el super admin, pero déjalo inactivo por el momento".
+- **Hoy:** el Super Administrador entra con su contraseña. Su cuenta gobierna todas las organizaciones.
+- **Qué cambia:**
+  - TOTP (RFC 6238) con cualquier app autenticadora; sin SMS ni proveedor, 0 USD al mes;
+  - lo activa el operador en el servidor (`SUPER_ADMIN_TWO_FACTOR`, apagado por defecto); no se apaga desde el panel;
+  - activo, es obligatorio: después de la contraseña, el panel sigue cerrado hasta el código; quien no lo tiene lo configura al entrar (código QR, clave, código de confirmación) y recibe 8 códigos de recuperación, una sola vez; el invitado lo configura al activar su cuenta;
+  - el código no sirve dos veces; 5 equivocados bloquean 15 minutos (R-SEC-03); 10 minutos para escribirlo;
+  - al activarlo, una sesión abierta sin el segundo paso se cierra;
+  - `make admin-2fa-reset EMAIL=…` lo restablece desde la consola;
+  - la clave, cifrada con la llave de la aplicación; los códigos de recuperación, solo su huella; todo en el log de auditoría.
+- ❓ **Decisiones por defecto:** solo el Super Administrador; obligatorio mientras esté activo; sin "recordar este equipo"; sin restablecerlo desde el panel (solo la consola), para no abrir otra puerta.
+- **Done-when:** los escenarios de `features/US-065-SEC.feature` en verde; con el interruptor apagado, `make e2e` igual que antes; el flujo probado en un navegador de verdad con el interruptor encendido; `make ux-check` sin retroceso.
+- **Modelo:** Opus xhigh. Es el acceso de la cuenta que lo gobierna todo.
+
+✅ **46g cumplida (2026-10-05), inactiva.** Historia nueva US-065-SEC; regla R-SEC-09.
+- **El interruptor:** `auth.super_admin_two_factor` (`SUPER_ADMIN_TWO_FACTOR`, `false` por defecto, en los tres `.env.*.example`). Apagado, nada cambia: las rutas del segundo paso responden 404.
+- **Las librerías:** `pragmarx/google2fa` (TOTP, RFC 6238) y `bacon/bacon-qr-code` (el código QR en SVG, en el servidor, sin imagick); las mismas que usa Laravel Fortify.
+- **El flujo** (`App\Application\Auth\SuperAdminTwoFactor`, `App\Http\Support\TwoFactorSession`, `Central\TwoFactorController`):
+  - `AuthenticateUser::verify()` revisa la contraseña sin iniciar la sesión; el ingreso central, con el interruptor encendido, deja pendiente a la persona 10 minutos y la lleva a `/two-factor`;
+  - la primera vez, el código QR y la clave (en grupos de 4); el primer código la confirma, inicia la sesión y muestra los 8 códigos de recuperación una sola vez;
+  - después, el código de la app o un código de recuperación;
+  - el invitado que activa su cuenta pasa por lo mismo;
+  - `EnsureTwoFactorPassed` cierra la sesión del panel que no pasó el segundo paso (las abiertas antes de activarlo).
+- **Seguridad:** la clave, cifrada con la llave de la aplicación (`encrypted`); los códigos de recuperación, solo su SHA-256; el último paso de 30 s usado, para que un código no sirva dos veces; ventana de ±1 paso; 5 equivocados bloquean 15 minutos; las rutas del segundo paso con límite de 20 por minuto.
+- **La consola:** `make admin-2fa-reset EMAIL=…` (`admin:two-factor-reset`), probado también en el entorno de desarrollo.
+- **Auditoría:** `super_admin.two_factor_enabled`, `super_admin.recovery_code_used`, `super_admin.two_factor_reset`, con sus etiquetas.
+- **Prueba:**
+  - Pest: `SuperAdminTwoFactorTest` (16 casos: apagado, configurarla, entrar, la contraseña sola, códigos equivocados, vencidos y repetidos, el bloqueo, el reloj atrasado, un código de recuperación, los 10 minutos, las sesiones abiertas, el invitado, la consola y los miembros de una organización); las suites de ingreso, plataforma, auditoría y privacidad;
+  - Vitest: las tres pantallas (9 casos);
+  - `make e2e`: 54 de 54 con el interruptor apagado;
+  - en un Chromium de verdad, con el interruptor encendido un momento: configurarla con el código QR, los 8 códigos, salir, un código equivocado, el bueno, y un código de recuperación; axe (WCAG 2.2 AA) sin violaciones en las tres pantallas;
+  - `make ux-check`: sin retroceso; `make trace-check`: 401 de 401.
+
 ## Pivote a Stellar (2026-09-28)
 
 El proyecto participa en **Stellar Apex**, así que la blockchain pasa de EVM/Polygon a **Stellar**, con Smart Contracts en **Soroban (Rust)**:

@@ -131,4 +131,12 @@ return [
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
+    /*
+    | It. 46g (US-065-SEC, R-SEC-09): the Super Administrador signs in with
+    | their password and a code from an authenticator app (TOTP). Off until
+    | the operator turns it on here, on the server: it is not switched off
+    | from the panel, where a stolen session could do it.
+    */
+    'super_admin_two_factor' => (bool) env('SUPER_ADMIN_TWO_FACTOR', false),
+
 ];
