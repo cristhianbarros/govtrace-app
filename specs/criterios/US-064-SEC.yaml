@@ -5,8 +5,8 @@ criterios_aceptacion:
   escenarios_exito:
     - "La página pública de una obra, su recibo, la foto, la descarga y la prueba de cada evidencia se abren con el identificador público (ULID, 26 caracteres), no con un número"
     - "El mapa, la línea de tiempo, el recibo, la Bandeja, los informes ciudadanos, el equipo y los datos abiertos (CSV y JSON) exponen el identificador público"
-    - "Un enlace público viejo, con número, redirige de forma permanente (301) al nuevo"
-    - "La invitación que llegó por correo antes del cambio sigue sirviendo: redirige al nuevo enlace, con su token"
+    - "Un enlace viejo, con número (la página de una obra, un recibo, una foto, una descarga, una prueba o una invitación), ya no abre nada: responde como no encontrado, exista o no el registro (it. 46i)"
+    - "La invitación que llega por correo lleva el identificador público del usuario"
   validaciones_reglas:
     - "Ninguna ruta de la app lleva el número de una obra, un reporte, una evidencia, un informe ciudadano, un usuario o una solicitud de alta (R-SEC-08): un test recorre todas las rutas"
     - "Las llaves numéricas no cambian: la referencia de la obra sellada sigue siendo el SHA-256 de «organización:ficha» (R-BLK-02), y lo ya sellado se sigue verificando"
@@ -14,12 +14,12 @@ criterios_aceptacion:
     - "Las rutas internas no aceptan el número: responden como no encontrado"
   manejo_errores:
     - {caso: "Un identificador público que no existe", mensaje: "No encontrado (404), como hoy un número que no existe"}
-    - {caso: "Un número en una ruta interna", mensaje: "No encontrado (404): solo los enlaces públicos y la invitación redirigen"}
+    - {caso: "Un número en una ruta interna", mensaje: "No encontrado (404): ninguna ruta acepta el número, ni siquiera para redirigir"}
   requisitos_ux:
     - "Nada cambia en pantalla: los enlaces se ven y se usan igual"
   casos_edge:
     - "Un reporte guardado sin conexión antes del cambio se recibe igual: nombra la obra por su contrato de SECOP, no por un número"
-    - "Un enlace público viejo redirige solo si lo que nombra ya es público (una evidencia oculta no se encuentra), con un límite de 30 por minuto por conexión; una invitación vieja, solo con su token válido: si no, la pantalla del enlace no válido, que no dice si la cuenta existe"
+    - "No hay redirecciones de los enlaces viejos: se quitaron antes de salir a producción (it. 46i), porque nada de eso se había compartido"
     - "Unir obras y corregir la ubicación de una obra se hacen con su identificador público"
     - "La solicitud de alta de una veeduría se aprueba desde la Nueva organización con su identificador público"
     - "El informe de un ciudadano se nombra, en pantalla y en sus correos, con una referencia corta tomada de la parte aleatoria de su identificador público (por ejemplo 7KQ3-M9XD), no con su número consecutivo (US-059-LEG)"

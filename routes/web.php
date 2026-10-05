@@ -22,10 +22,8 @@ use App\Http\Controllers\Central\SetPasswordController;
 use App\Http\Controllers\Central\SuperAdministratorController;
 use App\Http\Controllers\Central\TwoFactorController;
 use App\Http\Controllers\Central\UsageController;
-use App\Http\Controllers\LegacyLinkController;
 use App\Http\Middleware\EnsureSuperAdministratorIsActive;
 use App\Http\Middleware\EnsureTwoFactorPassed;
-use App\Models\User as SuperAdmin;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -51,8 +49,6 @@ foreach (config('tenancy.central_domains') as $domain) {
         Route::post('/reset-password', [PasswordResetController::class, 'reset'])->name('password.update');
         // It. 46a (US-063-USR): el enlace de la invitación de un Super Administrador.
         Route::get('/set-password/{user}', [SetPasswordController::class, 'show'])->where('user', PublicId::PATTERN)->name('set-password.show');
-        // It. 46c (US-064-SEC): la invitación que llegó por correo antes del cambio, con el número del usuario.
-        Route::get('/set-password/{number}', [LegacyLinkController::class, 'invitation'])->whereNumber('number')->defaults('model', SuperAdmin::class)->defaults('to', 'set-password.show')->middleware('throttle:30,1')->name('legacy.set-password.show');
         Route::post('/set-password/{user}', [SetPasswordController::class, 'store'])->where('user', PublicId::PATTERN)->middleware('throttle:6,1')->name('set-password.store');
 
         // It. 46g (US-065-SEC, R-SEC-09): el segundo paso del Super Administrador, después de la

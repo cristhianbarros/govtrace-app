@@ -15,15 +15,17 @@ Característica: Identificadores públicos que no se pueden recorrer
     Y la foto, la descarga, la prueba y el recibo de su evidencia también
 
   @complexity:medium
-  Escenario: Un enlace público viejo, con número, redirige al nuevo
-    Dado que alguien compartió el enlace de la obra con su número, antes del cambio
+  Escenario: Un enlace viejo, con número, ya no abre nada
+    Dado que alguien guardó el enlace de una obra, de un recibo o de una invitación con su número
     Cuando lo abre
-    Entonces llega a la misma obra, por una redirección permanente al enlace con su identificador público
+    Entonces ve que no existe, sin importar si ese registro existe o es público
+    Y solo el enlace con su identificador público abre
 
   @complexity:medium
   Escenario: Ninguna ruta de la app lleva el número de un registro
     Cuando se recorren todas las rutas de la app
     Entonces ninguna recibe el número de una obra, un reporte, una evidencia, un informe ciudadano, un usuario o una solicitud de alta
+    Y no queda ninguna ruta para los enlaces viejos
     Y las rutas internas responden como no encontrado si reciben un número
 
   @complexity:low
@@ -32,10 +34,10 @@ Característica: Identificadores públicos que no se pueden recorrer
     Entonces cada obra, reporte y evidencia lleva su identificador público y ninguno lleva su número
 
   @complexity:medium
-  Escenario: La invitación que llegó antes del cambio sigue sirviendo
-    Dado que un veedor recibió su invitación por correo antes del cambio
+  Escenario: La invitación lleva el identificador público del usuario
+    Dado que un veedor o un Super Administrador recibe su invitación por correo
     Cuando abre el enlace
-    Entonces llega a crear su contraseña, con el mismo token
+    Entonces llega a crear su contraseña, con su token
 
   @complexity:high
   Escenario: Un reporte guardado sin conexión antes del cambio se envía igual

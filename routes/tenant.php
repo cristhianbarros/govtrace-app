@@ -6,14 +6,9 @@ use App\Application\Privacy\DataPolicy;
 use App\Application\Publication\PublicStats;
 use App\Application\Publication\StellarForBrowser;
 use App\Domain\Organization\Roles;
-use App\Domain\Organization\User as OrganizationUser;
-use App\Domain\Reports\Evidence;
-use App\Domain\Reports\Report;
 use App\Domain\Shared\PublicId;
-use App\Domain\Worksites\Worksite;
 use App\Http\Controllers\Auth\ChangePasswordController;
 use App\Http\Controllers\Auth\PasswordResetController;
-use App\Http\Controllers\LegacyLinkController;
 use App\Http\Controllers\Tenant\AdministratorController;
 use App\Http\Controllers\Tenant\AuditController;
 use App\Http\Controllers\Tenant\CitizenReportController;
@@ -82,8 +77,6 @@ Route::middleware([
     Route::middleware(EnsureMapIsOnline::class.':screen')->group(function () {
         Route::get('/', fn () => Inertia::render('Public/Map'))->name('public.map');
         Route::get('/worksite/{worksite}', fn (string $worksite) => Inertia::render('Public/Worksite', ['worksiteId' => $worksite, 'stellar' => StellarForBrowser::props()]))->where('worksite', PublicId::PATTERN)->name('public.worksite');
-        // It. 46c (US-064-SEC): un enlace viejo, con el número de la obra, redirige al nuevo.
-        Route::get('/worksite/{number}', LegacyLinkController::class)->whereNumber('number')->defaults('model', Worksite::class)->defaults('to', 'public.worksite')->middleware('throttle:30,1')->name('legacy.public.worksite');
         // US-051-RPT: las estadísticas del territorio.
         Route::get('/stats', fn () => Inertia::render('Public/Stats'))->name('public.stats');
     });
@@ -96,8 +89,6 @@ Route::middleware([
         Route::get('/public/worksites/list', [PublicWorksiteController::class, 'listing'])->name('public.worksites.list');
         Route::get('/public/worksites/{worksite}', [PublicWorksiteController::class, 'show'])->where('worksite', PublicId::PATTERN)->name('public.worksites.show');
         Route::get('/public/evidences/{evidence}/photo', [PublicEvidenceController::class, 'photo'])->where('evidence', PublicId::PATTERN)->name('public.evidences.photo');
-        Route::get('/public/worksites/{number}', LegacyLinkController::class)->whereNumber('number')->defaults('model', Worksite::class)->defaults('to', 'public.worksites.show')->middleware('throttle:30,1')->name('legacy.public.worksites.show');
-        Route::get('/public/evidences/{number}/photo', LegacyLinkController::class)->whereNumber('number')->defaults('model', Evidence::class)->defaults('to', 'public.evidences.photo')->middleware('throttle:30,1')->name('legacy.public.evidences.photo');
         Route::get('/public/stats', fn (PublicStats $stats) => response()->json($stats->handle()))->name('public.stats.data');
     });
     // US-059-LEG (it. 44f): el ciudadano informa a la veeduría, con su correo verificado por un código.
@@ -129,10 +120,6 @@ Route::middleware([
         Route::get('/public/reports/{report}/receipt', [ReceiptController::class, 'public'])->where('report', PublicId::PATTERN)->name('public.reports.receipt');
         Route::get('/public/evidences/{evidence}/download', [PublicEvidenceController::class, 'download'])->where('evidence', PublicId::PATTERN)->name('public.evidences.download');
         Route::get('/public/evidences/{evidence}/proof', [PublicEvidenceController::class, 'proof'])->where('evidence', PublicId::PATTERN)->name('public.evidences.proof');
-        // It. 46c: los enlaces viejos del recibo, la descarga y la prueba, que pudieron compartirse.
-        Route::get('/public/reports/{number}/receipt', LegacyLinkController::class)->whereNumber('number')->defaults('model', Report::class)->defaults('to', 'public.reports.receipt')->middleware('throttle:30,1')->name('legacy.public.reports.receipt');
-        Route::get('/public/evidences/{number}/download', LegacyLinkController::class)->whereNumber('number')->defaults('model', Evidence::class)->defaults('to', 'public.evidences.download')->middleware('throttle:30,1')->name('legacy.public.evidences.download');
-        Route::get('/public/evidences/{number}/proof', LegacyLinkController::class)->whereNumber('number')->defaults('model', Evidence::class)->defaults('to', 'public.evidences.proof')->middleware('throttle:30,1')->name('legacy.public.evidences.proof');
         Route::get('/public/proofs/{sha256}', [PublicProofController::class, 'show'])->name('public.proofs.show');
     });
     Route::post('/login', [LoginController::class, 'store'])->name('tenant.login');
@@ -141,8 +128,6 @@ Route::middleware([
     // (invitación de veedor) — mismo token, misma pantalla.
     Route::get('/set-password/{user}', [SetPasswordController::class, 'show'])->where('user', PublicId::PATTERN)->name('tenant.set-password.show');
     Route::post('/set-password/{user}', [SetPasswordController::class, 'store'])->where('user', PublicId::PATTERN)->name('tenant.set-password.store');
-    // It. 46c: la invitación que llegó por correo antes del cambio, con el número del usuario.
-    Route::get('/set-password/{number}', [LegacyLinkController::class, 'invitation'])->whereNumber('number')->defaults('model', OrganizationUser::class)->defaults('to', 'tenant.set-password.show')->middleware('throttle:30,1')->name('legacy.tenant.set-password.show');
 
     // US-039-USR: restablecer la contraseña con un enlace por correo.
     Route::get('/forgot-password', [PasswordResetController::class, 'requestForm'])->name('tenant.password.request');
