@@ -2786,6 +2786,12 @@ El usuario pidió seguir con lo que no espera a nadie: la deuda técnica y los h
   - `make e2e`: 54 de 54; el ciudadano adjunta 2 fotos desde la galería (una con rostro, otra sin), la veeduría las ve y cada una abre;
   - `make ux-check`: sin retroceso; `make trace-check`: 404 de 404.
 
+✅ **46i cumplida (2026-10-05), con Sonnet medium.** Enmienda de US-064-SEC y de R-SEC-08. La decisión pendiente de la 46c: el usuario pidió mi decisión y dijo "do it".
+- **Qué se quitó:** las ocho rutas `legacy.*` y `LegacyLinkController`. Un enlace con número (la página de una obra, un recibo, una foto, una descarga, una prueba o una invitación) responde 404, exista o no el registro.
+- **Por qué:** no había nada compartido con número, la red principal todavía no existe, y cada ruta que queda es superficie.
+- **Prueba:** el test que recorre las rutas exige que no quede ninguna `legacy.*`; los enlaces con número responden 404 y el nuevo abre; las invitaciones llevan el identificador público.
+- **Lo que no cambia:** los identificadores públicos, las llaves numéricas internas y lo sellado.
+
 ## Pivote a Stellar (2026-09-28)
 
 El proyecto participa en **Stellar Apex**, así que la blockchain pasa de EVM/Polygon a **Stellar**, con Smart Contracts en **Soroban (Rust)**:

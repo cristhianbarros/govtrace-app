@@ -128,13 +128,13 @@ it('La página pública de una obra se abre con su identificador público: and s
     }
 });
 
-it('Un enlace público viejo, con número, redirige al nuevo', function (string $path, string $kind) {
+it('Un enlace viejo, con número, ya no abre nada: not even a published one, and nothing says whether the record exists', function (string $path, string $kind) {
     publishedReport($this->tenant, $this->veedor, $this->administrator);
     [$number, $publicId] = pidRecordOf($kind);
 
-    $this->get(PID_HOST.sprintf($path, $number))
-        ->assertStatus(301)
-        ->assertRedirect(PID_HOST.sprintf($path, $publicId));
+    $this->get(PID_HOST.sprintf($path, $number))->assertNotFound();
+    $this->get(PID_HOST.sprintf($path, $number + 1000))->assertNotFound();
+    $this->get(PID_HOST.sprintf($path, $publicId))->assertOk();
 })->with([
     'la página de la obra' => ['/worksite/%s', 'worksite'],
     'los datos de la obra' => ['/public/worksites/%s', 'worksite'],
@@ -144,21 +144,14 @@ it('Un enlace público viejo, con número, redirige al nuevo', function (string 
     'la prueba' => ['/public/evidences/%s/proof', 'evidence'],
 ]);
 
-it('redirects an old link only to what is already public: a number of a hidden evidence is not found', function () {
-    $reportId = sealedReport($this->tenant, $this->veedor); // sellada, y oculta hasta que la publiquen
-    $evidenceId = $this->tenant->run(fn () => Report::query()->findOrFail($reportId)->evidences()->value('id'));
-
-    $this->get(PID_HOST."/public/reports/{$reportId}/receipt")->assertNotFound();
-    $this->get(PID_HOST."/public/evidences/{$evidenceId}/download")->assertNotFound();
-});
-
-it('redirects an old invitation only with its token: without it, the screen of an invalid link, which tells nothing', function () {
+it('Un enlace viejo, con número, ya no abre nada: an old invitation, with its token, shows the screen of an invalid link, which tells nothing', function () {
     $veedor = $this->tenant->run(fn () => (new InviteObserver)->handle('nuevo@correo.co'));
+    $ana = SuperAdmin::factory()->create(['name' => 'Ana Directora']);
+    (new SuperAdministrators)->invite($ana, 'Luis Gómez', 'luis@govtrace.org');
+    $luis = SuperAdmin::query()->where('email', 'luis@govtrace.org')->sole();
 
-    foreach (["/set-password/{$veedor->id}?token=otro", "/set-password/{$veedor->id}", '/set-password/987654?token=otro'] as $path) {
-        $this->withoutVite()->get(PID_HOST.$path)
-            ->assertOk()
-            ->assertInertia(fn (AssertableInertia $page) => $page->component('Auth/SetPassword')->where('valid', false)->missing('email'));
+    foreach ([[PID_HOST, $veedor, 'tenant'], [PID_CENTRAL, $luis, 'web']] as [$host, $invited, $guard]) {
+        $this->withoutVite()->get("{$host}/set-password/{$invited->id}?token=cualquiera")->assertNotFound();
     }
 });
 
@@ -169,26 +162,15 @@ it('answers 404 to a public id or a number that does not exist', function () {
 
 it('Ninguna ruta de la app lleva el número de un registro', function () {
     $routes = collect(Route::getRoutes()->getRoutes());
-    $isLegacy = fn (RouteDefinition $route) => str_starts_with((string) $route->getName(), 'legacy.');
 
-    $offenders = $routes->reject($isLegacy)->flatMap(fn (RouteDefinition $route) => collect($route->parameterNames())
+    $offenders = $routes->flatMap(fn (RouteDefinition $route) => collect($route->parameterNames())
         ->intersect(PID_RECORD_PARAMETERS)
         ->filter(fn (string $parameter) => ($route->wheres[$parameter] ?? null) !== PublicId::PATTERN)
         ->map(fn (string $parameter) => "{$route->uri()} ({$parameter})"));
 
+    // Ni un camino para los enlaces viejos: el número no abre nada.
     expect($offenders->values()->all())->toBe([])
-        // Solo los enlaces que pudieron compartirse aceptan todavía el número, y solo para redirigir.
-        ->and($routes->filter($isLegacy)->map(fn (RouteDefinition $route) => $route->getName())->unique()->sort()->values()->all())->toBe([
-            'legacy.public.evidences.download',
-            'legacy.public.evidences.photo',
-            'legacy.public.evidences.proof',
-            'legacy.public.reports.receipt',
-            'legacy.public.worksite',
-            'legacy.public.worksites.show',
-            'legacy.set-password.show',
-            'legacy.tenant.set-password.show',
-        ])
-        ->and($routes->filter($isLegacy)->every(fn (RouteDefinition $route) => $route->methods() === ['GET', 'HEAD']))->toBeTrue();
+        ->and($routes->filter(fn (RouteDefinition $route) => str_starts_with((string) $route->getName(), 'legacy.'))->count())->toBe(0);
 });
 
 it('Ninguna ruta de la app lleva el número de un registro: an internal route answers 404 to a number', function () {
@@ -278,7 +260,7 @@ it('approves a request for an alta from the new organization, by its public id',
     expect($request->fresh()->status)->toBe('approved');
 });
 
-it('La invitación que llegó antes del cambio sigue sirviendo: the link of a veedor, with the same token', function () {
+it('La invitación lleva el identificador público del usuario: the link of a veedor opens its screen', function () {
     $veedor = $this->tenant->run(fn () => (new InviteObserver)->handle('nuevo@correo.co'));
     $url = null;
     Notification::assertSentTo($veedor, WelcomeNotification::class, function (WelcomeNotification $mail) use (&$url) {
@@ -287,15 +269,11 @@ it('La invitación que llegó antes del cambio sigue sirviendo: the link of a ve
         return true;
     });
     expect($url)->toStartWith(PID_HOST."/set-password/{$veedor->public_id}?token=");
-    $token = Str::after($url, 'token=');
 
-    $this->get(PID_HOST."/set-password/{$veedor->id}?token={$token}")
-        ->assertStatus(301)
-        ->assertRedirect($url);
     $this->withoutVite()->get($url)->assertInertia(fn (AssertableInertia $page) => $page->component('Auth/SetPassword')->where('valid', true));
 });
 
-it('La invitación que llegó antes del cambio sigue sirviendo: the link of a Super Administrador, with the same token', function () {
+it('La invitación lleva el identificador público del usuario: the link of a Super Administrador', function () {
     $ana = SuperAdmin::factory()->create(['name' => 'Ana Directora']);
     (new SuperAdministrators)->invite($ana, 'Luis Gómez', 'luis@govtrace.org');
     $luis = SuperAdmin::query()->where('email', 'luis@govtrace.org')->sole();
@@ -306,10 +284,6 @@ it('La invitación que llegó antes del cambio sigue sirviendo: the link of a Su
         return true;
     });
     expect($url)->toStartWith(PID_CENTRAL."/set-password/{$luis->public_id}?token=");
-
-    $this->get(PID_CENTRAL."/set-password/{$luis->id}?token=".Str::after($url, 'token='))
-        ->assertStatus(301)
-        ->assertRedirect($url);
 });
 
 it('Un reporte guardado sin conexión antes del cambio se envía igual: it names the worksite by its SECOP contract, not by a number', function () {

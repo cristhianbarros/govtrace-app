@@ -8,6 +8,12 @@ Al 2026-10-04. Empezó sobre `77e6030` (iteración 39) y se actualizó en las it
 
 | Qué | PR |
 |---|---|
+| 46i: se quitan las redirecciones de los enlaces viejos con número (US-064-SEC) | este |
+
+- **Tests:** Pest 1107, Vitest 595, `make e2e` 54 de 54, trace-check 404 de 404.
+
+| Qué | PR |
+|---|---|
 | 46h: el ciudadano adjunta de 1 a 3 fotos, con las mismas opciones del veedor (US-059-LEG) | este |
 
 - **Tests:** Pest 1108, Vitest 595, `make e2e` 54 de 54, trace-check 404 de 404, `make ux-check` sin retroceso.
@@ -49,7 +55,7 @@ Al 2026-10-04. Empezó sobre `77e6030` (iteración 39) y se actualizó en las it
 - **46e, en una frase:** cada foto se revisa antes de adjuntarla, con los rostros que encontró el detector ya difuminados (BlazeFace, en el celular, alojado en GovTrace). Se difumina a mano lo demás, y lo que se sella es la foto difuminada. La Bandeja dice cuántas zonas se difuminaron y avisa si se quitó un difuminado propuesto.
 - **Bloque 46, cerrado:** 46a a 46e.
 - **46c, en una frase:** las URL y el API llevan un ULID en vez del número de las obras, los reportes, las evidencias, los informes ciudadanos, los usuarios y las solicitudes de alta. Lo sellado no cambia, porque la referencia de la obra en Stellar sigue saliendo del número. Los enlaces viejos redirigen solo si lo que nombran ya es público, y una invitación solo con su token.
-- ❓ **Decisión tuya, antes de la red principal:** los enlaces viejos con número se pueden quitar si no hay enlaces compartidos de antes de la 46c (`docs/go-live.md`).
+- ✅ Los enlaces viejos con número ya no abren nada: se quitaron las redirecciones (it. 46i).
 - **Lo que dice el RUES, y lo que no:** trae lo inscrito en las cámaras de comercio, también las veedurías (382, 336 activas). Las inscritas en una personería no están, y para ellas el Super Administrador revisa el PDF. Es una ayuda para decidir: si el RUES no responde, se decide igual.
 - **Riesgo que queda:** el PDF no se analiza contra malware. Se descarga como adjunto, en un sandbox, y solo lo abre el Super Administrador.
 - **Lo que sigue:** las decisiones pendientes de la red principal (`docs/go-live.md`) y 42b, que espera la cuenta de AWS.
