@@ -113,6 +113,8 @@ La tesorería es una cuenta **fría**: nunca vive en el servidor. Crea la sellad
 
 **Se entregan:** los seis datos del responsable.
 
+Lo que más hay que revisar con el abogado, más allá de esta lista, y por qué: [`viabilidad-legal.md`](viabilidad-legal.md). Ahí están los términos de uso, el buen nombre del contratista, el valor de la evidencia y quién paga, y en su sección 7, las preguntas.
+
 ---
 
 ## Resumen
