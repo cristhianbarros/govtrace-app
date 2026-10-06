@@ -28,12 +28,27 @@ class ProcessSecopContractRow
      * It. 45c: of the row, only what GovTrace reads. SECOP also publishes the
      * legal representative, the supervisor, their documents and the bank
      * account of the contractor: public, but not needed here (Ley 1581,
-     * principio de finalidad).
+     * principio de finalidad). The exception, from the it. 46j: the supervisor's
+     * NAME (never their document), the entity's order and the funding sources
+     * go in their own columns, for the dossier.
      */
     public const KEPT_FIELDS = [
         'id_contrato', 'referencia_del_contrato', 'nombre_entidad', 'proveedor_adjudicado', 'descripcion_del_proceso',
         'tipo_de_contrato', 'estado_contrato', 'valor_del_contrato', 'fecha_de_firma', 'fecha_de_fin_del_contrato',
         'ciudad', 'departamento', 'urlproceso',
+    ];
+
+    /**
+     * It. 46j: the six funding sources SECOP II breaks the value into, by the
+     * short name the dossier uses.
+     */
+    private const FUNDING_FIELDS = [
+        'pgn' => 'presupuesto_general_de_la_nacion_pgn',
+        'sgp' => 'sistema_general_de_participaciones',
+        'sgr' => 'sistema_general_de_regal_as',
+        'territorial' => 'recursos_propios_alcald_as_gobernaciones_y_resguardos_ind_genas_',
+        'credit' => 'recursos_de_credito',
+        'own' => 'recursos_propios',
     ];
 
     public function __construct(
@@ -99,6 +114,9 @@ class ProcessSecopContractRow
             'department_code' => $departmentCode,
             'municipality_code' => $municipalityCode,
             'secop_url' => $row['urlproceso']['url'] ?? null,
+            'supervisor_name' => $this->supervisorName($row),
+            'entity_order' => $this->text($row['orden'] ?? null),
+            'funding_sources' => $this->fundingSources($row),
             'raw_payload' => array_intersect_key($row, array_flip(self::KEPT_FIELDS)),
             'cancelled_at' => $status === 'cancelled' ? $this->cancelledSince($row['id_contrato']) : null,
         ];
@@ -119,6 +137,36 @@ class ProcessSecopContractRow
         $contract = Contract::fromSecop(fn () => Contract::updateOrCreate(['secop_contract_id' => $row['id_contrato']], $attributes));
 
         return $contract->wasRecentlyCreated ? SecopRowOutcome::Inserted : SecopRowOutcome::Updated;
+    }
+
+    /**
+     * It. 46j: only the supervisor's name, never their document (Ley 1581,
+     * principio de finalidad). SECOP II writes "No definido" when it has none.
+     */
+    private function supervisorName(array $row): ?string
+    {
+        $name = $this->text($row['nombre_supervisor'] ?? null);
+
+        return $name !== null && Str::lower($name) !== 'no definido' ? $name : null;
+    }
+
+    /** @return array<string, int>|null null when the row has none of the six sources. */
+    private function fundingSources(array $row): ?array
+    {
+        $present = array_filter(self::FUNDING_FIELDS, fn (string $field) => isset($row[$field]) && is_numeric($row[$field]));
+
+        if ($present === []) {
+            return null;
+        }
+
+        return array_map(fn (string $field) => (int) round((float) ($row[$field] ?? 0)), self::FUNDING_FIELDS);
+    }
+
+    private function text(mixed $value): ?string
+    {
+        $text = trim((string) $value);
+
+        return $text === '' ? null : $text;
     }
 
     /**

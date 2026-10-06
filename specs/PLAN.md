@@ -2792,6 +2792,67 @@ El usuario pidió seguir con lo que no espera a nadie: la deuda técnica y los h
 - **Prueba:** el test que recorre las rutas exige que no quede ninguna `legacy.*`; los enlaces con número responden 404 y el nuevo abre; las invitaciones llevan el identificador público.
 - **Lo que no cambia:** los identificadores públicos, las llaves numéricas internas y lo sellado.
 
+✅ **46j cumplida (2026-10-06), con Sonnet medium: el expediente, con lo que califica la Contraloría** (enmienda de US-056-LEG). Aprobada por el usuario el 2026-10-06.
+- **De dónde sale:** el usuario preguntó si el expediente de la 44b está acorde con lo que pide la Contraloría (`docs/viabilidad-legal.md`, R2).
+- **Lo que pide la Contraloría:** no publica un formato. Califica cada denuncia con un formulario (Resolución Orgánica OGZ-0619 de 2017, art. 4 ❓, por confirmar si sigue vigente) que mira:
+  - la competencia;
+  - la claridad de los hechos;
+  - los presuntos responsables y la entidad;
+  - los tiempos y los lugares;
+  - las normas vulneradas;
+  - la relación funcional.
+- **Lo que el expediente ya cubre:** los hechos, la entidad, el contratista, los tiempos, la cuantía y las pruebas.
+- **Qué cambia:**
+  1. **El supervisor del contrato.**
+     - SECOP II lo trae en `nombre_supervisor`. Lo tienen unos 7 de cada 10 contratos de obra firmados desde 2023 (348 de 521 en Magdalena, 2.709 de 3.895 en Antioquia, medido el 2026-10-06); los demás dicen "No definido", que se trata como sin dato.
+     - Se guarda **solo el nombre**: ni su documento ni su tipo. Sale en el expediente, nunca en el sitio público.
+     - Enmienda la it. 45c, que lo había dejado fuera por el principio de finalidad (Ley 1581). Ahora tiene una finalidad: identificar a quien debía vigilar la ejecución (Ley 1474 de 2011, arts. 83 y 84; Ley 850 de 2003, art. 15 f)).
+  2. **El origen de los recursos, y a qué contraloría acudir.**
+     - SECOP II desglosa el valor en seis fuentes: el Presupuesto General de la Nación, el Sistema General de Participaciones, el Sistema General de Regalías, los recursos propios de alcaldías, gobernaciones y resguardos, el crédito y los recursos propios. El 99 % de esos contratos trae al menos una.
+     - También trae el orden de la entidad, Nacional o Territorial.
+     - El expediente y la denuncia muestran el desglose, y orientan:
+       - con recursos de la Nación, la Contraloría General;
+       - con recursos propios del territorio, la contraloría de ese territorio, en concurrencia con la General, cuyo control prevalece (Constitución, arts. 267 y 272).
+     - Es una orientación, no una decisión: la competencia la define la Contraloría. ❓ La regla la confirma un abogado.
+  3. **El lugar de la obra.**
+     - El municipio y el departamento del contrato.
+     - El punto aproximado de la obra (~100 m, R-PRIV-02: lo pudo anclar el primer veedor donde estaba), con el enlace a la obra en el mapa público.
+     - Un espacio para la dirección o una referencia, que completa la veeduría.
+  4. **Las normas o cláusulas presuntamente incumplidas.** Un espacio en blanco en la denuncia, con un ejemplo: la cláusula del plazo, o el deber de supervisión de la Ley 1474 de 2011, arts. 83 y 84. GovTrace no las sugiere: es el juicio de la veeduría.
+- **Cómo se guarda:**
+  - columnas nuevas en `contracts` y en `archived_contracts` de cada organización, en una migración aditiva: `supervisor_name`, `entity_order` y `funding_sources` (JSON, las seis fuentes en pesos);
+  - `ContractArchive` las copia como las demás, y `KEPT_FIELDS` suma los campos nuevos, nunca el documento del supervisor;
+  - se llenan con la próxima sincronización (cada noche, o "Sincronizar ahora"); mientras, el expediente dice "Sin dato en SECOP II".
+- **Fuera de esta iteración:**
+  - la denuncia sin nombre (Ley 962 de 2005, art. 81: una denuncia anónima abre un proceso fiscal si los hechos se prueban al menos sumariamente o son concretos e identificables), que espera la decisión del usuario;
+  - el derecho de petición a la Contraloría para validar el formato (el usuario lo dejó para después).
+- **Criterios nuevos en US-056-LEG:**
+  - el expediente y las dos plantillas dicen el supervisor según SECOP II, solo su nombre, o "Sin dato en SECOP II";
+  - dicen el origen de los recursos y a qué contraloría acudir, como orientación;
+  - dicen el municipio, el departamento, el punto aproximado de la obra con su enlace, y un espacio para la dirección;
+  - la denuncia deja en blanco las normas o cláusulas incumplidas, con un ejemplo;
+  - nunca el documento del supervisor.
+- **Escenarios nuevos (`features/US-056-LEG.feature`):**
+  - el supervisor según SECOP II;
+  - un contrato sin supervisor en SECOP II;
+  - con recursos de la Nación, la Contraloría General;
+  - con recursos propios del territorio, su contraloría;
+  - el lugar de la obra, aproximado;
+  - las normas incumplidas las escribe la veeduría;
+  - el documento del supervisor no se guarda.
+- **Prueba:**
+  - Pest:
+    - la fila de SECOP: el nombre sí, el documento no, "No definido" como vacío, las seis fuentes y el orden;
+    - el archivo de contratos con las columnas nuevas;
+    - el expediente en sus tres casos: la Nación, el territorio y sin dato;
+    - el lugar aproximado y su enlace;
+    - el espacio de las normas;
+  - `make trace-check`; el flujo del Administrador en `make e2e`; los tres PDF revisados a ojo con la demostración.
+- **Modelo:** Sonnet medium. Son plantillas, campos nuevos de SECOP y una migración aditiva; no toca seguridad, criptografía ni datos irreversibles.
+- **Cómo quedó:** migración `2026_10_06_000100` (`supervisor_name`, `entity_order`, `funding_sources`, en `contracts` y `archived_contracts`, que `ContractArchive` copia); `ProcessSecopContractRow` los llena (el nombre del supervisor, `No definido` como sin dato; las seis fuentes como enteros en pesos; nunca el documento) y `WorksiteDossier` los lleva a las plantillas (`_contracts`, `_place`, y en la denuncia las normas y «A qué contraloría acudir»). El expediente renumera sus secciones (el lugar es la 2).
+- **Prueba:** `SecopDossierFieldsTest` (5 casos) y 7 casos nuevos en `WorksiteDossierTest`; 8 escenarios nuevos en `US-056-LEG.feature`; `make trace-check`: 412 de 412.
+- **Pendiente:** los contratos ya guardados se llenan con la próxima sincronización (cada noche, o «Sincronizar ahora»).
+
 ## Pivote a Stellar (2026-09-28)
 
 El proyecto participa en **Stellar Apex**, así que la blockchain pasa de EVM/Polygon a **Stellar**, con Smart Contracts en **Soroban (Rust)**:

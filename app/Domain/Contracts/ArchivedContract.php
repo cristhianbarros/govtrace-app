@@ -23,6 +23,7 @@ class ArchivedContract extends Model
         'signed_at' => 'date',
         'end_date' => 'date',
         'raw_payload' => 'array',
+        'funding_sources' => 'array',
         'archived_at' => 'datetime',
     ];
 }

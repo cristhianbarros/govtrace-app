@@ -220,7 +220,7 @@ Suma los impedimentos del veedor (it. 44c) y los datos de inscripción de una ve
 
 - **R-LEG-01** — Un estado de GovTrace (Normal, Alerta, En riesgo) es una alerta: nunca se presenta como decisión de una autoridad ni como "obra inconclusa" (Ley 2020 de 2020) — US-055-LEG
 - **R-LEG-02** — Los canales para denunciar son los oficiales de la Contraloría; GovTrace no recibe ni reenvía la denuncia — US-055-LEG
-- **R-LEG-03** — El expediente de una obra solo lleva sus evidencias publicadas, cada archivo byte a byte con su prueba de inclusión; las plantillas no se radican desde GovTrace: las completa, las firma y las presenta la veeduría — US-056-LEG
+- **R-LEG-03** — El expediente de una obra solo lleva sus evidencias publicadas, cada archivo byte a byte con su prueba de inclusión; las plantillas no se radican desde GovTrace: las completa, las firma y las presenta la veeduría. (it. 46j) Además de los contratos, dice el supervisor (solo su nombre, nunca su documento), el origen de los recursos, el lugar de la obra (el punto aproximado, R-PRIV-02) y a qué contraloría acudir, como orientación y no como decisión — US-056-LEG
 - **R-LEG-04** — Cada descarga del expediente queda en el log de auditoría (`dossier.downloaded`): es la medida de si se usa — US-056-LEG
 - **R-LEG-09** — Un informe ciudadano (Ley 850 de 2003, art. 18 a)) no se sella ni se publica, ni cambia el estado de una obra; llega solo con el correo verificado por un código de 6 dígitos (10 minutos, 5 intentos), con límites por correo (3 códigos por hora, 3 informes por día, 1 por obra) y por conexión — US-059-LEG
 - **R-LEG-10** — El correo de un ciudadano se guarda cifrado; la veeduría nunca lo ve y le responde desde GovTrace. El log de auditoría no lo registra — US-059-LEG

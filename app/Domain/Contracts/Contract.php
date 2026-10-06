@@ -72,6 +72,7 @@ class Contract extends Model
         'secop_contract_id', 'process_number', 'entity_name', 'contractor_name',
         'object', 'contract_type', 'value', 'signed_at', 'end_date', 'status',
         'department_code', 'municipality_code', 'secop_url', 'raw_payload', 'cancelled_at',
+        'supervisor_name', 'entity_order', 'funding_sources',
     ];
 
     protected $casts = [
@@ -79,6 +80,7 @@ class Contract extends Model
         'signed_at' => 'date',
         'end_date' => 'date',
         'raw_payload' => 'array',
+        'funding_sources' => 'array',
         'cancelled_at' => 'datetime',
     ];
 

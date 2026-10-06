@@ -7,11 +7,14 @@
     <h2>1. Contratos de la obra en SECOP II</h2>
     @include('dossier._contracts')
 
-    <h2>2. Estado de la obra en GovTrace</h2>
+    <h2>2. Lugar de la obra</h2>
+    @include('dossier._place')
+
+    <h2>3. Estado de la obra en GovTrace</h2>
     <p><strong>{{ $condition['label'] }}.</strong> {{ $condition['reason'] }}</p>
     <p class="small">Es una alerta de GovTrace, calculada con los datos de SECOP II y las evidencias publicadas. No es la decisión de una autoridad, ni quiere decir que sea una «obra inconclusa» en el sentido de la Ley 2020 de 2020.</p>
 
-    <h2>3. Evidencias publicadas</h2>
+    <h2>4. Evidencias publicadas</h2>
     @forelse ($evidences as $evidence)
         <table>
             <tr><th>Evidencia n.º {{ $evidence['number'] }}</th><td>{{ $evidence['classification'] }}</td></tr>

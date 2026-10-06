@@ -68,3 +68,55 @@ Característica: El expediente de una obra, con el derecho de petición y la den
     Dado que la veeduría no tiene NIT y está inscrita con "Resolución 012 de 2026" ante "Personería de Santa Marta"
     Cuando descargo el expediente
     Entonces el derecho de petición y la denuncia la identifican por su inscripción
+
+  # Iteración 46j — lo que califica la Contraloría (docs/viabilidad-legal.md, R2)
+  @complexity:low
+  Escenario: El supervisor según SECOP II
+    Dado que SECOP II da el nombre del supervisor del contrato
+    Cuando descargo el expediente
+    Entonces el expediente y la denuncia lo dicen, y si SECOP II no lo da dicen "Sin dato en SECOP II"
+
+  @complexity:low @negative
+  Escenario: El documento del supervisor no se guarda
+    Dado que SECOP II publica el nombre y el documento del supervisor
+    Cuando GovTrace sincroniza el contrato
+    Entonces guarda el nombre, nunca el documento
+
+  @complexity:medium
+  Escenario: El origen de los recursos
+    Dado que SECOP II desglosa el valor del contrato en sus fuentes
+    Cuando descargo el expediente
+    Entonces dice el orden de la entidad y cada fuente con dinero, en pesos
+    Y si SECOP II no desglosa nada, dice "Sin dato en SECOP II"
+
+  @complexity:medium
+  Escenario: Con recursos de la Nación, la Contraloría General
+    Dado que el contrato tiene recursos del Presupuesto General de la Nación
+    Cuando descargo el expediente
+    Entonces la denuncia orienta hacia la Contraloría General de la República
+    Y aclara que es una orientación de GovTrace: la competencia la define la Contraloría
+    Y el derecho de petición no lleva esa sección
+
+  @complexity:medium
+  Escenario: Con recursos propios del territorio, su contraloría
+    Dado que el contrato tiene recursos propios del territorio
+    Cuando descargo el expediente
+    Entonces la denuncia orienta hacia la contraloría de ese territorio, sin perjuicio del control prevalente de la General
+
+  @complexity:medium
+  Escenario: Sin el origen de los recursos, la denuncia no lo inventa
+    Dado que SECOP II no informa el origen de los recursos
+    Cuando descargo el expediente
+    Entonces la denuncia lo dice y remite a preguntar a la entidad o a presentarla ante la Contraloría General
+
+  @complexity:medium @negative
+  Escenario: El lugar de la obra, aproximado
+    Cuando descargo el expediente
+    Entonces dice el municipio y el departamento, el punto aproximado a unos 100 m con el enlace a la obra en el mapa, y un espacio para la dirección
+    Y nunca el punto exacto
+
+  @complexity:low
+  Escenario: Las normas incumplidas las escribe la veeduría
+    Cuando descargo la denuncia
+    Entonces deja líneas en blanco para las normas o cláusulas que se consideran incumplidas, con un ejemplo
+    Y GovTrace no sugiere ninguna como hallazgo

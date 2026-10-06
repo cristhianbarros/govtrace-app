@@ -14,8 +14,16 @@
     <h2>El contrato</h2>
     @include('dossier._contracts')
 
+    <h2>Lugar de la obra</h2>
+    @include('dossier._place')
+
     <h2>Hechos</h2>
     @include('dossier._facts')
+
+    <h2>Normas o cláusulas que se consideran incumplidas</h2>
+    <p class="small">Las escribe la veeduría, según su lectura del contrato. Por ejemplo: la cláusula del plazo del contrato, o el deber de supervisión del contrato (Ley 1474 de 2011, artículos 83 y 84).</p>
+    <p>________________________________________________________________</p>
+    <p>________________________________________________________________</p>
 
     <h2>Solicitud</h2>
     <ol>
@@ -37,5 +45,10 @@
         <li>En línea, en SIPAR: https://denuncie.contraloria.gov.co:8443/sipar/</li>
         <li>Todos los canales: https://www.contraloria.gov.co/atencion-al-ciudadano/denuncias-y-otras-solicitudes-pqrd</li>
     </ul>
+    <h2>A qué contraloría acudir</h2>
+    @foreach ($contracts as $contract)
+        <p><strong>{{ $contract['id'] }}.</strong> {{ $contract['competence'] }}</p>
+    @endforeach
+    <p class="small">Es una orientación de GovTrace: la competencia la define la Contraloría.</p>
     <p class="small">La Contraloría General atiende las denuncias sobre recursos nacionales. Si la obra se paga con recursos del departamento o del municipio, puede ser competente la contraloría de ese territorio.</p>
 @endsection

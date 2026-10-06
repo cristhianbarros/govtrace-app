@@ -10,10 +10,15 @@ criterios_aceptacion:
     - "El derecho de petición va dirigido a la entidad contratante, cita el contrato, la veeduría, la Ley 1755 de 2015 y la Ley 850 de 2003, y pide los informes de supervisión o interventoría y el estado de la ejecución"
     - "La denuncia va dirigida a la Contraloría, cita la Ley 1757 de 2015 (art. 69), los hechos y la misma prueba, con los canales para radicarla y la aclaración de la contraloría territorial"
     - "Las dos plantillas dejan en blanco el nombre, la identificación y la firma de quien la presenta"
+    - "(it. 46j) El expediente y las plantillas dicen, de cada contrato, el supervisor según SECOP II (solo su nombre), el orden de la entidad, el origen de los recursos en pesos (solo las fuentes con dinero) y el municipio y el departamento; lo que SECOP II no da dice 'Sin dato en SECOP II'"
+    - "(it. 46j) El expediente y la denuncia traen 'Lugar de la obra': el punto aproximado (unos 100 m, nunca el exacto), el enlace a la obra en el mapa público y un espacio para la dirección o una referencia"
+    - "(it. 46j) La denuncia orienta a qué contraloría acudir según el origen de los recursos (la Nación: la General; el territorio: la de ese territorio, sin perjuicio del control prevalente de la General; sin dato: preguntar a la entidad o presentarla ante la General), como orientación de GovTrace y no como decisión"
+    - "(it. 46j) La denuncia deja líneas en blanco para las normas o cláusulas que se consideran incumplidas, con un ejemplo; GovTrace no sugiere ninguna"
   validaciones_reglas:
     - "R-LEG-03: solo entran las evidencias publicadas; las ocultas, rechazadas y retiradas, no"
     - "R-LEG-04: cada descarga queda en el log de auditoría (dossier.downloaded), con la obra y el número de archivos"
     - "Solo el Administrador de la organización descarga el expediente"
+    - "(it. 46j) De SECOP II se guarda el nombre del supervisor, nunca su documento ni su tipo (Ley 1581 de 2012, principio de finalidad); 'No definido' o vacío es sin dato. El supervisor sale en el expediente, nunca en el sitio público"
   manejo_errores: []
   requisitos_ux:
     - "El botón mide 44 px o más, y el nombre del ZIP dice la obra y la fecha"

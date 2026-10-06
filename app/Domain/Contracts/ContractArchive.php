@@ -24,7 +24,8 @@ final class ContractArchive
     private const COLUMNS = [
         'id', 'secop_contract_id', 'process_number', 'entity_name', 'contractor_name', 'object',
         'contract_type', 'value', 'signed_at', 'end_date', 'status', 'department_code',
-        'municipality_code', 'secop_url', 'raw_payload', 'cancelled_at', 'created_at', 'updated_at',
+        'municipality_code', 'secop_url', 'raw_payload', 'cancelled_at', 'supervisor_name', 'entity_order',
+        'funding_sources', 'created_at', 'updated_at',
     ];
 
     /** Closed per SECOP (R-SEC-07), since more than 5 years ago. */
