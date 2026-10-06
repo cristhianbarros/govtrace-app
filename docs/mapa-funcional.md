@@ -81,6 +81,13 @@ Trabaja en el subdominio de su organización, en el "Panel del Administrador".
   - retirar una ya publicada: en el mapa queda una lápida.
 
   La organización responde por lo que muestra su mapa (R-MAP-01).
+- **Lleva la evidencia al proceso formal** (US-056-LEG, it. 44b):
+  - en **Obras**, "Descargar expediente" baja un ZIP con:
+    - el expediente de la obra;
+    - las plantillas del derecho de petición a la entidad y de la denuncia ante la Contraloría;
+    - los originales con su prueba.
+  - Solo lleva lo publicado.
+  - La veeduría completa las plantillas, las firma y las presenta: GovTrace no las radica (R-LEG-03).
 - **Además:** el nombre y el logo, el resumen del territorio, el CSV, la auditoría de su organización y la autorización al Super Administrador.
 - **No puede:** crear otras organizaciones, cambiar el NIT ni alterar evidencias selladas (R-TA-01 a R-TA-03).
 
@@ -133,6 +140,7 @@ Es cualquier persona: un vecino, un periodista, un funcionario. No necesita cuen
 4. El sistema sella el reporte.
 5. El Administrador lo revisa y lo publica.
 6. El ciudadano lo ve en el mapa y lo comprueba.
+7. Si la obra lo amerita, el Administrador descarga el expediente, y la veeduría presenta el derecho de petición a la entidad o la denuncia ante la Contraloría.
 
 ## 1. El mapa de las interfaces
 
@@ -182,7 +190,7 @@ flowchart TB
       observers["Veedores"]
       territory["Territorio"]
       contracts["Contratos"]
-      worksites["Obras"]
+      worksites["Obras<br/>+ expediente"]
       orgprof["Organización"]
       summary["Resumen"]
       audit_t["Auditoría"]
@@ -232,7 +240,7 @@ flowchart TB
 | Veeduría | Veedores | `/admin/observers` | Administrador | US-005, US-006, US-040-USR, US-041-USR |
 | Veeduría | Territorio | `/admin/territory` | Administrador | US-012 |
 | Veeduría | Contratos | `/admin/contracts` | Administrador | US-015 |
-| Veeduría | Obras | `/admin/worksites` | Administrador | US-035, US-045-INT |
+| Veeduría | Obras, con "Descargar expediente" | `/admin/worksites` | Administrador | US-035, US-045-INT, US-056-LEG |
 | Veeduría | Organización | `/admin/organization` | Administrador | US-007 |
 | Veeduría | Resumen y CSV | `/admin/summary` | Administrador | US-049-RPT, US-050-RPT |
 | Veeduría | Auditoría | `/admin/audit` | Administrador | US-043-MON |
@@ -274,8 +282,9 @@ flowchart TB
 | 5 | Preparar las obras | ✅ | Contratos (US-015), corregir la ubicación (US-035) y agrupar contratos (US-045-INT). En Contratos no hay buscador (`docs/ux-analisis.md`). |
 | 6 | Revisar y publicar | ✅ | Publicar, rechazar con motivo y retirar con lápida. La tarjeta dice de qué obra es y qué veedor la envió (it. 40b, V4), y cada mañana le llega un resumen de las evidencias por revisar (it. 43i, V9). |
 | 7 | Hacer seguimiento | ✅ | Resumen, CSV, auditoría y el aviso de fallas de sellado. |
-| 8 | Autorizar al Super Administrador | ✅ | 30 días, revocable (US-042-SEC). |
-| 9 | Salir | ✅ | "Salir" en el menú de su cuenta, con confirmación (it. 40b, V1). |
+| 8 | Llevar la evidencia al proceso formal | ✅ | En Obras, "Descargar expediente" (it. 44b, US-056-LEG): el expediente, las plantillas del derecho de petición y de la denuncia, y los originales con su prueba. Solo lo publicado; cada descarga queda en la auditoría. La veeduría presenta los documentos, no GovTrace (R-LEG-03). |
+| 9 | Autorizar al Super Administrador | ✅ | 30 días, revocable (US-042-SEC). |
+| 10 | Salir | ✅ | "Salir" en el menú de su cuenta, con confirmación (it. 40b, V1). |
 
 ### Veedor de Campo
 
@@ -349,6 +358,7 @@ flowchart LR
   h --> p["Publicada"]
   h --> r["Rechazada<br/>(el veedor ve el motivo)"]
   p --> w["Retirada<br/>(queda una lápida)"]
+  p --> x["En el expediente de la obra<br/>(lo presenta la veeduría)"]
 ```
 
 ### 3.3 Una organización que se va
