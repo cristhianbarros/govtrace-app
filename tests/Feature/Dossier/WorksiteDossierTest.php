@@ -278,3 +278,79 @@ it('Solo el Administrador descarga el expediente: not a veedor, nor a visitor', 
 it('answers 404 for a worksite that does not exist', function () {
     $this->actingAs($this->administrator, 'tenant')->get(DOSSIER_HOST.'/worksites/'.PublicId::generate().'/dossier.zip')->assertNotFound();
 });
+
+/*
+ * Iteración 46j — el expediente, con lo que califica la Contraloría
+ * (features/US-056-LEG.feature, docs/viabilidad-legal.md): el supervisor, el
+ * origen de los recursos y a qué contraloría acudir, el lugar y las normas.
+ */
+
+it('El supervisor según SECOP II: the dossier gives its name, and says so when SECOP II does not', function () {
+    reportableContract('CO1.PCCNTR.7654321', ['supervisor_name' => 'Pedro Gómez']);
+    $this->tenant->run(fn () => Worksite::query()->findOrFail($this->worksite->id)->contracts()->create(['secop_contract_id' => 'CO1.PCCNTR.7654321']));
+
+    expect(dossierText('expediente'))
+        ->toContain('Supervisor (según SECOP II)Pedro Gómez')
+        ->toContain('Supervisor (según SECOP II)Sin dato en SECOP II')
+        ->and(dossierText('denuncia'))->toContain('Supervisor (según SECOP II)Pedro Gómez');
+});
+
+it('El origen de los recursos: the sources SECOP II gives, in pesos, and only those with money', function () {
+    reportableContract('CO1.PCCNTR.7654321', ['entity_order' => 'Territorial', 'funding_sources' => ['pgn' => 0, 'sgp' => 150_000_000, 'sgr' => 0, 'territorial' => 60_000_000, 'credit' => 0, 'own' => 0]]);
+    $this->tenant->run(fn () => Worksite::query()->findOrFail($this->worksite->id)->contracts()->create(['secop_contract_id' => 'CO1.PCCNTR.7654321']));
+
+    expect(dossierText('expediente'))
+        ->toContain('Sistema General de Participaciones: $ 150.000.000')
+        ->toContain('Recursos propios del territorio: $ 60.000.000')
+        ->not->toContain('Presupuesto General de la Nación: $')
+        ->toContain('Orden de la entidadTerritorial')
+        // Una contratación sin el desglose lo dice.
+        ->toContain('Origen de los recursos Sin dato en SECOP II');
+});
+
+it('Con recursos de la Nación, la Contraloría General: the denuncia orients, and says the competence is the Contraloría\'s', function () {
+    reportableContract('CO1.PCCNTR.7654321', ['funding_sources' => ['pgn' => 900_000_000, 'sgp' => 0, 'sgr' => 0, 'territorial' => 0, 'credit' => 0, 'own' => 0]]);
+    $this->tenant->run(fn () => Worksite::query()->findOrFail($this->worksite->id)->contracts()->create(['secop_contract_id' => 'CO1.PCCNTR.7654321']));
+    $text = dossierText('denuncia');
+
+    expect($text)->toContain('A qué contraloría acudir')
+        ->toContain('Con recursos de la Nación, la Contraloría General de la República')
+        ->toContain('Es una orientación de GovTrace: la competencia la define la Contraloría')
+        ->and(dossierText('peticion'))->not->toContain('A qué contraloría acudir');
+});
+
+it('Con recursos propios del territorio, su contraloría: the Contraloría General keeps the preferential control', function () {
+    reportableContract('CO1.PCCNTR.7654321', ['funding_sources' => ['pgn' => 0, 'sgp' => 0, 'sgr' => 0, 'territorial' => 60_000_000, 'credit' => 0, 'own' => 0]]);
+    $this->tenant->run(fn () => Worksite::query()->findOrFail($this->worksite->id)->contracts()->create(['secop_contract_id' => 'CO1.PCCNTR.7654321']));
+
+    expect(dossierText('denuncia'))
+        ->toContain('Con recursos propios del territorio, la contraloría de ese territorio')
+        ->toContain('control prevalente de la Contraloría General');
+});
+
+it('Sin el origen de los recursos, la denuncia no lo inventa: it asks the entity and files with the Contraloría General', function () {
+    expect(dossierText('denuncia'))
+        ->toContain('SECOP II no informa el origen de los recursos')
+        ->toContain('Ley 1755 de 2015, artículo 21');
+});
+
+it('El lugar de la obra, aproximado: the municipality, the approximate point with the map link, and a blank for the address', function () {
+    $text = dossierText('expediente');
+
+    expect($text)->toContain('Lugar de la obra')
+        ->toContain('Santa Marta, Magdalena')
+        ->toContain('http://veeduria-smr.govtrace.localhost/worksite/'.$this->worksite->public_id)
+        ->toContain('Dirección o referencia: ____')
+        // R-PRIV-02: nunca el punto exacto, que lo pudo fijar un veedor con su GPS.
+        ->not->toContain((string) santaMartaWorksiteLocation()[0])
+        ->and(dossierText('denuncia'))->toContain('Lugar de la obra');
+});
+
+it('Las normas incumplidas las escribe la veeduría: blank lines with an example, nothing suggested as a finding', function () {
+    $text = dossierText('denuncia');
+
+    expect($text)->toContain('Normas o cláusulas que se consideran incumplidas')
+        ->toContain('Por ejemplo: la cláusula del plazo del contrato')
+        ->toContain('Ley 1474 de 2011, artículos 83 y 84')
+        ->toContain('________');
+});

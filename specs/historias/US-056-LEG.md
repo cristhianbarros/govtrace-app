@@ -23,6 +23,10 @@
 - **Cada archivo del expediente se cita como "Prueba Pericial Criptográfica"** (el nombre lo fijó el usuario).
   - El anclaje legal es el de los mensajes de datos: su integridad y su valor probatorio (Ley 527 de 1999, arts. 9 a 11). El peritaje consiste en recalcular su SHA-256 y comprobar su raíz sellada en Stellar.
   - ❓ Conviene que un abogado confirme la etiqueta: en sentido estricto, la "prueba pericial" es el dictamen de un perito.
+- **Lo que califica la Contraloría (it. 46j).** La Contraloría no publica un formato, pero califica cada denuncia por su competencia, la claridad de los hechos, los presuntos responsables, los tiempos y lugares y las normas vulneradas (Resolución Orgánica OGZ-0619 de 2017, art. 4 ❓ por confirmar si sigue vigente). El expediente suma el supervisor (solo su nombre), el origen de los recursos con su orientación de a qué contraloría acudir, el lugar de la obra y un espacio para las normas incumplidas.
+  - **Es una orientación, no una decisión:** la competencia la define la Contraloría. ❓ Un abogado confirma la regla.
+  - **El supervisor** enmienda la it. 45c, que lo había dejado fuera: ahora tiene una finalidad (Ley 1474 de 2011, arts. 83 y 84; Ley 850 de 2003, art. 15 f)). Solo el nombre, solo en el expediente.
+  - **El punto de la obra es el aproximado** (R-PRIV-02): el oficial lo pudo fijar el GPS de un veedor.
 - **Cada descarga va al log de auditoría.** Es la telemetría que decidió el usuario: con ella se valida en producción si la función se usa.
 
 ## Criterios de aceptación

@@ -4,7 +4,19 @@ Al 2026-10-04. Empezó sobre `77e6030` (iteración 39) y se actualizó en las it
 
 ✅ hecho y probado · ⚠️ a medias · ⬜ falta · 🔒 espera algo externo · ❓ decisión tuya
 
-## Dónde quedó (2026-10-05)
+## Dónde quedó (2026-10-06)
+
+| Qué | PR |
+|---|---|
+| 46j: el expediente, con lo que califica la Contraloría: el supervisor, el origen de los recursos y a qué contraloría acudir, el lugar de la obra y las normas incumplidas (US-056-LEG) | este |
+
+- **Tests:** Pest 1119, Vitest 595, `make e2e` 54 de 54, trace-check 412 de 412.
+- **46j, en una frase:** el expediente y la denuncia dicen, de cada contrato, el supervisor según SECOP II (solo su nombre), el origen de los recursos y el lugar; la denuncia orienta a qué contraloría acudir y deja espacio para las normas que la veeduría considera incumplidas.
+- **Para verlo:** las columnas nuevas se llenan con la próxima sincronización de SECOP (cada noche, o "Sincronizar ahora"); mientras, el expediente dice "Sin dato en SECOP II".
+- ❓ **Un abogado confirma** la regla de a qué contraloría acudir: va como orientación, no como decisión.
+- **Queda para después:** la denuncia sin nombre (Ley 962 de 2005, art. 81), que espera tu decisión, y el derecho de petición a la Contraloría para validar su formato.
+
+## Antes (2026-10-05)
 
 | Qué | PR |
 |---|---|

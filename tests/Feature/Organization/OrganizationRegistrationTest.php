@@ -60,19 +60,20 @@ it('Alta de una veeduría sin NIT, con su inscripción: it is registered, its su
         'subdomain' => 'trupillos',
     ])->assertCreated();
 
-    $tenant = Tenant::query()->sole();
+    // Solo la que este test registró: la base de desarrollo puede tener otras (la demo, las de e2e).
+    $tenant = Tenant::query()->whereHas('domains', fn ($domains) => $domains->where('domain', 'trupillos.govtrace.localhost'))->sole();
     expect($tenant->nit)->toBeNull()
         ->and($tenant->registration_number)->toBe('Resolución 012 de 2026')
         ->and($tenant->registration_authority)->toBe('Personería de Santa Marta')
         ->and(Domain::query()->where('domain', 'trupillos.govtrace.localhost')->exists())->toBeTrue()
-        ->and(Arr::except(AuditLog::query()->where('action', 'organization.registered')->sole()->after, 'rues'))->toBe([
+        ->and(Arr::except(AuditLog::query()->where('action', 'organization.registered')->where('after->name', 'Veeduría del Parque Los Trupillos')->sole()->after, 'rues'))->toBe([
             'nit' => null,
             'name' => 'Veeduría del Parque Los Trupillos',
             'subdomain' => 'trupillos.govtrace.localhost',
             'registration' => 'Resolución 012 de 2026 · Personería de Santa Marta',
         ])
         // it. 46b: inscrita en una personería, que los datos abiertos del RUES no traen
-        ->and(AuditLog::query()->where('action', 'organization.registered')->sole()->after['rues']['status'])->toBe('personeria');
+        ->and(AuditLog::query()->where('action', 'organization.registered')->where('after->name', 'Veeduría del Parque Los Trupillos')->sole()->after['rues']['status'])->toBe('personeria');
 });
 
 it('Una organización necesita su NIT o su inscripción: without both, nothing is registered', function () {
@@ -123,7 +124,7 @@ it('Una organización puede tener su NIT y su inscripción: both are kept, and t
         'registration_authority' => 'Cámara de Comercio de Santa Marta',
         'subdomain' => 'veeduria-smr',
     ])->assertCreated();
-    $tenant = Tenant::query()->sole();
+    $tenant = Tenant::query()->whereHas('domains', fn ($domains) => $domains->where('domain', 'veeduria-smr.govtrace.localhost'))->sole();
 
     expect($this->actingAs($this->superAdmin, 'web')->getJson("http://govtrace.localhost/admin/organizations/{$tenant->id}")->json('data'))->toMatchArray([
         'nit' => '900123456-8',
