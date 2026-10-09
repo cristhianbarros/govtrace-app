@@ -1,0 +1,41 @@
+# It. 42b — make staging-aws-check: lo que se suma a docker-compose.prod.yml
+# para emitir el certificado comodín sin internet. Pebble hace de Let's Encrypt,
+# pebble-challtestsrv de DNS, y un DuckDNS de mentira (un solo TXT, como el
+# real) publica el TXT ahí. El servicio certbot es el mismo de producción.
+
+services:
+  pebble:
+    image: ghcr.io/letsencrypt/pebble:2.7.0
+    # Su configuración, con un solo perfil de 90 días como el de Let's Encrypt:
+    # la de la imagen también da, a veces, certificados de 6 días.
+    command: ["-config", "/govtrace/pebble-config.json", "-dnsserver", "challtestsrv:8053"]
+    volumes:
+      - ./tests/infra/pebble-config.json:/govtrace/pebble-config.json:ro
+    environment:
+      PEBBLE_VA_NOSLEEP: "1"
+      PEBBLE_WFE_NONCEREJECT: "0"
+      # Como Let's Encrypt: una autorización ya validada se reutiliza en el
+      # pedido siguiente. El segundo paso de deploy/issue-certificate.sh cuenta con eso.
+      PEBBLE_AUTHZREUSE: "100"
+    networks: [govtrace]
+
+  challtestsrv:
+    image: ghcr.io/letsencrypt/pebble-challtestsrv:2.7.0
+    command: ["-defaultIPv6", "", "-http01", "", "-https01", "", "-tlsalpn01", "", "-doh", ""]
+    networks: [govtrace]
+
+  duckdns:
+    image: python:3.13-alpine
+    command: ["python3", "-I", "/fake-duckdns.py"]
+    environment:
+      FAKE_DUCKDNS_TOKEN: "${DUCKDNS_TOKEN:?}"
+    volumes:
+      - ./tests/infra/fake-duckdns.py:/fake-duckdns.py:ro
+    networks: [govtrace]
+
+  certbot:
+    environment:
+      # Pebble sirve su API con un certificado de su propia CA de prueba.
+      REQUESTS_CA_BUNDLE: /pebble/minica.pem
+    volumes:
+      - ${PEBBLE_CA_FILE:?}:/pebble/minica.pem:ro

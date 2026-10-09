@@ -1,0 +1,12 @@
+# It. 42b — cada semana: con 30 días de margen, hay cuatro intentos antes de
+# que venza el certificado.
+[Unit]
+Description=GovTrace: revisar el certificado comodín cada semana
+
+[Timer]
+OnCalendar=weekly
+RandomizedDelaySec=6h
+Persistent=true
+
+[Install]
+WantedBy=timers.target

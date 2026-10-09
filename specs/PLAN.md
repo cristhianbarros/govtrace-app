@@ -36,6 +36,7 @@
 | D12 | Umbral de saldo de la cuenta patrocinadora (US-021, US-022, US-038-CFG) | ✅ **Resuelta (2026-09-28).** Umbral de alerta de **50 XLM** (`sponsor_balance_alert_threshold_xlm`, ~200 sellos de 0,2425 XLM); reemplaza al parámetro en POL de la it. 6. La **tesorería** paga el despliegue y la extensión de la vigencia de la instancia y del código del contrato, así la hot wallet solo paga sellos. Se mantiene la vigencia máxima por sello (se revisa en la it. 23). Detalle en la it. 14. | it. 21 |
 | D10 | Proximidad (US-019) | Haversine en SQL, sin PostGIS | it. 31 |
 | D13 | Red principal de Stellar (R-CFG-01, it. 37) | ✅ **Resuelta (2026-09-29).** El RPC de Stellar (JSON-RPC de Soroban, no Horizon) lo da un proveedor, **QuickNode o Validation Cloud**: la red principal no tiene un RPC público gratuito como el de testnet. **Dos endpoints:** `STELLAR_RPC_URL`, privado, para el servidor, y `STELLAR_PUBLIC_RPC_URL`, de solo lectura y restringido al dominio de GovTrace, para el validador del navegador, así el token del proveedor no queda a la vista. La **tesorería la fondea el presupuesto operativo central** del proyecto (el operador del SaaS), desde un exchange corporativo. Presupuesto: **28 XLM iniciales** (subir el código, desplegar la instancia y extender su vigencia), **unos 27 XLM cada ~180 días** para volver a extenderla, y la patrocinadora aparte, con alerta bajo 50 XLM (D12). | it. 37 |
+| D14 | Dominio y correo de staging (it. 42b) | ✅ **Resuelta (2026-10-08), por el usuario.** Staging usa un subdominio gratuito de **DuckDNS** (`govtrace.duckdns.org`; cada organización en `<slug>.govtrace.duckdns.org`) y el **SMTP de Gmail** (`govtrace.app@gmail.com`, con una contraseña de aplicación), sin comprar dominio ni usar SES. Los créditos de AWS no pagan el registro de un dominio. El certificado comodín de Let's Encrypt se valida por DNS con la API de DuckDNS, que guarda **un solo registro TXT a la vez**: se emite en dos pasos (el nombre principal, y luego los dos nombres con esa autorización ya validada). La cuenta de AWS es de la experiencia nueva ("Sign up for AWS (new)"): proyecto en **us-east-2**, sin usuario raíz ni varias regiones, así que staging no tiene réplica de los respaldos en otra región. Sin KMS en staging: con testnet, D11 (a) basta. **Antes de la red principal** se compra el dominio (govtrace.co estaba libre: 15,76 USD el primer año en Porkbun) y el correo pasa a SES con DKIM. | it. 42b |
 
 ### Convenciones de pruebas
 - **Backend:** Pest en `tests/Feature/<Épica>/US-XXX…Test.php`, con un test por `Escenario` y el mismo nombre. Cada `Esquema` es un test con `->with()` (dataset).
@@ -1897,6 +1898,31 @@ Esta iteración estaba reservada para ese recorrido. El recorrido se hizo para e
   - la imagen sin `storage/logs`: ni la app, ni el worker, ni el calendario podían escribir sus logs;
   - el despliegue sin la configuración en caché.
 - **`make demo` sobre un stack ya levantado se caía:** si Docker recreaba la app, el proxy de desarrollo se marcaba enfermo (su chequeo pasaba por la app) y `up --wait` abortaba. Ahora el proxy responde su propio `/healthz`, como el de producción. Cierra la deuda aceptada del "proxy impaciente".
+
+#### Iteración 42b — Staging en AWS, apuntando a testnet
+✅ **Aprobada por el usuario el 2026-10-09** ("continúa", con Opus 5.5 xhigh): lo pide el piloto con una veeduría y el demo day de BAF. Un celular solo da cámara y GPS por HTTPS (`docs/estado-mvp.md`, sección 1), así que sin staging no hay piloto. Decisiones en D14.
+
+**Entregable:**
+1. **El certificado comodín con DuckDNS** (`deploy/issue-certificate.sh`, `deploy/duckdns-hook.sh`): Let's Encrypt por DNS, en dos pasos porque DuckDNS guarda un solo TXT. Se repite sin pedir otro mientras le queden más de 30 días; la renovación la corre un temporizador de systemd en la máquina.
+2. **Los secretos desde SSM Parameter Store** (`deploy/secrets-from-ssm.sh`): cada parámetro de `/govtrace/staging/`, cifrado, llega al entorno del despliegue; nunca a un archivo ni a la salida.
+3. **La máquina, en CloudFormation** (`deploy/aws/staging.yml`; `make staging-provision` la crea o la actualiza): EC2 t4g.small (ARM) con Ubuntu 24.04, 30 GB, IP fija, IMDSv2 con 2 saltos; un grupo de seguridad con solo 80 y 443 (sin SSH: se entra por SSM); un rol que solo lee sus parámetros y escribe en sus buckets; el bucket de las evidencias y el de los respaldos (con versionado), privados, cifrados y que sobreviven a la pila. CloudFormation y no Terraform: no agrega herramientas ni un estado que guardar, y la pila se borra con un comando.
+4. **El despliegue en la máquina** (`deploy/staging-up.sh`): la plantilla pública, los secretos de SSM, DuckDNS apuntando a la IP de la máquina, el certificado y `deploy/deploy.sh`. Desde el equipo: `make staging-deploy`.
+5. `.env.staging.example` con lo de D14: `govtrace.duckdns.org`, us-east-2 y Gmail.
+
+**Done-when:**
+- `make staging-aws-check`, contra Pebble (la CA de prueba de Let's Encrypt) y un DuckDNS de mentira que guarda un solo TXT, como el real:
+  - pedir los dos nombres de una vez falla (la prueba reproduce el límite de DuckDNS);
+  - `issue-certificate.sh` deja en `live/<dominio>/` un certificado que cubre el dominio y `*.dominio`;
+  - repetirlo con más de 30 días por delante no pide otro; con menos, lo renueva;
+  - el TXT queda vacío al terminar, y el token de DuckDNS no sale en la salida;
+- `make staging-aws-check` también prueba `secrets-from-ssm.sh` con un `aws` de mentira: los valores con espacios y comillas llegan intactos, un nombre inválido se rechaza, y ningún valor sale en la salida;
+- `make staging-aws-check` además revisa la plantilla (cfn-lint; solo 80 y 443, IMDSv2, buckets privados que sobreviven a la pila, permisos sin comodín) y los scripts de `deploy/` (shellcheck);
+- `make staging-check` y `make secrets-check` siguen en verde;
+- **en la nube:** `https://govtrace.duckdns.org/up` responde con un certificado de Let's Encrypt verificado; una organización responde en su subdominio; un correo de invitación llega por Gmail; un reporte hecho desde un celular de verdad llega a "Sellada" en testnet.
+
+**Cubre:** la prueba real en la nube de `docs/estado-mvp.md` (sección 1: cámara y GPS en un celular; correo real; SECOP II de punta a punta) · D14.
+
+**Modelo:** Opus 5.5 xhigh: secretos, certificados y una cuenta de AWS de verdad.
 
 #### Iteración 43 — Flujos completos
 ⬜ **Propuesta el 2026-09-29, por aprobar.** Cierra los vacíos de `docs/mapa-funcional.md` que no caben en la it. 40. Casi todos son historias nuevas: según el marco, pasan antes por un `/discovery` corto, en modo asesor, con sus criterios y su Gherkin. Las decisiones de la sección 5 del mapa lo alimentan.

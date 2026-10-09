@@ -69,8 +69,12 @@ x-laravel-env: &laravel-env
   - ALERT_WEBHOOK_URL
   - XLM_PRICE_API_URL
   - COINGECKO_API_KEY
+  # It. 46g: la verificación en dos pasos del Super Administrador.
+  - SUPER_ADMIN_TWO_FACTOR
   # Apache cree el X-Forwarded-For solo del proxy de esta subred (vhost.conf).
-  - DOCKER_SUBNET
+  # El mismo valor por defecto que la red (abajo): sin él, Apache no arranca
+  # en un servidor donde nadie define DOCKER_SUBNET (it. 42b).
+  - DOCKER_SUBNET=${DOCKER_SUBNET:-172.29.0.0/24}
 
 x-logging: &logging
   driver: json-file
@@ -223,11 +227,17 @@ services:
 
   # ------------------------------------------------------------ certbot ----
   # Perfil tls: emite y renueva el certificado comodín validando por DNS en
-  # Route 53 (deploy/issue-certificate.sh). Con el rol de la instancia.
+  # DuckDNS (D14), en dos pasos porque DuckDNS guarda un solo TXT: lo corre
+  # deploy/issue-certificate.sh. Escribe donde lo lee el proxy.
   certbot:
-    image: certbot/dns-route53:v3.3.0
+    image: certbot/certbot:v3.3.0
+    environment:
+      DUCKDNS_TOKEN: "${DUCKDNS_TOKEN:-}"
+      DUCKDNS_API_URL: "${DUCKDNS_API_URL:-https://www.duckdns.org/update}"
+      DUCKDNS_PROPAGATION_SECONDS: "${DUCKDNS_PROPAGATION_SECONDS:-60}"
     volumes:
-      - letsencrypt:/etc/letsencrypt
+      - ${LETSENCRYPT_DIR:-letsencrypt}:/etc/letsencrypt
+      - ./deploy/duckdns-hook.sh:/hooks/duckdns-hook.sh:ro
     networks: [govtrace]
     profiles: [tls]
     security_opt: [no-new-privileges:true]

@@ -338,6 +338,8 @@ El MVP tiene que estar listo para producción, no solo funcionar. Esta es la var
 
 ## 5. La prueba real en la nube (staging en AWS)
 
+> **Actualizado en la it. 42b (D14):** staging quedó con un subdominio gratuito de DuckDNS en lugar de un dominio en Route 53, con el SMTP de Gmail en lugar de SES y sin KMS. La cuenta es de la experiencia nueva de AWS: el proyecto vive en us-east-2, sin usuario raíz ni usuarios de IAM con consola. La infraestructura está en CloudFormation. Lo de abajo es la propuesta original; lo vigente está en `docs/staging.md`.
+
 ### ¿Tu cuenta personal o una exclusiva para GovTrace?
 
 **Recomiendo una cuenta exclusiva:**

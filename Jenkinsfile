@@ -124,6 +124,10 @@ pipeline {
                 // over HTTPS the app knows it is HTTPS (no mixed content), the
                 // tenants answer on their subdomains, and a redeploy breaks nothing.
                 sh 'make staging-check'
+                // It. 42b: the wildcard certificate through DuckDNS, in two steps
+                // (against Pebble, a test Let's Encrypt), the secrets loader for
+                // SSM, the CloudFormation template and shellcheck on deploy/.
+                sh 'make staging-aws-check'
             }
         }
 
