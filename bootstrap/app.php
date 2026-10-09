@@ -11,7 +11,9 @@ use Illuminate\Http\Request;
 use Spatie\Permission\Middleware\PermissionMiddleware;
 use Spatie\Permission\Middleware\RoleMiddleware;
 use Spatie\Permission\Middleware\RoleOrPermissionMiddleware;
+use Stancl\Tenancy\Exceptions\TenantCouldNotBeIdentifiedOnDomainException;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -59,4 +61,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(fn (MethodNotAllowedHttpException $exception, Request $request) => $request->expectsJson()
             ? response()->json(['message' => MethodNotAllowedMessage::TEXT], 405, $exception->getHeaders())
             : null);
+
+        // It. 42b: un subdominio que no es de ninguna organización (un error al escribir
+        // la dirección; con DuckDNS cualquiera llega) es "no encontrado": ni 500 ni un error en el log.
+        $exceptions->dontReport(TenantCouldNotBeIdentifiedOnDomainException::class);
+        $exceptions->map(TenantCouldNotBeIdentifiedOnDomainException::class, fn (TenantCouldNotBeIdentifiedOnDomainException $exception) => new NotFoundHttpException(previous: $exception));
     })->create();

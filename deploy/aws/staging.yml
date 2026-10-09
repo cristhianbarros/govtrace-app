@@ -1,0 +1,200 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >-
+  GovTrace staging (it. 42b): una máquina con el stack de producción
+  (docker-compose.prod.yml) apuntando a la testnet de Stellar, sus buckets y su
+  rol. La crea y la actualiza make staging-provision; la despliega make staging-deploy.
+
+Parameters:
+  Name:
+    Type: String
+    Default: govtrace-staging
+    AllowedPattern: "[a-z0-9-]+"
+    Description: Prefijo de los recursos y de los buckets.
+  ImageId:
+    Type: AWS::EC2::Image::Id
+    Description: >-
+      Ubuntu 24.04 ARM. provision-staging.sh la busca la primera vez y la deja
+      fija: una AMI nueva reemplazaría la máquina y su base de datos.
+  InstanceType:
+    Type: String
+    Default: t4g.small
+    AllowedValues: [t4g.small, t4g.medium]
+    Description: 2 GB (más 4 GB de swap para construir la imagen) o 4 GB.
+  RepoUrl:
+    Type: String
+    Default: https://github.com/cristhianbarros/govtrace-app.git
+  SecretsPath:
+    Type: String
+    Default: /govtrace/staging
+    AllowedPattern: "/[A-Za-z0-9/_-]+"
+    Description: La ruta de los secretos en SSM Parameter Store (SecureString).
+
+Resources:
+  # Las evidencias: privadas, cifradas, sin ACL. Nunca se borran con la pila.
+  EvidenceBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BucketName: !Sub "${Name}-evidencias"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+
+  # Los respaldos fuera de la máquina (R-BCK, BACKUP_OFFSITE_S3_URL): los
+  # volcados de la base y un espejo de las evidencias. Con versionado, y las
+  # versiones anteriores se guardan 30 días: un borrado se puede deshacer
+  # (docs/restore.md). En la misma región: el proyecto no admite otra (D14).
+  BackupBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BucketName: !Sub "${Name}-respaldos"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      VersioningConfiguration:
+        Status: Enabled
+      LifecycleConfiguration:
+        Rules:
+          - Id: versiones-anteriores-30-dias
+            Status: Enabled
+            NoncurrentVersionExpiration:
+              NoncurrentDays: 30
+
+  # El rol de la máquina: sin llaves en el servidor. Lee solo sus secretos,
+  # escribe solo en sus dos buckets, y deja entrar a SSM (sin SSH).
+  InstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: { Service: ec2.amazonaws.com }
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      Policies:
+        - PolicyName: govtrace-staging
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: Objetos
+                Effect: Allow
+                Action: [s3:GetObject, s3:PutObject, s3:DeleteObject]
+                Resource:
+                  - !Sub "${EvidenceBucket.Arn}/*"
+                  - !Sub "${BackupBucket.Arn}/*"
+              - Sid: Listar
+                Effect: Allow
+                Action: [s3:ListBucket]
+                Resource:
+                  - !GetAtt EvidenceBucket.Arn
+                  - !GetAtt BackupBucket.Arn
+              - Sid: Secretos
+                Effect: Allow
+                Action: [ssm:GetParametersByPath, ssm:GetParameter, ssm:GetParameters]
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter${SecretsPath}"
+                  - !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter${SecretsPath}/*"
+
+  InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles: [!Ref InstanceRole]
+
+  # Solo HTTP (que lleva a HTTPS) y HTTPS. Sin SSH: se entra por SSM.
+  WebSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: GovTrace staging - HTTP y HTTPS
+      SecurityGroupIngress:
+        - { IpProtocol: tcp, FromPort: 80, ToPort: 80, CidrIp: 0.0.0.0/0 }
+        - { IpProtocol: tcp, FromPort: 443, ToPort: 443, CidrIp: 0.0.0.0/0 }
+        - { IpProtocol: tcp, FromPort: 80, ToPort: 80, CidrIpv6: "::/0" }
+        - { IpProtocol: tcp, FromPort: 443, ToPort: 443, CidrIpv6: "::/0" }
+      Tags:
+        - { Key: Name, Value: !Ref Name }
+
+  Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref ImageId
+      InstanceType: !Ref InstanceType
+      IamInstanceProfile: !Ref InstanceProfile
+      SecurityGroupIds: [!GetAtt WebSecurityGroup.GroupId]
+      # IMDSv2, con 2 saltos: los contenedores (detrás del puente de Docker) usan el rol.
+      MetadataOptions:
+        HttpEndpoint: enabled
+        HttpTokens: required
+        HttpPutResponseHopLimit: 2
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 30
+            VolumeType: gp3
+            Encrypted: true
+            DeleteOnTermination: true
+      Tags:
+        - { Key: Name, Value: !Ref Name }
+      # La primera vez que arranca: swap, Docker, el AWS CLI y el código. El
+      # despliegue lo hace después make staging-deploy (deploy/staging-up.sh).
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          set -euxo pipefail
+          export DEBIAN_FRONTEND=noninteractive
+          # 4 GB de swap: construir la imagen (Composer y Vite) en 2 GB de RAM.
+          if [ ! -f /swapfile ]; then
+            fallocate -l 4G /swapfile && chmod 600 /swapfile && mkswap /swapfile && swapon /swapfile
+            echo '/swapfile none swap sw 0 0' >> /etc/fstab
+          fi
+          apt-get update
+          apt-get install -y ca-certificates curl git python3
+          install -m 0755 -d /etc/apt/keyrings
+          curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+          chmod a+r /etc/apt/keyrings/docker.asc
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" > /etc/apt/sources.list.d/docker.list
+          apt-get update
+          apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+          snap install aws-cli --classic
+          [ -d /opt/govtrace/.git ] || git clone ${RepoUrl} /opt/govtrace
+
+  # La IP fija: DuckDNS apunta aquí (deploy/staging-up.sh).
+  ElasticIp:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      InstanceId: !Ref Instance
+      Tags:
+        - { Key: Name, Value: !Ref Name }
+
+Outputs:
+  InstanceId:
+    Value: !Ref Instance
+  PublicIp:
+    Value: !Ref ElasticIp
+  EvidenceBucket:
+    Value: !Ref EvidenceBucket
+  BackupBucket:
+    Value: !Ref BackupBucket

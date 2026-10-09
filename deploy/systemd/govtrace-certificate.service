@@ -1,0 +1,12 @@
+# It. 42b — renueva el certificado comodín de staging si le quedan menos de
+# 30 días, y recarga el proxy. Lo instala deploy/staging-up.sh; lo dispara
+# govtrace-certificate.timer.
+[Unit]
+Description=GovTrace: renovar el certificado comodín si hace falta
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/govtrace
+ExecStart=/opt/govtrace/deploy/staging-up.sh --cert-only

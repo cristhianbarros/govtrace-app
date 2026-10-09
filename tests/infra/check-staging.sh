@@ -63,6 +63,9 @@ EVIDENCE_AWS_SECRET_ACCESS_KEY=test
 BACKUP_S3_ENDPOINT=http://storage:4566
 BACKUP_AWS_ACCESS_KEY_ID=test
 BACKUP_AWS_SECRET_ACCESS_KEY=test
+# Sin la réplica de la plantilla (el bucket de respaldos de AWS, it. 42b): la
+# prueba make backup-check.
+BACKUP_OFFSITE_S3_URL=
 set +a
 
 COMPOSE="docker compose -f docker-compose.prod.yml $COMPOSE_EXTRA_FILES"
@@ -74,8 +77,9 @@ cleanup() {
 trap cleanup EXIT
 
 # 0. Cada variable de la plantilla llega a su servicio: el compose la nombra. (Los
-#    puertos y las imágenes los usa el propio compose, no un servicio.)
-missing=$(grep -oE '^[A-Z0-9_]+' .env.staging.example | grep -vxE 'PUBLISH_IP|HTTP_PORT|HTTPS_PORT|APP_IMAGE|BACKUP_IMAGE' \
+#    puertos y las imágenes los usa el propio compose, no un servicio, y el
+#    correo de Let's Encrypt, deploy/issue-certificate.sh.)
+missing=$(grep -oE '^[A-Z0-9_]+' .env.staging.example | grep -vxE 'PUBLISH_IP|HTTP_PORT|HTTPS_PORT|APP_IMAGE|BACKUP_IMAGE|CERTBOT_EMAIL' \
     | while read -r name; do grep -qE "^\s+- $name$|\\\$\{$name[:?}-]" docker-compose.prod.yml || echo "$name"; done)
 [ -z "$missing" ] && pass "el compose de producción pasa a la aplicación cada variable de la plantilla" || flunk "el compose no pasa: $(echo $missing)"
 

@@ -21,7 +21,8 @@ HTTP_PORT ?= $(shell sed -n 's/^HTTP_PORT=\([0-9]*\).*/\1/p' .env.docker 2>/dev/
         stellar-up contract-test contract-deploy contract-smoke doctor test-stellar \
         contract-extend testnet-setup testnet-extend smoke-testnet secrets-check monitoring-check verify-check e2e \
         backup-now backup-list restore-drill backup-check storage-check storage-restore trace-check network-deploy network-extend network-deploy-check \
-        admin admin-2fa-reset invites demo audit staging-check
+        admin admin-2fa-reset invites demo audit staging-check staging-aws-check \
+        staging-provision staging-secret staging-deploy
 
 help: ## List available commands
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -148,6 +149,17 @@ audit: .env.docker ## It. 41: known vulnerabilities in the dependencies (compose
 	@$(NODE) npm audit --omit=dev --audit-level=high
 staging-check: .env.docker ## It. 42a: the production stack (docker-compose.prod.yml) end to end, locally, with TLS from a test CA
 	@bash tests/infra/check-staging.sh
+staging-aws-check: ## It. 42b: the wildcard certificate through DuckDNS (against Pebble, a test Let's Encrypt) and the secrets from SSM, without AWS
+	@bash tests/infra/check-staging-aws.sh
+
+# It. 42b: staging on AWS (D14). Profile from `aws login --profile govtrace-staging`; region of the AWS project.
+STAGING_AWS ?= AWS_PROFILE=govtrace-staging AWS_REGION=us-east-2 AWS_PAGER=
+staging-provision: ## It. 42b: create or update staging on AWS (CloudFormation, deploy/aws/staging.yml) and its generated secrets
+	@$(STAGING_AWS) bash deploy/aws/provision-staging.sh
+staging-secret: ## It. 42b: store one staging secret in SSM without showing it: make staging-secret NAME=MAIL_PASSWORD
+	@$(STAGING_AWS) bash deploy/aws/put-secret.sh "$(NAME)"
+staging-deploy: ## It. 42b: deploy branch REF (default main) to the staging machine through SSM, no SSH: make staging-deploy REF=main
+	@$(STAGING_AWS) REF="$(or $(REF),main)" bash deploy/aws/deploy-staging.sh
 trace-check: ## Traceability: every Gherkin scenario has a test named after it (CLAUDE.md, R-TST-04)
 	@$(EXEC) php tests/infra/check-traceability.php
 secrets-check: ## R-BLK-04: no Stellar secret key in the repository, its history or the env examples
