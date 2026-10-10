@@ -106,6 +106,7 @@ Borra la máquina (con su base de datos), la IP, el rol y el grupo de seguridad.
 
 ## Lo que hay que saber
 
+- **El GPS del celular en 2000 m:** Chrome tiene, en Android, solo la ubicación aproximada, y la app pide 50 m o menos. En *Ajustes → Aplicaciones → Chrome → Permisos → Ubicación*, activa **"Usar ubicación precisa"** y cierra Chrome del todo antes de volver a intentarlo. En un iPhone: *Ajustes → Privacidad y seguridad → Localización → Safari (o Chrome) → Ubicación exacta*.
 - **Testnet se reinicia** cada tanto, y con ella desaparecen el contrato y los sellos. Si pasa, corre `make testnet-setup`, actualiza `.env.staging.example` con el contrato y las cuentas nuevas, y carga las llaves nuevas con `make staging-secret`.
 - **Es una prueba, no evidencia definitiva:** por el reinicio de testnet, y porque todavía no hay operador ni revisión legal (`docs/viabilidad-legal.md`, L1 a L3).
 - **Gmail** envía unos 500 correos al día, y DuckDNS es un servicio gratuito que a veces se cae. Alcanza para un piloto, no para producción: allí van un dominio propio, SES con DKIM y KMS (37b).
