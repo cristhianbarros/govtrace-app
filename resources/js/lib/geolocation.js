@@ -17,6 +17,14 @@ export const isPreciseEnough = (accuracy) => accuracy <= MAX_GPS_ACCURACY_METERS
 export const imprecisionMessage = (accuracy) =>
     `La precisión del GPS es de ${formatMeters(accuracy)} m y se requieren ${MAX_GPS_ACCURACY_METERS} m o menos. Espere a tener mejor señal y vuelva a intentarlo.`;
 
+const readingOf = ({ coords, timestamp }) => ({
+    latitude: coords.latitude,
+    longitude: coords.longitude,
+    accuracy: coords.accuracy,
+    capturedAt: new Date(timestamp).toISOString(),
+});
+const errorOf = (error) => new Error(error.code === error.PERMISSION_DENIED ? GPS_DENIED_MESSAGE : GPS_UNAVAILABLE_MESSAGE);
+
 /** @returns {Promise<{latitude: number, longitude: number, accuracy: number, capturedAt: string}>} */
 export function capturePosition(geolocation = globalThis.navigator?.geolocation) {
     return new Promise((resolve, reject) => {
@@ -26,16 +34,28 @@ export function capturePosition(geolocation = globalThis.navigator?.geolocation)
         }
 
         geolocation.getCurrentPosition(
-            ({ coords, timestamp }) =>
-                resolve({
-                    latitude: coords.latitude,
-                    longitude: coords.longitude,
-                    accuracy: coords.accuracy,
-                    capturedAt: new Date(timestamp).toISOString(),
-                }),
-            (error) => reject(new Error(error.code === error.PERMISSION_DENIED ? GPS_DENIED_MESSAGE : GPS_UNAVAILABLE_MESSAGE)),
+            (position) => resolve(readingOf(position)),
+            (error) => reject(errorOf(error)),
             // Nunca una lectura guardada: la evidencia se certifica aquí y ahora.
             { enableHighAccuracy: true, maximumAge: 0, timeout: 30_000 },
         );
     });
+}
+
+/**
+ * It. 47b: seguir el GPS mientras la pantalla está abierta. La primera lectura
+ * de un Android suele venir de la red (unos 2.000 m); las siguientes, del GPS.
+ * Cada lectura llega a onReading; un error, a onError. Devuelve cómo dejar de seguirlo.
+ */
+export function followPosition({ onReading, onError }, geolocation = globalThis.navigator?.geolocation) {
+    if (!geolocation?.watchPosition) {
+        onError(new Error(GPS_DENIED_MESSAGE));
+        return () => {};
+    }
+    const id = geolocation.watchPosition(
+        (position) => onReading(readingOf(position)),
+        (error) => onError(errorOf(error)),
+        { enableHighAccuracy: true, maximumAge: 0, timeout: 60_000 },
+    );
+    return () => geolocation.clearWatch(id);
 }

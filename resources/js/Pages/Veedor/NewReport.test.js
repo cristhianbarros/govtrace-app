@@ -10,12 +10,12 @@ import EvidencePicker from '@/Components/EvidencePicker.vue';
 import { loadDetector } from '@/lib/evidence/faces.js';
 import { configureOutbox, outboxState } from '@/composables/useOutbox.js';
 import { createOutbox, memoryStore } from '@/lib/outbox.js';
-import { browseContracts, sendReport } from '@/services/api.js';
+import { browseContracts, fetchNearbyWorksites, sendReport } from '@/services/api.js';
 import { page } from '@/testing/inertia.js';
 
 vi.mock('@inertiajs/vue3', async () => await import('@/testing/inertia.js'));
 vi.mock('@/lib/evidence/faces.js', () => ({ loadDetector: vi.fn(async () => ({})) }));
-vi.mock('@/services/api.js', () => ({ browseContracts: vi.fn(), sendReport: vi.fn(), logout: vi.fn() }));
+vi.mock('@/services/api.js', () => ({ browseContracts: vi.fn(), fetchNearbyWorksites: vi.fn(), sendReport: vi.fn(), logout: vi.fn() }));
 
 /** Lo que responde la lista de obras (it. 47a), sin obras ni cercanas. */
 const browsed = (more = {}) => ({
@@ -38,22 +38,39 @@ const contract = { secop_contract_id: 'CO1.PCCNTR.1234567', object: 'Pavimentaci
 const reading = (accuracy) => ({ coords: { latitude: 11.2419, longitude: -74.199, accuracy }, timestamp: Date.parse('2026-09-28T15:00:00Z') });
 const evidence = (n) => ({ kind: 'photo', file: new File([`foto ${n}`], `foto${n}.jpg`, { type: 'image/jpeg' }), sha256: String(n).repeat(64), blurs: { faces: n, dismissed: 0, manual: 1 } });
 
-/** El GPS del teléfono: cada llamada responde con la siguiente lectura (o el error). */
+/**
+ * El GPS del teléfono (it. 47b: la pantalla lo sigue con watchPosition). La
+ * primera respuesta llega al seguirlo; las demás, a cada lectura puntual
+ * (getCurrentPosition), y si se acaban, esa lectura no llega. emit() entrega
+ * otra lectura a quien lo sigue.
+ */
 function phoneGps(...answers) {
-    const getCurrentPosition = vi.fn((ok, fail) => {
-        const answer = answers.shift();
-        return answer.code ? fail(answer) : ok(answer);
-    });
-    Object.defineProperty(window.navigator, 'geolocation', { value: { getCurrentPosition }, configurable: true });
-    return getCurrentPosition;
+    const [first, ...more] = answers;
+    const phone = { watchers: [] };
+    const reply = (answer, ok, fail) => (answer.code ? fail(answer) : ok(answer));
+    phone.geolocation = {
+        watchPosition: vi.fn((ok, fail) => {
+            phone.watchers.push({ ok, fail });
+            if (first) reply(first, ok, fail);
+            return phone.watchers.length - 1;
+        }),
+        clearWatch: vi.fn(),
+        getCurrentPosition: vi.fn((ok, fail) => {
+            const answer = more.shift();
+            if (answer) reply(answer, ok, fail);
+        }),
+    };
+    phone.emit = (answer) => reply(answer, phone.watchers.at(-1).ok, phone.watchers.at(-1).fail);
+    Object.defineProperty(window.navigator, 'geolocation', { value: phone.geolocation, configurable: true });
+    return phone;
 }
 
 /**
- * Con la obra ya elegida en la lista. La primera lectura del GPS es la de abrir
- * la pantalla (it. 47a: el municipio y las cercanas); las demás, las del reporte.
+ * Con la obra ya elegida en la lista. La lectura del GPS es una para toda la
+ * pantalla (it. 47b): la lista y el reporte usan la misma.
  */
 async function onWorksite(...gpsAnswers) {
-    phoneGps(reading(20), ...gpsAnswers);
+    phoneGps(...gpsAnswers);
     const wrapper = mount(NewReport);
     await flushPromises();
     wrapper.findComponent(WorksiteBrowser).vm.$emit('select', contract);
@@ -75,7 +92,8 @@ const submitButton = (wrapper) => wrapper.get('button[type="submit"]');
 beforeEach(() => {
     // El reloj, fijo unos minutos después de la captura de ejemplo: la bandeja de salida descarta lo
     // capturado hace más de 7 días, y con la fecha real estos reportes "vencían" una semana después.
-    vi.useFakeTimers({ toFake: ['Date'], now: new Date('2026-09-28T15:05:00Z') });
+    // It. 47b: 10 s después de la lectura de ejemplo, que así es reciente (el reporte usa una de 30 s o menos).
+    vi.useFakeTimers({ toFake: ['Date'], now: new Date('2026-09-28T15:00:10Z') });
     sendReport.mockReset();
     browseContracts.mockReset();
     browseContracts.mockResolvedValue(browsed());
@@ -135,17 +153,20 @@ describe('Nuevo Reporte', () => {
         expect(wrapper.find('form').exists()).toBe(false);
     });
 
-    it('Precisión mínima del GPS de 50 m: with 51 m the app asks to retry until the signal is good', async () => {
-        const wrapper = await onWorksite(reading(51), reading(15));
+    it('Precisión mínima del GPS de 50 m: with 51 m the app waits until the signal is good (it. 47b), and only then can send', async () => {
+        phoneGps(reading(51));
+        const wrapper = mount(NewReport);
+        await flushPromises();
+        wrapper.findComponent(WorksiteBrowser).vm.$emit('select', contract);
+        await flushPromises();
 
-        expect(wrapper.text()).toContain('La precisión del GPS es de 51 m y se requieren 50 m o menos. Espere a tener mejor señal y vuelva a intentarlo.');
+        expect(wrapper.get('[data-test="gps-waiting"]').text()).toBe('Buscando señal GPS: 51 m. Se necesitan 50 m o menos.');
         await fillReport(wrapper);
         expect(submitButton(wrapper).attributes('disabled')).toBeDefined();
 
-        await wrapper.get('[data-test="retry-gps"]').trigger('click');
+        window.navigator.geolocation.watchPosition.mock.calls.at(-1)[0](reading(15));
         await flushPromises();
 
-        expect(wrapper.text()).not.toContain('La precisión del GPS es de 51 m');
         expect(wrapper.text()).toContain('Precisión del GPS: 15 m');
         expect(submitButton(wrapper).attributes('disabled')).toBeUndefined();
     });
@@ -407,7 +428,7 @@ describe('El botón de enviar dice qué falta (it. 40b)', () => {
     });
 
     it('says it is waiting for the GPS while there is no position yet', async () => {
-        Object.defineProperty(window.navigator, 'geolocation', { value: { getCurrentPosition: vi.fn() }, configurable: true });
+        Object.defineProperty(window.navigator, 'geolocation', { value: { watchPosition: vi.fn(), clearWatch: vi.fn(), getCurrentPosition: vi.fn() }, configurable: true });
         const wrapper = mount(NewReport);
         wrapper.findComponent(WorksiteBrowser).vm.$emit('select', contract);
         await flushPromises();
@@ -455,5 +476,77 @@ describe('Una foto por revisar (it. 46e)', () => {
 
         expect(wrapper.text()).toContain('terminar de revisar las fotos');
         expect(wrapper.text()).not.toContain('terminen de prepararse');
+    });
+});
+
+describe('El GPS, una sola vez por pantalla (it. 47b)', () => {
+    const at = (seconds) => ({ coords: { latitude: 11.2419, longitude: -74.199, accuracy: 15 }, timestamp: Date.parse('2026-09-28T15:00:10Z') - seconds * 1000 });
+
+    it('La app espera una lectura de 50 m o menos y muestra la precisión mientras tanto', async () => {
+        fetchNearbyWorksites.mockResolvedValue([]);
+        const phone = phoneGps(reading(2000));
+        const wrapper = mount(NewReport);
+        await flushPromises();
+
+        const nearby = () => wrapper.get('[data-test="nearby-section"]').text();
+        expect(nearby()).toContain('Buscando señal GPS: 2000 m. Se necesitan 50 m o menos.');
+
+        phone.emit(reading(120));
+        await flushPromises();
+        expect(nearby()).toContain('Buscando señal GPS: 120 m. Se necesitan 50 m o menos.');
+        expect(fetchNearbyWorksites).not.toHaveBeenCalled();
+
+        phone.emit(reading(18));
+        await flushPromises();
+        expect(fetchNearbyWorksites).toHaveBeenCalledWith(11.2419, -74.199);
+        expect(nearby()).not.toContain('Buscando señal GPS');
+
+        // La misma lectura, en el reporte: la ubicación queda lista.
+        wrapper.findComponent(WorksiteBrowser).vm.$emit('select', contract);
+        await flushPromises();
+        expect(wrapper.text()).toContain('Precisión del GPS: 18 m');
+        expect(phone.geolocation.watchPosition).toHaveBeenCalledTimes(1);
+    });
+
+    it('Sin una buena lectura en un minuto, la app explica qué hacer', async () => {
+        vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout'], now: new Date('2026-09-28T15:00:10Z') });
+        const phone = phoneGps(reading(300));
+        const wrapper = mount(NewReport);
+        await vi.advanceTimersByTimeAsync(0);
+
+        await vi.advanceTimersByTimeAsync(60_000);
+
+        expect(wrapper.get('[data-test="slow-gps"] [role="alert"]').text()).toBe(
+            'No se consiguió una buena señal del GPS en 1 minuto. Salga a un lugar abierto y revise que su celular tenga activada la ubicación precisa. Luego toque «Intentar de nuevo».',
+        );
+        await wrapper.get('[data-test="slow-gps"] button').trigger('click');
+
+        expect(wrapper.find('[data-test="slow-gps"]').exists()).toBe(false);
+        expect(phone.geolocation.watchPosition).toHaveBeenCalledTimes(2);
+    });
+
+    it.each([
+        [10, true],
+        [30, true],
+        [31, false],
+    ])('El reporte usa la última lectura del GPS si tiene 30 segundos o menos: %i s', async (seconds, used) => {
+        const phone = phoneGps(at(seconds));
+        const wrapper = mount(NewReport);
+        await flushPromises();
+        wrapper.findComponent(WorksiteBrowser).vm.$emit('select', contract);
+        await flushPromises();
+
+        if (used) {
+            expect(wrapper.text()).toContain('Precisión del GPS: 15 m');
+            expect(phone.geolocation.getCurrentPosition).not.toHaveBeenCalled();
+            sendReport.mockResolvedValue({});
+            await fillReport(wrapper);
+            await wrapper.get('form').trigger('submit');
+            await flushPromises();
+            expect(sendReport.mock.calls[0][0].get('captured_at')).toBe(new Date(at(seconds).timestamp).toISOString());
+        } else {
+            expect(wrapper.find('[data-test="gps-waiting"]').exists()).toBe(true);
+            expect(phone.geolocation.getCurrentPosition).toHaveBeenCalledTimes(1);
+        }
     });
 });

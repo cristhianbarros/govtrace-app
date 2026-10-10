@@ -4,7 +4,7 @@
 // comparten "Nuevo Reporte" del veedor y la pantalla del Super Administrador
 // que reporta en nombre de una organización (US-042-SEC). Quién lo envía, y
 // qué hace sin señal, lo decide cada pantalla con lo que emite `submit`.
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import EvidencePicker from '@/Components/EvidencePicker.vue';
 import { cannotUpload } from '@/lib/evidence/attachments.js';
 import { capturePosition, formatMeters, imprecisionMessage, isPreciseEnough } from '@/lib/geolocation.js';
@@ -12,6 +12,9 @@ import { CLASSIFICATIONS, MAX_COMMENT_LENGTH, MEANING } from '@/lib/report.js';
 
 const props = defineProps({
     contract: { type: Object, required: true },
+    // It. 47b: el GPS de la pantalla (useGps), compartido con la lista de obras. Sin él,
+    // el formulario toma su propia lectura (la pantalla del Super Administrador).
+    gps: { type: Object, default: null },
     sending: { type: Boolean, default: false },
     serverErrors: { type: Array, default: () => [] },
 });
@@ -35,7 +38,50 @@ async function locate() {
     }
 }
 
-onMounted(locate);
+// It. 47b: con el GPS compartido, el reporte usa la última lectura de 50 m o
+// menos si tiene 30 s o menos, con su hora como hora de captura. Si no la hay,
+// espera la siguiente, y pide una por si el celular, quieto, no envía más.
+function useShared() {
+    const reading = props.gps.fresh();
+    if (reading) {
+        gps.value = { status: 'ready', position: reading };
+    }
+    return Boolean(reading);
+}
+
+onMounted(() => {
+    if (!props.gps) {
+        locate();
+        return;
+    }
+    if (props.gps.status.value === 'failed') {
+        gps.value = { status: 'failed', message: props.gps.message.value };
+    } else if (!useShared()) {
+        gps.value = { status: 'locating' };
+        props.gps.refresh();
+    }
+});
+
+watch(
+    () => props.gps?.precise.value,
+    () => {
+        if (props.gps && gps.value.status !== 'ready') useShared();
+    },
+);
+watch(
+    () => props.gps?.status.value,
+    (status) => {
+        if (props.gps && status === 'failed' && gps.value.status !== 'ready') {
+            gps.value = { status: 'failed', message: props.gps.message.value };
+        }
+    },
+);
+
+// Mientras espera: la precisión de la última lectura, si no alcanza.
+const waitingFor = computed(() => {
+    const latest = props.gps?.latest.value;
+    return latest && latest.accuracy > 50 ? `Buscando señal GPS: ${Math.round(latest.accuracy)} m. Se necesitan 50 m o menos.` : 'Obteniendo su ubicación…';
+});
 
 const commentTooLong = computed(() => comment.value.length > MAX_COMMENT_LENGTH);
 
@@ -96,7 +142,7 @@ function submit() {
 
     <!-- El GPS -->
     <section class="flex flex-col gap-2">
-        <p v-if="gps.status === 'locating'" class="text-sm text-slate-600">Obteniendo su ubicación…</p>
+        <p v-if="gps.status === 'locating'" data-test="gps-waiting" class="text-base text-slate-600">{{ waitingFor }}</p>
         <p v-else-if="gps.status === 'ready'" class="text-sm text-emerald-800">
             Precisión del GPS: {{ formatMeters(gps.position.accuracy) }} m
         </p>

@@ -6,7 +6,7 @@
 // una lectura de 50 m o menos, las obras cercanas encima ("Cerca de usted").
 // La ubicación va solo en la primera petición, en el cuerpo (it. 45f).
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
-import { browseContracts } from '@/services/api.js';
+import { browseContracts, fetchNearbyWorksites } from '@/services/api.js';
 import { situationText } from '@/lib/situation.js';
 
 const props = defineProps({
@@ -96,9 +96,23 @@ watch(
     () => props.location,
     (location) => {
         if (location !== undefined && answer.value === null && status.value === 'waiting') firstLoad();
+        lookNearby(location);
     },
     { immediate: true },
 );
+
+// It. 47b: las obras cercanas, apenas llega una lectura de 50 m o menos (si la
+// primera no lo era). Una sola vez: después, la lista ya las tiene.
+let lookingNearby = false;
+async function lookNearby(location) {
+    if (!answer.value || nearby.value !== null || lookingNearby || !location || location.accuracy > 50) return;
+    lookingNearby = true;
+    try {
+        nearby.value = await fetchNearbyWorksites(location.latitude, location.longitude);
+    } catch {
+        lookingNearby = false;
+    }
+}
 
 function chooseMunicipality(code) {
     filters.value.municipality = code;
@@ -173,7 +187,7 @@ function retry() {
                 <input id="work-search" v-model="keyword" type="search" autocomplete="off" placeholder="Obra, entidad, contratista o número de proceso" class="min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-base focus:border-brand-700 focus:outline-none" />
             </div>
 
-            <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <div class="grid grid-cols-1 gap-2 md:grid-cols-2">
                 <label class="flex flex-col gap-1 text-base font-semibold text-slate-700">
                     Municipio
                     <select id="municipality" :value="filters.municipality ?? ''" class="min-h-11 rounded-lg border border-slate-300 bg-white px-2 text-base font-normal" @change="chooseMunicipality($event.target.value)">
