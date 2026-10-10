@@ -107,6 +107,15 @@ class Contract extends Model
     }
 
     /**
+     * R-SEC-07: how long a finished contract can still be reported. It. 47c:
+     * also how long an overdue one counts as recently overdue.
+     */
+    public static function reportWindowMonths(CarbonInterface $moment): int
+    {
+        return (int) (Parameters::valueAt('closed_contract_report_window_months', $moment) ?? 12);
+    }
+
+    /**
      * US-016: contracts a veedor may report on at $moment — active ones,
      * plus closed ones for a while after their end date; never an
      * annulled one (R-SEC-07). The window is the one in force at $moment
@@ -117,8 +126,7 @@ class Contract extends Model
      */
     public function scopeReportableAt(Builder $query, CarbonInterface $moment): void
     {
-        $windowMonths = (int) (Parameters::valueAt('closed_contract_report_window_months', $moment) ?? 12);
-        $closedSince = $moment->copy()->subMonths($windowMonths);
+        $closedSince = $moment->copy()->subMonths(self::reportWindowMonths($moment));
 
         $query->where(fn (Builder $query) => $query
             ->statusIn(SecopContractStatus::ACTIVE)

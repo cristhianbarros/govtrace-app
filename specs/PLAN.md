@@ -2954,6 +2954,32 @@ El usuario pidió seguir con lo que no espera a nadie: la deuda técnica y los h
 
 **Orden aprobado:** 42c → 47a → 47b.
 
+**47c — Las vencidas hace años, después** (US-016). ✅ Aprobada por el usuario el 2026-10-10 ("Apruebo, continúa con la 47c").
+- **Por qué:** el detalle del orden de la 47 lo propuso Claude: arriba, la obra que más tiempo llevaba vencida. Con datos reales no sirve.
+  - De los contratos que SECOP II muestra activos en la base de desarrollo, el 38 % (574 de 1522) lleva más de 2 años vencido: registros que la entidad no cerró.
+  - Llenaban las primeras páginas, y la obra en construcción o la que se venció el mes pasado quedaba muy abajo.
+- **El orden nuevo** mantiene "las vencidas primero", que decidió el usuario:
+  1. plazo vencido en los últimos 12 meses, la más reciente arriba;
+  2. en ejecución, la que vence antes arriba;
+  3. sin fecha de fin;
+  4. plazo vencido hace más de 12 meses, la más reciente arriba, con "Plazo vencido hace más de N años · SECOP no la ha cerrado";
+  5. terminadas hace poco.
+- **Los 12 meses** son la ventana de `closed_contract_report_window_months` (R-SEC-07): si el Super Administrador la cambia, cambia también aquí.
+- Las vencidas hace años no se ocultan, porque una obra abandonada también se reporta. El filtro "Plazo vencido" las muestra todas, la más reciente arriba.
+- **Done-when:** el escenario del orden corregido y el nuevo de US-016 con su test, y `situation.js` en años desde un año.
+- **Modelo:** Sonnet medium por la política (orden y textos). El usuario siguió con Opus 5.5.
+- ✅ **47c cumplida (2026-10-10).**
+  - **Cómo quedó:**
+    - `BrowseReportableContracts` ordena con cinco grupos y devuelve una situación más, `long_overdue`.
+    - `Contract::reportWindowMonths()` es la ventana que ya usaba `scopeReportableAt`.
+    - `situation.js` escribe "hace 1 año", "hace más de 8 años" (por el calendario) y el aviso de SECOP.
+    - La etiqueta queda roja como las demás vencidas.
+  - **Prueba:**
+    - Pest: el orden, el filtro y la ventana de 24 meses.
+    - Vitest: los textos y la etiqueta.
+    - Todo visto en rojo antes.
+  - **Lo que encontró:** `BrowseReportableContractsTest` no reinicia la base entre pruebas. Una versión nueva de un parámetro quedaba para la siguiente corrida: ahora cada prueba borra las que agregó.
+
 ### Iteración 48 — Revisar los rostros más rápido
 
 ✅ **Aprobada por el usuario el 2026-10-10** ("ese punto sí va, la idea es optimizarlo"). En la prueba de staging, la revisión de rostros de cada foto tardaba unos segundos en el celular (Vivo, Chrome). Va después de la 47.
