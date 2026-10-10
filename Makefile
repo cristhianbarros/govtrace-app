@@ -11,6 +11,16 @@ NODE     ?= $(COMPOSE) --profile frontend run --rm node
 # Rust + Stellar CLI for the sealing Smart Contract (profile stellar, it. 12).
 SOROBAN  ?= $(COMPOSE) --profile stellar run --rm -T soroban
 LOCAL_IP ?= $(shell sed -n 's/^LOCAL_IP=//p' .env.docker 2>/dev/null | head -1)
+# Docker Compose v5 builds through bake. With DOCKER_BUILD_NETWORK=host (a VPN
+# that hijacks Docker's bridge, see .env.docker) bake asks for permission to
+# use the host's network, and make grants it (it. 49). Usage:
+# $(COMPOSE) [--profile …] $(call COMPOSE_BUILD,[services])
+DOCKER_BUILD_NETWORK ?= $(shell sed -n 's/^DOCKER_BUILD_NETWORK=\([a-z]*\).*/\1/p' .env.docker 2>/dev/null | head -1)
+ifeq ($(DOCKER_BUILD_NETWORK),host)
+COMPOSE_BUILD = build --print $(1) | docker buildx bake --allow=network.host -f -
+else
+COMPOSE_BUILD = build $(1)
+endif
 HTTP_PORT ?= $(shell sed -n 's/^HTTP_PORT=\([0-9]*\).*/\1/p' .env.docker 2>/dev/null | head -1)
 
 .DEFAULT_GOAL := help
@@ -19,7 +29,7 @@ HTTP_PORT ?= $(shell sed -n 's/^HTTP_PORT=\([0-9]*\).*/\1/p' .env.docker 2>/dev/
         shell composer artisan migrate psql test test-front test-all lint fmt \
         npm-install npm-build npm-watch xdebug-on xdebug-off hosts image-qa teardown \
         stellar-up contract-test contract-deploy contract-smoke doctor test-stellar \
-        contract-extend testnet-setup testnet-extend smoke-testnet secrets-check monitoring-check verify-check e2e faces-bench \
+        contract-extend testnet-setup testnet-extend smoke-testnet soroban-image secrets-check monitoring-check verify-check e2e faces-bench \
         backup-now backup-list restore-drill backup-check storage-check storage-restore trace-check network-deploy network-extend network-deploy-check \
         admin admin-2fa-reset invites demo audit staging-check staging-aws-check \
         staging-provision staging-secret staging-deploy
@@ -41,7 +51,7 @@ docker/app/xdebug.ini:
 
 setup: .env.docker .env docker/app/xdebug.ini ## Full bootstrap from scratch (build, deps, key, migrations)
 	@mkdir -p .cache/npm
-	@$(COMPOSE) build
+	@$(COMPOSE) $(call COMPOSE_BUILD)
 	@$(RUN) composer install --no-interaction
 	@# Primero la app y su base, y las migraciones: el worker y el calendario
 	@# usan las tablas de la cola y la caché, y en una base vacía no arrancan.
@@ -125,21 +135,23 @@ fmt: ## Fix style with Pint
 
 stellar-up: .env.docker ## Start the local Stellar standalone network (RPC + friendbot)
 	@$(COMPOSE) --profile stellar up -d --wait stellar
-contract-test: .env.docker ## Smart Contract: rustfmt, clippy, cargo test and the compiled WASM's interface
+soroban-image: .env.docker ## The Rust + Stellar CLI image for make contract-*, built once
+	@docker image inspect govtrace-soroban:dev >/dev/null 2>&1 || $(COMPOSE) --profile stellar $(call COMPOSE_BUILD,soroban)
+contract-test: .env.docker soroban-image ## Smart Contract: rustfmt, clippy, cargo test and the compiled WASM's interface
 	@$(SOROBAN) sh -c 'cargo fmt --check && cargo clippy --locked --all-targets -- -D warnings && cargo test --locked && stellar contract build && ./scripts/check-interface.sh'
-contract-deploy: .env.docker .env stellar-up ## Deploy the sealing contract to the local network; writes its ID to .env
+contract-deploy: .env.docker .env stellar-up soroban-image ## Deploy the sealing contract to the local network; writes its ID to .env
 	@$(SOROBAN) ./scripts/deploy-local.sh
-contract-smoke: .env.docker stellar-up ## Seal, reject an outsider and a duplicate, on the local network
+contract-smoke: .env.docker stellar-up soroban-image ## Seal, reject an outsider and a duplicate, on the local network
 	@$(SOROBAN) ./scripts/smoke-local.sh
-contract-extend: .env.docker stellar-up ## D12: the treasury extends the local contract's instance and code to the network's max TTL
+contract-extend: .env.docker stellar-up soroban-image ## D12: the treasury extends the local contract's instance and code to the network's max TTL
 	@$(SOROBAN) ./scripts/extend-contract.sh local
-testnet-setup: .env.docker ## Testnet: funded test accounts + the contract deployed; writes .env.testnet (never versioned)
+testnet-setup: .env.docker soroban-image ## Testnet: funded test accounts + the contract deployed; writes .env.testnet (never versioned)
 	@$(SOROBAN) ./scripts/deploy-testnet.sh
-testnet-extend: .env.docker ## D12: the treasury extends the testnet contract's instance and code (run before they expire)
+testnet-extend: .env.docker soroban-image ## D12: the treasury extends the testnet contract's instance and code (run before they expire)
 	@$(SOROBAN) ./scripts/extend-contract.sh testnet
-network-deploy: .env.docker ## Deploy on NETWORK=testnet|mainnet: the funded treasury (STELLAR_TREASURY_SECRET) creates the accounts, deploys and extends (D12, D13)
+network-deploy: .env.docker soroban-image ## Deploy on NETWORK=testnet|mainnet: the funded treasury (STELLAR_TREASURY_SECRET) creates the accounts, deploys and extends (D12, D13)
 	@$(SOROBAN) env STELLAR_TREASURY_SECRET="$$STELLAR_TREASURY_SECRET" STELLAR_SEALER_ADDRESS="$$STELLAR_SEALER_ADDRESS" STELLAR_SPONSOR_ADDRESS="$$STELLAR_SPONSOR_ADDRESS" STELLAR_MAINNET_RPC_URL="$$STELLAR_MAINNET_RPC_URL" CONFIRM_MAINNET="$$CONFIRM_MAINNET" SPONSOR_STARTING_XLM="$${SPONSOR_STARTING_XLM:-100}" ./scripts/deploy-network.sh $(NETWORK)
-network-extend: .env.docker ## D12 on NETWORK=testnet|mainnet: the treasury (STELLAR_TREASURY_SECRET) extends STELLAR_SEALING_CONTRACT_ID's instance and code
+network-extend: .env.docker soroban-image ## D12 on NETWORK=testnet|mainnet: the treasury (STELLAR_TREASURY_SECRET) extends STELLAR_SEALING_CONTRACT_ID's instance and code
 	@$(SOROBAN) env STELLAR_TREASURY_SECRET="$$STELLAR_TREASURY_SECRET" STELLAR_SEALING_CONTRACT_ID="$$STELLAR_SEALING_CONTRACT_ID" STELLAR_MAINNET_RPC_URL="$$STELLAR_MAINNET_RPC_URL" ./scripts/extend-contract.sh $(NETWORK)
 network-deploy-check: .env.docker ## It. 37a: the main-network deploy, end to end on testnet (throwaway accounts and contract, a report up to "Sellada")
 	@bash tests/infra/check-network-deploy.sh

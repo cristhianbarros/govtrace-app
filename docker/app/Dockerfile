@@ -43,9 +43,11 @@ RUN set -eux; \
 #   pcntl     -> graceful SIGTERM in queue:work / schedule:work
 #   redis     -> phpredis client (REDIS_CLIENT=phpredis)
 #   gmp       -> stellar-php-sdk: sealing on Stellar (it. 13)
+# It. 49: pecl.php.net sometimes does not answer (in CI, several machines build
+# at once), so the download gets three attempts before the build fails.
 RUN set -eux; \
     docker-php-ext-install -j"$(nproc)" pdo_pgsql intl bcmath zip opcache pcntl gmp; \
-    pecl install redis-6.2.0; \
+    for attempt in 1 2 3; do pecl install redis-6.2.0 && break; [ "$attempt" -lt 3 ]; sleep 10; done; \
     docker-php-ext-enable redis
 
 RUN ln -snf "/usr/share/zoneinfo/${TZ}" /etc/localtime && echo "${TZ}" > /etc/timezone

@@ -21,6 +21,11 @@ flunk() { echo "FAIL  $1"; fail=1; }
 
 $COMPOSE up -d --wait backup >/dev/null || { echo "FAIL  el servicio backup no arrancó"; exit 1; }
 
+# It. 49: una organización con evidencias, la misma que deja make e2e. Sin
+# ella, en una máquina nueva (o un trabajo de CI aparte) no hay archivos que
+# enlazar ni una base de organización que pueda faltar.
+$COMPOSE exec -T -u workspace app php tests/e2e/fixture.php >/dev/null || { echo "FAIL  no se pudo preparar la organización de pruebas (¿make up?)"; exit 1; }
+
 # Una copia "de hace 31 días", que la próxima debe borrar.
 in_backup 'mkdir -p /backups/20200101T000000Z && touch -d "31 days ago" /backups/20200101T000000Z'
 

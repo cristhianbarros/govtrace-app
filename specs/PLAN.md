@@ -3046,6 +3046,58 @@ El usuario pidió seguir con lo que no espera a nadie: la deuda técnica y los h
 - **Después**, con la 48: "se demora mucho menos". No dio el número exacto.
 - Cuadra con el banco: su celular es algo más lento que un Chromium con la CPU frenada 4×, donde la revisión pasó de 11,7 a 0,5 s.
 
+### Iteración 49 — El pipeline, corriendo en cada PR
+
+✅ **Aprobada por el usuario el 2026-10-10** ("continúa", tras la propuesta de orden: CI → prueba de carga → piloto → registro de imágenes y 37b).
+
+**Por qué:**
+- El `Jenkinsfile` existe desde la it. 1, pero ningún Jenkins está conectado al repositorio. Ningún PR tiene chequeos (#109: "no checks reported"), ni hay webhooks.
+- Hasta hoy, las suites las corría Claude a mano antes de cada fusión. Con otros contribuyentes, eso no alcanza.
+
+**Entregable:**
+- `.github/workflows/ci.yml`. GitHub Actions es gratis para un repositorio público. Llama a los **mismos `make`** que el `Jenkinsfile`, que se queda para quien use Jenkins: el pipeline vive en el `Makefile`, y los dos no se separan.
+- **Trabajos en paralelo**, cada uno en su máquina:
+  - formato, trazabilidad, dependencias y secretos;
+  - el backend, en 4 partes (`pest --shard`);
+  - el frontend;
+  - el contrato;
+  - el sellado contra Stellar local y el verificador independiente;
+  - el e2e y la interfaz;
+  - respaldos y almacenamiento;
+  - el stack de producción.
+  - Al final, uno que resume todo: el chequeo que exige `main`.
+- **En un tag `v*`:** el monitoreo y la prueba de humo en testnet. Las llaves de testnet, como secretos del repositorio (D11).
+- **Seguridad:**
+  - permisos de solo lectura;
+  - las acciones fijadas por su SHA;
+  - `pull_request`, nunca `pull_request_target`: un PR de un fork no ve ningún secreto.
+- **`main` protegida:** no se fusiona un PR con el chequeo en rojo.
+
+**Done-when:**
+- Un PR muestra los chequeos y todos pasan.
+- Un PR con una prueba rota queda en rojo y no se puede fusionar.
+
+**Modelo:** Opus xhigh: maneja las llaves de testnet como secretos de CI y decide qué puede fusionarse.
+
+**✅ Cumplido (2026-10-10).** Los 12 trabajos en verde en unos **10 minutos** (sin paralelo serían unos 30): calidad 3 min, cada parte de Pest 5 a 7, e2e e interfaz 10, el stack de producción 7.
+
+**Lo que encontró correr en una máquina nueva** (seis fallas que en la máquina del desarrollo no se veían):
+1. **`make setup` no construía con Docker Compose v5**, ni en CI ni en un equipo recién instalado.
+   - Compose v5 construye con *bake*, que pide permiso para usar la red del host, y `DOCKER_BUILD_NETWORK=host` era el valor por defecto.
+   - Ahora el valor por defecto es `default`. Con `host` (una VPN), `make` construye con `docker buildx bake --allow=network.host` (`COMPOSE_BUILD`), y la imagen de Soroban se construye una vez (`make soroban-image`).
+2. **`make backup-check` dependía de los datos que deja `make e2e`.** Ahora prepara la organización de pruebas él mismo.
+3. **Una prueba dependía del orden de las demás.** `EmailLinksTest` dejaba entradas en la auditoría, que vive en la base central y no se reinicia entre archivos, y `ManageInvitationsTest` esperaba una sola. Con la suite en 4 partes, corrieron seguidas. Ahora cada una limpia lo suyo.
+4. **El fixture de e2e corría como `root`** (`docker compose exec` sin `-u workspace`). El correo de desarrollo (`storage/logs/mail.log`) quedaba de `root` y Apache ya no podía escribirlo: las invitaciones y los códigos fallaban. Ahora todos los comandos de PHP de los scripts corren como el usuario de la app, igual que `deploy/deploy.sh`.
+5. **Con un solo Super Administrador**, el panel avisa en cada pantalla (`role=status`), y en una base nueva ese aviso tapaba los mensajes que esperan las pruebas. El fixture deja dos activos, como pide la salida a producción.
+6. **La página de mantenimiento podía tardar hasta 60 s.** Con la app apagada, su IP vieja sigue en la caché del resolver de nginx unos segundos, y la conexión se colgaba hasta el límite de nginx. Con `proxy_connect_timeout 5s` llega pronto: también mejora la producción.
+7. **pecl.php.net a veces no responde.** Cada trabajo construye la imagen y descarga `redis` de pecl. En el PR de prueba en rojo, una de esas descargas falló y tumbó un trabajo que no tenía nada que ver. Ahora la descarga tiene tres intentos (`docker/app/Dockerfile`). Compartir la imagen entre trabajos queda como mejora, si hace falta.
+
+**Visto en rojo:** el PR #111, con una prueba de Vitest rota a propósito, dejó "Frontend" y "CI completo" en rojo. Se cerró sin fusionar.
+
+**Queda para el usuario:**
+- **Proteger `main`** para que exija "CI completo". El clasificador de permisos no dejó a Claude cambiar las reglas de acceso del repositorio.
+- **Subir las llaves de testnet** como secretos del repositorio, solo si se va a usar un tag `v*`.
+
 ## Pivote a Stellar (2026-09-28)
 
 El proyecto participa en **Stellar Apex**, así que la blockchain pasa de EVM/Polygon a **Stellar**, con Smart Contracts en **Soroban (Rust)**:

@@ -1,0 +1,230 @@
+# It. 49 — el pipeline de cada PR, en GitHub Actions (gratis en un repositorio
+# público). Llama a los mismos `make` que el Jenkinsfile y que cada
+# desarrollador en su máquina: el pipeline vive en el Makefile, y no se separan.
+# Cada trabajo corre en su propia máquina, en paralelo; "CI completo" los
+# resume y es el chequeo que exige main.
+#
+# Seguridad: permisos de solo lectura, las acciones fijadas por su SHA, y
+# `pull_request` (nunca `pull_request_target`): un PR de un fork no ve ningún
+# secreto. Las llaves de testnet solo se usan en un tag v* (D11).
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  # Que la salida de make y de Docker llegue al log sin colores ni barras de progreso.
+  BUILDKIT_PROGRESS: plain
+  COMPOSE_ANSI: never
+
+jobs:
+  calidad:
+    name: Formato, trazabilidad, dependencias y secretos
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # make secrets-check revisa todo el historial
+          persist-credentials: false
+      - name: Ninguna llave secreta de Stellar en el repositorio ni su historial (R-BLK-04)
+        run: make secrets-check
+      - name: El entorno de desarrollo, desde cero
+        run: |
+          echo "PUID=$(id -u)" >> "$GITHUB_ENV"
+          echo "PGID=$(id -g)" >> "$GITHUB_ENV"
+      - run: make setup
+      - name: Pint
+        run: make lint
+      - name: Cada escenario de features/ tiene su prueba
+        run: make trace-check
+      - name: Vulnerabilidades conocidas (it. 41)
+        run: make audit
+
+  backend:
+    name: Backend (Pest ${{ matrix.shard }}/4)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: |
+          echo "PUID=$(id -u)" >> "$GITHUB_ENV"
+          echo "PGID=$(id -g)" >> "$GITHUB_ENV"
+      - run: make setup
+      - run: make test ARGS="--shard=${{ matrix.shard }}/4"
+
+  frontend:
+    name: Frontend (Vitest)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: |
+          echo "PUID=$(id -u)" >> "$GITHUB_ENV"
+          echo "PGID=$(id -g)" >> "$GITHUB_ENV"
+      - run: make npm-install
+      - run: make test-front
+
+  contrato:
+    name: Contrato de sellado (Soroban)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: |
+          echo "PUID=$(id -u)" >> "$GITHUB_ENV"
+          echo "PGID=$(id -g)" >> "$GITHUB_ENV"
+      - name: rustfmt, clippy, cargo test y la interfaz exacta del WASM
+        run: make contract-test
+
+  stellar:
+    name: Sellado en Stellar local y verificador independiente
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: |
+          echo "PUID=$(id -u)" >> "$GITHUB_ENV"
+          echo "PGID=$(id -g)" >> "$GITHUB_ENV"
+      - run: make setup
+      - name: La red local, con el contrato desplegado
+        run: make stellar-up && make contract-deploy
+      - run: make test-stellar
+      - name: El verificador independiente, aislado con el nodo de Stellar solo (US-026)
+        run: make verify-check
+
+  e2e:
+    name: Extremo a extremo e interfaz (Playwright)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: |
+          echo "PUID=$(id -u)" >> "$GITHUB_ENV"
+          echo "PGID=$(id -g)" >> "$GITHUB_ENV"
+      - run: make setup
+      - name: La red local, para sellar lo que envía el veedor
+        run: |
+          make stellar-up && make contract-deploy
+          # El worker y el calendario leen el contrato al arrancar.
+          docker compose --env-file .env.docker restart worker scheduler
+      - run: make e2e
+      - run: make ux-check
+      - name: Capturas y trazas
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: e2e-y-capturas
+          path: |
+            storage/framework/testing/e2e/
+            storage/framework/testing/ux/shots/
+          if-no-files-found: ignore
+          retention-days: 14
+
+  respaldos:
+    name: Respaldos y almacenamiento
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: |
+          echo "PUID=$(id -u)" >> "$GITHUB_ENV"
+          echo "PGID=$(id -g)" >> "$GITHUB_ENV"
+      - run: make setup
+      - name: Copias, retención de 30 días y restauración de prueba (R-BCK)
+        run: make backup-check
+      - name: El S3 de desarrollo conserva sus archivos (it. 45d)
+        run: make storage-check
+
+  produccion:
+    name: Stack de producción y staging
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: |
+          echo "PUID=$(id -u)" >> "$GITHUB_ENV"
+          echo "PGID=$(id -g)" >> "$GITHUB_ENV"
+      - name: La imagen inmutable detrás de TLS, como la despliega deploy/deploy.sh (it. 42a)
+        run: make staging-check
+      - name: El certificado por DuckDNS, los secretos de SSM y la plantilla de AWS (it. 42b)
+        run: make staging-aws-check
+
+  ci:
+    name: CI completo
+    if: ${{ always() }}
+    needs: [calidad, backend, frontend, contrato, stellar, e2e, respaldos, produccion]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Todos los trabajos pasaron
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "Resultados: $RESULTS"
+          for result in $RESULTS; do
+            [ "$result" = success ] || { echo "::error::Un trabajo terminó en $result."; exit 1; }
+          done
+
+  release:
+    name: Antes de una versión (monitoreo y testnet)
+    if: ${{ startsWith(github.ref, 'refs/tags/v') }}
+    needs: [ci]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: |
+          echo "PUID=$(id -u)" >> "$GITHUB_ENV"
+          echo "PGID=$(id -g)" >> "$GITHUB_ENV"
+      - name: El monitor externo avisa tras 5 minutos caído, no por un parpadeo (US-044-MON)
+        run: make monitoring-check
+      - run: make setup
+      - name: Un reporte hasta "Sellada" en testnet (R-TST-01)
+        env:
+          STELLAR_TESTNET_CONTRACT_ID: ${{ secrets.STELLAR_TESTNET_CONTRACT_ID }}
+          STELLAR_TESTNET_SEALER_SECRET: ${{ secrets.STELLAR_TESTNET_SEALER_SECRET }}
+          STELLAR_TESTNET_SPONSOR_SECRET: ${{ secrets.STELLAR_TESTNET_SPONSOR_SECRET }}
+        run: |
+          # Las llaves solo viven en este archivo, durante este paso (D11).
+          trap 'rm -f .env.testnet' EXIT
+          umask 077
+          {
+            echo 'STELLAR_RPC_URL=https://soroban-testnet.stellar.org'
+            echo 'STELLAR_NETWORK_PASSPHRASE="Test SDF Network ; September 2015"'
+            echo "STELLAR_SEALING_CONTRACT_ID=$STELLAR_TESTNET_CONTRACT_ID"
+            echo "STELLAR_SEALER_SECRET=$STELLAR_TESTNET_SEALER_SECRET"
+            echo "STELLAR_SPONSOR_SECRET=$STELLAR_TESTNET_SPONSOR_SECRET"
+          } > .env.testnet
+          make smoke-testnet
