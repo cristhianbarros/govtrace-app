@@ -126,7 +126,7 @@ for (const [viewport, options] of Object.entries(VIEWPORTS)) {
             await visit(page, viewport, 'veedor-nuevo-reporte');
 
             await page.getByLabel('Buscar Obra').fill('Parque de pruebas');
-            await page.locator('[data-test="contract-result"]').first().click();
+            await page.locator('[data-test="contract-result"]').filter({ hasText: 'Parque de pruebas' }).first().click();
             // It. 46e: la revisión de la foto, con un rostro ya difuminado, y el reporte armado.
             await page.locator('input[type="file"]').first().setInputFiles(FACE);
             await page.locator('[data-test="faces-found"]').waitFor({ timeout: 30_000 });

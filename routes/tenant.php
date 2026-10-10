@@ -11,6 +11,7 @@ use App\Http\Controllers\Auth\ChangePasswordController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Tenant\AdministratorController;
 use App\Http\Controllers\Tenant\AuditController;
+use App\Http\Controllers\Tenant\BrowseContractsController;
 use App\Http\Controllers\Tenant\CitizenReportController;
 use App\Http\Controllers\Tenant\CitizenReportInboxController;
 use App\Http\Controllers\Tenant\ContractListController;
@@ -232,6 +233,8 @@ Route::middleware([
 
             // US-016: "Buscar Obra". US-019: las obras cercanas.
             Route::get('/contracts/search', ContractSearchController::class)->name('contracts.search');
+            // It. 47a: al abrir Nuevo reporte, las obras de su municipio, con filtros (POST: la ubicación, en el cuerpo).
+            Route::post('/contracts/browse', BrowseContractsController::class)->name('contracts.browse');
             Route::post('/worksites/nearby', NearbyWorksitesController::class)->name('worksites.nearby');
         });
     });

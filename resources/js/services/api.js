@@ -16,6 +16,8 @@ export const searchContracts = async (keyword) => (await dataOf(http.get('/contr
 
 /** US-019: hasta 5 obras a menos de la geocerca, de la más cercana a la más lejana. La ubicación va en el cuerpo, nunca en la URL (it. 45f). */
 export const fetchNearbyWorksites = async (latitude, longitude) => (await dataOf(http.post('/worksites/nearby', { latitude, longitude }))).data;
+// It. 47a: las obras del municipio del veedor, con filtros; la ubicación, en el cuerpo (it. 45f).
+export const browseContracts = (body) => dataOf(http.post('/contracts/browse', body));
 
 /** It. 44f (US-059-LEG): el ciudadano informa a la veeduría — primero el código a su correo, después el informe (multipart). */
 export const requestCitizenCode = (data) => dataOf(http.post('/citizen-reports/code', data));

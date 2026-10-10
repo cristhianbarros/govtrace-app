@@ -49,7 +49,7 @@ test('La CSP no bloquea nada en las pantallas públicas ni en las del veedor', a
     await page.waitForURL('**/reports/new');
     await page.evaluate(() => navigator.serviceWorker.ready);
     await page.getByLabel('Buscar Obra').fill('Parque de pruebas');
-    await page.locator('[data-test="contract-result"]').first().click();
+    await page.locator('[data-test="contract-result"]').filter({ hasText: 'Parque de pruebas' }).first().click();
     await expect(page.getByText(/Precisión del GPS/)).toBeVisible();
     // It. 46e: la foto pasa por el detector de rostros (TF.js y su modelo, de GovTrace) sin que la CSP lo bloquee.
     await attachPhoto(page, FACE);

@@ -61,6 +61,13 @@ class Contract extends Model
         static::creating($guard);
         static::updating($guard);
 
+        // It. 47a (US-016): its kind of work and the text the veedor's search
+        // compares, from what SECOP says — kept with it, never typed by hand.
+        static::saving(function (self $contract) {
+            $contract->work_type = WorkType::classify($contract->object, $contract->raw_payload['codigo_de_categoria_principal'] ?? null)->value;
+            $contract->search_text = SearchText::of($contract->object, $contract->contractor_name, $contract->process_number, $contract->entity_name);
+        });
+
         // US-033: not even SECOP deletes — an annulled contract becomes
         // "cancelled" and stays, because evidence may already point at it.
         static::deleting(function () {
@@ -74,6 +81,8 @@ class Contract extends Model
         'department_code', 'municipality_code', 'secop_url', 'raw_payload', 'cancelled_at',
         'supervisor_name', 'entity_order', 'funding_sources',
     ];
+
+    protected $hidden = ['search_text'];
 
     protected $casts = [
         'value' => 'decimal:2',

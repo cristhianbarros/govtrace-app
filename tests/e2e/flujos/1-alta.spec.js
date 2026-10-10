@@ -145,7 +145,7 @@ test('El veedor activa su cuenta y encuentra la obra para reportar', async ({ pa
     await page.waitForURL('**/reports/new');
 
     await page.getByLabel('Buscar Obra').fill('Parque de pruebas');
-    await expect(page.locator('[data-test="contract-result"]').first()).toContainText(WORKSITE);
+    await expect(page.locator('[data-test="contract-result"]').filter({ hasText: WORKSITE })).toHaveCount(1);
 });
 
 test('El ciudadano encuentra la veeduría nueva en el Inicio de GovTrace (V5)', async ({ page }) => {

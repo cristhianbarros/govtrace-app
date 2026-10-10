@@ -155,7 +155,7 @@ test('V7: crea un reporte en nombre de una organización que lo autorizó (it. 4
     await expect(page.getByRole('heading', { name: `Reportar en nombre de ${E2E_ORG}` })).toBeVisible();
 
     await page.getByLabel('Buscar Obra').fill('Parque de pruebas');
-    await page.locator('[data-test="contract-result"]').first().click();
+    await page.locator('[data-test="contract-result"]').filter({ hasText: 'Parque de pruebas' }).first().click();
     await expect(page.getByText(/Precisión del GPS/)).toBeVisible();
     await page.getByLabel('Avance').check();
     await attachPhoto(page, PHOTO);
