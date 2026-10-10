@@ -53,7 +53,8 @@ class SecurityHeaders
         $directives = [
             'default-src' => ["'self'"],
             // It. 46e (R-PRIV-05): el detector de rostros (TF.js) compila WebAssembly al cargar
-            // (long.js, enteros de 64 bits). 'wasm-unsafe-eval' permite solo eso, no eval de JavaScript.
+            // (long.js, enteros de 64 bits), y desde la it. 48 el modelo corre en WebAssembly, con
+            // binarios de GovTrace. 'wasm-unsafe-eval' permite solo eso, no eval de JavaScript.
             'script-src' => ["'self'", "'wasm-unsafe-eval'", $dev],
             'style-src' => ["'self'", "'unsafe-inline'", $dev],
             'img-src' => ["'self'", 'data:', 'blob:', self::MAP_TILES],

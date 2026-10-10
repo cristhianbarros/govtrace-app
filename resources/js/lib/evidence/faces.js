@@ -1,8 +1,12 @@
 // It. 46e — R-PRIV-05 reescrita: los rostros de una foto se buscan en el
 // celular, antes de calcular su huella, con BlazeFace (Google, Apache-2.0) en
 // TensorFlow.js. El modelo y el código vienen de GovTrace (el Service Worker los
-// guarda para usarlos sin señal): la foto nunca sale del teléfono. Se usa el
-// backend de CPU: cerca de 0,6 MB en total, sin WebGL ni WebAssembly.
+// guarda para usarlos sin señal): la foto nunca sale del teléfono.
+// It. 48: el modelo corre en WebAssembly (SIMD donde el teléfono lo tiene), no
+// en JavaScript: medido en un Chromium con la CPU frenada como un celular de
+// gama media, cada foto se revisaba en unos 11,7 s, casi todo el modelo.
+import wasmSimdUrl from '@tensorflow/tfjs-backend-wasm/dist/tfjs-backend-wasm-simd.wasm?url';
+import wasmUrl from '@tensorflow/tfjs-backend-wasm/dist/tfjs-backend-wasm.wasm?url';
 import modelUrl from './blazeface/model.json?url';
 import weightsUrl from './blazeface/group1-shard1of1.bin?url';
 
@@ -26,6 +30,12 @@ const WINDOW_FACE_MAX = 0.12;
 /** Del recuadro del rostro a la cabeza entera: el cabello, las orejas, el mentón. */
 const HEAD_MARGIN = 0.35;
 const SAME_FACE = 0.3;
+/**
+ * It. 48: el modelo ve cada imagen en 128 x 128 px. Se la damos así, reducida
+ * por el navegador: leer los 2,7 millones de píxeles de la foto entera para
+ * reducirlos después costaba más que el modelo mismo.
+ */
+const MODEL_SIDE = 128;
 
 /** @returns {Array<{x: number, y: number, width: number, height: number}>} */
 export function regionsOf(width, height) {
@@ -78,13 +88,12 @@ export function mergeBoxes(boxes) {
 }
 
 function cropOf(source, region) {
-    if (region.width === source.width && region.height === source.height) {
-        return source;
-    }
     const canvas = document.createElement('canvas');
-    canvas.width = region.width;
-    canvas.height = region.height;
-    canvas.getContext('2d').drawImage(source, region.x, region.y, region.width, region.height, 0, 0, region.width, region.height);
+    canvas.width = MODEL_SIDE;
+    canvas.height = MODEL_SIDE;
+    const context = canvas.getContext('2d');
+    context.imageSmoothingQuality = 'high';
+    context.drawImage(source, region.x, region.y, region.width, region.height, 0, 0, MODEL_SIDE, MODEL_SIDE);
     return canvas;
 }
 
@@ -102,13 +111,17 @@ export async function detectFaces(canvas, { model = null, crop = cropOf } = {}) 
     for (const [index, region] of regionsOf(canvas.width, canvas.height).entries()) {
         // Entre pasada y pasada, el navegador pinta: "Revisando la foto…" no se congela.
         await nextTask();
-        for (const face of await detector.estimateFaces(crop(canvas, region), false)) {
+        const input = crop(canvas, region);
+        // De los píxeles que vio el modelo a los de la foto.
+        const scaleX = region.width / input.width;
+        const scaleY = region.height / input.height;
+        for (const face of await detector.estimateFaces(input, false)) {
             const [left, top] = face.topLeft;
             const [right, bottom] = face.bottomRight;
-            if (probabilityOf(face) < MIN_PROBABILITY || (index > 0 && right - left > canvas.width * WINDOW_FACE_MAX)) {
+            const box = { x: region.x + left * scaleX, y: region.y + top * scaleY, width: (right - left) * scaleX, height: (bottom - top) * scaleY };
+            if (probabilityOf(face) < MIN_PROBABILITY || (index > 0 && box.width > canvas.width * WINDOW_FACE_MAX)) {
                 continue;
             }
-            const box = { x: region.x + left, y: region.y + top, width: right - left, height: bottom - top };
             found.push(headOf(box, canvas.width, canvas.height));
         }
     }
@@ -134,13 +147,36 @@ async function modelArtifacts() {
     };
 }
 
+/**
+ * WebAssembly, con los binarios de GovTrace; si el navegador no puede (o no se
+ * descargó), la CPU, como antes: más lenta, pero la foto se revisa igual.
+ */
+export async function useFastestBackend(tf, { wasm = () => import('@tensorflow/tfjs-backend-wasm'), cpu = () => import('@tensorflow/tfjs-backend-cpu') } = {}) {
+    try {
+        const backend = await wasm();
+        // Los hilos de WebAssembly corren en un worker blob:, que la CSP no permite: el binario con hilos nunca se pide.
+        tf.env().set('WASM_HAS_MULTITHREAD_SUPPORT', false);
+        backend.setWasmPaths({ 'tfjs-backend-wasm.wasm': wasmUrl, 'tfjs-backend-wasm-simd.wasm': wasmSimdUrl, 'tfjs-backend-wasm-threaded-simd.wasm': wasmSimdUrl });
+        if (await tf.setBackend('wasm')) {
+            return 'wasm';
+        }
+    } catch {
+        // Sigue con la CPU.
+    }
+    await cpu();
+    if (await tf.setBackend('cpu')) {
+        return 'cpu';
+    }
+    throw new Error('No se pudo iniciar el detector de rostros.');
+}
+
 let loading = null;
 
 /** Una sola vez por pantalla. Si falla (sin señal la primera vez), se puede volver a intentar. */
 export function loadDetector() {
     loading ??= (async () => {
-        const [tf, , blazeface] = await Promise.all([import('@tensorflow/tfjs-core'), import('@tensorflow/tfjs-backend-cpu'), import('@tensorflow-models/blazeface')]);
-        await tf.setBackend('cpu');
+        const [tf, blazeface] = await Promise.all([import('@tensorflow/tfjs-core'), import('@tensorflow-models/blazeface')]);
+        await useFastestBackend(tf);
         await tf.ready();
         const artifacts = await modelArtifacts();
         return blazeface.load({ modelUrl: { load: async () => artifacts }, maxFaces: 20, scoreThreshold: MIN_PROBABILITY });

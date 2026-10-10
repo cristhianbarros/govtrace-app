@@ -19,7 +19,7 @@ HTTP_PORT ?= $(shell sed -n 's/^HTTP_PORT=\([0-9]*\).*/\1/p' .env.docker 2>/dev/
         shell composer artisan migrate psql test test-front test-all lint fmt \
         npm-install npm-build npm-watch xdebug-on xdebug-off hosts image-qa teardown \
         stellar-up contract-test contract-deploy contract-smoke doctor test-stellar \
-        contract-extend testnet-setup testnet-extend smoke-testnet secrets-check monitoring-check verify-check e2e \
+        contract-extend testnet-setup testnet-extend smoke-testnet secrets-check monitoring-check verify-check e2e faces-bench \
         backup-now backup-list restore-drill backup-check storage-check storage-restore trace-check network-deploy network-extend network-deploy-check \
         admin admin-2fa-reset invites demo audit staging-check staging-aws-check \
         staging-provision staging-secret staging-deploy
@@ -97,6 +97,8 @@ verify-check: ## Independent verifier (tools/verify) on a published evidence, is
 	@bash tests/infra/check-verify.sh
 e2e: .env.docker ## End-to-end in a real Chromium against make up: each role's journey, gaps as fixme (it. 40a), and US-018 offline (needs make up and make npm-build)
 	@bash tests/infra/run-e2e.sh
+faces-bench: .env.docker ## How long the face review of a photo takes (it. 48), in a real Chromium with the CPU slowed like a mid-range phone (needs make up and make npm-build). Options: CPU_RATE=4 RUNS=3
+	@E2E_CONFIG=tests/e2e/bench/playwright.config.js CPU_RATE=$(or $(CPU_RATE),4) RUNS=$(or $(RUNS),3) bash tests/infra/run-e2e.sh
 ux-check: .env.docker ## UX checkpoint (it. 40a): every screen of every role, phone and computer, with screenshots, axe (WCAG 2.2 AA) and text/target sizes, against tests/ux/baseline.json
 	@bash tests/infra/run-ux-check.sh
 ux-baseline: .env.docker ## Rewrite tests/ux/baseline.json after a UX improvement (review its diff)

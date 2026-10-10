@@ -42,6 +42,9 @@ test('La CSP no bloquea nada en las pantallas públicas ni en las del veedor', a
     await expect(page.getByRole('heading', { name: 'Validador de evidencias' })).toBeVisible();
 
     // El veedor: su Service Worker, la búsqueda, el GPS y la vista previa de una foto.
+    // It. 48: el detector de rostros corre en WebAssembly (SIMD), con el binario de GovTrace; sin él volvería, callado, a la CPU: 20 veces más lento.
+    const wasm = [];
+    page.on('response', (response) => /\/build\/assets\/tfjs-backend-wasm-simd-[\w-]+\.wasm$/.test(response.url()) && response.ok() && wasm.push(response.url()));
     await page.goto('/login');
     await page.getByLabel('Correo electrónico').fill('e2e.veedor@correo.co');
     await page.getByLabel('Contraseña').fill('Veeduria#2026');
@@ -51,9 +54,10 @@ test('La CSP no bloquea nada en las pantallas públicas ni en las del veedor', a
     await page.getByLabel('Buscar Obra').fill('Parque de pruebas');
     await page.locator('[data-test="contract-result"]').filter({ hasText: 'Parque de pruebas' }).first().click();
     await expect(page.getByText(/Precisión del GPS/)).toBeVisible();
-    // It. 46e: la foto pasa por el detector de rostros (TF.js y su modelo, de GovTrace) sin que la CSP lo bloquee.
+    // It. 46e: la foto pasa por el detector de rostros (TF.js y su modelo, de GovTrace) sin que la CSP lo bloquee; it. 48, en WebAssembly.
     await attachPhoto(page, FACE);
     await expect(page.getByRole('button', { name: 'Enviar Reporte' })).toBeVisible();
+    expect(wasm).not.toHaveLength(0);
     await page.goto('/my-reports');
 
     expect(violations).toEqual([]);
