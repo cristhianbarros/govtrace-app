@@ -6,17 +6,35 @@ criterios_aceptacion:
     - "En la PWA el veedor toca 'Buscar Obra' y escribe en el buscador"
     - "A partir del tercer carácter, con un debounce de 300 ms, el sistema lista los contratos que coinciden"
     - "El veedor selecciona la obra de la lista y procede a reportar"
+    - "(It. 47, 2026-10-10, discovery corto; decidido por el usuario) Al abrir Nuevo reporte, el veedor ve las obras reportables de su municipio, decidido por su GPS, en una lista con filtros y el buscador encima"
+    - "(It. 47, 2026-10-10, discovery corto; decidido por el usuario) La lista muestra 20 obras; Ver 20 más trae las siguientes 20"
+    - "(It. 47, 2026-10-10, discovery corto; decidido por el usuario) Filtros: tipo de obra, situación del contrato y entidad contratante, además del municipio, que el veedor puede cambiar"
   validaciones_reglas:
     - "La búsqueda exige mínimo 3 caracteres alfanuméricos"
     - "Son consultables y seleccionables los contratos en estado 'En ejecución', 'Modificado', 'Aprobado', 'cedido' o 'Suspendido', y también los 'terminado' o 'Cerrado' hasta 12 meses después de su fecha de terminación en SECOP (R-SEC-07; ajustado a los estados reales de SECOP II el 2026-09-28)"
     - "Nunca aparecen los contratos anulados ('Cancelado' en SECOP), 'Borrador', 'enviado Proveedor' ni 'En aprobación', ni los cerrados con más de 12 meses"
     - "Los estados se comparan sin distinguir mayúsculas (SECOP publica 'terminado' en minúscula)"
     - "Filtro territorial obligatorio (R-VC-04): se suman todos los territorios configurados por la organización; un departamento incluye la Gobernación y todos sus municipios (jerarquía DIVIPOLA, ej. Magdalena 47 incluye Santa Marta 47001)"
+    - "(It. 47, 2026-10-10, discovery corto; decidido por el usuario) Orden: primero las de plazo vencido, luego las en ejecución que vencen más pronto, porque son las que hay que seguir"
+    - "(It. 47, 2026-10-10, discovery corto; propuesta de Claude, validada por el usuario) El orden en detalle: plazo vencido, de la que lleva más días vencida a la que menos; en ejecución, de la que vence más pronto a la que más tarde; luego las que no tienen fecha de fin; al final las terminadas hace poco, de la más reciente a la más antigua"
+    - "(It. 47, 2026-10-10, discovery corto; decidido por el usuario) El tipo de obra sale de las palabras del objeto del contrato y, si ninguna encaja, del código UNSPSC de SECOP II (codigo_de_categoria_principal)"
+    - "(It. 47, 2026-10-10, discovery corto; propuesta de Claude, validada por el usuario) Ocho tipos: Vías y puentes, Agua y saneamiento, Vivienda, Educación, Salud, Deporte y recreación, Espacio público y Otras. Si el objeto tiene palabras de varios tipos, decide la que aparece primero. El código UNSPSC solo decide 7211 (Vivienda) y 721411 (Vías y puentes); el resto es Otras. Lo calcula la sincronización con SECOP II y queda con el contrato; los ya guardados se completan en la próxima sincronización"
+    - "(It. 47, 2026-10-10, discovery corto; propuesta de Claude, validada por el usuario) La situación: Plazo vencido (ni terminado ni cerrado, con la fecha de fin ya pasada), En ejecución (ni terminado ni cerrado, con la fecha de fin por venir o sin fecha) y Terminada hace poco (terminado o cerrado hace 12 meses o menos, R-SEC-07). Por defecto, todas"
+    - "(It. 47, 2026-10-10, discovery corto; propuesta de Claude, validada por el usuario) La búsqueda de texto se aplica dentro del municipio y los filtros elegidos, sin distinguir tildes ni mayúsculas, en el objeto, el contratista, el número de proceso y la entidad"
+    - "(It. 47, 2026-10-10, discovery corto; decidido por el usuario) Si el GPS no permite saber el municipio (sin permiso, una mala lectura o fuera del territorio), la lista abre con el primer municipio del territorio por código DIVIPOLA (la capital, si el territorio es un departamento) y le pide elegir el suyo"
+    - "(It. 47, 2026-10-10, discovery corto; propuesta de Claude, validada por el usuario) El municipio es el del territorio con la cabecera más cercana a la lectura del GPS, si está a 30 km o menos (anchor_municipality_radius_km, US-038-CFG) y la lectura es de 5 km o menos. La ubicación viaja en el cuerpo de la petición, nunca en la URL, y el servidor no la guarda (it. 45f)"
   manejo_errores:
     - {caso: "Búsqueda sin resultados", mensaje: "No se encontraron obras activas. Verifique el número de proceso, nombre del contratista o palabras clave de la obra."}
+    - {caso: "(It. 47) Sin municipio por el GPS", mensaje: "No pudimos saber en qué municipio está. Le mostramos las obras de [municipio]: elija el suyo."}
+    - {caso: "(It. 47) Búsqueda sin resultados en el municipio", mensaje: "No se encontraron obras en [municipio] con esa búsqueda.", accion: "Buscar en todo el territorio"}
   requisitos_ux:
     - "Búsqueda con debounce de 300 ms a partir del tercer carácter"
-  casos_edge: []
+    - "(It. 47, 2026-10-10, discovery corto; propuesta de Claude, validada por el usuario) Cada obra muestra su nombre (o el objeto, en dos líneas), la entidad, el tipo de obra, el número de proceso, la situación con su fecha (Plazo vencido hace 40 días, Vence en 3 meses, Terminada hace 2 meses) y Sin ubicación todavía o su distancia"
+    - "(It. 47, 2026-10-10, discovery corto; propuesta de Claude, validada por el usuario) El selector de municipio trae los del territorio que tienen obras reportables, en orden alfabético, con cuántas tiene cada uno; el de entidad, las de las obras del municipio, de la que más tiene a la que menos. Letra de 16 px y botones de 44 px (R-UX)"
+  casos_edge:
+    - "(It. 47) Una obra sin ubicación aparece como cualquier otra, con Sin ubicación todavía: la ubica su primer reporte (US-008, V18)"
+    - "(It. 47) via encuentra Vía y VÍA: sin tildes ni mayúsculas (V19)"
+    - "(It. 47) Un municipio con 20 obras o menos no muestra Ver 20 más"
 validacion_smart:
   specific: true
   measurable: true

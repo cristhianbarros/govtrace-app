@@ -60,3 +60,12 @@ Esto contradice literalmente R-TST-04 (*"todas las reglas deben tener su escenar
   - Haversine frente a PostGIS;
   - Filament y TypeScript, mencionados por el usuario pero no confirmados.
 - **Documento externo.** El usuario aportó a mitad de sesión un documento que contradecía lo confirmado. Se fijó como fuente de verdad el registro de la sesión, y solo se rescataron 5 historias (US-030 a US-034).
+
+## Discovery corto "Encontrar la obra en campo" (2026-10-10)
+
+- **Alcance:** V18 y V19 de `docs/mapa-funcional.md`, y la lectura del GPS. Enmienda US-016, US-019 y US-008 (EPIC-002). El modo sin señal quedó fuera, como V20.
+- **Escenarios nuevos: 21** (15 en US-016, 3 en US-019, 3 en US-008), validados con el parser oficial de Gherkin, sin nombres repetidos. **7 `@negative`, 4 `@edge` y 1 `@privacy`**.
+- **Cada mensaje exacto de los YAML nuevos está en su `.feature`:** sin municipio por el GPS, sin resultados en el municipio, la espera del GPS y su minuto de límite.
+- **Decisiones:** 7 del usuario (lo que se ve primero, los filtros, el orden, el tope, el municipio por defecto, la regla del tipo de obra y dejar fuera el modo sin señal) y 13 propuestas de Claude, validadas por el usuario el mismo día.
+- **Frontera probada:** la lectura del GPS de 30 s se usa y la de 31 s no; 50 m sí y 120 m no para las obras cercanas; 20 obras con "Ver 20 más" y sin él cuando no hay más.
+- **Riesgo anotado:** leer el GPS una vez por pantalla toca la validez de la evidencia (la hora y el lugar de la captura). Por eso esa parte se propone con Opus en el plan.

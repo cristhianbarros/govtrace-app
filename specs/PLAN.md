@@ -2921,6 +2921,29 @@ El usuario pidió seguir con lo que no espera a nadie: la deuda técnica y los h
 - **Pendiente:** los contratos ya guardados se llenan con la próxima sincronización (cada noche, o «Sincronizar ahora»).
 
 
+### Iteración 47 — Encontrar la obra en campo
+
+✅ **Aprobada por el usuario el 2026-10-10** ("Apruebo todo": la 47 y las decisiones 7 a 19 del discovery). Sale del discovery corto del mismo nombre (`sessions/cristhian-barros/SHARED-MEMORY.md`, `specs/historias/US-016.md`), tras la prueba de staging: la veeduría de prueba tenía 915 contratos reportables solo en Medellín, y el buscador los recorría todos sin filtro ni tope (V19); las obras sin ubicación no se veían sin saber el contrato (V18); y el GPS tomaba la primera lectura, imprecisa. Enmienda US-016, US-019 y US-008: 21 escenarios nuevos. Las decisiones 7 a 19 las propuso Claude (el usuario le pidió terminar el discovery con su criterio) y el usuario las validó. El modo sin señal quedó fuera (V20).
+
+**47a — La lista de obras del municipio** (US-016, US-019; V18 y V19).
+- Al abrir "Nuevo reporte", las obras reportables del municipio del veedor (la cabecera del territorio más cercana a su GPS, a 30 km o menos; si no, el primer municipio del territorio por código DIVIPOLA, con un aviso), con el buscador encima.
+- Filtros: municipio, tipo de obra, situación y entidad. Orden: plazo vencido primero, luego las que vencen más pronto. De 20 en 20, con "Ver 20 más".
+- El tipo de obra: lo calcula la sincronización con SECOP II por las palabras del objeto y, si no, por el código UNSPSC (`codigo_de_categoria_principal`, nuevo); ocho tipos; columna nueva en `contracts` y `archived_contracts`, que se llena en la próxima sincronización.
+- La búsqueda: sin tildes ni mayúsculas (la extensión `unaccent` de PostgreSQL, o una columna normalizada), también por la entidad, dentro del municipio y los filtros, con "Buscar en todo el territorio".
+- "Cerca de usted" encabeza la lista; "Sin ubicación todavía" en las obras sin ubicación.
+- La ubicación, en el cuerpo de la petición (POST), nunca en la URL; el servidor no la guarda (it. 45f).
+- Índices: los contratos por municipio y fecha de fin; las obras por latitud y longitud.
+- **Done-when:** los escenarios nuevos de US-016 y US-019 (salvo los del GPS) con su test; `make e2e` con V18 y V19 en verde (dejan de ser `fixme`); `make ux-check` sin retroceso; `make trace-check`.
+- **Modelo:** Sonnet medium (interfaz y consultas).
+
+**47b — Esperar una buena lectura del GPS, y leerlo una vez** (US-008, US-019).
+- La app sigue el GPS (`watchPosition`) hasta una lectura de 50 m o menos, mostrando la precisión en vivo, con un minuto de límite y "Intentar de nuevo".
+- Una sola lectura por pantalla: las obras cercanas, el municipio y el reporte usan la última. El reporte la usa si es de 50 m o menos y tiene 30 s o menos, con su hora como hora de captura; si es más vieja, espera una nueva.
+- **Done-when:** los escenarios nuevos de US-008 y el de la mala lectura de US-019 con su test (Vitest, con un GPS de mentira que da 2000, 120 y 18 m); las pruebas del GPS y de la geocerca de US-008 siguen en verde.
+- **Modelo:** **Opus xhigh**: toca la hora y el lugar de la captura, que son parte de la validez de la evidencia (R-SEC-05, US-008).
+
+**Orden aprobado:** 42c → 47a → 47b.
+
 ### Iteración 48 — Revisar los rostros más rápido
 
 ✅ **Aprobada por el usuario el 2026-10-10** ("ese punto sí va, la idea es optimizarlo"). En la prueba de staging, la revisión de rostros de cada foto tardaba unos segundos en el celular (Vivo, Chrome). Va después de la 47.
@@ -2928,7 +2951,7 @@ El usuario pidió seguir con lo que no espera a nadie: la deuda técnica y los h
 **Por qué tarda:** BlazeFace corre en la CPU, en JavaScript puro (it. 46e), y mira cada foto 17 veces: la foto entera y una grilla de 4 × 4 ventanas, que encuentra rostros desde unos 48 px (it. 46f). La primera foto paga además la carga del detector, y la revisión empieza cuando la foto entra a revisión.
 
 **Entregable, de menos a más:**
-1. precargar el detector al abrir "Nuevo reporte";
+1. precargar el detector al abrir "Nuevo reporte": **ya existe desde la 46e** (`loadDetector()` en `NewReport.vue`); queda medir cuánto pesa la primera foto;
 2. revisar en segundo plano (un Web Worker) apenas se toma la foto, mientras el veedor escribe lo que vio;
 3. si medido en un celular de gama media sigue haciendo falta, WebAssembly (la CSP ya permite `wasm-unsafe-eval`), con su peso en el caché sin señal.
 

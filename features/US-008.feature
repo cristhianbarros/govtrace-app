@@ -181,3 +181,33 @@ Característica: Crear un reporte de evidencia con ubicación GPS
     Pero aún no elegí la clasificación ni adjunté archivos
     Cuando miro el botón "Enviar Reporte"
     Entonces junto a él leo "Para enviar falta:" con "decir qué vio en la obra" y "adjuntar al menos una foto o un PDF"
+
+  # It. 47, "Encontrar la obra en campo" (discovery corto, 2026-10-10): esperar
+  # una buena lectura del GPS y leerlo una sola vez por pantalla.
+
+  @complexity:medium
+  Escenario: La app espera una lectura de 50 m o menos y muestra la precisión mientras tanto
+    Dado que mi GPS da primero una lectura de 2000 m, luego una de 120 m y luego una de 18 m
+    Cuando abro "Nuevo reporte"
+    Entonces veo "Buscando señal GPS: 2000 m. Se necesitan 50 m o menos."
+    Y después "Buscando señal GPS: 120 m. Se necesitan 50 m o menos."
+    Y con la lectura de 18 m la ubicación queda lista
+
+  @complexity:low @negative
+  Escenario: Sin una buena lectura en un minuto, la app explica qué hacer
+    Dado que mi GPS no da una lectura de 50 m o menos durante 60 s
+    Cuando espero en "Nuevo reporte"
+    Entonces veo el mensaje "No se consiguió una buena señal del GPS en 1 minuto. Salga a un lugar abierto y revise que su celular tenga activada la ubicación precisa. Luego toque «Intentar de nuevo»."
+    Y veo el botón "Intentar de nuevo"
+
+  @complexity:medium @edge
+  Esquema del escenario: El reporte usa la última lectura del GPS si tiene 30 segundos o menos
+    Dado que mi última lectura del GPS fue de 15 m hace <edad> s
+    Cuando armo el reporte
+    Entonces el reporte <resultado>
+
+    Ejemplos:
+      | edad | resultado                                       |
+      | 10   | usa esa lectura, con su hora como hora de captura |
+      | 30   | usa esa lectura, con su hora como hora de captura |
+      | 31   | espera una lectura nueva                        |

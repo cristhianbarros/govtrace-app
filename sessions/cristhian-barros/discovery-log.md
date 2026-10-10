@@ -63,3 +63,7 @@
 | 2026-09-27 | Completitud | Cierre B: 56/56 historias con criterios y SMART completo. Checkpoint de fase. |
 | 2026-09-27 | Completitud | Checkpoint aceptado: 10/10 áreas, 17 gaps, 64 reglas, 56/56 historias con SMART completo. |
 | 2026-09-27 | Gherkin | 56 features generados (248 escenarios, 136 negativos, 36 edge), validados con el parser oficial; trazabilidad historia↔feature y mensajes exactos verificados. Se agregaron 4 negativos de roles faltantes. Borrado ejemplo_formato.feature. DQS-lite escrito. SPEC.md consolidado. Discovery COMPLETO. |
+| 2026-10-10 | Discovery corto | "Encontrar la obra en campo" (V18, V19, GPS): EPIC-002, enmienda de US-016, US-019 y US-008. Arranca en Historias. |
+| 2026-10-10 | Discovery corto | Decididas por el usuario: 1 (lista del municipio con filtros y buscador encima), 1b (sin señal, fuera: V20), 2 (filtros: tipo, situación, entidad), 3 (orden: plazo vencido primero), 4 (20 y "Ver más"), 5 (sin municipio: el primero del territorio), 6 (tipo: palabras del objeto y, si no, UNSPSC). Del 7 al 19, propuestas de Claude por validar, a pedido del usuario. |
+| 2026-10-10 | Discovery corto | Criterios en YAML (US-016, US-019, US-008) y 21 escenarios nuevos validados con el parser oficial (7 negativos, 4 edge, 1 privacy). DQS-lite actualizado. It. 42c y 47 (47a Sonnet, 47b Opus) propuestas en PLAN, por aprobar. Discovery corto COMPLETO. |
+| 2026-10-10 | Discovery corto | El usuario validó las decisiones 7 a 19 y aprobó la 42c, la 47 y la revisión de rostros más rápida ("Apruebo todo"). |

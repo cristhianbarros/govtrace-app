@@ -448,3 +448,45 @@ gherkin_phase:
 | 147 | Completitud | Checkpoint de transición | Aceptado ✅ |
 | 148 | Gherkin | Generación y cierre | 56 .feature, dqs-lite.md, SPEC.md consolidado; discovery completo → siguiente paso /plan ✅ |
 | 149 | Cierre | ¿Rebalancear P2 antes de /plan? | No: se deja que /plan muestre la carga real por iteración ✅ |
+
+## Discovery corto — "Encontrar la obra en campo" (2026-10-10)
+
+> Pedido por el usuario tras la prueba de staging (it. 42b): V18 y V19 de `docs/mapa-funcional.md`, más la búsqueda por GPS. Modo asesor. Toca EPIC-002 (Recolección de evidencia): enmienda US-016, US-019 y, en el GPS, US-008.
+
+```yaml
+mini_discovery:
+  id: encontrar-la-obra-en-campo
+  iniciado: 2026-10-10
+  epica: EPIC-002
+  alcance:
+    - "V18: las obras sin ubicación del municipio donde está el veedor"
+    - "V19: Buscar Obra con filtros (municipio, tipo de obra, situación, entidad), tope, orden, sin tildes"
+    - "GPS: esperar una buena lectura, no buscar con una mala, leer una sola vez"
+  datos_medidos:
+    - "UNSPSC en contratos de obra de Antioquia desde 2023 (familias): 7210 mantenimiento 911, 7214 construcción pesada 555, 8110 servicios de ingeniería 463, PECI 455, 7215 oficios especializados 242, 7212 edificaciones no residenciales 226. Ruidoso: redes de acueducto y viviendas caen en 7210, una cancha en 7215"
+    - "veeduria-prueba (Antioquia): 1.111 contratos reportables; 915 en Medellín (2026-10-10)"
+    - "SECOP II, 525 contratos de obra de Magdalena desde 2023: codigo_de_categoria_principal, direcci_n_de_ejecuci_n_del_contrato, objeto_del_contrato, valor_pagado y dias_adicionados al 100 %; fecha_de_inicio_del_contrato al 75 %; la dirección de ejecución suele ser la de la entidad"
+  current_phase: completed   # 21 escenarios nuevos; it. 42c y 47 aprobadas (2026-10-10)
+  decisiones:
+    - {n: 1, tema: "Qué ve primero el veedor al abrir Nuevo reporte", decision: "A) Las obras de su municipio (por su GPS), en una lista con filtros, y el buscador encima"}
+    - {n: 1b, tema: "Modo sin señal", decision: "Fuera de este alcance (el usuario, 2026-10-10). Hallazgo: hoy, sin señal, el veedor no puede elegir la obra (Buscar Obra y Obras cercanas necesitan red). Anotado como V20 en docs/mapa-funcional.md"}
+    - {n: 2, tema: "Filtros de la lista, además del municipio", decision: "A) Tipo de obra, B) Situación del contrato, C) Entidad contratante. Sin filtro de valor"}
+    - {n: 3, tema: "Orden de la lista", decision: "A) Primero las de plazo vencido; luego las en ejecución que vencen más pronto", porque: "son las que habría que hacerles seguimiento (el usuario)"}
+    - {n: 4, tema: "Cuántas obras de una vez", decision: "A) Las primeras 20, con un botón \"Ver más\" para las siguientes 20"}
+    - {n: 5, tema: "Si el GPS no dice el municipio (sin permiso, sin buena señal o fuera del territorio)", decision: "A) La lista abre con el primer municipio del territorio (por código DIVIPOLA: la capital, si es un departamento) y le pide elegir el suyo"}
+    - {n: 6, tema: "Cómo se decide el tipo de obra", decision: "C) Por palabras del objeto del contrato y, si ninguna encaja, por el código UNSPSC de SECOP II"}
+    # Desde aquí, a pedido del usuario ("continúa autónomamente acorde a tu criterio… añades un resumen de tus decisiones para que lo pueda validar"): propuestas de Claude, VALIDADAS por el usuario el 2026-10-10 ("Apruebo todo").
+    - {n: 7, por: claude, tema: "Categorías del tipo de obra", decision: "Ocho: vías y puentes · agua y saneamiento · vivienda · educación · salud · deporte y recreación · espacio público · otras. Respaldo UNSPSC solo donde es confiable: 7211 → vivienda, 721411 → vías y puentes; el resto, otras"}
+    - {n: 8, por: claude, tema: "Esperar una buena lectura del GPS", decision: "La app sigue el GPS hasta tener 50 m o menos, mostrando la precisión en vivo ('Buscando señal GPS: 120 m. Se necesitan 50 m o menos.'); a los 60 s sin lograrlo explica qué hacer y ofrece 'Intentar de nuevo'"}
+    - {n: 9, por: claude, tema: "Leer el GPS una sola vez", decision: "Al abrir Nuevo reporte se enciende el GPS y queda encendido en esa pantalla; las obras cercanas, el municipio y el reporte usan la última lectura. El reporte la usa si es de 50 m o menos y tiene 30 s o menos; su hora de captura es la de esa lectura. Si es más vieja, espera una nueva. El servidor sigue validando lo mismo (US-008)"}
+    - {n: 10, por: claude, tema: "No buscar con una mala lectura", decision: "Las obras cercanas (500 m) exigen una lectura de 50 m o menos; mientras no la hay, muestra 'Buscando señal GPS…' en lugar de 'no hay obras'. El municipio se decide con una lectura de hasta 5 km: alcanza para saber el municipio"}
+    - {n: 11, por: claude, tema: "Dónde quedan las obras cercanas", decision: "Encabezan la lista, en 'Cerca de usted' (hasta 5, ya ubicadas, a 500 m o menos, con su distancia); debajo, la lista del municipio"}
+    - {n: 12, por: claude, tema: "Obras sin ubicación (V18)", decision: "Están en la lista del municipio como cualquier otra, con la marca 'Sin ubicación todavía'. Las cubre la lista: no hace falta otra pantalla"}
+    - {n: 13, por: claude, tema: "La búsqueda de texto", decision: "Busca dentro del municipio y de los filtros elegidos; sin resultados, ofrece 'Buscar en todo el territorio'. Sin distinguir tildes ni mayúsculas. En el objeto, el contratista, el número de proceso y la entidad. Siguen los 3 caracteres y los 300 ms"}
+    - {n: 14, por: claude, tema: "La situación del contrato", decision: "Todas (por defecto) · Plazo vencido (no terminado, con la fecha de fin ya pasada) · En ejecución (no terminado, con la fecha de fin por venir o sin fecha) · Terminada hace poco (terminado o cerrado hace 12 meses o menos, R-SEC-07)"}
+    - {n: 15, por: claude, tema: "El orden, en detalle", decision: "Plazo vencido, de la que lleva más días vencida a la que menos; luego en ejecución, de la que vence más pronto a la que más tarde; luego sin fecha de fin; al final, las terminadas hace poco, de la más reciente a la más antigua"}
+    - {n: 16, por: claude, tema: "Los selectores", decision: "Municipio: los del territorio que tienen obras reportables, en orden alfabético, con cuántas tiene cada uno. Entidad: las de las obras del municipio, de la que más tiene a la que menos"}
+    - {n: 17, por: claude, tema: "Qué muestra cada obra", decision: "El nombre (o el objeto, en dos líneas), la entidad, el tipo de obra, el número de proceso, la situación con su fecha ('Plazo vencido hace 40 días', 'Vence en 3 meses', 'Terminada hace 2 meses') y 'Sin ubicación todavía' o la distancia"}
+    - {n: 18, por: claude, tema: "Privacidad de la ubicación", decision: "Como en la it. 45f: la ubicación viaja en el cuerpo de la petición, nunca en la URL; el servidor la usa para decidir el municipio y las cercanas, y no la guarda"}
+    - {n: 19, por: claude, tema: "El tipo de obra, cuándo se calcula", decision: "Lo calcula la sincronización con SECOP II (trae codigo_de_categoria_principal) y queda guardado con el contrato; los contratos ya guardados se completan en la próxima sincronización, como en la 46j"}
+```

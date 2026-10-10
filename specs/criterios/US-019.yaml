@@ -4,15 +4,18 @@ bloque: "B12 — Offline y proximidad"
 criterios_aceptacion:
   escenarios_exito:
     - "La app sugiere un máximo de 5 obras dentro de un radio de 500 m, ordenadas de la más cercana a la más lejana"
+    - "(It. 47, 2026-10-10, discovery corto; propuesta de Claude, validada por el usuario) Las obras cercanas encabezan la lista del municipio, en Cerca de usted, con su distancia"
   validaciones_reglas:
     - "Aplican las mismas reglas de US-016: solo obras del territorio de la organización (R-VC-04), en estado activo o Terminadas/Liquidadas hace 12 meses o menos"
     - "Solo se sugieren obras con ubicación (ancladas)"
     - "(It. 45f, 2026-10-02, decidido por el usuario) La ubicación del veedor viaja en el cuerpo de la petición (POST), nunca en la URL: las URL quedan en los registros de acceso del proxy y del servidor web, con la hora y la IP. Como segunda barrera, esos registros no guardan los parámetros de ninguna URL"
+    - "(It. 47, 2026-10-10, discovery corto; propuesta de Claude, validada por el usuario) Solo se buscan obras cercanas con una lectura del GPS de 50 m o menos; mientras no la hay, se ve Buscando señal GPS en lugar de no hay obras. Es la misma lectura que usa el reporte (US-008): el GPS se lee una sola vez por pantalla"
   manejo_errores:
     - {caso: "Ninguna obra a menos de 500 m", mensaje: "📍 No se encontraron obras a menos de 500m. Utilice el buscador para encontrarla por nombre o contrato."}
   requisitos_ux:
     - "Orden por distancia ascendente"
-  casos_edge: []
+  casos_edge:
+    - "(It. 47) Con la ubicación aproximada del celular (2000 m) no se buscan obras cercanas"
 validacion_smart:
   specific: true
   measurable: true
