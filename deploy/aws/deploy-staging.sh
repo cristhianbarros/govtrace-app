@@ -6,6 +6,9 @@ set -euo pipefail
 STACK=${STACK:-govtrace-staging}
 REF=${REF:-main}
 [[ $REF =~ ^[A-Za-z0-9._/-]+$ ]] || { echo "deploy-staging.sh: REF no es un nombre de rama: $REF" >&2; exit 2; }
+# It. 42c: MAINTENANCE=1 para una migración que rompe la versión anterior (deploy/deploy.sh).
+MAINTENANCE=${MAINTENANCE:-0}
+[[ $MAINTENANCE =~ ^[01]$ ]] || { echo "deploy-staging.sh: MAINTENANCE es 0 o 1" >&2; exit 2; }
 
 instance=$(aws cloudformation describe-stacks --stack-name "$STACK" \
     --query "Stacks[0].Outputs[?OutputKey=='InstanceId'].OutputValue" --output text)
@@ -22,7 +25,7 @@ done
 
 commands=$(python3 -I -c '
 import json, sys
-ref = sys.argv[1]
+ref, maintenance = sys.argv[1], sys.argv[2]
 print(json.dumps({
     "commands": [
         # sh, que en Ubuntu es dash: sin pipefail.
@@ -33,10 +36,10 @@ print(json.dumps({
         "git fetch --quiet --prune origin",
         f"git checkout --quiet --force -B staging origin/{ref}",
         "git log -1 --format=\"Desplegando %h: %s\"",
-        "deploy/staging-up.sh",
+        f"MAINTENANCE={maintenance} deploy/staging-up.sh",
     ],
     "executionTimeout": ["3600"],
-}))' "$REF")
+}))' "$REF" "$MAINTENANCE")
 
 command_id=$(aws ssm send-command --instance-ids "$instance" --document-name AWS-RunShellScript \
     --comment "make staging-deploy REF=$REF" --parameters "$commands" \

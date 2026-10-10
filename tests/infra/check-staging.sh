@@ -180,11 +180,48 @@ unwritable=$(for service in app worker scheduler; do
 done | xargs)
 [ -z "$unwritable" ] && pass "app, worker y scheduler escriben en el volumen de logs" || flunk "no pueden escribir sus logs: $unwritable"
 
+# 8b. It. 42c: mientras un despliegue reemplaza la app, nginx no tiene a quién
+#     pasarle la visita. En vez de un 502, un 503 en español que dice que
+#     vuelva en un minuto, y en JSON a la app del veedor (su bandeja de salida
+#     guarda el reporte y lo reintenta). Al volver la app, todo sigue igual.
+$COMPOSE stop app >/dev/null 2>&1
+maintenance_headers=$("${CURL[@]}" -D - -o "$WORK/maintenance.html" "https://$HOST:$HTTPS_PORT/login")
+if grep -qE '^HTTP/[0-9.]+ 503' <<< "$maintenance_headers" && grep -qi '^retry-after: 60' <<< "$maintenance_headers" \
+        && grep -q 'Estamos actualizando GovTrace' "$WORK/maintenance.html"; then
+    pass "sin la app, HTTPS responde 503 en español, con Retry-After"
+else
+    flunk "sin la app no hay página de mantenimiento: $(head -1 <<< "$maintenance_headers")"
+fi
+tenant_code=$("${CURL[@]}" -o /dev/null -w '%{http_code}' "https://$TENANT_HOST:$HTTPS_PORT/")
+[ "$tenant_code" = 503 ] && pass "también en el subdominio de una organización" || flunk "el subdominio respondió $tenant_code sin la app"
+json=$("${CURL[@]}" -H 'Accept: application/json' -D - "https://$TENANT_HOST:$HTTPS_PORT/me/reports")
+if grep -qE '^HTTP/[0-9.]+ 503' <<< "$json" && grep -qi '^content-type: application/json' <<< "$json" \
+        && grep -q '"message": *"Estamos actualizando GovTrace' <<< "$json"; then
+    pass "a la app del veedor, el 503 le llega en JSON"
+else
+    flunk "a una petición JSON no le llega el 503 en JSON: $(grep -i '^content-type' <<< "$json")"
+fi
+$COMPOSE start app >/dev/null 2>&1
+for _ in $(seq 1 30); do
+    [ "$("${CURL[@]}" -o /dev/null -w '%{http_code}' "https://$HOST:$HTTPS_PORT/up")" = 200 ] && break
+    sleep 2
+done
+[ "$("${CURL[@]}" -o /dev/null -w '%{http_code}' "https://$HOST:$HTTPS_PORT/up")" = 200 ] \
+    && pass "al volver la app, responde 200" || flunk "la app no volvió a responder"
+
 # 9. Desplegar otra vez no rompe nada, y los logs sobreviven.
 if bash deploy/deploy.sh >/dev/null 2>&1 && [ "$("${CURL[@]}" -o /dev/null -w '%{http_code}' "https://$TENANT_HOST:$HTTPS_PORT/")" = 200 ]; then
     pass "desplegar dos veces no rompe nada: la organización sigue ahí"
 else
     flunk "el segundo despliegue rompió algo"
+fi
+# It. 42c: con MAINTENANCE=1 (una migración que rompe la versión anterior), el
+# despliegue apaga la app antes de migrar, y al final todo vuelve.
+if out=$(MAINTENANCE=1 bash deploy/deploy.sh 2>&1) && grep -q 'Modo mantenimiento' <<< "$out" \
+        && [ "$("${CURL[@]}" -o /dev/null -w '%{http_code}' "https://$TENANT_HOST:$HTTPS_PORT/")" = 200 ]; then
+    pass "con MAINTENANCE=1 el despliegue apaga la app para migrar, y todo vuelve"
+else
+    flunk "el despliegue con MAINTENANCE=1 falló: $(tail -3 <<< "$out")"
 fi
 lines=$($COMPOSE exec -T app sh -c 'wc -l < storage/logs/staging-check.log' 2>/dev/null | tr -d ' ')
 [ "${lines:-0}" -ge 3 ] && pass "los logs sobreviven al despliegue: el volumen no se pierde" || flunk "los logs se perdieron al volver a desplegar"

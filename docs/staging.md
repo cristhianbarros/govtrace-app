@@ -71,6 +71,18 @@ make staging-deploy REF=main
 
 Con `REF=<rama>` se prueba una rama antes de fusionarla. Un secreto nuevo de `make staging-secret` toma efecto en el siguiente despliegue.
 
+### Lo que se ve mientras se despliega (it. 42c)
+
+Durante 10 a 30 segundos, mientras se reemplaza el contenedor de la app, nginx responde **503** con una página en español: "Estamos actualizando GovTrace. Vuelva a intentar en un minuto". La página se recarga sola cada 20 s. A la app del veedor le llega en JSON, y un reporte que estaba enviando **queda guardado en el celular** y se envía solo después.
+
+**Si una migración rompe la versión anterior** (borra o renombra una columna que el código viejo usa), despliega con el modo mantenimiento:
+
+```
+make staging-deploy REF=main MAINTENANCE=1
+```
+
+Apaga la app, el worker y el calendario **antes** de migrar, y durante la migración se ve la misma página. `php artisan down` no sirve para esto: la marca vive dentro del contenedor de la app, y el despliegue lo reemplaza.
+
 ## El certificado
 
 - Let's Encrypt valida que el dominio es nuestro con un registro TXT en DuckDNS. DuckDNS guarda **un solo TXT**, y un certificado de `govtrace.duckdns.org` y `*.govtrace.duckdns.org` pide dos a la vez. Por eso `deploy/issue-certificate.sh` lo pide en dos pasos: primero solo el nombre principal, y después los dos, cuando Let's Encrypt ya validó el primero y solo pide el TXT del comodín.

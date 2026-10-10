@@ -158,8 +158,8 @@ staging-provision: ## It. 42b: create or update staging on AWS (CloudFormation, 
 	@$(STAGING_AWS) bash deploy/aws/provision-staging.sh
 staging-secret: ## It. 42b: store one staging secret in SSM without showing it: make staging-secret NAME=MAIL_PASSWORD
 	@$(STAGING_AWS) bash deploy/aws/put-secret.sh "$(NAME)"
-staging-deploy: ## It. 42b: deploy branch REF (default main) to the staging machine through SSM, no SSH: make staging-deploy REF=main
-	@$(STAGING_AWS) REF="$(or $(REF),main)" bash deploy/aws/deploy-staging.sh
+staging-deploy: ## It. 42b: deploy branch REF (default main) to the staging machine through SSM, no SSH: make staging-deploy REF=main [MAINTENANCE=1]
+	@$(STAGING_AWS) REF="$(or $(REF),main)" MAINTENANCE="$(or $(MAINTENANCE),0)" bash deploy/aws/deploy-staging.sh
 trace-check: ## Traceability: every Gherkin scenario has a test named after it (CLAUDE.md, R-TST-04)
 	@$(EXEC) php tests/infra/check-traceability.php
 secrets-check: ## R-BLK-04: no Stellar secret key in the repository, its history or the env examples

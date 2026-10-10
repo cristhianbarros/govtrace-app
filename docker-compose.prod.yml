@@ -116,6 +116,8 @@ services:
       - PUBLIC_PORT_SUFFIX
     volumes:
       - ./docker/proxy/templates/prod.conf.template:/etc/nginx/templates/default.conf.template:ro
+      # It. 42c: la página de mantenimiento, mientras un despliegue reemplaza la app.
+      - ./docker/proxy/maintenance:/usr/share/nginx/govtrace:ro
       - ${LETSENCRYPT_DIR:-letsencrypt}:/etc/letsencrypt:ro
     ports:
       - "${PUBLISH_IP:-0.0.0.0}:${HTTP_PORT:-80}:80"
