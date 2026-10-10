@@ -1924,6 +1924,27 @@ Esta iteración estaba reservada para ese recorrido. El recorrido se hizo para e
 
 **Modelo:** Opus 5.5 xhigh: secretos, certificados y una cuenta de AWS de verdad.
 
+✅ **Cumplida (2026-10-10), con Opus 5.5 xhigh.** Staging en `https://govtrace.duckdns.org`: la pila `govtrace-staging` (us-east-2), la máquina `t4g.small` ARM con IP fija y los siete secretos en SSM. La pila la creó el usuario con `make staging-provision`, porque Claude Code no deja aplicar infraestructura en la nube sin su permiso.
+
+**Lo que encontró:**
+1. **El certificado en dos pasos funciona contra Let's Encrypt de verdad:** el primer certificado solo del nombre principal y, ya validado, el de los dos nombres; el del primer paso se borra. Pebble, con su configuración de fábrica, a veces da certificados de 6 días (un perfil "shortlived"): la prueba lo fija en 90 días, como Let's Encrypt, y el script hizo bien en renovar.
+2. **Apache no arrancaba en un servidor real** (defecto de la 42a): `docker-compose.prod.yml` pasaba `DOCKER_SUBNET` sin valor por defecto, y `make staging-check` lo tapaba porque la define. Ahora lleva el mismo valor que la red, con su prueba en `make staging-aws-check`.
+3. **`SUPER_ADMIN_TWO_FACTOR` no llegaba a la aplicación** en el stack de producción (it. 46g): lo atrapó la revisión de la plantilla de `make staging-check`.
+4. **Un subdominio que no es de ninguna organización respondía 500** y dejaba un error en el log; con DuckDNS cualquiera llega. Ahora es 404, "No encontrado", sin reportarse (`UnknownOrganizationTest`).
+5. **La cuenta de AWS es de la experiencia nueva:** la región la fija el país del contacto (us-east-2 para Colombia; us-east-1 está denegada por política), sin usuario raíz ni usuarios de IAM con consola, y los créditos no pagan dominios.
+6. **El GPS del celular en 2000 m:** Chrome tenía, en Android, solo la ubicación aproximada. Con "Usar ubicación precisa", 14,4 m. Va en `docs/staging.md`.
+7. **Encontrar la obra en campo** (V18 y V19 en `docs/mapa-funcional.md`): la veeduría de prueba, con Antioquia, tenía 1.111 contratos reportables, 915 de Medellín, y el buscador no filtra por municipio ni pone tope. Próxima iteración, con un `/discovery` corto.
+8. **La revisión de rostros tarda unos segundos por foto** en el celular: 17 pasadas del modelo en la CPU. Propuesto, sin aprobar: precargar el detector, revisar en segundo plano mientras el veedor escribe y, si hace falta, WebAssembly.
+
+**Prueba:**
+- `make staging-aws-check`: 18 de 18; `make staging-check`: 20 de 20; `make secrets-check`; `make test-all`: Pest 1.122 y Vitest 595.
+- **En la nube:**
+  - `/up` responde 200 con un certificado de Let's Encrypt verificado, que cubre los dos nombres y vence el 2027-01-07; TLS 1.1 rechazado; HTTP a HTTPS; HSTS;
+  - `veeduria-prueba.govtrace.duckdns.org` responde por HTTPS; las invitaciones llegaron por Gmail;
+  - un reporte desde un celular (Vivo, Chrome, GPS de 14,4 m) ancló su obra a 3,2 km de la cabecera de Medellín y quedó sellado en testnet en el ledger 5.116.303 (tx `c0099047…cb25`), 7 s después de llegar, por 0,3956 XLM;
+  - `get_seal` del contrato en testnet, consultado sin GovTrace, devuelve ese ledger, esa hora y la misma referencia de la obra.
+- **Costo:** unos 17,5 USD al mes, de los créditos de AWS.
+
 #### Iteración 43 — Flujos completos
 ⬜ **Propuesta el 2026-09-29, por aprobar.** Cierra los vacíos de `docs/mapa-funcional.md` que no caben en la it. 40. Casi todos son historias nuevas: según el marco, pasan antes por un `/discovery` corto, en modo asesor, con sus criterios y su Gherkin. Las decisiones de la sección 5 del mapa lo alimentan.
 
