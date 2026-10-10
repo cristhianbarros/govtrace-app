@@ -3092,11 +3092,14 @@ El usuario pidió seguir con lo que no espera a nadie: la deuda técnica y los h
 6. **La página de mantenimiento podía tardar hasta 60 s.** Con la app apagada, su IP vieja sigue en la caché del resolver de nginx unos segundos, y la conexión se colgaba hasta el límite de nginx. Con `proxy_connect_timeout 5s` llega pronto: también mejora la producción.
 7. **pecl.php.net a veces no responde.** Cada trabajo construye la imagen y descarga `redis` de pecl. En el PR de prueba en rojo, una de esas descargas falló y tumbó un trabajo que no tenía nada que ver. Ahora la descarga tiene tres intentos (`docker/app/Dockerfile`). Compartir la imagen entre trabajos queda como mejora, si hace falta.
 
-**Visto en rojo:** el PR #111, con una prueba de Vitest rota a propósito, dejó "Frontend" y "CI completo" en rojo. Se cerró sin fusionar.
+**Visto en rojo:** el PR #111, con una prueba de Vitest rota a propósito, dejó "Frontend" y "CI completo" en rojo, y con `main` protegida no se pudo fusionar. Se cerró sin fusionar.
 
-**Queda para el usuario:**
-- **Proteger `main`** para que exija "CI completo". El clasificador de permisos no dejó a Claude cambiar las reglas de acceso del repositorio.
-- **Subir las llaves de testnet** como secretos del repositorio, solo si se va a usar un tag `v*`.
+**`main` protegida (2026-10-10, por el usuario):**
+- exige "CI completo", también a los administradores;
+- no permite force-push ni borrar la rama.
+- Con eso, GitHub rechazó el PR #111 dos veces: con el CI corriendo y con el CI en rojo.
+
+**Queda:** subir las llaves de testnet como secretos del repositorio, solo si se va a usar un tag `v*`.
 
 ## Pivote a Stellar (2026-09-28)
 
