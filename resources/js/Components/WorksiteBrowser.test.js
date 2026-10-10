@@ -197,6 +197,14 @@ describe('WorksiteBrowser', () => {
         expect(located.text()).toContain('Vence en 20 días');
     });
 
+    it('marks a work overdue for years like any overdue one, and says SECOP did not close it (it. 47c)', async () => {
+        const wrapper = await opened(HERE, answer({ data: [work(1, { situation: 'long_overdue', end_date: '2018-08-10' })] }));
+        const badge = wrapper.get('[data-test="work"] [data-test="situation"]');
+
+        expect(badge.text()).toBe('Plazo vencido hace más de 8 años · SECOP no la ha cerrado');
+        expect(badge.classes()).toContain('bg-red-50');
+    });
+
     it('Las obras cercanas encabezan la lista, en Cerca de usted: with their distance, and choosing one picks its contract', async () => {
         const nearby = [
             { worksite_id: 'w1', name: 'Obra a 80 m', distance_meters: 80, contract: { secop_contract_id: 'CO1.PCCNTR.80', object: 'Obra a 80 m', entity_name: 'Distrito' } },

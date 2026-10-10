@@ -238,7 +238,7 @@ function retry() {
                             <span class="text-base text-slate-700">{{ item.entity_name }}<template v-if="scope === 'territory' && item.municipality"> · {{ item.municipality }}</template></span>
                             <span class="text-base text-slate-600">{{ item.work_type_label }} · {{ item.process_number }}</span>
                             <span class="flex flex-wrap gap-2">
-                                <span :class="['rounded-full px-2 py-0.5 text-base', item.situation === 'overdue' ? 'bg-red-50 text-red-800' : 'bg-slate-100 text-slate-700']">{{ situationText(item) }}</span>
+                                <span data-test="situation" :class="['rounded-full px-2 py-0.5 text-base', ['overdue', 'long_overdue'].includes(item.situation) ? 'bg-red-50 text-red-800' : 'bg-slate-100 text-slate-700']">{{ situationText(item) }}</span>
                                 <span v-if="!item.located" class="rounded-full bg-amber-50 px-2 py-0.5 text-base text-amber-900">Sin ubicación todavía</span>
                             </span>
                         </button>

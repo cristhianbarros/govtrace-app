@@ -98,7 +98,22 @@ Característica: Buscar la obra por palabra clave
       | Cancha E    | terminada hace 2 meses     |
       | Sede F      | sin fecha de fin           |
     Cuando abro "Nuevo reporte"
-    Entonces veo las obras en este orden: "Acueducto D", "Colegio B", "Vía C", "Parque A", "Sede F" y "Cancha E"
+    Entonces veo las obras en este orden: "Colegio B", "Acueducto D", "Vía C", "Parque A", "Sede F" y "Cancha E"
+
+  @complexity:medium @edge
+  Escenario: Las de plazo vencido hace más de 12 meses van después de las que están en ejecución
+    Dado que la ventana para reportar un contrato terminado es de 12 meses
+    Y que en "Santa Marta" hay estas obras reportables:
+      | obra      | situacion                           |
+      | Parque A  | vence en 90 días                    |
+      | Muelle G  | plazo vencido hace 8 años y 2 meses |
+      | Colegio B | plazo vencido hace 10 días          |
+      | Puente H  | plazo vencido hace 14 meses         |
+      | Sede F    | sin fecha de fin                    |
+      | Cancha E  | terminada hace 2 meses              |
+    Cuando abro "Nuevo reporte"
+    Entonces veo las obras en este orden: "Colegio B", "Parque A", "Sede F", "Puente H", "Muelle G" y "Cancha E"
+    Y "Muelle G" dice "Plazo vencido hace más de 8 años · SECOP no la ha cerrado"
 
   @complexity:medium
   Escenario: Veo 20 obras y Ver 20 más trae las siguientes
@@ -125,7 +140,7 @@ Característica: Buscar la obra por palabra clave
 
     Ejemplos:
       | situacion           | obras                                       |
-      | Plazo vencido       | "Acueducto D" y "Colegio B"                 |
+      | Plazo vencido       | "Colegio B" y "Acueducto D"                 |
       | En ejecución        | "Parque A" y "Sede F"                       |
       | Terminada hace poco | "Cancha E"                                  |
       | Todas               | las cinco                                   |

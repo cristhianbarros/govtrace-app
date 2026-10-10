@@ -27,6 +27,9 @@ use Illuminate\Support\Facades\DB;
  * can't be — with filters (kind of work, situation, entity), overdue first,
  * 20 at a time, and the search without accents. With a reading of 50 m or
  * less, the works near him on top. His location is used, never kept.
+ * It. 47c: overdue for longer than the report window (12 months), a work
+ * goes after the running ones: in SECOP II, many contracts stay "en
+ * ejecución" years after their end date, because no one closed them.
  */
 final class BrowseReportableContracts
 {
@@ -49,6 +52,7 @@ final class BrowseReportableContracts
     public function handle(Tenant $tenant, array $request): array
     {
         $today = now()->startOfDay();
+        $longOverdue = $today->copy()->subMonths(Contract::reportWindowMonths(now()));
         $watched = WatchedTerritories::ofActiveOrganizations($tenant->getTenantKey());
         $reportable = fn (): Builder => Contract::query()->inTerritory($watched)->reportableAt(now());
 
@@ -70,7 +74,7 @@ final class BrowseReportableContracts
         $list = (clone $inScope);
         $this->filtered($list, $request, $today);
         $page = max(1, (int) ($request['page'] ?? 1));
-        $contracts = $this->ordered($list, $today)->with('municipality')
+        $contracts = $this->ordered($list, $today, $longOverdue)->with('municipality')
             ->offset(($page - 1) * self::PAGE)->limit(self::PAGE + 1)->get();
 
         return [
@@ -79,7 +83,7 @@ final class BrowseReportableContracts
             'municipalities' => array_values($choices->sortBy('name', SORT_NATURAL | SORT_FLAG_CASE)->all()),
             'entities' => $entities,
             'work_types' => array_map(fn (WorkType $type) => ['key' => $type->value, 'label' => $type->label()], WorkType::cases()),
-            'data' => $this->presented($contracts->take(self::PAGE), $today),
+            'data' => $this->presented($contracts->take(self::PAGE), $today, $longOverdue),
             'has_more' => $contracts->count() > self::PAGE,
             'nearby' => $here !== null && $accuracy !== null && $accuracy <= self::NEARBY_ACCURACY_METERS
                 ? $this->nearby($here)
@@ -183,21 +187,28 @@ final class BrowseReportableContracts
     }
 
     /**
-     * Overdue first, the longest overdue on top; then the ones running, the
-     * one ending soonest on top; then those with no end date; last, the ones
-     * finished lately, the most recent on top (decided in the discovery).
+     * Overdue within the report window first, the most recently overdue on
+     * top; then the ones running, the one ending soonest on top; then those
+     * with no end date; then the ones overdue for longer, the most recent on
+     * top; last, the ones finished lately, the most recent on top (decided
+     * in the discovery, the overdue ones changed in it. 47c).
      */
-    private function ordered(Builder $query, \DateTimeInterface $today): Builder
+    private function ordered(Builder $query, \DateTimeInterface $today, \DateTimeInterface $longOverdue): Builder
     {
-        $active = implode(', ', array_fill(0, count(SecopContractStatus::ACTIVE), '?'));
+        $active = 'lower(status) in ('.implode(', ', array_fill(0, count(SecopContractStatus::ACTIVE), '?')).')';
+        $rank = "case when {$active} and end_date < ? and end_date >= ? then 0 when {$active} and end_date >= ? then 1 when {$active} and end_date is null then 2 when {$active} then 3 else 4 end";
         $day = $today->format('Y-m-d');
-        $rank = "case when lower(status) in ({$active}) and end_date < ? then 0 when lower(status) in ({$active}) and end_date >= ? then 1 when lower(status) in ({$active}) then 2 else 3 end";
-        $bindings = [...SecopContractStatus::ACTIVE, $day, ...SecopContractStatus::ACTIVE, $day, ...SecopContractStatus::ACTIVE];
+        $bindings = [
+            ...SecopContractStatus::ACTIVE, $day, $longOverdue->format('Y-m-d'),
+            ...SecopContractStatus::ACTIVE, $day,
+            ...SecopContractStatus::ACTIVE,
+            ...SecopContractStatus::ACTIVE,
+        ];
 
         return $query
             ->orderByRaw("{$rank} asc", $bindings)
-            ->orderByRaw("case when ({$rank}) in (0, 1) then end_date end asc nulls last", $bindings)
-            ->orderByRaw("case when ({$rank}) = 3 then end_date end desc nulls last", $bindings)
+            ->orderByRaw("case when ({$rank}) = 1 then end_date end asc nulls last", $bindings)
+            ->orderByRaw("case when ({$rank}) in (0, 3, 4) then end_date end desc nulls last", $bindings)
             ->orderByDesc('signed_at')
             ->orderBy('secop_contract_id');
     }
@@ -206,13 +217,13 @@ final class BrowseReportableContracts
      * @param  Collection<int, Contract>  $contracts
      * @return list<array<string, mixed>>
      */
-    private function presented(Collection $contracts, \DateTimeInterface $today): array
+    private function presented(Collection $contracts, \DateTimeInterface $today, \DateTimeInterface $longOverdue): array
     {
         // Each organization has its own worksite sheet (R-INT-05): whether this one located it, and its name.
         $sheets = WorksiteContract::query()->whereIn('secop_contract_id', $contracts->pluck('secop_contract_id'))
             ->with('worksite')->get()->keyBy('secop_contract_id');
 
-        return $contracts->map(function (Contract $contract) use ($sheets, $today) {
+        return $contracts->map(function (Contract $contract) use ($sheets, $today, $longOverdue) {
             $worksite = $sheets->get($contract->secop_contract_id)?->worksite;
 
             return [
@@ -221,14 +232,14 @@ final class BrowseReportableContracts
                 'municipality' => $contract->municipality ? PlaceName::forDisplay($contract->municipality->name) : null,
                 'work_type' => $contract->work_type,
                 'work_type_label' => WorkType::tryFrom((string) $contract->work_type)?->label() ?? WorkType::Other->label(),
-                'situation' => $this->situation($contract, $today),
+                'situation' => $this->situation($contract, $today, $longOverdue),
                 'end_date' => $contract->end_date?->toDateString(),
                 'located' => $worksite instanceof Worksite && $worksite->latitude !== null,
             ];
         })->values()->all();
     }
 
-    private function situation(Contract $contract, \DateTimeInterface $today): string
+    private function situation(Contract $contract, \DateTimeInterface $today, \DateTimeInterface $longOverdue): string
     {
         if (in_array(mb_strtolower((string) $contract->status), SecopContractStatus::CLOSED, true)) {
             return 'finished';
@@ -236,6 +247,7 @@ final class BrowseReportableContracts
 
         return match (true) {
             $contract->end_date === null => 'no_end_date',
+            $contract->end_date->lt($longOverdue) => 'long_overdue',
             $contract->end_date->lt($today) => 'overdue',
             default => 'in_progress',
         };

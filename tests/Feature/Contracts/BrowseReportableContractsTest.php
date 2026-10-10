@@ -2,6 +2,8 @@
 
 use App\Application\Organization\ConfigureTerritory;
 use App\Application\Organization\RegisterOrganization;
+use App\Domain\Configuration\Parameters;
+use App\Domain\Configuration\ParameterValue;
 use App\Domain\Contracts\WorkType;
 use App\Domain\Organization\Roles;
 use App\Infrastructure\Tenancy\Tenant;
@@ -32,6 +34,7 @@ beforeEach(function () {
     (new DivipolaSeeder)->run();
     Notification::fake();
     Carbon::setTestNow('2026-10-10 12:00:00');
+    $this->lastParameterVersion = (int) ParameterValue::query()->max('id');
 
     $this->tenant = (new RegisterOrganization)->handle('900123456-8', 'Veeduría Ciudadana Santa Marta', 'veeduria-smr');
     (new ConfigureTerritory)->handle($this->tenant, ['47']);
@@ -46,6 +49,8 @@ afterEach(function () {
 
     Tenant::query()->get()->each->delete();
     DB::table('contracts')->delete();
+    // Lo que una prueba cambió en los parámetros (esta base no se reinicia entre pruebas).
+    ParameterValue::query()->where('id', '>', $this->lastParameterVersion)->delete();
 });
 
 /** @param  array<string, mixed>  $body */
@@ -146,7 +151,46 @@ it('opens on the first municipality of the territory when the one asked for is n
 it('Primero las de plazo vencido, luego las que vencen más pronto', function () {
     sixWorksInSantaMarta();
 
-    expect(objectsOf(browse(fromSantaMarta())))->toBe(['Acueducto D', 'Colegio B', 'Vía C', 'Parque A', 'Sede F', 'Cancha E']);
+    expect(objectsOf(browse(fromSantaMarta())))->toBe(['Colegio B', 'Acueducto D', 'Vía C', 'Parque A', 'Sede F', 'Cancha E']);
+});
+
+/** It. 47c: the works of the scenario of the old overdue ones, on 2026-10-10. */
+function worksOverdueForYearsInSantaMarta(): void
+{
+    contractIn('47001', 'Parque A', ['end_date' => '2027-01-08']);              // vence en 90 días
+    contractIn('47001', 'Muelle G', ['end_date' => '2018-08-10']);              // plazo vencido hace 8 años y 2 meses
+    contractIn('47001', 'Colegio B', ['end_date' => '2026-09-30']);             // plazo vencido hace 10 días
+    contractIn('47001', 'Puente H', ['end_date' => '2025-08-10']);              // plazo vencido hace 14 meses
+    contractIn('47001', 'Sede F', ['end_date' => null]);                        // sin fecha de fin
+    contractIn('47001', 'Cancha E', ['status' => 'terminado', 'end_date' => '2026-08-10']); // terminada hace 2 meses
+}
+
+it('Las de plazo vencido hace más de 12 meses van después de las que están en ejecución', function () {
+    expect(Parameters::current('closed_contract_report_window_months'))->toBe('12');
+    worksOverdueForYearsInSantaMarta();
+
+    $response = browse(fromSantaMarta());
+
+    expect(objectsOf($response))->toBe(['Colegio B', 'Parque A', 'Sede F', 'Puente H', 'Muelle G', 'Cancha E'])
+        // La pantalla escribe "Plazo vencido hace más de 8 años · SECOP no la ha cerrado".
+        ->and(collect($response->json('data'))->firstWhere('object', 'Muelle G'))->toMatchArray(['situation' => 'long_overdue', 'end_date' => '2018-08-10'])
+        ->and(collect($response->json('data'))->firstWhere('object', 'Colegio B')['situation'])->toBe('overdue');
+});
+
+it('shows every overdue work under Plazo vencido, the most recently overdue first', function () {
+    worksOverdueForYearsInSantaMarta();
+
+    expect(objectsOf(browse(fromSantaMarta(['situation' => 'overdue']))))->toBe(['Colegio B', 'Puente H', 'Muelle G']);
+});
+
+it('takes the 12 months from the report window parameter: with 24, one overdue for 14 months is still recent', function () {
+    Parameters::set('closed_contract_report_window_months', '24', now());
+    worksOverdueForYearsInSantaMarta();
+
+    $response = browse(fromSantaMarta());
+
+    expect(objectsOf($response))->toBe(['Colegio B', 'Puente H', 'Parque A', 'Sede F', 'Muelle G', 'Cancha E'])
+        ->and(collect($response->json('data'))->firstWhere('object', 'Puente H')['situation'])->toBe('overdue');
 });
 
 it('says the situation of each work and its end date, for the screen to write it in words', function () {
@@ -155,8 +199,8 @@ it('says the situation of each work and its end date, for the screen to write it
     $situations = collect(browse(fromSantaMarta())->json('data'))->mapWithKeys(fn (array $item) => [$item['object'] => [$item['situation'], $item['end_date']]]);
 
     expect($situations->all())->toBe([
-        'Acueducto D' => ['overdue', '2026-08-31'],
         'Colegio B' => ['overdue', '2026-09-30'],
+        'Acueducto D' => ['overdue', '2026-08-31'],
         'Vía C' => ['in_progress', '2026-10-30'],
         'Parque A' => ['in_progress', '2027-01-08'],
         'Sede F' => ['no_end_date', null],
@@ -185,10 +229,10 @@ it('Filtro las obras por su situación', function (string $situation, array $exp
 
     expect(objectsOf(browse(fromSantaMarta(['situation' => $situation]))))->toBe($expected);
 })->with([
-    'Plazo vencido' => ['overdue', ['Acueducto D', 'Colegio B']],
+    'Plazo vencido' => ['overdue', ['Colegio B', 'Acueducto D']],
     'En ejecución' => ['in_progress', ['Vía C', 'Parque A', 'Sede F']],
     'Terminada hace poco' => ['finished', ['Cancha E']],
-    'Todas' => ['all', ['Acueducto D', 'Colegio B', 'Vía C', 'Parque A', 'Sede F', 'Cancha E']],
+    'Todas' => ['all', ['Colegio B', 'Acueducto D', 'Vía C', 'Parque A', 'Sede F', 'Cancha E']],
 ]);
 
 it('Filtro las obras por su tipo', function () {
