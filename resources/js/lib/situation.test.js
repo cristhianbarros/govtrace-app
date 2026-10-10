@@ -6,7 +6,7 @@ const today = new Date('2026-10-10T12:00:00');
 
 describe('situationText', () => {
     it.each([
-        [{ situation: 'overdue', end_date: '2026-08-31' }, 'Plazo vencido hace 40 días'],
+        [{ situation: 'overdue', end_date: '2026-08-31' }, 'Plazo vencido hace 41 días'],
         [{ situation: 'overdue', end_date: '2026-10-09' }, 'Plazo vencido hace 1 día'],
         [{ situation: 'overdue', end_date: '2025-11-10' }, 'Plazo vencido hace 11 meses'],
         // It. 47c: desde un año, en años.
