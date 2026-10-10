@@ -100,6 +100,20 @@ Contract::fromSecop(fn () => Contract::query()->updateOrCreate(['secop_contract_
     'process_number' => 'E2E-001',
 ]));
 
+// It. 47a (V18, V19): otra obra de Santa Marta, sin ubicación todavía, con tilde en el objeto.
+Contract::fromSecop(fn () => Contract::query()->updateOrCreate(['secop_contract_id' => E2E_CONTRACT.'-SIN-UBICACION'], [
+    'entity_name' => 'Alcaldía Distrital de Santa Marta',
+    'contractor_name' => 'Constructora de Pruebas S.A.S.',
+    'object' => 'Construcción de la VÍA a Minca de pruebas',
+    'contract_type' => 'Obra',
+    'status' => 'En ejecución',
+    'signed_at' => now()->subMonths(4)->toDateString(),
+    'end_date' => now()->subDays(10)->toDateString(),
+    'department_code' => '47',
+    'municipality_code' => '47001',
+    'process_number' => 'E2E-001-B',
+]));
+
 $tenant->run(function () {
     foreach ([
         ['Administradora E2E', 'e2e.admin@correo.co', Roles::Administrator, null],

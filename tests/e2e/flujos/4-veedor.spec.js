@@ -55,7 +55,7 @@ test('Arma un reporte: la obra, lo que vio y la foto', async ({ page }) => {
     await enter(page);
 
     await page.getByLabel('Buscar Obra').fill('Parque de pruebas');
-    await page.locator('[data-test="contract-result"]').first().click();
+    await page.locator('[data-test="contract-result"]').filter({ hasText: 'Parque de pruebas' }).first().click();
     await expect(page.getByText(/Precisión del GPS/)).toBeVisible();
     await page.getByLabel('Avance').check();
     await page.locator('input[type="file"]').first().setInputFiles(NO_FACE);
@@ -104,14 +104,44 @@ async function fineDetail(page, sources, area) {
     );
 }
 
-test.fixme('V18: sin obras ubicadas cerca, ve las obras de su municipio que aún no tienen ubicación', async () => {});
-test.fixme('V19: busca la obra en su municipio, sin tildes, con pocos resultados y ordenados', async () => {});
+// It. 47a: al abrir Nuevo reporte, las obras de su municipio, con las cercanas encima.
+test('V18: sin obras ubicadas cerca, ve las obras de su municipio que aún no tienen ubicación', async ({ page }) => {
+    await enter(page);
+
+    await expect(page.locator('select#municipality')).toHaveValue('47001');
+    const nearby = page.locator('[data-test="nearby-section"]');
+    await expect(nearby).toContainText('Cerca de usted');
+    await expect(nearby.locator('[data-test="nearby"]').first()).toContainText('Parque de pruebas sin conexión');
+
+    // Solo las obras del fixture: la base de desarrollo puede tener las de make demo.
+    await page.getByLabel('Buscar Obra').fill('E2E-001');
+    const unlocated = page.locator('[data-test="work"]').filter({ hasText: 'Construcción de la VÍA a Minca de pruebas' });
+    await expect(unlocated).toContainText('Sin ubicación todavía');
+    await expect(unlocated).toContainText('Plazo vencido hace 10 días');
+});
+
+test('V19: busca la obra en su municipio, sin tildes, con pocos resultados y ordenados', async ({ page }) => {
+    await enter(page);
+
+    // Solo las obras del fixture, por su número de proceso (la base de desarrollo puede tener las de make demo); plazo vencido primero.
+    await page.getByLabel('Buscar Obra').fill('E2E-001');
+    await expect(page.locator('[data-test="work-name"]')).toHaveText(['Construcción de la VÍA a Minca de pruebas', 'Parque de pruebas sin conexión']);
+
+    // Sin tildes ni mayúsculas.
+    await page.getByLabel('Buscar Obra').fill('via a minca');
+    await expect(page.locator('[data-test="work-name"]')).toHaveText(['Construcción de la VÍA a Minca de pruebas']);
+
+    // Con la situación.
+    await page.getByLabel('Buscar Obra').fill('E2E-001');
+    await page.locator('select#situation').selectOption('in_progress');
+    await expect(page.locator('[data-test="work-name"]')).toHaveText(['Parque de pruebas sin conexión']);
+});
 test.fixme('V20: sin señal, elige la obra entre los contratos guardados en su celular', async () => {});
 
 test('Un rostro lejano también se difumina (it. 46f)', async ({ page }) => {
     await enter(page);
     await page.getByLabel('Buscar Obra').fill('Parque de pruebas');
-    await page.locator('[data-test="contract-result"]').first().click();
+    await page.locator('[data-test="contract-result"]').filter({ hasText: 'Parque de pruebas' }).first().click();
     await expect(page.getByText(/Precisión del GPS/)).toBeVisible();
 
     // El modelo de verdad, en un Chromium de verdad: la foto entera no los ve; la grilla de ventanas, sí.
@@ -128,7 +158,7 @@ test('Los rostros de una foto se difuminan en el celular antes de calcular su hu
     const comment = `Rostro difuminado E2E ${Date.now()}`;
     await enter(page);
     await page.getByLabel('Buscar Obra').fill('Parque de pruebas');
-    await page.locator('[data-test="contract-result"]').first().click();
+    await page.locator('[data-test="contract-result"]').filter({ hasText: 'Parque de pruebas' }).first().click();
     await expect(page.getByText(/Precisión del GPS/)).toBeVisible();
     await page.getByLabel('Retraso').check();
     await page.getByLabel('Comentario (opcional)').fill(comment);

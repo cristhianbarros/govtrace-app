@@ -36,6 +36,8 @@ class ProcessSecopContractRow
         'id_contrato', 'referencia_del_contrato', 'nombre_entidad', 'proveedor_adjudicado', 'descripcion_del_proceso',
         'tipo_de_contrato', 'estado_contrato', 'valor_del_contrato', 'fecha_de_firma', 'fecha_de_fin_del_contrato',
         'ciudad', 'departamento', 'urlproceso',
+        // It. 47a: the UNSPSC code, for the kind of work when the object's words don't say it.
+        'codigo_de_categoria_principal',
     ];
 
     /**

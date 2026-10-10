@@ -5,17 +5,30 @@
 import { flushPromises, mount } from '@vue/test-utils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import NewReport from './NewReport.vue';
-import ContractSearch from '@/Components/ContractSearch.vue';
+import WorksiteBrowser from '@/Components/WorksiteBrowser.vue';
 import EvidencePicker from '@/Components/EvidencePicker.vue';
 import { loadDetector } from '@/lib/evidence/faces.js';
 import { configureOutbox, outboxState } from '@/composables/useOutbox.js';
 import { createOutbox, memoryStore } from '@/lib/outbox.js';
-import { fetchNearbyWorksites, sendReport } from '@/services/api.js';
+import { browseContracts, sendReport } from '@/services/api.js';
 import { page } from '@/testing/inertia.js';
 
 vi.mock('@inertiajs/vue3', async () => await import('@/testing/inertia.js'));
 vi.mock('@/lib/evidence/faces.js', () => ({ loadDetector: vi.fn(async () => ({})) }));
-vi.mock('@/services/api.js', () => ({ searchContracts: vi.fn(async () => []), sendReport: vi.fn(), logout: vi.fn(), fetchNearbyWorksites: vi.fn() }));
+vi.mock('@/services/api.js', () => ({ browseContracts: vi.fn(), sendReport: vi.fn(), logout: vi.fn() }));
+
+/** Lo que responde la lista de obras (it. 47a), sin obras ni cercanas. */
+const browsed = (more = {}) => ({
+    municipality: { code: '47001', name: 'Santa Marta' },
+    notice: null,
+    municipalities: [{ code: '47001', name: 'Santa Marta', count: 1 }],
+    entities: [],
+    work_types: [],
+    data: [],
+    has_more: false,
+    nearby: null,
+    ...more,
+});
 
 const GPS_DENIED =
     'GovTrace requiere acceso a su ubicación exacta para certificar criptográficamente que la evidencia fue tomada en el sitio de la obra. Por favor habilite el GPS.';
@@ -35,11 +48,15 @@ function phoneGps(...answers) {
     return getCurrentPosition;
 }
 
-/** Con la obra ya elegida en "Buscar Obra". */
+/**
+ * Con la obra ya elegida en la lista. La primera lectura del GPS es la de abrir
+ * la pantalla (it. 47a: el municipio y las cercanas); las demás, las del reporte.
+ */
 async function onWorksite(...gpsAnswers) {
-    phoneGps(...gpsAnswers);
+    phoneGps(reading(20), ...gpsAnswers);
     const wrapper = mount(NewReport);
-    wrapper.findComponent(ContractSearch).vm.$emit('select', contract);
+    await flushPromises();
+    wrapper.findComponent(WorksiteBrowser).vm.$emit('select', contract);
     await flushPromises();
     return wrapper;
 }
@@ -60,6 +77,8 @@ beforeEach(() => {
     // capturado hace más de 7 días, y con la fecha real estos reportes "vencían" una semana después.
     vi.useFakeTimers({ toFake: ['Date'], now: new Date('2026-09-28T15:05:00Z') });
     sendReport.mockReset();
+    browseContracts.mockReset();
+    browseContracts.mockResolvedValue(browsed());
     configureOutbox({ store: memoryStore() });
 });
 afterEach(() => {
@@ -104,7 +123,7 @@ describe('Nuevo Reporte', () => {
         expect(wrapper.get('[data-test="location-pending"]').text()).toBe(pending);
 
         // El siguiente reporte empieza sin ese aviso.
-        wrapper.findComponent(ContractSearch).vm.$emit('select', contract);
+        wrapper.findComponent(WorksiteBrowser).vm.$emit('select', contract);
         await flushPromises();
         expect(wrapper.find('[data-test="location-pending"]').exists()).toBe(false);
     });
@@ -327,11 +346,10 @@ describe('Obras cercanas (US-019)', () => {
         contract: { secop_contract_id: `CO1.PCCNTR.${meters}`, object: `Obra a ${meters} m`, entity_name: 'Alcaldía Distrital de Santa Marta' },
     });
 
-    async function openNearby(answer, ...gpsAnswers) {
-        fetchNearbyWorksites.mockResolvedValue(answer);
+    async function openNearby(nearby, ...gpsAnswers) {
+        browseContracts.mockResolvedValue(browsed({ nearby }));
         phoneGps(...gpsAnswers);
         const wrapper = mount(NewReport);
-        await wrapper.findAll('button').find((button) => button.text() === '📍 Obras cercanas').trigger('click');
         await flushPromises();
         return wrapper;
     }
@@ -339,7 +357,7 @@ describe('Obras cercanas (US-019)', () => {
     it('Hasta 5 obras dentro de 500 m ordenadas por distancia: from where the veedor is, the closest first', async () => {
         const wrapper = await openNearby([50, 120, 200, 310, 420].map(suggestion), reading(15), reading(15));
 
-        expect(fetchNearbyWorksites).toHaveBeenCalledWith(11.2419, -74.199);
+        expect(browseContracts).toHaveBeenCalledWith({ latitude: 11.2419, longitude: -74.199, accuracy: 15, page: 1 });
         const offered = wrapper.findAll('[data-test="nearby"]');
         expect(offered.map((item) => item.get('[data-test="distance"]').text())).toEqual(['a 50 m', 'a 120 m', 'a 200 m', 'a 310 m', 'a 420 m']);
         expect(offered[0].text()).toContain('Obra a 50 m');
@@ -354,14 +372,15 @@ describe('Obras cercanas (US-019)', () => {
         const wrapper = await openNearby([], reading(15));
 
         expect(wrapper.text()).toContain(NONE);
-        expect(wrapper.find('input#contract-search').exists()).toBe(true);
+        expect(wrapper.find('input#work-search').exists()).toBe(true);
     });
 
-    it('asks for the GPS first, and says why if it is denied', async () => {
-        const wrapper = await openNearby([], { code: 1, PERMISSION_DENIED: 1 });
+    it('opens the list even when the GPS is denied: without the location, and without nearby works (it. 47a)', async () => {
+        const wrapper = await openNearby(null, { code: 1, PERMISSION_DENIED: 1 });
 
-        expect(fetchNearbyWorksites).not.toHaveBeenCalled();
-        expect(wrapper.text()).toContain(GPS_DENIED);
+        expect(browseContracts).toHaveBeenCalledWith({ page: 1 });
+        expect(wrapper.find('[data-test="nearby-section"]').exists()).toBe(false);
+        expect(wrapper.find('input#work-search').exists()).toBe(true);
     });
 });
 
@@ -390,7 +409,7 @@ describe('El botón de enviar dice qué falta (it. 40b)', () => {
     it('says it is waiting for the GPS while there is no position yet', async () => {
         Object.defineProperty(window.navigator, 'geolocation', { value: { getCurrentPosition: vi.fn() }, configurable: true });
         const wrapper = mount(NewReport);
-        wrapper.findComponent(ContractSearch).vm.$emit('select', contract);
+        wrapper.findComponent(WorksiteBrowser).vm.$emit('select', contract);
         await flushPromises();
 
         expect(missing(wrapper).text()).toContain('la ubicación del GPS');

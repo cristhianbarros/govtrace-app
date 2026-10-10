@@ -23,7 +23,7 @@ test('Guardado sin conexión y envío automático al recuperar la señal', async
 
     // El reporte: la obra, el GPS, la clasificación y la foto.
     await page.getByLabel('Buscar Obra').fill('Parque de pruebas');
-    await page.locator('[data-test="contract-result"]').first().click();
+    await page.locator('[data-test="contract-result"]').filter({ hasText: 'Parque de pruebas' }).first().click();
     await expect(page.getByText(/Precisión del GPS/)).toBeVisible();
     await page.getByLabel('Retraso').check();
     await attachPhoto(page, PHOTO);

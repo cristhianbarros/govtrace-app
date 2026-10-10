@@ -3,6 +3,7 @@
 namespace App\Application\Contracts;
 
 use App\Domain\Contracts\Contract;
+use App\Domain\Contracts\SearchText;
 use App\Domain\Organization\WatchedTerritories;
 use App\Infrastructure\Tenancy\Tenant;
 use Illuminate\Database\Eloquent\Collection;
@@ -23,18 +24,16 @@ class SearchSelectableContracts
      */
     public function handle(Tenant $tenant, string $keyword): Collection
     {
-        if (mb_strlen(trim($keyword)) < self::MIN_CHARACTERS) {
+        // It. 47a (V19): sin tildes ni mayúsculas, y también por la entidad, como la lista del veedor.
+        $keyword = SearchText::of($keyword);
+        if (mb_strlen($keyword) < self::MIN_CHARACTERS) {
             return new Collection;
         }
 
         return Contract::query()
             ->inTerritory(WatchedTerritories::ofActiveOrganizations($tenant->id))
             ->reportableAt(now())
-            ->where(function ($query) use ($keyword) {
-                $query->where('object', 'ilike', "%{$keyword}%")
-                    ->orWhere('contractor_name', 'ilike', "%{$keyword}%")
-                    ->orWhere('process_number', 'ilike', "%{$keyword}%");
-            })
+            ->where('search_text', 'like', '%'.addcslashes($keyword, '%_\\').'%')
             ->get();
     }
 }
