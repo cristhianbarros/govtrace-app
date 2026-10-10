@@ -18,17 +18,21 @@ criterios_aceptacion:
     - "R-VC-04: solo obras del territorio de la organización"
     - "Si la ficha de obra agrupa varios contratos (US-045-INT), el reporte se vincula a la ficha completa"
     - "El servidor registra también su propia hora de recepción y marca el reporte cuando la hora de captura del teléfono está más de 5 minutos en el futuro respecto al servidor (tolerancia por latencia y desfase del reloj) o es anterior a los 7 días de vigencia offline; la marca la ven el Administrador de Organización y el Super Administrador (R-SEC-05)"
+    - "(It. 47, 2026-10-10, discovery corto; propuesta de Claude, validada por el usuario) El GPS se enciende al abrir Nuevo reporte y queda encendido en esa pantalla. El reporte usa la última lectura si es de 50 m o menos y tiene 30 s o menos, con la hora de esa lectura como hora de captura; si es más vieja, espera una nueva. El servidor valida lo mismo que antes"
   manejo_errores:
     - {caso: "(It. 46f) Primer reporte lejos del municipio del contrato", mensaje: "La ubicación de esta obra queda por confirmar: su reporte se tomó a [X] km de [municipio], y para fijar una obra hay que estar a menos de 30 km de su municipio. La veeduría la revisará."}
     - {caso: "(It. 46f) Primer reporte con una precisión del GPS de más de 20 m", mensaje: "La ubicación de esta obra queda por confirmar: la señal del GPS tenía una precisión de [X] m, y para fijar una obra se necesitan 20 m o menos. La veeduría la revisará."}
     - {caso: "Permiso de GPS denegado", mensaje: "GovTrace requiere acceso a su ubicación exacta para certificar criptográficamente que la evidencia fue tomada en el sitio de la obra. Por favor habilite el GPS."}
     - {caso: "Fuera de la geocerca de 500 m", mensaje: "Se encuentra a [X] km de la ubicación oficial de la obra. Para prevenir fraudes, debe acercarse a un radio de 500 metros del proyecto."}
+    - {caso: "(It. 47) Sin una lectura de 50 m o menos en 60 s", mensaje: "No se consiguió una buena señal del GPS en 1 minuto. Salga a un lugar abierto y revise que su celular tenga activada la ubicación precisa. Luego toque «Intentar de nuevo»."}
   requisitos_ux:
     - "Si la precisión del GPS es mayor a 50 m, la app pide reintentar hasta obtener buena señal"
     - "(It. 40b, 2026-09-29) Mientras 'Enviar Reporte' no se puede usar, junto al botón se lee qué falta: la ubicación del GPS, qué vio en la obra, al menos un archivo"
+    - "(It. 47, 2026-10-10, discovery corto; propuesta de Claude, validada por el usuario) Mientras espera una lectura de 50 m o menos, la app muestra la precisión en vivo: Buscando señal GPS: [X] m. Se necesitan 50 m o menos."
   casos_edge:
     - {caso: "La ubicación oficial fijada por First-Touch es errónea y los veedores en la obra real quedan fuera de la geocerca", resultado: "El Administrador de Organización puede corregir la ubicación de la obra, dejando registro del cambio (nueva historia US-035)"}
     - {caso: "Dos veedores envían al mismo tiempo el primer reporte de una obra sin ubicación", resultado: "Bloqueo atómico en base de datos sobre la ficha de obra: la primera transacción fija la ubicación oficial (First-Touch); la segunda lee esa ubicación y se valida contra la geocerca de 500 m; si ambos están cerca, entran los dos reportes"}
+    - "(It. 47) La primera lectura del celular suele venir de la red (por ejemplo, 2000 m): la app no la usa y sigue esperando"
 validacion_smart:
   specific: true
   measurable: true

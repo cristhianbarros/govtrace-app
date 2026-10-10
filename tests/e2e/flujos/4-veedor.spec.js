@@ -106,6 +106,7 @@ async function fineDetail(page, sources, area) {
 
 test.fixme('V18: sin obras ubicadas cerca, ve las obras de su municipio que aún no tienen ubicación', async () => {});
 test.fixme('V19: busca la obra en su municipio, sin tildes, con pocos resultados y ordenados', async () => {});
+test.fixme('V20: sin señal, elige la obra entre los contratos guardados en su celular', async () => {});
 
 test('Un rostro lejano también se difumina (it. 46f)', async ({ page }) => {
     await enter(page);
