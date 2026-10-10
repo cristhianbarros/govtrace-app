@@ -3041,7 +3041,10 @@ El usuario pidió seguir con lo que no espera a nadie: la deuda técnica y los h
   - "No encontramos rostros" en el paisaje;
   - las dos fotos del ciudadano (46h).
 
-**Queda:** el número "antes y después en el mismo celular" del Done-when es el del Vivo del usuario en staging. Se mide al desplegar: la primera foto, a mano.
+**En el mismo celular (Done-when), medido por el usuario en staging (2026-10-10), en su Vivo con Chrome:**
+- **Antes**, con la 42c desplegada: unos 15 s por foto.
+- **Después**, con la 48: "se demora mucho menos". No dio el número exacto.
+- Cuadra con el banco: su celular es algo más lento que un Chromium con la CPU frenada 4×, donde la revisión pasó de 11,7 a 0,5 s.
 
 ## Pivote a Stellar (2026-09-28)
 
