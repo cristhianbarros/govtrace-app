@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import WorksiteBrowser from './WorksiteBrowser.vue';
 import { browseContracts } from '@/services/api.js';
 
-vi.mock('@/services/api.js', () => ({ browseContracts: vi.fn() }));
+vi.mock('@/services/api.js', () => ({ browseContracts: vi.fn(), fetchNearbyWorksites: vi.fn() }));
 
 const SANTA_MARTA = { code: '47001', name: 'Santa Marta' };
 const HERE = { latitude: 11.2408, longitude: -74.199, accuracy: 15 };

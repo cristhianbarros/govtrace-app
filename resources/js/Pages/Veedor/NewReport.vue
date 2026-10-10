@@ -8,12 +8,12 @@
 // con filtros, y las cercanas encima); aquí, el GPS al abrir y qué pasa sin
 // señal (US-018).
 import { Head, usePage } from '@inertiajs/vue3';
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import ReportForm from '@/Components/ReportForm.vue';
 import VeedorNav from '@/Components/VeedorNav.vue';
 import WorksiteBrowser from '@/Components/WorksiteBrowser.vue';
-import { capturePosition } from '@/lib/geolocation.js';
+import { useGps } from '@/composables/useGps.js';
 import { saveOffline, startOutboxSync } from '@/composables/useOutbox.js';
 import { registerServiceWorker } from '@/lib/pwa.js';
 import { loadDetector } from '@/lib/evidence/faces.js';
@@ -33,10 +33,18 @@ const sent = ref(false);
 const savedOffline = ref(false); // US-018 e it. 41: por qué quedó en la bandeja de salida (el mensaje), o false
 const locationPending = ref(null); // it. 46f: por qué la ubicación de la obra quedó por confirmar
 
-// It. 47a: dónde está el veedor, para su municipio y las obras cercanas.
+// It. 47b: el GPS, una sola vez por pantalla (useGps): la lista (el municipio y
+// las obras cercanas) y el reporte usan la misma lectura. Para la lista:
 // undefined mientras el GPS responde; null si no hay ubicación (no dio permiso,
-// o el teléfono no la tiene): la lista abre igual, en el primer municipio.
-const location = ref(undefined);
+// o un minuto sin señal): abre igual, en el primer municipio del territorio.
+const gps = useGps();
+const location = computed(() => {
+    const reading = gps.latest.value;
+    if (reading) {
+        return { latitude: reading.latitude, longitude: reading.longitude, accuracy: reading.accuracy };
+    }
+    return ['failed', 'slow'].includes(gps.status.value) ? null : undefined;
+});
 
 function chooseWorksite(selected) {
     contract.value = selected;
@@ -94,9 +102,7 @@ async function keepOffline(report, message = MESSAGES.saved) {
 onMounted(() => {
     registerServiceWorker();
     startOutboxSync();
-    capturePosition()
-        .then(({ latitude, longitude, accuracy }) => (location.value = { latitude, longitude, accuracy }))
-        .catch(() => (location.value = null));
+    gps.start();
     if (navigator.onLine !== false) {
         loadDetector().catch(() => {});
     }
@@ -120,8 +126,14 @@ function startOver() {
             <p v-if="savedOffline" role="status" class="rounded-lg bg-amber-100 p-3 text-sm font-semibold text-amber-900">{{ savedOffline }}</p>
 
             <!-- 1. La obra: las de su municipio, con filtros, y las cercanas encima (it. 47a) -->
+            <!-- It. 47b: un minuto sin una lectura de 50 m o menos -->
+            <div v-if="gps.status.value === 'slow'" data-test="slow-gps" class="flex flex-col gap-2">
+                <p role="alert" class="rounded-lg bg-amber-50 p-3 text-base text-amber-900 ring-1 ring-amber-200">{{ gps.message.value }}</p>
+                <button type="button" class="min-h-11 rounded-xl border border-brand-200 bg-white px-3 text-base font-semibold text-brand-800" @click="gps.start()">Intentar de nuevo</button>
+            </div>
+
             <WorksiteBrowser v-if="!contract" :location="location" @select="chooseWorksite" />
-            <ReportForm v-else :contract="contract" :sending="sending" :server-errors="serverErrors" @submit="submit" @change-worksite="startOver" />
+            <ReportForm v-else :contract="contract" :gps="gps" :sending="sending" :server-errors="serverErrors" @submit="submit" @change-worksite="startOver" />
         </div>
         <template #nav>
             <VeedorNav current="/reports/new" />

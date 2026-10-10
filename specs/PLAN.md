@@ -2946,6 +2946,11 @@ El usuario pidió seguir con lo que no espera a nadie: la deuda técnica y los h
 - Una sola lectura por pantalla: las obras cercanas, el municipio y el reporte usan la última. El reporte la usa si es de 50 m o menos y tiene 30 s o menos, con su hora como hora de captura; si es más vieja, espera una nueva.
 - **Done-when:** los escenarios nuevos de US-008 y el de la mala lectura de US-019 con su test (Vitest, con un GPS de mentira que da 2000, 120 y 18 m); las pruebas del GPS y de la geocerca de US-008 siguen en verde.
 - **Modelo:** **Opus xhigh**: toca la hora y el lugar de la captura, que son parte de la validez de la evidencia (R-SEC-05, US-008).
+- ✅ **47b cumplida (2026-10-10), con Opus 5.5.**
+  - **Cómo quedó:** `useGps` sigue el GPS (`watchPosition`, alta precisión, sin lecturas guardadas) mientras "Nuevo reporte" está abierta, y guarda aparte la última lectura de 50 m o menos. La lista recibe la última lectura: con ella decide el municipio, muestra "Buscando señal GPS: X m. Se necesitan 50 m o menos." y, apenas hay una de 50 m o menos, pide las obras cercanas (`POST /worksites/nearby`). El formulario usa la misma lectura si tiene 30 s o menos, con su hora como hora de captura; si no, espera la siguiente y pide una puntual (un celular quieto puede no enviar más). A los 60 s sin lograrlo, "Nuevo reporte" dice qué hacer, con "Intentar de nuevo". La pantalla del Super Administrador (US-042-SEC) sigue con su propia lectura.
+  - **El servidor no cambió:** sigue exigiendo 50 m o menos y validando la hora de captura (R-SEC-05).
+  - **Prueba:** Vitest: `useGps` (6) y los tres escenarios nuevos de US-008 en "Nuevo reporte" (con un GPS de mentira que da 2000, 120 y 18 m; un minuto sin señal; lecturas de 10, 30 y 31 s), verificados con una mutación (con 60 s de vigencia, el caso de 31 s falla); `make trace-check`: 431 de 431; `make e2e`: 56; `make ux-check` sin retroceso.
+  - **Lo que encontró:** el límite del formulario público de solicitud de alta (it. 43k) se activó tras varias corridas de `make e2e` en una hora desde la misma conexión: funciona como debe; en desarrollo se limpia con `make artisan CMD="cache:clear"`.
 
 **Orden aprobado:** 42c → 47a → 47b.
 
