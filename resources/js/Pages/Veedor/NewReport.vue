@@ -71,6 +71,9 @@ async function submit(report) {
         if (error?.response?.status === 429) {
             // It. 41: pasado el límite por hora, a la bandeja de salida: se envía sola después.
             await keepOffline(report, MESSAGES.rateLimited);
+        } else if ([502, 503, 504].includes(error?.response?.status)) {
+            // It. 42c: GovTrace se está desplegando; tampoco se pierde.
+            await keepOffline(report, MESSAGES.updating);
         } else if (error?.response) {
             serverErrors.value = errorMessages(error);
         } else {

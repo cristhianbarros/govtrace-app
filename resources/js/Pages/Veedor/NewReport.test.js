@@ -288,6 +288,21 @@ describe('Nuevo Reporte sin conexión (US-018)', () => {
         expect(pending[0].fields).toMatchObject({ secop_contract_id: 'CO1.PCCNTR.1234567', captured_at: '2026-09-28T15:00:00.000Z' });
     });
 
+    it.each([502, 503, 504])('keeps the report in the phone when GovTrace is being updated (%i, it. 42c), and sends it later', async (status) => {
+        const UPDATING = '🔄 GovTrace se está actualizando. Su reporte quedó guardado en el dispositivo y se enviará automáticamente en unos minutos.';
+        const outbox = await outboxHolding(0);
+        sendReport.mockRejectedValue({ response: { status, data: { message: 'Estamos actualizando GovTrace. Vuelva a intentar en un minuto.' } } });
+        const wrapper = await onWorksite(reading(15));
+
+        await fillReport(wrapper);
+        await wrapper.get('form').trigger('submit');
+        await flushPromises();
+
+        expect(wrapper.get('[role="status"]').text()).toBe(UPDATING);
+        expect(wrapper.find('[role="alert"]').exists()).toBe(false);
+        expect(await outbox.pending()).toHaveLength(1);
+    });
+
     it('Mensaje de almacenamiento lleno: with 10 pending, the new one is not kept, and the report stays on screen', async () => {
         const outbox = await outboxHolding(10);
         sendReport.mockRejectedValue(noSignal);

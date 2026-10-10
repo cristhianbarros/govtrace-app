@@ -16,6 +16,11 @@
 #   4. /up por HTTPS, desde esta misma máquina.
 #
 # Volver a la versión anterior: APP_IMAGE=govtrace-app:<la anterior> SKIP_BUILD=1 deploy/deploy.sh
+#
+# It. 42c: mientras se reemplaza la app, nginx responde 503 con la página de
+# mantenimiento (docker/proxy/maintenance). Con una migración que rompe la
+# versión anterior, MAINTENANCE=1 apaga la app, el worker y el calendario antes
+# de migrar: durante la migración se ve esa misma página.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -40,6 +45,10 @@ fi
 
 step "2/4 La base de datos y las migraciones"
 $COMPOSE up -d --wait pgsql
+if [ "${MAINTENANCE:-0}" = 1 ]; then
+    echo "Modo mantenimiento: la app, el worker y el calendario se apagan mientras se migra."
+    $COMPOSE stop app worker scheduler
+fi
 $ARTISAN migrate --force
 $ARTISAN tenants:migrate --force
 $ARTISAN db:seed --class=DivipolaSeeder --force

@@ -1945,6 +1945,26 @@ Esta iteración estaba reservada para ese recorrido. El recorrido se hizo para e
   - `get_seal` del contrato en testnet, consultado sin GovTrace, devuelve ese ledger, esa hora y la misma referencia de la obra.
 - **Costo:** unos 17,5 USD al mes, de los créditos de AWS.
 
+#### Iteración 42c — Desplegar sin 502
+✅ **Aprobada por el usuario el 2026-10-10** ("Apruebo todo, continúa con la 42c"). El usuario vio un 502 en staging durante un despliegue y pidió activar el modo mantenimiento.
+
+**Por qué no basta `php artisan down`:** el 502 aparece cuando `docker compose up -d` reemplaza el contenedor de la app (10 a 30 s), y la marca de mantenimiento de Laravel vive dentro de ese contenedor (driver `file`): el nuevo arranca sin ella. Ese hueco solo lo cubre nginx.
+
+**Entregable:**
+- nginx: si no puede hablar con la app (502 o 504), responde **503** con una página en español ("Estamos actualizando GovTrace. Vuelva a intentar en un minuto."), `Retry-After: 60`, letra grande y recarga cada 20 s; en JSON a la app del veedor, cuya bandeja de salida guarda el reporte y lo reintenta (solo descarta ante un 422);
+- `docs/staging.md`: el modo mantenimiento de Laravel, como paso manual solo para una migración que rompa la versión anterior.
+
+**Done-when (`make staging-check`):** con la app apagada a propósito, HTTPS responde 503 con la página en español y `Retry-After`, también en el subdominio de una organización, y en JSON a una petición JSON; al volver la app, 200.
+
+**Modelo:** Sonnet medium (nginx y una prueba de infraestructura; no toca seguridad ni datos). El usuario siguió con Opus.
+
+✅ **Cumplida (2026-10-10), con Opus 5.5.**
+- **nginx** (`docker/proxy/templates/prod.conf.template`): `error_page 502 504 =503` hacia la página de `docker/proxy/maintenance/` (montada en el proxy de `docker-compose.prod.yml`), en HTML o en JSON según lo que pide la visita, con `Retry-After: 60` y `Cache-Control: no-store`.
+- **Lo que encontró:** la bandeja de salida del veedor ya conservaba un reporte ante un 503 al sincronizar en segundo plano (`sync.js`), pero **el envío directo** desde "Nuevo reporte" lo trataba como un error del servidor: el veedor veía el mensaje y tenía que reenviarlo a mano. Ahora un 502, 503 o 504 lo guarda en el celular, como un 429, con "🔄 GovTrace se está actualizando. Su reporte quedó guardado en el dispositivo y se enviará automáticamente en unos minutos."
+- **`MAINTENANCE=1`** en `deploy/deploy.sh` y en `make staging-deploy`: apaga la app, el worker y el calendario antes de migrar. Reemplaza el `php artisan down` del plan, que no sobrevive al cambio de contenedor.
+- **Prueba:** `make staging-check`, 25 de 25 (5 nuevos: 503 en español con `Retry-After`, en el subdominio, en JSON, la vuelta a 200 y el despliegue con `MAINTENANCE=1`); Vitest, 598 de 598 (3 nuevos: 502, 503 y 504 guardan el reporte); `make staging-aws-check`, 18 de 18.
+
+
 #### Iteración 43 — Flujos completos
 ⬜ **Propuesta el 2026-09-29, por aprobar.** Cierra los vacíos de `docs/mapa-funcional.md` que no caben en la it. 40. Casi todos son historias nuevas: según el marco, pasan antes por un `/discovery` corto, en modo asesor, con sus criterios y su Gherkin. Las decisiones de la sección 5 del mapa lo alimentan.
 
@@ -2899,6 +2919,22 @@ El usuario pidió seguir con lo que no espera a nadie: la deuda técnica y los h
 - **Cómo quedó:** migración `2026_10_06_000100` (`supervisor_name`, `entity_order`, `funding_sources`, en `contracts` y `archived_contracts`, que `ContractArchive` copia); `ProcessSecopContractRow` los llena (el nombre del supervisor, `No definido` como sin dato; las seis fuentes como enteros en pesos; nunca el documento) y `WorksiteDossier` los lleva a las plantillas (`_contracts`, `_place`, y en la denuncia las normas y «A qué contraloría acudir»). El expediente renumera sus secciones (el lugar es la 2).
 - **Prueba:** `SecopDossierFieldsTest` (5 casos) y 7 casos nuevos en `WorksiteDossierTest`; 8 escenarios nuevos en `US-056-LEG.feature`; `make trace-check`: 412 de 412.
 - **Pendiente:** los contratos ya guardados se llenan con la próxima sincronización (cada noche, o «Sincronizar ahora»).
+
+
+### Iteración 48 — Revisar los rostros más rápido
+
+✅ **Aprobada por el usuario el 2026-10-10** ("ese punto sí va, la idea es optimizarlo"). En la prueba de staging, la revisión de rostros de cada foto tardaba unos segundos en el celular (Vivo, Chrome). Va después de la 47.
+
+**Por qué tarda:** BlazeFace corre en la CPU, en JavaScript puro (it. 46e), y mira cada foto 17 veces: la foto entera y una grilla de 4 × 4 ventanas, que encuentra rostros desde unos 48 px (it. 46f). La primera foto paga además la carga del detector, y la revisión empieza cuando la foto entra a revisión.
+
+**Entregable, de menos a más:**
+1. precargar el detector al abrir "Nuevo reporte";
+2. revisar en segundo plano (un Web Worker) apenas se toma la foto, mientras el veedor escribe lo que vio;
+3. si medido en un celular de gama media sigue haciendo falta, WebAssembly (la CSP ya permite `wasm-unsafe-eval`), con su peso en el caché sin señal.
+
+**Done-when:** las pruebas con el modelo real de la 46f (rostros desde unos 48 px, también al centro) siguen en verde; el tiempo de la revisión, medido antes y después en el mismo celular.
+
+**Modelo:** Opus xhigh: es la privacidad de la gente que aparece en las fotos (R-PRIV-05).
 
 ## Pivote a Stellar (2026-09-28)
 

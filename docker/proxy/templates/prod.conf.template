@@ -26,6 +26,15 @@ map $http_referer $govtrace_log_referer {
     ~/(set|reset)-password/  "[enlace con token]";
     default                  $http_referer;
 }
+# It. 42c: mientras un despliegue reemplaza la app, nginx no tiene a quién pasarle
+# la visita (un 502). Responde 503 con docker/proxy/maintenance: la página en
+# español, o el JSON para la app del veedor, cuya bandeja de salida guarda el
+# reporte y lo reintenta.
+map $http_accept $govtrace_maintenance {
+    ~*application/json  /mantenimiento.json;
+    default             /mantenimiento.html;
+}
+
 log_format govtrace '$remote_addr - $remote_user [$time_local] "$request_method $govtrace_log_uri $server_protocol" '
                     '$status $body_bytes_sent "$govtrace_log_referer" "$http_user_agent"';
 
@@ -62,6 +71,15 @@ server {
     ssl_session_cache shared:TLS:10m;
     ssl_session_timeout 1d;
     ssl_session_tickets off;
+
+    error_page 502 504 =503 @mantenimiento;
+
+    location @mantenimiento {
+        root /usr/share/nginx/govtrace;
+        add_header Retry-After 60 always;
+        add_header Cache-Control "no-store" always;
+        try_files $govtrace_maintenance =503;
+    }
 
     location / {
         set $upstream_app app:80;
