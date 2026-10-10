@@ -9,6 +9,7 @@ use App\Domain\Organization\Notifications\WelcomeNotification;
 use App\Domain\Organization\Roles;
 use App\Domain\Organization\User;
 use App\Infrastructure\Tenancy\Tenant;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 
 /*
@@ -31,6 +32,8 @@ afterEach(function () {
     }
 
     Tenant::query()->get()->each->delete();
+    // La auditoría vive en la base central, que no se reinicia entre archivos: el reenvío deja su entrada.
+    DB::table('audit_logs')->delete();
 });
 
 it('takes the scheme and the port of APP_URL for the Administrador inicial welcome link', function (string $appUrl, string $prefix) {

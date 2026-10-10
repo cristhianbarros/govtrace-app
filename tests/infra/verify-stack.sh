@@ -36,7 +36,7 @@ if [ "$code" = "200" ]; then echo "PASS  /up -> 200"; else echo "FAIL  /up -> $c
 # It. 38b: un correo de la app llega al buzón de desarrollo (Mailpit), por el proxy.
 if grep -q '^MAIL_COPY_TO_MAILPIT=true' .env 2>/dev/null; then
     to="verify-stack.$(date +%s)@govtrace.test"
-    $COMPOSE exec -T app php artisan tinker --execute="Illuminate\Support\Facades\Mail::raw('verify-stack', fn (\$m) => \$m->to('$to')->subject('verify-stack'));" >/dev/null 2>&1
+    $COMPOSE exec -T -u workspace app php artisan tinker --execute="Illuminate\Support\Facades\Mail::raw('verify-stack', fn (\$m) => \$m->to('$to')->subject('verify-stack'));" >/dev/null 2>&1
     found=$(curl -s -H 'Host: mailpit.govtrace.localhost' "http://${LOCAL_IP}:${HTTP_PORT}/api/v1/search?query=to:${to}" | grep -o '"messages_count":[0-9]*' | cut -d: -f2)
     if [ "${found:-0}" -ge 1 ]; then echo "PASS  un correo llega a Mailpit"; else echo "FAIL  el correo no llegó a Mailpit (http://mailpit.govtrace.localhost:${HTTP_PORT})"; fail=1; fi
 fi

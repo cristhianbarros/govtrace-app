@@ -19,7 +19,7 @@ cd "$(git rev-parse --show-toplevel)"
 COMPOSE="docker compose --env-file .env.docker"
 env_value() { sed -n "s/^$1=\([^ #]*\).*/\1/p" .env.docker 2>/dev/null | head -1; }
 NETWORK=$(env_value DOCKER_NETWORK); NETWORK=${NETWORK:-govtrace_net}
-BUILD_NET=$(env_value DOCKER_BUILD_NETWORK); BUILD_NET=${BUILD_NET:-host}
+BUILD_NET=$(env_value DOCKER_BUILD_NETWORK); BUILD_NET=${BUILD_NET:-default}
 fail=0
 
 route_dev() { ip route get "$1" 2>/dev/null | head -1 | sed -n 's/.* dev \([^ ]*\).*/\1/p'; }

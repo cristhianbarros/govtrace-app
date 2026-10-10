@@ -81,6 +81,12 @@ SuperAdministrator::query()->updateOrCreate(
     ['email' => 'e2e.superadmin@govtrace.test'],
     ['name' => 'Super Administrador E2E', 'password' => E2E_PASSWORD],
 )->forceFill(['is_active' => true, 'invitation_token_hash' => null, 'invitation_expires_at' => null])->save();
+// It. 49: dos activos, como pide la salida a producción (it. 46a). Con uno solo, el
+// panel avisa en cada pantalla, y en una base nueva (CI) ese aviso tapaba los mensajes.
+SuperAdministrator::query()->updateOrCreate(
+    ['email' => 'e2e.superadmin.respaldo@govtrace.test'],
+    ['name' => 'Super Administradora de respaldo E2E', 'password' => E2E_PASSWORD],
+)->forceFill(['is_active' => true, 'invitation_token_hash' => null, 'invitation_expires_at' => null])->save();
 // It. 46a: los Super Administradores que invita el flujo (e2e.superadmin2.<hora>@govtrace.test).
 SuperAdministrator::query()->where('email', 'like', 'e2e.superadmin2.%@govtrace.test')->delete();
 

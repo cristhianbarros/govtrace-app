@@ -34,7 +34,7 @@ make help      # todos los comandos
 ### 4. Flujo de Git
 - Una rama por feature desde `main` (`feature/<slug>`), un commit por iteración con tests en verde.
 - Mensajes: `feat: iteración N — <resumen> (US-XXX)`.
-- Todo PR pasa por el pipeline de Jenkins (Build → Format Check → Test Backend → Test Frontend).
+- Todo PR pasa por el pipeline de GitHub Actions (`.github/workflows/ci.yml`): formato, trazabilidad, dependencias, backend, frontend, contrato, Stellar, e2e, interfaz, respaldos y el stack de producción, en paralelo. `main` solo acepta un PR con "CI completo" en verde. Cada paso es un `make` que también puedes correr en tu máquina; el `Jenkinsfile` llama a los mismos.
 
 ### 5. Código en inglés, especificación en español
 - Clases, métodos y variables en inglés. Historias, criterios y `.feature` en español.

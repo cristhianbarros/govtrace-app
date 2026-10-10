@@ -9,8 +9,8 @@ x-app-base: &app-base
     target: dev              # base -> dev | vendor | assets | qa
     # The RUN steps of a build use Docker's default bridge (docker0,
     # 172.17.0.0/16), which a VPN can hijack with its own routes: no DNS,
-    # no internet. The host's network stack always works. See .env.docker.
-    network: "${DOCKER_BUILD_NETWORK:-host}"
+    # no internet. Then DOCKER_BUILD_NETWORK=host (see .env.docker).
+    network: "${DOCKER_BUILD_NETWORK:-default}"
     args:
       PUID: "${PUID:-1000}"
       PGID: "${PGID:-1000}"
@@ -200,7 +200,7 @@ services:
     build:
       context: .
       dockerfile: docker/backup/Dockerfile
-      network: "${DOCKER_BUILD_NETWORK:-host}"
+      network: "${DOCKER_BUILD_NETWORK:-default}"
     image: govtrace-backup:dev
     environment:
       PGHOST: pgsql
@@ -330,7 +330,7 @@ services:
   soroban:
     build:
       context: docker/soroban
-      network: "${DOCKER_BUILD_NETWORK:-host}"   # same reason as the app image
+      network: "${DOCKER_BUILD_NETWORK:-default}"   # same reason as the app image
     image: govtrace-soroban:dev
     user: "${PUID:-1000}:${PGID:-1000}"
     working_dir: /workspace/contracts/sealing

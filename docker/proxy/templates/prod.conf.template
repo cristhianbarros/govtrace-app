@@ -84,6 +84,11 @@ server {
     location / {
         set $upstream_app app:80;
         proxy_pass http://$upstream_app;
+        # It. 49: con la app apagada (un despliegue), su IP vieja puede seguir en
+        # la caché del resolver unos segundos y la conexión colgarse hasta el
+        # límite de nginx (60 s). Con 5 s, la página de mantenimiento llega
+        # pronto; dentro de la red de Docker, conectar tarda menos de 1 ms.
+        proxy_connect_timeout 5s;
 
         # El Host con que la aplicación reconoce a cada organización: el que nginx
         # ya validó contra server_name, y el puerto público si no es el 443.

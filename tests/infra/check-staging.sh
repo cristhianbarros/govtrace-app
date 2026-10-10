@@ -158,7 +158,7 @@ spoofed=$("${CURL[@]}" -H 'X-Forwarded-Host: atacante.example' -H 'X-Forwarded-P
 [ "$spoofed" = "https://$HOST:$HTTPS_PORT/login" ] && pass "el host y el puerto que manda el visitante se ignoran" || flunk "se creyó el host del visitante: $spoofed"
 
 # 7. Una organización, en su subdominio, por HTTPS (el certificado comodín).
-$COMPOSE exec -T app php -r '
+$COMPOSE exec -T -u workspace app php -r '
     require "vendor/autoload.php";
     $app = require "bootstrap/app.php";
     $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
@@ -171,7 +171,7 @@ code=$("${CURL[@]}" -o /dev/null -w '%{http_code}' "https://$TENANT_HOST:$HTTPS_
 unhealthy=$($COMPOSE ps --format '{{.Service}} {{.Health}}' | awk '$2 != "healthy" {print $1}' | xargs)
 [ -z "$unhealthy" ] && pass "todos los servicios sanos: app, proxy, pgsql, worker, scheduler, backup" || flunk "servicios sin salud: $unhealthy"
 $COMPOSE exec -T app test -f bootstrap/cache/config.php && pass "la configuración está en caché" || flunk "la configuración no está en caché"
-refusal=$($COMPOSE exec -T app php artisan demo:prepare 2>&1)
+refusal=$($COMPOSE exec -T -u workspace app php artisan demo:prepare 2>&1)
 grep -q 'no corre en producción' <<< "$refusal" && pass "make demo se niega a correr en producción" || flunk "la demostración corrió en producción"
 
 # Los logs: los tres contenedores de la aplicación escriben en su volumen, como su usuario.

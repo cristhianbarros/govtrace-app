@@ -31,6 +31,8 @@ beforeEach(function () {
     Notification::fake();
     Carbon::setTestNow('2026-09-29 12:00:00');
     $this->lastParameterVersion = (int) ParameterValue::query()->max('id');
+    // It. 49: lo que otro archivo dejó en la auditoría no cuenta aquí (en CI, la suite corre en partes y en otro orden).
+    DB::table('audit_logs')->delete();
 
     $this->tenant = (new RegisterOrganization)->handle('900123456-8', 'Veeduría Ciudadana Santa Marta', 'veeduria-smr');
     $this->administrator = reportingMember($this->tenant, 'ana.perez@veeduria-smr.org', Roles::Administrator);

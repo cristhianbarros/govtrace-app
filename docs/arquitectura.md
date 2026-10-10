@@ -60,7 +60,7 @@ specs/                SPEC.md, PLAN.md, historias/, criterios/*.yaml, epicas/, A
 tests/                Feature/ y Unit/ (Pest), e2e/ y ux/ (Playwright), infra/ (scripts de chequeo)
 tools/verify/         El verificador independiente: Node, sin dependencias
 Makefile              Todo se corre con make (make help lista 65 comandos)
-Jenkinsfile           El pipeline de cada PR
+.github/workflows/    El pipeline de cada PR (GitHub Actions); Jenkinsfile: el mismo, para Jenkins
 ```
 
 ## 3. La arquitectura en una imagen
@@ -341,7 +341,7 @@ Vue 3 + Inertia + Tailwind v4 (`resources/js`), **mobile-first estricto**: solo 
 
 - **Trazabilidad:** cada escenario de `features/` tiene una prueba con su nombre (`make trace-check`).
 - **El hook de pre-commit** (`.claude/hooks/pre-commit-check.sh`) prueba solo lo que cambió. La suite completa (`make test-all`, unos 16 min) corre antes de fusionar.
-- **El pipeline** (`Jenkinsfile`) corre en cada PR:
+- **El pipeline** (GitHub Actions, `.github/workflows/ci.yml`; el `Jenkinsfile` llama a los mismos `make`) corre en cada PR, en trabajos paralelos, en unos 10 minutos. `main` no acepta un PR con "CI completo" en rojo:
   - construcción, formato y auditoría de dependencias;
   - backend, frontend y e2e;
   - el contrato y Stellar local;
