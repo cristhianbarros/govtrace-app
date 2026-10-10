@@ -3113,7 +3113,18 @@ El usuario pidió seguir con lo que no espera a nadie: la deuda técnica y los h
 
 **Hecho (2026-10-10):** el script, validado en local (30 s: reportes recibidos, p95 de 262 ms; los límites de la app respondieron 429 como deben).
 
-**Falta, y es del usuario:** correrla en staging exige subir los límites mientras dura y una veeduría de pruebas. Es un cambio en un sitio público: lo decide él.
+**Primera corrida en staging (2026-10-10), con los límites subidos, 40 peticiones públicas por segundo y 8 veedores:** **falló, y encontró la causa.**
+- Hubo **3.840 errores 500** de 6.550 peticiones. El CPU llegó a 99 %; los créditos de la máquina estaban de sobra (388).
+- **Causa:** `FATAL: sorry, too many clients already`. Cada proceso de Apache abre hasta dos conexiones a PostgreSQL (la base central y la de la organización), y PostgreSQL permite 100. Apache permitía **150** procesos a la vez (300 conexiones).
+- Con los límites normales de la app no se nota: 120 peticiones por minuto por IP no llegan a tantas. Con muchos visitantes desde muchas IPs, sí.
+
+**It. 50b — el arreglo:**
+- `docker/app/mpm_prefork.conf`: `MaxRequestWorkers 30` (60 conexiones, bajo el límite de 100, con 40 de margen), `MaxConnectionsPerChild 500`.
+- Los 30 procesos caben en 2 GB (unos 30 a 60 MB cada uno). Lo que sobra espera en la cola de Apache en vez de fallar con 500.
+- `make staging-check` lo exige: falla si la imagen permite más de 40 procesos. Visto en rojo con la imagen anterior (150).
+- **Se verifica con la segunda corrida** en staging. Una máquina más grande sube `MaxRequestWorkers` junto con `max_connections` de PostgreSQL.
+
+**Falta, y es del usuario:** la segunda corrida. Exige subir otra vez los límites mientras dura. Es un cambio en un sitio público: lo decide él.
 
 **Modelo:** Sonnet medium.
 

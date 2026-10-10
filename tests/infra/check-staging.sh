@@ -102,6 +102,18 @@ else
     flunk "la imagen inmutable trae herramientas de desarrollo o muestra errores"
 fi
 
+# It. 50: cada proceso de Apache abre hasta dos conexiones a PostgreSQL (la base central y la
+# de la organización), y PostgreSQL permite 100. Sin tope, la prueba de carga (40 peticiones
+# por segundo) agotó las conexiones: 3.840 errores 500. Con un tope, lo que sobra espera en la
+# cola de Apache en vez de fallar. 40 procesos son 80 conexiones, y quedan 20 para el worker,
+# el calendario, los respaldos y quien entre a la base.
+workers=$(docker run --rm --entrypoint sh "$APP_IMAGE" -c 'sed -n "s/^ *MaxRequestWorkers *//p" /etc/apache2/mods-enabled/mpm_prefork.conf')
+if [ -n "$workers" ] && [ "$workers" -le 40 ]; then
+    pass "Apache atiende como mucho $workers peticiones a la vez: no agota las conexiones de PostgreSQL"
+else
+    flunk "Apache no tiene tope de procesos (MaxRequestWorkers: ${workers:-?}): con carga agota las conexiones de PostgreSQL"
+fi
+
 # 2. El despliegue, como en el servidor.
 if out=$(bash deploy/deploy.sh 2>&1); then
     pass "deploy/deploy.sh levantó el stack de producción"

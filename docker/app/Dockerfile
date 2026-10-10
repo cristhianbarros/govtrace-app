@@ -61,6 +61,7 @@ RUN set -eux; \
     a2dissite 000-default; \
     sed -ri 's/^ServerTokens .*/ServerTokens Prod/; s/^ServerSignature .*/ServerSignature Off/' \
         /etc/apache2/conf-available/security.conf
+COPY docker/app/mpm_prefork.conf /etc/apache2/mods-available/mpm_prefork.conf
 COPY docker/app/vhost.conf /etc/apache2/sites-available/govtrace.conf
 RUN a2ensite govtrace
 
