@@ -3101,6 +3101,22 @@ El usuario pidió seguir con lo que no espera a nadie: la deuda técnica y los h
 
 **Queda:** subir las llaves de testnet como secretos del repositorio, solo si se va a usar un tag `v*`.
 
+### Iteración 50 — La prueba de carga
+
+✅ **Aprobada por el usuario el 2026-10-10** (punto 2 del orden aprobado, con Sonnet medium).
+
+**Por qué:** la app nunca se probó con mucha gente a la vez. Antes del piloto conviene saber cuánto aguanta la máquina de staging (t4g.small, 2 GB) y dónde cede primero.
+
+**Entregable:**
+- `tests/load/carga.js` (k6, `make load-test`): visitantes públicos y veedores que envían reportes con foto, a la vez.
+- `docs/prueba-de-carga.md`: cómo correrla, los umbrales y cómo tratar los límites de la app (un 429 se cuenta aparte, no es una falla).
+
+**Hecho (2026-10-10):** el script, validado en local (30 s: reportes recibidos, p95 de 262 ms; los límites de la app respondieron 429 como deben).
+
+**Falta, y es del usuario:** correrla en staging exige subir los límites mientras dura y una veeduría de pruebas. Es un cambio en un sitio público: lo decide él.
+
+**Modelo:** Sonnet medium.
+
 ## Pivote a Stellar (2026-09-28)
 
 El proyecto participa en **Stellar Apex**, así que la blockchain pasa de EVM/Polygon a **Stellar**, con Smart Contracts en **Soroban (Rust)**:
