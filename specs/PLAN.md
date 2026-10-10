@@ -2969,6 +2969,54 @@ El usuario pidió seguir con lo que no espera a nadie: la deuda técnica y los h
 
 **Modelo:** Opus xhigh: es la privacidad de la gente que aparece en las fotos (R-PRIV-05).
 
+**✅ Cumplido (2026-10-10).** Revisar una foto pasó de **11,7 s a 0,5 s**, medido en un Chromium con la CPU frenada 4× (un celular de gama media). Los rostros que encuentra son los mismos.
+
+**Lo que se midió primero (`make faces-bench`, nuevo):**
+- El tiempo no estaba donde suponía el plan.
+  - Decodificar y escalar la foto: unos 40 ms, aun con una de 12 MP.
+  - La carga del detector: casi nada, porque ya se precarga.
+  - El modelo: el 95 %, a unos 690 ms por pasada, 17 pasadas.
+- También la foto de 600 px tardaba 11,5 s: pasa de 800 px de alto, así que también se mira por ventanas.
+- Por eso el Web Worker (punto 2) no habría acortado nada. Lo que sobraba era el modelo en JavaScript puro: se pasó directo al punto 3.
+
+**Cambios:**
+1. **WebAssembly** (`@tensorflow/tfjs-backend-wasm` 4.22.0, Apache-2.0, la misma versión de TF.js), en `useFastestBackend`:
+   - Usa SIMD donde el teléfono lo tiene: Chrome 91+ y Safari 16.4+.
+   - Los binarios (425 KB, 137 KB comprimidos) los sirve GovTrace con su hash; el Service Worker los guarda como al modelo, para usarlos sin señal.
+   - Sin hilos: corren en un worker `blob:`, que la CSP no permite, y piden COOP/COEP. El binario con hilos nunca se pide.
+   - Si WebAssembly no arranca o no se descarga, vuelve a la CPU, como antes: más lento, pero la foto se revisa igual. La CSP ya tenía `'wasm-unsafe-eval'` (it. 46e).
+2. **Cada región va al modelo ya en 128 × 128 px**, que es lo que el modelo ve.
+   - Antes, el modelo leía los 2,7 millones de píxeles de la foto entera para reducirlos él mismo: esa pasada costaba 170 a 300 ms, y ahora unos 20.
+   - Lo que encuentra se lleva de vuelta a píxeles de la foto, también para la regla de "en una ventana, solo rostros pequeños" (46f).
+   - El navegador reduce con `imageSmoothingQuality: 'high'`.
+
+**Medido con `make faces-bench`, en la página, desde que se elige la foto hasta que se pinta la revisión (mediana de 3):**
+
+| | Antes (CPU, JavaScript) | WebAssembly | WebAssembly + 128 px |
+|---|---|---|---|
+| CPU 4× (gama media) | 11 768 ms | ≈1 300 ms¹ | **520 ms** |
+| CPU 1× (portátil i7-1355U) | 2 905 ms | — | **177 ms** |
+
+¹ Medido desde Playwright, fuera de la página: incluye la holgura de su sondeo.
+
+- La primera foto, apenas se abre la pantalla: 607 ms.
+- La de 600 px: 458 ms.
+- La de 12 MP de una cámara (medida aparte): unos 560 ms.
+
+**Pruebas:**
+- Vitest: 6 nuevas en `faces.test.js`, todas vistas en rojo con el código anterior:
+  - el backend y su vuelta a la CPU;
+  - la región reducida y llevada de vuelta a la foto;
+  - un rostro grande en una ventana, medido en píxeles de la foto.
+- e2e: la prueba de la CSP ahora exige que se descargue el binario SIMD. Si el detector vuelve callado a la CPU, falla; se vio fallar con el código anterior.
+- Con el modelo real siguen en verde:
+  - los 3 rostros lejanos de unos 56 px (46f, uno al centro);
+  - el rostro de la pintura y su difuminado sellado (46e);
+  - "No encontramos rostros" en el paisaje;
+  - las dos fotos del ciudadano (46h).
+
+**Queda:** el número "antes y después en el mismo celular" del Done-when es el del Vivo del usuario en staging. Se mide al desplegar: la primera foto, a mano.
+
 ## Pivote a Stellar (2026-09-28)
 
 El proyecto participa en **Stellar Apex**, así que la blockchain pasa de EVM/Polygon a **Stellar**, con Smart Contracts en **Soroban (Rust)**:

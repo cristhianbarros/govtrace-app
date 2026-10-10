@@ -15,7 +15,8 @@ IMAGE="mcr.microsoft.com/playwright:v$(sed -n 's/.*"@playwright\/test": "\([0-9.
 
 $COMPOSE exec -T app php tests/e2e/fixture.php || { echo "✘ No se pudo preparar la organización de pruebas (¿make up?)."; exit 1; }
 
+# make faces-bench (it. 48) usa la misma organización y el mismo navegador, con su configuración.
 docker run --rm --network host --ipc=host --user "$(id -u):$(id -g)" -e HOME=/tmp \
-  -e E2E_BASE_URL="http://veeduria-e2e.govtrace.localhost:${HTTP_PORT:-8080}" \
+  -e E2E_BASE_URL="http://veeduria-e2e.govtrace.localhost:${HTTP_PORT:-8080}" -e CPU_RATE -e RUNS \
   -v "$PWD:/work" -w /work "$IMAGE" \
-  npx playwright test -c tests/e2e/playwright.config.js "$@"
+  npx playwright test -c "${E2E_CONFIG:-tests/e2e/playwright.config.js}" "$@"

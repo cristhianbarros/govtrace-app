@@ -30,6 +30,7 @@
         "@inertiajs/vue3": "^3.7.1",
         "@tensorflow-models/blazeface": "0.1.0",
         "@tensorflow/tfjs-backend-cpu": "4.22.0",
+        "@tensorflow/tfjs-backend-wasm": "4.22.0",
         "@tensorflow/tfjs-converter": "4.22.0",
         "@tensorflow/tfjs-core": "4.22.0",
         "axios": "^1.20.0",
