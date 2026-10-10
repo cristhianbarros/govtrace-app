@@ -14,7 +14,10 @@ import { Counter, Trend } from 'k6/metrics';
 const BASE = __ENV.BASE_URL || 'http://veeduria-e2e.govtrace.localhost:8080';
 const EMAIL = __ENV.VEEDOR_EMAIL || 'e2e.veedor@correo.co';
 const PASSWORD = __ENV.VEEDOR_PASSWORD || 'Veeduria#2026';
-const CONTRACT = __ENV.CONTRACT_ID || 'CO1.PCCNTR.9990001';
+// Sin CONTRACT_ID, cada reporte elige una obra de la lista del veedor (sin ubicación primero).
+const CONTRACT = __ENV.CONTRACT_ID || '';
+const LAT = __ENV.LAT || '11.2419';
+const LNG = __ENV.LNG || '-74.1990';
 const PUBLIC_RATE = Number(__ENV.PUBLIC_RATE || 5); // peticiones por segundo
 const VEEDORES = Number(__ENV.VEEDORES || 3);
 const DURATION = __ENV.DURATION || '2m';
@@ -24,6 +27,7 @@ const photoHash = crypto.sha256(photo, 'hex');
 
 const limitadas = new Counter('limitadas');
 const reportes = new Counter('reportes_recibidos');
+const rechazados = new Counter('reportes_rechazados');
 const envioDeReporte = new Trend('envio_de_reporte', true);
 
 export const options = {
@@ -41,7 +45,7 @@ export const options = {
 };
 
 // Un 429 es la app defendiéndose: se cuenta, no es una falla.
-http.setResponseCallback(http.expectedStatuses({ min: 200, max: 399 }, 429));
+http.setResponseCallback(http.expectedStatuses({ min: 200, max: 399 }, 422, 429));
 
 function watch(response) {
     if (response.status === 429) limitadas.add(1);
@@ -75,17 +79,23 @@ export function veedor() {
     }
     group('un reporte', () => {
         const headers = { Accept: 'application/json', 'X-XSRF-TOKEN': xsrf() };
-        const browse = watch(http.post(`${BASE}/contracts/browse`, JSON.stringify({ latitude: 11.2419, longitude: -74.199, accuracy: 12 }), {
+        const browse = watch(http.post(`${BASE}/contracts/browse`, JSON.stringify({ latitude: Number(LAT), longitude: Number(LNG), accuracy: 12 }), {
             headers: { ...headers, 'Content-Type': 'application/json' }, tags: { name: 'browse' },
         }));
         check(browse, { 'veedor: lista de obras': (r) => r.status === 200 || r.status === 429 });
 
+        const works = browse.status === 200 ? browse.json('data') : [];
+        const pool = works.filter((work) => !work.located);
+        const chosen = (pool.length ? pool : works)[Math.floor(Math.random() * (pool.length || works.length))];
+        const contract = CONTRACT || (chosen && chosen.secop_contract_id);
+        if (!contract) return;
+
         const sent = watch(http.post(`${BASE}/reports`, {
-            secop_contract_id: CONTRACT,
+            secop_contract_id: contract,
             classification: 'Avance',
             comment: `Carga ${__VU}-${__ITER}`,
-            latitude: '11.2419',
-            longitude: '-74.1990',
+            latitude: LAT,
+            longitude: LNG,
             accuracy_meters: '12',
             captured_at: new Date().toISOString(),
             'files[]': http.file(photo, 'foto.jpg', 'image/jpeg'),
@@ -93,7 +103,9 @@ export function veedor() {
         }, { headers, tags: { name: 'reporte' } }));
         envioDeReporte.add(sent.timings.duration);
         if (sent.status === 201 || sent.status === 200) reportes.add(1);
-        check(sent, { 'veedor: reporte recibido o limitado': (r) => r.status === 201 || r.status === 200 || r.status === 429 });
+        // 422: la obra ya tiene ubicación y el GPS de la prueba está fuera de su geocerca (LAT y LNG).
+        if (sent.status === 422) rechazados.add(1);
+        check(sent, { 'veedor: reporte recibido, limitado o fuera de la geocerca': (r) => [200, 201, 422, 429].includes(r.status) });
     });
     sleep(5 + Math.random() * 5);
 }

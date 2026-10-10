@@ -14,5 +14,5 @@ fi
 
 mkdir -p storage/framework/testing/load
 docker run --rm --network host --user "$(id -u):$(id -g)" -v "$PWD:/work" -w /work \
-  -e BASE_URL="$BASE_URL" -e PUBLIC_RATE -e VEEDORES -e DURATION -e VEEDOR_EMAIL -e VEEDOR_PASSWORD -e CONTRACT_ID \
+  -e BASE_URL="$BASE_URL" -e PUBLIC_RATE -e VEEDORES -e DURATION -e VEEDOR_EMAIL -e VEEDOR_PASSWORD -e CONTRACT_ID -e LAT -e LNG \
   grafana/k6:1.3.0 run --summary-export=storage/framework/testing/load/resumen.json tests/load/carga.js "$@"
