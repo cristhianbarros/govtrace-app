@@ -292,7 +292,7 @@ flowchart TB
 |---|---|---|---|
 | 1 | Recibir la invitación, crear su contraseña y entrar | ✅ | Abre en Nuevo reporte. |
 | 2 | Volver a entrar otro día | ⚠️ 🟠 | **V6.** Tiene que haber guardado el enlace de su veeduría. La app no se puede instalar: tiene service worker, pero le faltan el manifiesto y los íconos. Y el dominio central solo ofrece el acceso del Super Administrador (V5). |
-| 3 | Reportar | ✅ | Buscar la obra u "Obras cercanas", GPS, fotos o PDF, sin señal y con límite por hora (US-008, US-009, US-016, US-018, US-019). |
+| 3 | Reportar | ⚠️ 🟠 | Buscar la obra u "Obras cercanas", GPS, fotos o PDF, sin señal y con límite por hora (US-008, US-009, US-016, US-018, US-019). Una obra sin ubicación no sale en "Obras cercanas": se busca por nombre o contrato, y la ubica el primer reporte (it. 46f). En campo, sin saber el contrato, no tiene cómo verla (V18). El buscador no filtra por municipio ni limita ni ordena los resultados (V19). |
 | 4 | Saber qué pasó con su reporte | ✅ | Mis reportes, con el recibo y el motivo si fue rechazado (US-010, US-023). No le llega correo: lo ve al entrar (V17). |
 | 5 | Su cuenta | ⚠️ 🟡 | Recuperar la contraseña: ✅. **V11:** no puede cambiarla con la sesión abierta. Su nombre sale del correo (deuda aceptada). |
 | 6 | Salir | ✅ | Avisa si quedan reportes sin enviar. |
@@ -388,6 +388,8 @@ También está completo:
 | V15 | ✅ **Cerrado en la it. 43b.** No se puede sincronizar SECOP a mano desde el panel global: corre cada noche y al cambiar un territorio. | Super Admin | 🟡 | US-014 solo pide ver la salud. | Un botón "Sincronizar ahora". |
 | V16 | ✅ **Cerrado en la it. 43a.** El Super Administrador no ve quién administra cada organización. | Super Admin | 🟡 | Omisión | Va con V2. |
 | V17 | Al veedor no le llega correo cuando su reporte se publica o se rechaza: lo ve al entrar. | Veedor | 🟡 | No estaba en la SPEC. | ❓ Opcional. |
+| V18 | En campo, sin obras ubicadas a menos de 500 m, el veedor no ve las obras de su municipio que todavía no tienen ubicación: solo las encuentra si sabe su nombre, su entidad o su número de contrato. SECOP II no trae coordenadas, y la ubicación la pone el primer reporte (it. 46f). Se notó al preparar la prueba de staging (2026-10-09). | Veedor | 🟡 | US-019 sugiere solo obras ya ubicadas, y US-016 busca por texto. | ❓ **A (recomendada):** si no hay obras cercanas, los contratos reportables del municipio donde está el veedor (por su GPS y la DIVIPOLA) que aún no tienen ubicación. **B:** el administrador ubica cada obra en un mapa antes de las visitas. Se decide con lo que muestre el piloto. |
+| V19 | "Buscar Obra" no sirve para un territorio grande. Busca en todo el territorio de la veeduría, sin filtrar por municipio (un departamento son miles de contratos: Antioquia tenía 3.895 contratos de obra desde 2023), devuelve **todas** las coincidencias sin límite ni orden, y distingue las tildes ("via" no encuentra "vía"). Busca en el objeto, el contratista y el número de proceso, no en la entidad. Lo notó el usuario al preparar la prueba de staging (2026-10-09). | Veedor | 🟠 | US-016 pide buscar por texto, sin filtros ni límite (`SearchSelectableContracts`). | ❓ El municipio, por defecto el de donde está el veedor (su GPS y la DIVIPOLA) y cambiable entre los del territorio; los resultados ordenados y con un tope (por ejemplo, 20, con "afine la búsqueda"); buscar también por la entidad; sin distinguir tildes. Con V18, una iteración: "Encontrar la obra en campo". |
 
 **Decidido así en el discovery, y no es un vacío:**
 - **El autorregistro de organizaciones.** Es un alta controlada, contra la suplantación y el spam (US-001).
@@ -429,6 +431,10 @@ También está completo:
 4. **El aviso diario (V9):** ¿un correo al administrador con las evidencias por revisar?
 5. **El contacto de la veeduría (V13):** ¿se publican su correo, teléfono o web?
 6. **El administrador que también reporta:** ¿se acepta que use otro correo, o se permite que un mismo correo tenga los dos roles en su organización?
+7. **Encontrar la obra en campo (V18 y V19):**
+   - las obras sin ubicación (V18): ¿A, B o ninguna? Recomiendo A: resuelve al veedor que llega sin preparar, y la ubicación la sigue poniendo quien está en la obra;
+   - el buscador (V19): el municipio, el tope, el orden, la entidad y las tildes. El tope y las tildes no esperan al piloto: hoy un veedor de un departamento grande no encuentra su obra.
+   - Una iteración, con un `/discovery` corto.
 
 ## 6. ¿Probado pero sin interfaz?
 
