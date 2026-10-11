@@ -113,6 +113,8 @@ it('limits the open data downloads more tightly', function () {
 
 it('allows by default 30 reports per veedor per hour, 120 public requests per visitor per minute and 10 open data downloads', function () {
     expect(config('limits'))->toBe([
+        // It. 52: cuántas filas lleva una página de un listado.
+        'list_page_size' => 20,
         'reports_per_veedor_per_hour' => 30,
         'public_requests_per_minute' => 120,
         'open_data_per_minute' => 10,
