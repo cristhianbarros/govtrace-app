@@ -3178,6 +3178,32 @@ El usuario pidió seguir con lo que no espera a nadie: la deuda técnica y los h
 
 **Modelo:** Sonnet medium. Es rendimiento y pantallas; no toca la evidencia ni los sellos.
 
+### Iteración 53 — El mapa público dice que el punto es aproximado
+
+📝 **Pedida por el usuario el 2026-10-10**, por aprobar su orden. **Qué se vio:** el mismo punto sale en un lugar distinto en el mapa del Administrador (exacto) y en el público (hasta unos 55 m más allá, que a zoom 17 son unos 46 píxeles). El usuario lo notó "un poco más arriba".
+
+**No es un error de dibujo: es R-PRIV-02.** El mapa público redondea a 3 decimales (`GeoPoint::approximate()`): `11.2408, -74.1990` se ve en `11.241, -74.199`. La coordenada que ancla la primera evidencia es donde estaba parado el veedor, con 50 m de precisión o menos, y mostrarla exacta le diría a cualquiera dónde estuvo (R-PRIV-02, igual que el seudónimo, R-PRIV-03).
+
+**Lo que sí es un defecto:** el pin parece preciso y no dice que es aproximado. Se corrige sin tocar la privacidad.
+
+**Decisión (Claude propuso, el usuario aprobó el plan):** mantener la regla de unos 100 m.
+- Lo que se protege es el veedor, no la obra: la obra ya está en SECOP.
+- 100 m alcanzan para el objetivo del mapa: "la obra del colegio, por esta zona".
+- El punto exacto está en el expediente de la veeduría para la Contraloría (US-056-LEG), donde el rigor sí importa.
+- Aflojarla después es posible; volver a esconder lo ya publicado, no.
+
+**Entregable:**
+- Un círculo de unos 100 m alrededor de cada pin del mapa público y de la vista de una obra.
+- La nota "Ubicación aproximada, a unos 100 m" bajo el mapa.
+- En la lista y la tarjeta de la obra, sin coordenadas numéricas que aparenten precisión.
+- **Historia:** se enmienda US-027 y US-029 (el mapa y la vista de una obra), con un escenario nuevo.
+
+**Done-when:** el escenario de Gherkin con su prueba (Vitest de `PinsMap` y de la vista de la obra) y una prueba e2e con la obra del e2e, que comprueba que el pin y el círculo se ven donde van.
+
+**Para el piloto (no se decide ahora):** si a una veeduría le parece poca precisión, un parámetro por organización para mostrar el punto exacto. Cambiar la regla es una decisión de la SPEC, no un arreglo: enmienda R-PRIV-02.
+
+**Modelo:** Sonnet medium.
+
 ## Pivote a Stellar (2026-09-28)
 
 El proyecto participa en **Stellar Apex**, así que la blockchain pasa de EVM/Polygon a **Stellar**, con Smart Contracts en **Soroban (Rust)**:
