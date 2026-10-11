@@ -8,10 +8,14 @@ import { deactivateObserver, fetchAdministrators, fetchObservers, inviteObserver
 vi.mock('@inertiajs/vue3', async () => await import('@/testing/inertia.js'));
 vi.mock('@/services/api.js');
 
+/** What the server answers (it. 52): the page, how many there are and whether there are more. */
+const answer = (rows, extra = {}) => ({ data: rows, total: rows.length, has_more: false, ...extra });
+
+
 const DUPLICATE = 'Ya existe un usuario registrado o una invitación pendiente con este correo electrónico en la organización.';
 
-async function openObservers(team = []) {
-    fetchObservers.mockResolvedValue(team);
+async function openObservers(team = [], extra = {}) {
+    fetchObservers.mockResolvedValue(answer(team, extra));
     const wrapper = mount(Observers);
     await flushPromises();
     return wrapper;
@@ -35,7 +39,7 @@ describe('Veedores', () => {
     });
 
     it('says when it could not load the team, and lets retry', async () => {
-        fetchObservers.mockRejectedValueOnce(new Error('Network Error')).mockResolvedValueOnce([{ email: 'carlos@correo.co', status: 'Activo' }]);
+        fetchObservers.mockRejectedValueOnce(new Error('Network Error')).mockResolvedValueOnce(answer([{ email: 'carlos@correo.co', status: 'Activo' }]));
         const wrapper = mount(Observers);
         await flushPromises();
 
@@ -69,7 +73,7 @@ describe('Veedores', () => {
     it('Invitación exitosa: confirms it, clears the field and refreshes the team', async () => {
         const wrapper = await openObservers([]);
         inviteObserver.mockResolvedValue({ message: 'Invitación enviada a laura@correo.co. El enlace vence en 48 horas.' });
-        fetchObservers.mockResolvedValue([{ email: 'laura@correo.co', status: 'Invitación pendiente' }]);
+        fetchObservers.mockResolvedValue(answer([{ email: 'laura@correo.co', status: 'Invitación pendiente' }]));
 
         await invite(wrapper, 'laura@correo.co');
 
@@ -105,7 +109,7 @@ describe('Desactivar y reactivar veedores', () => {
     it('Desactivación con revocación inmediata de sesiones: asks to confirm, then deactivates and refreshes the team', async () => {
         const wrapper = await openObservers([carlos('Activo')]);
         deactivateObserver.mockResolvedValue({ message: 'Veedor desactivado. Su sesión quedó cerrada y ya no puede enviar reportes.' });
-        fetchObservers.mockResolvedValue([carlos('Inactivo')]);
+        fetchObservers.mockResolvedValue(answer([carlos('Inactivo')]));
 
         await button(wrapper, 'Desactivar').trigger('click');
         expect(deactivateObserver).not.toHaveBeenCalled();
@@ -123,7 +127,7 @@ describe('Desactivar y reactivar veedores', () => {
     it('Reactivación de un veedor: brings him back with his account', async () => {
         const wrapper = await openObservers([carlos('Inactivo')]);
         reactivateObserver.mockResolvedValue({ message: 'Veedor reactivado. Ya puede volver a iniciar sesión.' });
-        fetchObservers.mockResolvedValue([carlos('Activo')]);
+        fetchObservers.mockResolvedValue(answer([carlos('Activo')]));
 
         expect(button(wrapper, 'Desactivar')).toBeUndefined();
         await button(wrapper, 'Reactivar').trigger('click');
@@ -172,7 +176,7 @@ describe('Reenviar o revocar una invitación', () => {
     it('Un enlace revocado no permite activar la cuenta: asks to confirm, then revokes it and the invitation leaves the team', async () => {
         const wrapper = await openObservers([carlos('Invitación pendiente')]);
         revokeInvitation.mockResolvedValue({ message: 'Invitación revocada. El enlace enviado a carlos@correo.co ya no es válido.' });
-        fetchObservers.mockResolvedValue([]);
+        fetchObservers.mockResolvedValue(answer([]));
 
         await button(wrapper, 'Revocar invitación').trigger('click');
         expect(revokeInvitation).not.toHaveBeenCalled();
@@ -219,5 +223,36 @@ describe('Veedores y Administradores van en pantallas separadas (it. 54)', () =>
         expect(wrapper.find('[data-test="administrators"]').exists()).toBe(false);
         expect(wrapper.text()).not.toContain('Invitar a otro administrador');
         expect(fetchAdministrators).not.toHaveBeenCalled();
+    });
+});
+
+// It. 52 — de a una página, y se buscan por correo.
+describe('Los veedores de a una página, con búsqueda por correo (it. 52)', () => {
+    it('Veo 20 veedores y Ver 20 más trae los siguientes: appends the next page, says how many there are', async () => {
+        const wrapper = await openObservers([{ id: 'a', email: 'ana@correo.co', status: 'Activo' }], { total: 21, has_more: true });
+        fetchObservers.mockResolvedValue(answer([{ id: 'b', email: 'beto@correo.co', status: 'Activo' }], { total: 21 }));
+
+        await wrapper.get('[data-test="more"]').trigger('click');
+        await flushPromises();
+
+        expect(fetchObservers).toHaveBeenLastCalledWith({ page: 2 });
+        expect(wrapper.text()).toContain('ana@correo.co');
+        expect(wrapper.text()).toContain('beto@correo.co');
+        expect(wrapper.find('[data-test="more"]').exists()).toBe(false);
+        expect(wrapper.get('[data-test="total"]').text()).toBe('21 veedores');
+    });
+
+    it('Busco un veedor por su correo: after a pause, and says when no veedor matches', async () => {
+        vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+        const wrapper = await openObservers([{ id: 'a', email: 'ana@correo.co', status: 'Activo' }]);
+        fetchObservers.mockResolvedValue(answer([]));
+
+        await wrapper.get('input#search-team').setValue('zzz');
+        vi.advanceTimersByTime(300);
+        await flushPromises();
+
+        expect(fetchObservers).toHaveBeenLastCalledWith({ q: 'zzz', page: 1 });
+        expect(wrapper.text()).toContain('Ningún veedor con ese correo.');
+        vi.useRealTimers();
     });
 });

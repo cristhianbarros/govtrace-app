@@ -6,6 +6,7 @@ use App\Application\Organization\DeactivateObserver;
 use App\Application\Organization\ReactivateObserver;
 use App\Application\Organization\ResendInvitation;
 use App\Application\Organization\RevokeInvitation;
+use App\Application\Pagination\Page;
 use App\Domain\Organization\Exceptions\OrganizationValidationException;
 use App\Domain\Organization\Roles;
 use App\Domain\Organization\User;
@@ -23,19 +24,23 @@ use Illuminate\Validation\ValidationException;
  */
 class ObserverController extends Controller
 {
-    public function index(): JsonResponse
+    /** It. 52: de 20 en 20, y se busca por correo (?page=, ?q=). */
+    public function index(Request $request): JsonResponse
     {
-        return response()->json([
-            'data' => User::role(Roles::Observer->value, 'tenant')->orderBy('email')->get()
-                ->map(fn (User $observer) => [
-                    'id' => $observer->public_id, // it. 46c
-                    'email' => $observer->email,
-                    'status' => $observer->statusLabel(),
-                    // US-057-LEG: cuándo declaró no tener impedimentos para ser veedor; null, aún no.
-                    'impediments_declared_at' => $observer->impediments_declared_at?->toIso8601String(),
-                ])
-                ->values(),
-        ]);
+        $request->validate(['page' => ['nullable', 'integer', 'min:1'], 'q' => ['nullable', 'string', 'max:100']]);
+        $search = trim((string) $request->query('q', ''));
+
+        $query = User::role(Roles::Observer->value, 'tenant')
+            ->when($search !== '', fn ($query) => $query->where('email', 'ilike', '%'.addcslashes($search, '%_\\').'%'))
+            ->orderBy('email');
+
+        return response()->json(Page::of($query, (int) $request->query('page', 1), fn ($observers) => $observers->map(fn (User $observer) => [
+            'id' => $observer->public_id, // it. 46c
+            'email' => $observer->email,
+            'status' => $observer->statusLabel(),
+            // US-057-LEG: cuándo declaró no tener impedimentos para ser veedor; null, aún no.
+            'impediments_declared_at' => $observer->impediments_declared_at?->toIso8601String(),
+        ])));
     }
 
     public function deactivate(Request $request, string $observer): JsonResponse

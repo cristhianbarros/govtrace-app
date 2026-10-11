@@ -48,3 +48,18 @@ Característica: Invitar veedores por correo
   Escenario: El Administrador de Organización no puede dar de alta otras organizaciones
     Cuando intento registrar la organización "Veeduría Nueva" con NIT "901234567-7"
     Entonces la acción es rechazada
+
+  @complexity:medium
+  Escenario: Veo 20 veedores y Ver 20 más trae los siguientes
+    Dado que la organización tiene 45 veedores
+    Cuando abro "Veedores"
+    Entonces veo 20 veedores y "45 veedores"
+    Cuando toco "Ver 20 más"
+    Entonces veo 40 veedores
+
+  @complexity:low
+  Escenario: Busco un veedor por su correo
+    Dado que la organización tiene 45 veedores
+    Cuando escribo parte del correo de uno en "Buscar por correo"
+    Entonces veo solo los veedores cuyo correo lo contiene, sin distinguir mayúsculas
+    Y si ninguno lo contiene, veo "Ningún veedor con ese correo."

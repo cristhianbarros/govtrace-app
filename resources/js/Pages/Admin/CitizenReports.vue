@@ -5,14 +5,27 @@
 // descarta. No es evidencia sellada: si hace falta, la veeduría manda un veedor.
 import { onMounted, ref } from 'vue';
 import LoadState from '@/Components/LoadState.vue';
+import MoreButton from '@/Components/MoreButton.vue';
 import RowAction from '@/Components/RowAction.vue';
-import { useLoader } from '@/composables/useLoader.js';
+import { usePagedList } from '@/composables/usePagedList.js';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { formatDateTime } from '@/lib/format.js';
 import { answerCitizenReport, discardCitizenReport, fetchCitizenReports } from '@/services/api.js';
 import { errorMessage } from '@/services/errors.js';
 
-const { data: reports, loading, error, load } = useLoader(fetchCitizenReports);
+const { data: reports, meta, loading, loadingMore, error, load, more } = usePagedList(fetchCitizenReports);
+// It. 52: de 20 en 20, y por estado (los nuevos son los que esperan respuesta).
+const STATUSES = [
+    { value: '', label: 'Todos' },
+    { value: 'new', label: 'Por responder' },
+    { value: 'answered', label: 'Atendidos' },
+    { value: 'discarded', label: 'Descartados' },
+];
+const status = ref('');
+const byStatus = (value) => {
+    status.value = value;
+    return load(value === '' ? {} : { status: value });
+};
 const notice = ref(null);
 const answering = ref(null); // el id del informe que se responde
 const answer = ref('');
@@ -58,7 +71,14 @@ onMounted(load);
         <p class="text-base text-slate-700">Lo que los ciudadanos le informan a la veeduría desde el mapa. La ley la obliga a recibirlo (Ley 850 de 2003, art. 18). No se publica ni se sella; su correo no se muestra: la respuesta le llega desde GovTrace.</p>
         <p v-if="notice" role="status" class="rounded-lg bg-emerald-50 p-3 text-sm font-semibold text-emerald-800">{{ notice }}</p>
 
-        <LoadState :loading="loading" :error="error" :empty="reports?.length === 0" loading-text="Cargando informes…" empty-text="Aún no hay informes de ciudadanos." illustration="messages" @retry="load">
+        <label for="status" class="flex flex-col gap-1 text-sm font-semibold text-slate-700">Estado
+            <select id="status" :value="status" class="min-h-11 rounded-lg border border-slate-300 bg-white px-2 text-base font-normal md:max-w-xs" @change="byStatus($event.target.value)">
+                <option v-for="option in STATUSES" :key="option.value" :value="option.value">{{ option.label }}</option>
+            </select>
+        </label>
+        <p v-if="meta && meta.total > 0" data-test="total" class="text-base text-slate-700">{{ meta.total }} {{ meta.total === 1 ? 'informe' : 'informes' }}</p>
+
+        <LoadState :loading="loading" :error="error" :empty="reports?.length === 0" loading-text="Cargando informes…" :empty-text="status === '' ? 'Aún no hay informes de ciudadanos.' : 'Ningún informe con ese estado.'" illustration="messages" @retry="load">
             <div class="flex flex-col gap-3">
                 <article v-for="report in reports" :key="report.id" data-test="citizen-report" class="flex flex-col gap-2 rounded-2xl bg-white p-3 text-base shadow-soft ring-1 ring-slate-900/5">
                     <header class="flex flex-wrap items-center justify-between gap-2">
@@ -91,6 +111,7 @@ onMounted(load);
                         </div>
                     </template>
                 </article>
+                <MoreButton v-if="meta?.has_more" :loading="loadingMore" @more="more" />
             </div>
         </LoadState>
     </AdminLayout>

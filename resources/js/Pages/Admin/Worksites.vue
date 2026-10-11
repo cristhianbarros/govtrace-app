@@ -5,8 +5,9 @@
 // It. 45f: "Corregir ubicación" desde la Bandeja llega con ?corregir=<obra>.
 import { computed, nextTick, onMounted, ref } from 'vue';
 import LoadState from '@/Components/LoadState.vue';
+import MoreButton from '@/Components/MoreButton.vue';
 import LocationMap from '@/Components/LocationMap.vue';
-import { useLoader } from '@/composables/useLoader.js';
+import { usePagedList } from '@/composables/usePagedList.js';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { correctWorksiteLocation, fetchWorksites, groupContracts } from '@/services/api.js';
 import { errorMessage } from '@/services/errors.js';
@@ -14,7 +15,17 @@ import { errorMessage } from '@/services/errors.js';
 // Sin ubicación todavía, el mapa abre sobre Colombia.
 const COLOMBIA = { latitude: 4.5709, longitude: -74.2973 };
 
-const { data: worksites, loading, error, load } = useLoader(fetchWorksites);
+const { data: worksites, meta, loading, loadingMore, error, load, more, search } = usePagedList(fetchWorksites);
+// It. 52: de 20 en 20, y se buscan por el nombre de la ficha o por el objeto de sus contratos.
+const keyword = ref('');
+// El enlace "Corregir ubicación" de la Bandeja llega con una obra (?corregir=): se pide esa, y se puede volver a todas.
+const onlyOne = ref(false);
+
+function showAll() {
+    onlyOne.value = false;
+    keyword.value = '';
+    return load({});
+}
 
 const editing = ref(null); // id de la obra que se corrige
 const latitude = ref('');
@@ -90,19 +101,23 @@ const where = (worksite) =>
     worksite.latitude === null ? 'Sin ubicación oficial' : `${worksite.latitude.toFixed(7)}, ${worksite.longitude.toFixed(7)}`;
 
 // It. 45f: abre la corrección de la obra que nombra el enlace de la Bandeja.
-async function openFromLink() {
-    const id = new URLSearchParams(window.location.search).get('corregir'); // it. 46c: su identificador público
+// It. 52: la pide al servidor por su id, porque ya no están todas en la primera página.
+async function openFromLink(id) {
+    onlyOne.value = true;
+    await load({ worksite: id });
     const worksite = (worksites.value ?? []).find((candidate) => candidate.id === id);
     if (worksite) {
         correct(worksite);
         await nextTick();
         document.getElementById(`obra-${worksite.id}`)?.scrollIntoView?.({ block: 'start' });
+    } else {
+        await showAll();
     }
 }
 
 onMounted(async () => {
-    await load();
-    await openFromLink();
+    const id = new URLSearchParams(window.location.search).get('corregir'); // it. 46c: su identificador público
+    await (id ? openFromLink(id) : load());
 });
 </script>
 
@@ -110,12 +125,22 @@ onMounted(async () => {
     <AdminLayout title="Obras">
         <p v-if="saved" role="status" class="rounded-lg bg-emerald-50 p-3 text-sm font-semibold text-emerald-800">{{ saved }}</p>
 
+        <div v-if="meta && !onlyOne && (meta.total > 0 || keyword !== '')" class="flex flex-col gap-1">
+            <label for="search-worksites" class="text-sm font-semibold text-slate-700">Buscar una obra</label>
+            <input id="search-worksites" v-model="keyword" type="search" autocomplete="off" placeholder="Nombre de la obra o de su contrato" class="w-full rounded-lg border border-slate-300 px-3 py-3 text-base" @input="search(keyword)" />
+        </div>
+        <div v-if="onlyOne && meta" class="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-slate-100 p-3 text-base text-slate-800">
+            <span>Mostrando la obra que va a corregir.</span>
+            <button type="button" data-test="show-all" class="min-h-11 rounded-xl border border-brand-200 bg-white px-3 font-semibold text-brand-800 hover:bg-brand-50" @click="showAll">Ver todas las obras</button>
+        </div>
+        <p v-else-if="meta && meta.total > 0" data-test="total" class="text-base text-slate-700">{{ meta.total }} {{ meta.total === 1 ? 'obra' : 'obras' }}</p>
+
         <LoadState
             :loading="loading"
             :error="error"
             :empty="worksites?.length === 0"
             loading-text="Cargando obras…"
-            empty-text="Aún no hay obras. Una obra aparece aquí con el primer reporte de uno de sus contratos."
+            :empty-text="keyword.trim() === '' ? 'Aún no hay obras. Una obra aparece aquí con el primer reporte de uno de sus contratos.' : 'Ninguna obra con esa búsqueda.'"
             illustration="works"
             @retry="load"
         >
@@ -155,6 +180,7 @@ onMounted(async () => {
                     <!-- US-056-LEG (it. 44b): lo que la veeduría lleva a la entidad y a la Contraloría. -->
                     <a data-test="dossier" :href="`/worksites/${worksite.id}/dossier.zip`" class="inline-flex min-h-11 items-center self-start rounded-xl border-2 border-brand-700 bg-white px-3 font-semibold text-brand-800 hover:bg-brand-50">Descargar expediente</a>
                 </article>
+                <MoreButton v-if="meta?.has_more" :loading="loadingMore" @more="more" />
             </div>
         </LoadState>
 

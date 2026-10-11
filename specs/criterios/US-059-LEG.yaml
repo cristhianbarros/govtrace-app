@@ -8,6 +8,7 @@ criterios_aceptacion:
     - "El Administrador ve en 'Informes ciudadanos' la obra, la fecha, el mensaje y sus fotos (hasta 3, cada una se abre por separado), sin el correo de quien lo envió"
     - "El Administrador responde desde GovTrace (al ciudadano le llega la respuesta por correo) o lo descarta; los dos quedan en el log de auditoría"
   validaciones_reglas:
+    - "(It. 52, 2026-10-10) Los informes de ciudadanos llegan de a 20 (los más recientes primero) con 'Ver 20 más' y el total, y se filtran por estado (Por responder, Atendidos, Descartados)"
     - "R-LEG-09: un informe ciudadano no se sella ni se publica; no cambia el estado de la obra"
     - "R-LEG-10: el correo se guarda cifrado y la veeduría nunca lo ve"
     - "R-LEG-07: sin autorizar el tratamiento de datos no se pide el código"

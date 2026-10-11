@@ -6,6 +6,7 @@ criterios_aceptacion:
   escenarios_exito:
     - "El Administrador agrupa dos o más contratos de tipo Obra de su territorio en una ficha de obra"
   validaciones_reglas:
+    - "(It. 52, 2026-10-10) La lista de obras llega de a 20 con 'Ver 20 más' y el total, y se busca por el nombre de la ficha o el objeto de sus contratos; el enlace 'Corregir ubicación' de la Bandeja pide esa obra por su id, esté en la página que esté"
     - "Los reportes se vinculan a la ficha completa (todos sus contratos)"
     - "El pin de la ficha toma el peor estado entre sus contratos"
     - "La vista pública de la obra muestra todos los contratos agrupados"

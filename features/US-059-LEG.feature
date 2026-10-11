@@ -99,3 +99,19 @@ Característica: Informar a la veeduría de lo que vi en una obra
   Escenario: Solo el Administrador ve los informes
     Cuando un veedor pide los informes ciudadanos
     Entonces se le niega
+
+  @complexity:medium
+  Escenario: Veo 20 informes y Ver 20 más trae los siguientes
+    Dado que la veeduría ha recibido 45 informes de ciudadanos
+    Cuando abro "Informes ciudadanos"
+    Entonces veo 20 informes, los más recientes primero, y "45 informes"
+    Cuando toco "Ver 20 más"
+    Entonces veo 40 informes
+
+  @complexity:low
+  Escenario: Filtro los informes por estado
+    Dado que hay informes nuevos, atendidos y descartados
+    Cuando filtro el estado por "Por responder"
+    Entonces veo solo los informes nuevos
+    Cuando filtro el estado por "Todos"
+    Entonces veo todos los informes

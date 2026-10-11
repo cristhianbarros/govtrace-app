@@ -12,6 +12,7 @@ use App\Domain\CitizenReports\Notifications\CitizenReportReceived;
 use App\Domain\Organization\OrganizationStatus;
 use App\Domain\Organization\Roles;
 use App\Domain\Sealing\ReportSeal;
+use App\Domain\Worksites\Worksite;
 use App\Infrastructure\Tenancy\Tenant;
 use Database\Seeders\DivipolaSeeder;
 use Illuminate\Http\UploadedFile;
@@ -356,4 +357,29 @@ it('gives the photo of a report that already existed its place in the list', fun
     });
 
     expect($paths)->toBe([['org/citizen-reports/abc.jpg'], []]);
+});
+
+// It. 52 — de a una página, y por estado ------------------------------------
+
+it('Los informes de los ciudadanos llegan de a una página y se filtran por estado: the newest first, with the total and whether there are more', function () {
+    config(['limits.list_page_size' => 2]);
+    $this->tenant->run(function () {
+        foreach (['uno', 'dos', 'tres'] as $message) {
+            CitizenReport::query()->create([
+                'worksite_id' => Worksite::query()->value('id'), 'email' => encrypt(CITIZEN), 'email_hash' => hash('sha256', $message.CITIZEN),
+                'message' => $message, 'photo_paths' => [], 'status' => $message === 'uno' ? 'answered' : 'new',
+                'data_authorized_at' => now(), 'data_policy_version' => '1',
+            ]);
+        }
+    });
+    $page = fn (array $query) => collect(test()->actingAs(test()->administrator, 'tenant')->getJson(CITIZEN_HOST.'/citizen-reports?'.http_build_query($query))->assertOk()->json());
+
+    expect($page([])->get('total'))->toBe(3)
+        ->and(array_column($page([])->get('data'), 'message'))->toBe(['tres', 'dos'])
+        ->and($page([])->get('has_more'))->toBeTrue()
+        ->and(array_column($page(['page' => 2])->get('data'), 'message'))->toBe(['uno'])
+        // Por estado: los nuevos (por responder) y los atendidos.
+        ->and(array_column($page(['status' => 'new'])->get('data'), 'message'))->toBe(['tres', 'dos'])
+        ->and($page(['status' => 'answered'])->get('total'))->toBe(1);
+    test()->actingAs($this->administrator, 'tenant')->getJson(CITIZEN_HOST.'/citizen-reports?status=otro')->assertUnprocessable()->assertJsonValidationErrors('status');
 });

@@ -3196,7 +3196,20 @@ El usuario pidió seguir con lo que no espera a nadie: la deuda técnica y los h
 | Datos recibidos en 30 s | 485 MB | 6,5 MB |
 
 - **Lo que encontró la medición:** `make load-test` rehace la organización de pruebas y borraría lo sembrado: `KEEP_DATA=1` lo evita. Y el jar de cookies de k6 se vaciaba tras la primera respuesta grande (con curl, la sesión sigue valiendo): el escenario del administrador entra en cada iteración, con el login en su propia etiqueta.
-- **Falta de la 52:** las demás pantallas de la tabla (informes de ciudadanos, Mis reportes, veedores y obras del Administrador, línea de tiempo, panel global, búsqueda de territorios y datos abiertos). Se hacen en partes siguientes, por orden.
+- **Falta de la 52 tras la parte 1:** lo que no es de la bandeja, en las partes siguientes (2: listados del Administrador y del veedor; 3: lo público y el panel global).
+
+**Avance de la 52 — parte 2: Mis reportes, informes de ciudadanos, veedores y obras ✅ (2026-10-10).**
+- **Servidor:** `Page::of()` (`app/Application/Pagination`) devuelve `{ data, total, has_more }` con 20 filas por defecto (`config('limits.list_page_size')`, `LIST_PAGE_SIZE`). Una fila de más dice si hay otra página sin una segunda consulta. Cuatro listados lo usan:
+  - **Mis reportes** (`GET /me/reports?page=`): los más recientes primero.
+  - **Informes de ciudadanos** (`/citizen-reports?page=&status=`): por estado.
+  - **Veedores** (`/observers?page=&q=`): se buscan por correo, sin distinguir mayúsculas.
+  - **Obras** (`/worksites?page=&q=&worksite=`): se buscan por el nombre de la ficha o por el objeto de sus contratos (sin tildes). Los contratos viven en la base central y las fichas en la de la organización: son dos consultas, no una subconsulta, con un tope de 2.000 contratos por búsqueda.
+  - Un `page` o un filtro que no existe es un 422.
+- **El enlace "Corregir ubicación" de la Bandeja** (`?corregir=<obra>`) buscaba la obra en la lista cargada: con páginas ya no está garantizado que esté en la primera. Ahora pide esa obra por su id (`?worksite=`), muestra "Mostrando la obra que va a corregir" y ofrece "Ver todas las obras".
+- **Pantalla:** `usePagedList` (composable) y `MoreButton` ("Ver 20 más") compartidos; cada pantalla suma el total, y según el caso, su búsqueda (veedores, obras) o su selector de estado (informes).
+- **Historias:** US-010, US-059-LEG, US-005 y US-045-INT enmendadas (criterio y 8 escenarios nuevos). Trazabilidad: 446 de 446.
+- **Pruebas:** Pest (4 nuevas, vistas en rojo antes), Vitest (el composable con 5; cada pantalla con las suyas; las que existían pasaron a la forma nueva de la respuesta, 513 en total), e2e y `make ux-check`.
+- **Falta de la 52:** la línea de tiempo de una obra y su expediente, el panel global (organizaciones, uso, costos y fallas de sellado), la búsqueda de territorios y los datos abiertos. Parte 3.
 
 **Modelo:** Sonnet medium. Es rendimiento y pantallas; no toca la evidencia ni los sellos.
 

@@ -23,7 +23,8 @@ export const browseContracts = (body) => dataOf(http.post('/contracts/browse', b
 export const requestCitizenCode = (data) => dataOf(http.post('/citizen-reports/code', data));
 export const sendCitizenReport = (form) => dataOf(http.post('/citizen-reports', form));
 /** Y el Administrador los lee, los responde o los descarta. */
-export const fetchCitizenReports = async () => (await dataOf(http.get('/citizen-reports'))).data;
+/** It. 52: de a una página ({ page, status }): { data, total, has_more }. */
+export const fetchCitizenReports = (params) => dataOf(http.get('/citizen-reports', { params }));
 export const answerCitizenReport = (id, answer) => dataOf(http.post(`/citizen-reports/${id}/answer`, { answer }));
 export const discardCitizenReport = (id) => dataOf(http.post(`/citizen-reports/${id}/discard`));
 
@@ -39,7 +40,8 @@ export const logout = () => dataOf(http.post('/logout'));
 export const changePassword = (data) => dataOf(http.put('/account/password', data));
 
 /** US-010: sus reportes, con el estado técnico y el editorial por separado. */
-export const fetchMyReports = async () => (await dataOf(http.get('/me/reports'))).data;
+/** It. 52: de a una página ({ page }): { data, total, has_more }. */
+export const fetchMyReports = (params) => dataOf(http.get('/me/reports', { params }));
 
 // El Administrador -----------------------------------------------------------
 
@@ -51,7 +53,8 @@ export const fetchInbox = (params) => dataOf(http.get('/inbox', { params }));
 export const decideOnEvidence = (reportId, decision, reason) => dataOf(http.post(`/reports/${reportId}/${decision}`, { reason }));
 
 /** US-005 */
-export const fetchObservers = async () => (await dataOf(http.get('/observers'))).data;
+/** It. 52: de a una página y con búsqueda por correo ({ page, q }): { data, total, has_more }. */
+export const fetchObservers = (params) => dataOf(http.get('/observers', { params }));
 export const inviteObserver = (email) => dataOf(http.post('/observers/invite', { email }));
 // It. 43j (V3, US-061-USR): los administradores de la organización, e invitar a otro.
 export const fetchAdministrators = async () => (await dataOf(http.get('/administrators'))).data;
@@ -81,7 +84,8 @@ export const saveProfile = (form) => dataOf(http.post('/organization/profile', f
 export const fetchAuditLog = (page, filters = {}) => dataOf(http.get('/audit', { params: { page, ...filters } }));
 
 /** US-035 */
-export const fetchWorksites = async () => (await dataOf(http.get('/worksites'))).data;
+/** It. 52: de a una página y con búsqueda ({ page, q }): { data, total, has_more }. */
+export const fetchWorksites = (params) => dataOf(http.get('/worksites', { params }));
 export const correctWorksiteLocation = (worksiteId, { latitude, longitude }) =>
     dataOf(http.patch(`/worksites/${worksiteId}/location`, { latitude, longitude }));
 
