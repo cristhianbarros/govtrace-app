@@ -3204,6 +3204,40 @@ El usuario pidió seguir con lo que no espera a nadie: la deuda técnica y los h
 
 **Modelo:** Sonnet medium.
 
+### Iteración 54 — Veedores y Administradores, en pantallas separadas
+
+✅ **Aprobada por el usuario el 2026-10-10** ("Sí, tenga en cuenta las otras mejoras que están en espera"). **Qué se vio:** la pestaña "Veedores" (`/admin/observers`, `Observers.vue`) mezcla dos asuntos: arriba, invitar y gestionar veedores de campo; abajo, la sección "Administradores" con su lista y su formulario para invitar a otro (V3, it. 43j). Esa sección se puso ahí porque ya existía la pantalla de invitaciones.
+
+**Por qué separarlas:**
+- Son dos roles con riesgos distintos. Un veedor reporta desde el celular; un Administrador publica o retira evidencia, ubica obras y gestiona personas. Invitar a un Administrador pesa mucho más.
+- La pestaña dice "Veedores" y adentro hay Administradores: quien busca agregar otro Administrador no la encuentra.
+- Con más de 20 veedores, la lista empuja la de Administradores muy abajo.
+- Cada lista necesita su paginación y sus filtros (it. 52): mezcladas, se complican.
+
+**Entregable:**
+- Dos pestañas en el grupo "Equipo": **Veedores** y **Administradores**. Cada una con su lista, su formulario de invitar, su estado (activo, pendiente, inactivo), el reenvío y la revocación.
+- La de Administradores conserva la regla de V3: la veeduría nunca queda sin uno activo.
+- **Los permisos no cambian**, solo la ubicación en pantalla. `/admin/observers` se mantiene; la nueva pantalla es `/admin/administrators`.
+- **Historias:** se enmiendan US-005 (veedores) y US-061-USR (administradores).
+
+**Done-when:** los escenarios de ambas historias con su prueba (Vitest y e2e), las pruebas de acceso actuales en verde, y `make ux-check` sin retroceso.
+
+**Modelo:** Sonnet medium.
+
+### Orden de lo que está en espera (2026-10-10)
+
+| Orden | Qué | Por qué en ese lugar |
+|---|---|---|
+| 0 | **Segunda corrida de la prueba de carga** en staging (it. 50b) y volver a desplegar `main`, que restaura los límites | Verifica el tope de Apache. Lo hace el usuario con Claude |
+| 1 | **It. 54** — Veedores y Administradores, separados | Corta. La 52 va a paginar esas dos listas: conviene que ya estén separadas |
+| 2 | **It. 52** — Paginar y filtrar | Rendimiento antes del piloto, con el escenario de carga de la bandeja |
+| 3 | **It. 53** — El mapa público dice que el punto es aproximado | Confunde a quien mira el mapa |
+| 4 | **It. 51** — El subdominio sale del nombre | Comodidad para el Super Administrador |
+| 5 | **El piloto** con una veeduría real | Con lo que muestre se decide V20 (elegir la obra sin señal) y V17 (correo al veedor) |
+| 6 | **Imagen en un registro** (GitHub Container Registry) y **la red principal** (37b) | Cuando estén el dominio, el operador y los fondos |
+
+Cada una se aprueba por separado y pasa por el CI (it. 49) antes de fusionarse.
+
 ## Pivote a Stellar (2026-09-28)
 
 El proyecto participa en **Stellar Apex**, así que la blockchain pasa de EVM/Polygon a **Stellar**, con Smart Contracts en **Soroban (Rust)**:
