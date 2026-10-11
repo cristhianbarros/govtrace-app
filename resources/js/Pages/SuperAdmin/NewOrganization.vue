@@ -5,10 +5,10 @@
 // It. 46b: antes de registrarla, lo que dicen del NIT o de la matrícula los
 // datos abiertos del RUES.
 import { Link } from '@inertiajs/vue3';
-import { reactive, ref } from 'vue';
+import { onBeforeUnmount, reactive, ref, watch } from 'vue';
 import RuesAnswer from '@/Components/SuperAdmin/RuesAnswer.vue';
 import SuperAdminLayout from '@/Layouts/SuperAdminLayout.vue';
-import { lookupRues, registerOrganization } from '@/services/api.js';
+import { lookupRues, registerOrganization, suggestSubdomain } from '@/services/api.js';
 import { errorMessage } from '@/services/errors.js';
 
 const props = defineProps({
@@ -27,6 +27,58 @@ const form = reactive({
           }
         : {}),
 });
+
+// It. 51: el subdominio sale del nombre de la veeduría. Se propone mientras se escribe el nombre
+// (tras una pausa) y se puede ajustar: lo que se escribe a mano ya no lo pisa el nombre. El servidor
+// calcula el slug —el mismo con el que registra si el campo llega vacío— y el primero libre si ya
+// existe (-2, -3…); aquí solo se muestra.
+const MIN_NAME = 3;
+const suggestion = ref(null); // { subdomain, address } de la última propuesta
+const apex = ref(null); // el dominio de las veedurías, de la dirección que dio el servidor
+const touched = ref(false); // el Super Administrador lo escribió o lo cambió él
+let timer;
+let latest = 0;
+
+async function suggest(name) {
+    const current = ++latest;
+    const answer = await suggestSubdomain(name.trim());
+    if (current !== latest || !answer) {
+        return;
+    }
+    suggestion.value = answer.subdomain ? answer : null;
+    apex.value = answer.address ? answer.address.slice(answer.subdomain.length + 1) : apex.value;
+    if (!touched.value) {
+        form.subdomain = answer.subdomain ?? '';
+    }
+}
+
+watch(
+    () => form.name,
+    (name) => {
+        clearTimeout(timer);
+        if (name.trim().length < MIN_NAME) {
+            latest += 1;
+            suggestion.value = null;
+            if (!touched.value) {
+                form.subdomain = '';
+            }
+            return;
+        }
+        timer = setTimeout(() => suggest(name), 300);
+    },
+);
+
+// Desde una solicitud de alta, el nombre ya viene: se propone al abrir, sin pausa.
+if (props.request && form.name.trim().length >= MIN_NAME) {
+    suggest(form.name);
+}
+
+function useSuggestion() {
+    touched.value = false;
+    form.subdomain = suggestion.value?.subdomain ?? '';
+}
+
+onBeforeUnmount(() => clearTimeout(timer));
 
 const NOTHING_TO_LOOK_UP = 'Escriba el NIT o la inscripción para consultarla en el RUES.';
 const UNAVAILABLE = 'No se pudo consultar el RUES ahora. Puede decidir con el PDF, o volver a intentarlo más tarde.';
@@ -76,6 +128,8 @@ async function submit() {
             })
         ).message;
         Object.assign(form, empty);
+        touched.value = false;
+        suggestion.value = null;
     } catch (failure) {
         refused.value = errorMessage(failure);
     } finally {
@@ -119,7 +173,10 @@ async function submit() {
                     <RuesAnswer :loading="rues.loading" :answer="rues.answer" />
                     <div class="flex flex-col gap-1">
                         <label for="subdomain" class="text-sm font-semibold text-slate-700">Subdominio</label>
-                        <input id="subdomain" v-model="form.subdomain" type="text" placeholder="veeduria-smr" class="w-full rounded-lg border border-slate-300 px-3 py-3 text-base" />
+                        <input id="subdomain" v-model="form.subdomain" type="text" placeholder="Sale del nombre de la veeduría" class="w-full rounded-lg border border-slate-300 px-3 py-3 text-base" @input="touched = true" />
+                        <p v-if="form.subdomain.trim() !== '' && apex" data-test="subdomain-address" class="text-base text-slate-700">La dirección será {{ form.subdomain.trim() }}.{{ apex }}</p>
+                        <p v-else class="text-base text-slate-700">Se propone del nombre; puede cambiarlo antes de registrar. Después no se cambia.</p>
+                        <button v-if="touched && suggestion && suggestion.subdomain !== form.subdomain" type="button" data-test="use-suggestion" class="min-h-11 self-start rounded-xl border border-brand-200 bg-white px-3 font-semibold text-brand-800 hover:bg-brand-50" @click="useSuggestion">Usar la propuesta: {{ suggestion.subdomain }}</button>
                     </div>
                 </fieldset>
 

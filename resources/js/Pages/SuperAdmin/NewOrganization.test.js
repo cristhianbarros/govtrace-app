@@ -1,9 +1,9 @@
 // Iteración 19 — US-001 y US-002 (UI): dar de alta una organización y,
 // opcionalmente en el mismo paso, asignar su Administrador inicial.
 import { flushPromises, mount } from '@vue/test-utils';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import NewOrganization from './NewOrganization.vue';
-import { lookupRues, registerOrganization } from '@/services/api.js';
+import { lookupRues, registerOrganization, suggestSubdomain } from '@/services/api.js';
 
 vi.mock('@inertiajs/vue3', async () => await import('@/testing/inertia.js'));
 vi.mock('@/services/api.js');
@@ -174,5 +174,106 @@ describe('Consultar el RUES (it. 46b)', () => {
 
         expect(lookupRues).not.toHaveBeenCalled();
         expect(wrapper.get('[data-test="rues"]').text()).toContain('Escriba el NIT o la inscripción para consultarla en el RUES.');
+    });
+});
+
+// It. 51 — el subdominio sale del nombre de la veeduría, y se puede ajustar.
+describe('El subdominio, propuesto desde el nombre (it. 51)', () => {
+    const SUGGESTED = { subdomain: 'veeduria-ciudadana-santa-marta', address: 'veeduria-ciudadana-santa-marta.govtrace.localhost' };
+
+    beforeEach(() => vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] }));
+    afterEach(() => vi.useRealTimers());
+
+    async function typeName(wrapper, name) {
+        await wrapper.get('input#name').setValue(name);
+        vi.advanceTimersByTime(300);
+        await flushPromises();
+    }
+
+    it('El formulario propone el subdominio mientras se escribe el nombre: after a pause, with its address', async () => {
+        suggestSubdomain.mockResolvedValue(SUGGESTED);
+        const wrapper = mount(NewOrganization);
+
+        await wrapper.get('input#name').setValue('Veeduría Ciudadana Santa Marta');
+        expect(suggestSubdomain).not.toHaveBeenCalled();
+        vi.advanceTimersByTime(300);
+        await flushPromises();
+
+        expect(suggestSubdomain).toHaveBeenCalledWith('Veeduría Ciudadana Santa Marta');
+        expect(wrapper.get('input#subdomain').element.value).toBe('veeduria-ciudadana-santa-marta');
+        expect(wrapper.get('[data-test="subdomain-address"]').text()).toBe('La dirección será veeduria-ciudadana-santa-marta.govtrace.localhost');
+    });
+
+    it('does not ask for a name of less than 3 letters, and leaves the field empty', async () => {
+        const wrapper = mount(NewOrganization);
+
+        await typeName(wrapper, 'Ve');
+
+        expect(suggestSubdomain).not.toHaveBeenCalled();
+        expect(wrapper.get('input#subdomain').element.value).toBe('');
+    });
+
+    it('Un subdominio ajustado a mano no lo pisa el nombre: and "Usar la propuesta" brings the suggestion back', async () => {
+        suggestSubdomain.mockResolvedValue(SUGGESTED);
+        const wrapper = mount(NewOrganization);
+        await typeName(wrapper, 'Veeduría Ciudadana Santa Marta');
+
+        await wrapper.get('input#subdomain').setValue('smr');
+        suggestSubdomain.mockResolvedValue({ subdomain: 'veeduria-ciudadana-santa-marta-2', address: 'veeduria-ciudadana-santa-marta-2.govtrace.localhost' });
+        await typeName(wrapper, 'Veeduría Ciudadana Santa Marta S');
+
+        expect(wrapper.get('input#subdomain').element.value).toBe('smr');
+        expect(wrapper.get('[data-test="subdomain-address"]').text()).toBe('La dirección será smr.govtrace.localhost');
+
+        await wrapper.get('[data-test="use-suggestion"]').trigger('click');
+
+        expect(wrapper.get('input#subdomain').element.value).toBe('veeduria-ciudadana-santa-marta-2');
+        expect(wrapper.find('[data-test="use-suggestion"]').exists()).toBe(false);
+    });
+
+    it('when the name gives no valid subdomain, the field stays free to write', async () => {
+        suggestSubdomain.mockResolvedValue({ subdomain: null, address: null });
+        const wrapper = mount(NewOrganization);
+
+        await typeName(wrapper, '¿¿¿ ???');
+
+        expect(wrapper.get('input#subdomain').element.value).toBe('');
+        expect(wrapper.find('[data-test="subdomain-address"]').exists()).toBe(false);
+    });
+
+    it('ignores the answer of an old name when a newer one was typed', async () => {
+        let slow;
+        suggestSubdomain.mockReturnValueOnce(new Promise((resolve) => (slow = resolve))).mockResolvedValueOnce({ subdomain: 'nueva', address: 'nueva.govtrace.localhost' });
+        const wrapper = mount(NewOrganization);
+
+        await typeName(wrapper, 'Veeduría vieja');
+        await typeName(wrapper, 'Veeduría nueva');
+        slow({ subdomain: 'vieja', address: 'vieja.govtrace.localhost' });
+        await flushPromises();
+
+        expect(wrapper.get('input#subdomain').element.value).toBe('nueva');
+    });
+
+    it('from a request for registration, the subdomain comes from its name as soon as it opens, with no pause', async () => {
+        suggestSubdomain.mockResolvedValue({ subdomain: 'veeduria-del-parque', address: 'veeduria-del-parque.govtrace.localhost' });
+
+        const wrapper = mount(NewOrganization, { props: { request: { id: 'r1', name: 'Veeduría del Parque', contact_email: 'a@b.co', registration_number: 'Acta 4', registration_authority: 'Personería de Santa Marta' } } });
+        await flushPromises();
+
+        expect(suggestSubdomain).toHaveBeenCalledWith('Veeduría del Parque');
+        expect(wrapper.get('input#subdomain').element.value).toBe('veeduria-del-parque');
+    });
+
+    it('registers with what the field says: the suggestion, or what was written', async () => {
+        suggestSubdomain.mockResolvedValue(SUGGESTED);
+        registerOrganization.mockResolvedValue({ message: SUCCESS });
+        const wrapper = mount(NewOrganization);
+        await typeName(wrapper, 'Veeduría Ciudadana Santa Marta');
+        await wrapper.get('input#nit').setValue('900123456-8');
+
+        await wrapper.get('form').trigger('submit');
+        await flushPromises();
+
+        expect(registerOrganization).toHaveBeenCalledWith(expect.objectContaining({ subdomain: 'veeduria-ciudadana-santa-marta' }));
     });
 });

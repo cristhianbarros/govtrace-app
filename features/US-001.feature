@@ -133,3 +133,52 @@ Característica: Alta de una organización con validación legal y subdominio
     Cuando escribo ese NIT en la nueva organización y pido consultarlo en el RUES
     Entonces veo su razón social, su cámara y el estado de su matrícula
     Y al registrarla, el log de auditoría guarda lo que dijo el RUES
+
+  @complexity:medium
+  Escenario: El subdominio sale del nombre de la veeduría
+    Cuando registro la organización "Veeduría Ciudadana Santa Marta" sin escribir su subdominio
+    Entonces su subdominio es "veeduria-ciudadana-santa-marta"
+    Y el nombre se limpia con Str::slug(): sin tildes ni eñe, en minúsculas, con guiones donde había espacios o símbolos
+
+  @complexity:medium
+  Escenario: Si el Super Administrador escribe un subdominio, se respeta
+    Dado que ya existe una organización con el subdominio "smr"
+    Cuando registro otra organización escribiendo el subdominio "smr"
+    Entonces veo "El subdominio especificado ya no está disponible. Por favor elija otro."
+    Y no se le agrega ningún número: lo escrito se respeta o se rechaza
+
+  @complexity:medium @edge
+  Escenario: Dos veedurías con el mismo nombre: la segunda toma -2, y la tercera -3
+    Dado que ya existe "Veeduría Ciudadana de Ciénaga" con su subdominio calculado
+    Cuando registro otra con ese mismo nombre sin escribir su subdominio
+    Entonces su subdominio es "veeduria-ciudadana-de-cienaga-2"
+
+  @complexity:low @edge
+  Escenario: Un nombre largo se corta a 63 caracteres, el límite del DNS, sin guion al final
+    Cuando registro una organización cuyo nombre da más de 63 caracteres
+    Entonces su subdominio tiene 63 caracteres o menos y no termina en guion
+
+  @complexity:low @negative
+  Esquema del escenario: Un nombre cuyo subdominio sería una palabra reservada o muy corto se rechaza, con el mensaje de siempre
+    Cuando registro una organización llamada "<nombre>" sin escribir su subdominio
+    Entonces veo "<mensaje>"
+    Y no se registra nada
+
+    Ejemplos:
+      | nombre  | mensaje                                                                                                      |
+      | API     | El subdominio utiliza una palabra reservada del sistema y no puede ser utilizado.                            |
+      | ¿¿¿ ??? | El subdominio solo puede contener letras minúsculas, números y guiones, sin espacios ni caracteres especiales. |
+
+  @complexity:medium
+  Escenario: El formulario propone el subdominio mientras se escribe el nombre
+    Cuando escribo el nombre "Veeduría Ciudadana Santa Marta" en "Nueva organización"
+    Entonces tras una pausa el campo "Subdominio" dice "veeduria-ciudadana-santa-marta"
+    Y debajo dice "La dirección será veeduria-ciudadana-santa-marta" seguido del dominio de las veedurías
+
+  @complexity:medium
+  Escenario: Un subdominio ajustado a mano no lo pisa el nombre
+    Dado que cambié el subdominio propuesto por "smr"
+    Cuando sigo escribiendo el nombre
+    Entonces el subdominio sigue siendo "smr"
+    Y puedo tocar "Usar la propuesta" para volver al que sale del nombre
+

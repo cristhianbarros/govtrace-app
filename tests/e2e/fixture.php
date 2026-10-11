@@ -47,7 +47,8 @@ const E2E_CONTRACT = 'CO1.PCCNTR.9990001';
 const E2E_PASSWORD = 'Veeduria#2026';
 const E2E_WORKSITE = [11.2408, -74.1990];
 // Las que crea el flujo de alta (tests/e2e/flujos): su subdominio y los dos NIT que usa.
-const E2E_CREATED_SUBDOMAINS = ['veeduria-e2e-alta'];
+// It. 51: el de la alta sale del nombre ("Veeduría de Alta E2E"); 'veeduria-e2e-alta' era el de antes.
+const E2E_CREATED_SUBDOMAINS = ['veeduria-de-alta-e2e', 'veeduria-e2e-alta'];
 const E2E_CREATED_NITS = ['901555888-3', '901555999-2'];
 // [clasificación, días atrás, metros al norte de la obra, comentario, foto de database/seeders/demo, decisión]
 const E2E_REPORTS = [

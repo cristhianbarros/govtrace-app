@@ -3154,6 +3154,18 @@ El usuario pidió seguir con lo que no espera a nadie: la deuda técnica y los h
 
 **Modelo:** Sonnet medium.
 
+✅ **Cumplida (2026-10-10).**
+- **Cómo quedó:**
+  - `Subdomain::slugOf()`: `Str::slug()` del nombre, cortado a 63 caracteres sin guion al final.
+  - `SuggestSubdomain`: el primero libre, con `-2`, `-3`… si ya existe (el número cabe dentro de los 63). Devuelve `null` si el nombre no da un subdominio válido (sin letras, de menos de 3 caracteres o reservado).
+  - `RegisterOrganization` recibe el subdominio como opcional: uno escrito se respeta y se valida (tomado es un error, nunca se le pone un número); sin uno, sale del nombre; si el nombre no da uno válido, se rechaza con el mensaje de siempre.
+  - `GET /admin/organizations/subdomain?name=`: la propuesta con su dirección, para el formulario.
+  - **Formulario** (`NewOrganization.vue`): propone el subdominio tras una pausa mientras se escribe el nombre, y muestra "La dirección será …". Si se escribe o se cambia a mano, el nombre ya no lo pisa, y "Usar la propuesta" lo trae de vuelta. Desde una solicitud de alta (V10) se propone al abrir, sin pausa. El servidor calcula el slug; la pantalla no lo repite, para que no haya dos reglas que se separen.
+- **Veedurías ya creadas:** no se tocan (cambiar su subdominio rompería enlaces, invitaciones y correos), y no se cambia una vez registrada.
+- **Historia:** US-001 enmendada (criterio y 7 escenarios nuevos).
+- **Pruebas:** Pest (`SubdomainFromNameTest`, 11, vistas en rojo antes), Vitest (el formulario, 7 nuevas), e2e en un navegador real (el alta completa, con el subdominio propuesto y no escrito), trace-check.
+- **Lo que encontró:** los ids de las organizaciones no son secuenciales: una prueba que comparaba el orden de creación era frágil.
+
 ### Iteración 52 — Nada se carga entero: paginar y filtrar
 
 📝 **Pedida por el usuario el 2026-10-10**, por aprobar su orden. **Por qué:** la bandeja del Administrador muestra todas las evidencias de una vez, sin "Ver más" ni filtros. Con 20 administradores o más abriéndola a cada rato, y miles de evidencias, es un cuello de botella. La prueba de carga de la it. 50 mostró lo rápido que la base y el CPU de una máquina pequeña se agotan.

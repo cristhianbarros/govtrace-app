@@ -10,7 +10,8 @@ import { CENTRAL, PEOPLE, WORKSITE, latestLinkTo, latestMailAbout, logIn, logOut
 const ALTA = {
     name: 'Veeduría de Alta E2E',
     nit: '901555888-3',
-    subdomain: 'veeduria-e2e-alta',
+    // It. 51: el subdominio sale del nombre: el formulario lo propone, y no se escribe.
+    subdomain: 'veeduria-de-alta-e2e',
     admin: 'e2e.alta.admin@correo.co',
     veedor: 'e2e.alta.veedor@correo.co',
     password: 'Veeduria#2026Alta',
@@ -67,7 +68,9 @@ test('El Super Administrador da de alta la organización con su Administrador in
     const organization = page.getByRole('group', { name: 'Organización' });
     await organization.getByLabel('Nombre').fill(ALTA.name);
     await organization.getByLabel('NIT (con dígito de verificación, si tiene)').fill(ALTA.nit);
-    await organization.getByLabel('Subdominio').fill(ALTA.subdomain);
+    // El subdominio se propone del nombre (tras una pausa), con su dirección, y no se escribe.
+    await expect(organization.getByLabel('Subdominio')).toHaveValue(ALTA.subdomain);
+    await expect(page.locator('[data-test="subdomain-address"]')).toContainText(`La dirección será ${ALTA.subdomain}.`);
     const administrator = page.getByRole('group', { name: 'Administrador inicial (opcional)' });
     await administrator.getByLabel('Nombre').fill('Administradora de Alta');
     await administrator.getByLabel('Correo electrónico').fill(ALTA.admin);
