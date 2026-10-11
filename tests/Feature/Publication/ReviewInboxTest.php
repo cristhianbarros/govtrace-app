@@ -5,6 +5,7 @@ use App\Application\Organization\RegisterOrganization;
 use App\Application\Publication\PublicTimeline;
 use App\Application\Sealing\SealingNetwork;
 use App\Domain\Audit\AuditLog;
+use App\Domain\Geography\GeoPoint;
 use App\Domain\Organization\Roles;
 use App\Domain\Organization\User as OrganizationUser;
 use App\Domain\Reports\Report;
@@ -297,6 +298,7 @@ it('La evidencia que fijó la ubicación de la obra llega marcada: with that poi
         'distance_meters' => 0,
         'point' => ['latitude' => round($latitude, 7), 'longitude' => round($longitude, 7)],
         'corrected' => false,
+        'official' => null,
         'pending' => null,
     ]);
 });
@@ -311,14 +313,29 @@ it('tells when the location that report fixed was corrected afterwards', functio
     tenancy()->end();
     $this->flushSession();
 
-    expect(inboxEvidence($this->administrator, $reportId)['location']['corrected'])->toBeTrue();
+    $location = inboxEvidence($this->administrator, $reportId)['location'];
+    $taken = new GeoPoint($location['point']['latitude'], $location['point']['longitude']);
+
+    // It. 55: la tarjeta dice dónde quedó la ubicación oficial hoy, y a cuántos metros del punto del reporte.
+    expect($location['corrected'])->toBeTrue()
+        ->and($location['official'])->toBe([
+            'latitude' => 11.2411,
+            'longitude' => -74.1995,
+            'distance_meters' => (int) round($taken->distanceInMetersTo(new GeoPoint(11.2411, -74.1995))),
+        ]);
+});
+
+it('Una ubicación sin corregir no trae la oficial: the card already shows it, it is the point of the report', function () {
+    $reportId = anchoringReport($this);
+
+    expect(inboxEvidence($this->administrator, $reportId)['location']['official'])->toBeNull();
 });
 
 it('Cada evidencia de la bandeja dice a qué distancia de la obra se tomó: and never the coordinates of the veedor', function () {
     $evidence = inboxEvidence($this->administrator, $this->hidden[0]);
     [$latitude] = pointMetersNorthOf(santaMartaWorksiteLocation(), 120);
 
-    expect($evidence['location'])->toBe(['anchored_worksite' => false, 'distance_meters' => 120, 'point' => null, 'corrected' => false, 'pending' => null])
+    expect($evidence['location'])->toBe(['anchored_worksite' => false, 'distance_meters' => 120, 'point' => null, 'corrected' => false, 'official' => null, 'pending' => null])
         ->and(json_encode($evidence))->not->toContain((string) round($latitude, 4));
 });
 
@@ -368,6 +385,7 @@ it('La evidencia cuyo primer reporte no fijó la ubicación llega por confirmar:
         'distance_meters' => null,
         'point' => ['latitude' => round($latitude, 7), 'longitude' => round($longitude, 7)],
         'corrected' => false,
+        'official' => null,
         'pending' => [
             'reason' => 'se tomó a 42.3 km de Santa Marta, y para fijar una obra hay que estar a menos de 30 km de su municipio',
             'status' => 'unlocated',

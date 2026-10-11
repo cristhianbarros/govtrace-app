@@ -28,6 +28,14 @@ Característica: Corregir la ubicación oficial de una obra
     Entonces la ubicación oficial de la obra queda en 11.6000, -74.2000
     Y el log registra mi ID, la fecha y hora, sin coordenadas anteriores, y las nuevas 11.6000, -74.2000
 
+  @complexity:medium
+  Escenario: La Bandeja muestra dónde quedó la ubicación corregida
+    Dado que el primer reporte de "Acueducto Gaira" fijó su ubicación en 11.2000, -74.2300
+    Cuando corrijo la ubicación de "Acueducto Gaira" a 11.2408, -74.1990 y guardo
+    Y abro mi Bandeja
+    Entonces la tarjeta de ese reporte muestra dos puntos: donde se tomó, en 11.2000, -74.2300, y la ubicación oficial hoy, en 11.2408, -74.1990
+    Y dice a cuántos metros de donde se tomó el reporte quedó la ubicación oficial
+
   @complexity:low @negative
   Escenario: Cada corrección queda en el log de auditoría
     Cuando corrijo la ubicación de "Acueducto Gaira" a 11.2408, -74.1990 y guardo

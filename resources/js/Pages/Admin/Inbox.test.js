@@ -14,7 +14,7 @@ vi.mock('@/services/api.js');
 // It. 45f: el mapa pequeño del punto que fijó la ubicación (Leaflet se prueba en LocationMap.test.js).
 vi.mock('@/Components/LocationMap.vue', () => ({
     default: defineComponent({
-        props: { modelValue: { type: Object, default: null }, readonly: { type: Boolean, default: false } },
+        props: { modelValue: { type: Object, default: null }, readonly: { type: Boolean, default: false }, official: { type: Object, default: null } },
         setup: (props) => () =>
             h('div', { 'data-test': 'location-map', 'data-readonly': String(props.readonly) }, `${props.modelValue.latitude}, ${props.modelValue.longitude}`),
     }),
@@ -244,6 +244,24 @@ describe('La ubicación de cada evidencia (it. 45f)', () => {
         expect(map.attributes('data-readonly')).toBe('true');
         expect(wrapper.get('a[data-test="correct-location"]').attributes('href')).toBe('/admin/worksites?corregir=1');
         expect(wrapper.get('a[data-test="correct-location"]').text()).toBe('Corregir ubicación');
+    });
+
+    it('La Bandeja muestra dónde quedó la ubicación corregida: both points, and how far the official one moved (it. 55)', async () => {
+        const official = { latitude: 11.2411, longitude: -74.1995, distance_meters: 1340 };
+        const wrapper = await openInbox([anchoring({ corrected: true, official })]);
+        const map = wrapper.getComponent('[data-test="location-map"]');
+
+        expect(map.props('official')).toEqual(official);
+        expect(wrapper.get('[data-test="official-moved"]').text()).toBe('La ubicación oficial hoy está a 1.340 m de donde se tomó este reporte.');
+        // Cada pin dice quién es: el rojo, la oficial; el gris, donde se tomó.
+        expect(wrapper.get('[data-test="official-legend"]').text()).toBe('Rojo: ubicación oficial hoy. Gris: donde se tomó el reporte.');
+    });
+
+    it('does not talk about an official location that was not corrected (it. 55)', async () => {
+        const wrapper = await openInbox([anchoring()]);
+
+        expect(wrapper.getComponent('[data-test="location-map"]').props('official')).toBeFalsy();
+        expect(wrapper.find('[data-test="official-moved"]').exists()).toBe(false);
     });
 
     it('says when the location that evidence fixed was corrected afterwards', async () => {
