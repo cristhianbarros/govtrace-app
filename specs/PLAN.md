@@ -3128,6 +3128,56 @@ El usuario pidió seguir con lo que no espera a nadie: la deuda técnica y los h
 
 **Modelo:** Sonnet medium.
 
+### Iteración 51 — El subdominio sale del nombre de la veeduría
+
+📝 **Pedida por el usuario el 2026-10-10**, por aprobar su orden. Hoy el Super Administrador escribe el subdominio a mano (`NewOrganization.vue`), y el servidor lo recibe tal cual (`Subdomain::fromString`).
+
+**Entregable:**
+- El subdominio se calcula con `Str::slug()` del nombre: "Veeduría Ciudadana Santa Marta" queda `veeduria-ciudadana-santa-marta`.
+- El formulario lo muestra mientras se escribe el nombre. El servidor lo calcula siempre: ignora lo que mande el formulario.
+- **Casos borde:**
+  1. Máximo 63 caracteres (límite del DNS), sin guion al final.
+  2. Si dos nombres dan el mismo slug, el segundo toma `-2`, `-3`…
+  3. Un nombre reservado (`api`, `admin`, `app`, `www`…) o de menos de 3 caracteres se rechaza, con el mensaje actual.
+  4. Las veedurías ya creadas no se tocan: cambiar su subdominio rompería enlaces, invitaciones y correos.
+  5. Al aprobar una solicitud de alta (V10), el subdominio sale de su nombre.
+- No se cambia después (R-SA-03).
+- **Pregunta abierta:** ¿el Super Administrador puede ajustar el subdominio calculado antes de registrar? La propuesta es que no.
+- **Historia:** se enmienda US-001 (el criterio dice que el Super Administrador lo asigna).
+
+**Done-when:** los escenarios de US-001 con su prueba, y el caso de colisión y el del nombre largo, en Pest, Vitest y e2e.
+
+**Modelo:** Sonnet medium.
+
+### Iteración 52 — Nada se carga entero: paginar y filtrar
+
+📝 **Pedida por el usuario el 2026-10-10**, por aprobar su orden. **Por qué:** la bandeja del Administrador muestra todas las evidencias de una vez, sin "Ver más" ni filtros. Con 20 administradores o más abriéndola a cada rato, y miles de evidencias, es un cuello de botella. La prueba de carga de la it. 50 mostró lo rápido que la base y el CPU de una máquina pequeña se agotan.
+
+**Inventario** (revisión del 2026-10-10 de `app/Application` y `app/Http/Controllers`):
+
+| Pantalla o API | Qué carga hoy | Orden de la iteración |
+|---|---|---|
+| **Bandeja del Administrador** (`ReviewInbox`) | Todas las evidencias de la veeduría, con su obra, su sello y su veedor | **Primero**: de 20 en 20, con filtros (estado de revisión, obra, veedor, fecha) y el conteo por estado |
+| **Informes de ciudadanos** (`CitizenReportInbox`) | Todos | Igual: de 20 en 20, con "por responder" primero |
+| **Mis reportes** del veedor (`MyReportsController`) | Todos sus reportes | De 20 en 20 y con filtro por estado |
+| **Veedores** (`ObserverController`) y **Obras** (`WorksiteController`) del Administrador | Todos, con sus contratos | De 20 en 20 y con buscador |
+| **Línea de tiempo de una obra** (`PublicTimeline`), su vista pública y el expediente (`WorksiteDossier`) | Todas las evidencias de la obra | De 20 en 20 ("Ver más"). El expediente para la Contraloría sí lleva todas: se arma en trozos, no en una sola consulta |
+| **Mapa público** (`PublicMap`) | Todos los pines | Por diseño (R-MAP-02: id, lat, lng, color). Se revisa cuántos son con 5.000 obras y si se agrupan por zoom |
+| **Datos abiertos** (`OpenData`) | Todas las evidencias publicadas, en una consulta | Se mantiene lo que se descarga, pero en trozos (`chunk`) y en flujo, no en memoria |
+| **Panel global:** organizaciones, uso (`UsageSummary`), costos de sellado (`SealingCosts`), fallas (`SealingFailures`) | Todas las organizaciones, y por cada una abre su base | De 20 en 20 y con buscador. Un recorrido por todas las bases en cada visita no escala: pasar a un cálculo programado |
+| **Búsqueda de territorios** (`SearchTerritories`) | Los 1.100 departamentos y municipios en cada tecla | Una consulta con `LIKE` y un tope, o cacheada |
+
+**Ya paginan:** la lista de contratos del Administrador (`ListTerritoryContracts`), el log de auditoría y la lista del veedor (it. 47a).
+
+**Forma común:**
+- Un solo patrón: `?page=` y 20 por página, con "Ver 20 más" (como la lista del veedor, it. 47a), y los filtros en el servidor.
+- Los índices que cada filtro necesite, con su migración.
+- **Medir antes y después con `make load-test`** (it. 50): un escenario nuevo, "el Administrador abre su bandeja", con una veeduría de 5.000 evidencias.
+
+**Done-when:** la bandeja y las otras pantallas de la tabla, con su escenario Gherkin; el escenario de carga de la bandeja, con su p95 antes y después.
+
+**Modelo:** Sonnet medium. Es rendimiento y pantallas; no toca la evidencia ni los sellos.
+
 ## Pivote a Stellar (2026-09-28)
 
 El proyecto participa en **Stellar Apex**, así que la blockchain pasa de EVM/Polygon a **Stellar**, con Smart Contracts en **Soroban (Rust)**:
