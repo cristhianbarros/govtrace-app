@@ -10,14 +10,21 @@ use DomainException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /** The Administrador's "Informes ciudadanos" (US-059-LEG): read, answer, discard. */
 class CitizenReportInboxController extends Controller
 {
-    public function index(CitizenReportInbox $inbox): JsonResponse
+    /** It. 52: de 20 en 20, y por estado (?page=, ?status=new|answered|discarded). */
+    public function index(Request $request, CitizenReportInbox $inbox): JsonResponse
     {
-        return response()->json(['data' => $inbox->list()]);
+        $query = $request->validate([
+            'page' => ['nullable', 'integer', 'min:1'],
+            'status' => ['nullable', Rule::in(array_keys(CitizenReport::STATUS_LABELS))],
+        ]);
+
+        return response()->json($inbox->list((int) ($query['page'] ?? 1), $query['status'] ?? null));
     }
 
     /** It. 46h: la foto número $position (de 1 a 3) del informe. */

@@ -6,9 +6,10 @@
 import { Head, usePage } from '@inertiajs/vue3';
 import { onBeforeUnmount, onMounted, ref } from 'vue';
 import LoadState from '@/Components/LoadState.vue';
+import MoreButton from '@/Components/MoreButton.vue';
 import ReceiptDetails from '@/Components/ReceiptDetails.vue';
 import VeedorNav from '@/Components/VeedorNav.vue';
-import { useLoader } from '@/composables/useLoader.js';
+import { usePagedList } from '@/composables/usePagedList.js';
 import { outboxState, startOutboxSync, syncOutbox } from '@/composables/useOutbox.js';
 import { registerServiceWorker } from '@/lib/pwa.js';
 import { MESSAGES, waitingLabel } from '@/lib/outbox.js';
@@ -22,7 +23,7 @@ const page = usePage();
 const TONE = { Sellado: 'good', Publicado: 'good', 'En Cola': 'waiting', Sellando: 'waiting', 'En Revisión': 'waiting', Rechazada: 'bad' };
 const TONE_CSS = { good: 'bg-green-100 text-green-900', waiting: 'bg-amber-100 text-amber-900', bad: 'bg-red-100 text-red-900', neutral: 'bg-slate-100 text-slate-800' };
 const tone = (status) => TONE[status] ?? 'neutral';
-const { data: reports, loading, error, load } = useLoader(fetchMyReports);
+const { data: reports, meta, loading, loadingMore, error, load, more } = usePagedList(fetchMyReports);
 
 // El recibo abierto de cada reporte: { loading, receipt, error }.
 const receipts = ref({});
@@ -101,6 +102,7 @@ onBeforeUnmount(() => window.removeEventListener('online', onOnline));
                     </div>
                 </li>
             </ol>
+            <MoreButton v-if="meta?.has_more" class="mt-3 w-full" :loading="loadingMore" @more="more" />
         </LoadState>
         <template #nav>
             <VeedorNav current="/my-reports" />

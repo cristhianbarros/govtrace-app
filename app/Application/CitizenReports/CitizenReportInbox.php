@@ -2,6 +2,7 @@
 
 namespace App\Application\CitizenReports;
 
+use App\Application\Pagination\Page;
 use App\Domain\Audit\AuditLog;
 use App\Domain\CitizenReports\CitizenReport;
 use App\Domain\CitizenReports\Notifications\CitizenReportAnswered;
@@ -18,24 +19,29 @@ use Illuminate\Support\Facades\Notification;
  */
 class CitizenReportInbox
 {
-    /** @return list<array<string, mixed>> newest first */
-    public function list(): array
+    /**
+     * It. 52: a page, the newest first; by status if asked (new, answered, discarded).
+     *
+     * @return array{data: list<array<string, mixed>>, total: int, has_more: bool}
+     */
+    public function list(int $page = 1, ?string $status = null): array
     {
-        return CitizenReport::query()->with('worksite')->latest('id')->get()
-            ->map(fn (CitizenReport $report) => [
-                // It. 46c (US-064-SEC): identificadores públicos.
-                'id' => $report->public_id,
-                'reference' => $report->reference(), // la que recibió el ciudadano
-                'worksite_id' => $report->worksite?->public_id,
-                'worksite' => CitizenReportDesk::nameOf($report->worksite),
-                'received_at' => $report->created_at->toIso8601String(),
-                'message' => $report->message,
-                // It. 46h: de 1 a 3 fotos, por su lugar en la lista (1, 2, 3), no por un número de registro.
-                'photo_urls' => array_map(fn (int $index) => "/citizen-reports/{$report->public_id}/photos/".($index + 1), array_keys($report->photo_paths)),
-                'status' => $report->status,
-                'status_label' => CitizenReport::STATUS_LABELS[$report->status],
-                'answer' => $report->answer,
-            ])->all();
+        $query = CitizenReport::query()->with('worksite')->when($status !== null, fn ($query) => $query->where('status', $status))->latest('id');
+
+        return Page::of($query, $page, fn ($reports) => $reports->map(fn (CitizenReport $report) => [
+            // It. 46c (US-064-SEC): identificadores públicos.
+            'id' => $report->public_id,
+            'reference' => $report->reference(), // la que recibió el ciudadano
+            'worksite_id' => $report->worksite?->public_id,
+            'worksite' => CitizenReportDesk::nameOf($report->worksite),
+            'received_at' => $report->created_at->toIso8601String(),
+            'message' => $report->message,
+            // It. 46h: de 1 a 3 fotos, por su lugar en la lista (1, 2, 3), no por un número de registro.
+            'photo_urls' => array_map(fn (int $index) => "/citizen-reports/{$report->public_id}/photos/".($index + 1), array_keys($report->photo_paths)),
+            'status' => $report->status,
+            'status_label' => CitizenReport::STATUS_LABELS[$report->status],
+            'answer' => $report->answer,
+        ]));
     }
 
     public function answer(User $administrator, int $id, string $answer): void

@@ -51,3 +51,14 @@ Característica: Seguimiento de mis reportes
     Dado que "laura@correo.co" tiene 3 reportes en mi organización
     Cuando abro "Mis Reportes"
     Entonces no veo ningún reporte de "laura@correo.co"
+
+  @complexity:medium
+  Escenario: Veo 20 reportes y Ver 20 más trae los siguientes
+    Dado que he enviado 45 reportes
+    Cuando abro "Mis Reportes"
+    Entonces veo 20 reportes, los más recientes primero
+    Cuando toco "Ver 20 más"
+    Entonces veo 40 reportes
+    Cuando toco "Ver 20 más"
+    Entonces veo 45 reportes
+    Y no veo "Ver 20 más"

@@ -13,6 +13,10 @@ import { page } from '@/testing/inertia.js';
 vi.mock('@inertiajs/vue3', async () => await import('@/testing/inertia.js'));
 vi.mock('@/services/api.js');
 
+/** What the server answers (it. 52): the page, how many there are and whether there are more. */
+const answer = (rows, extra = {}) => ({ data: rows, total: rows.length, has_more: false, ...extra });
+
+
 const PENDING = '⏳ Su evidencia está en proceso de sellado en la red Stellar. Este proceso toma unos minutos. El recibo criptográfico aparecerá aquí en breve.';
 
 const published = {
@@ -28,8 +32,8 @@ const published = {
 const rejected = { ...published, id: 11, technical_status: 'Sellado', editorial_status: 'Rechazada', rejection_reason: 'La foto no corresponde a la obra', receipt_url: '/reports/11/receipt' };
 const queued = { ...published, id: 10, technical_status: 'En Cola', editorial_status: 'En Revisión', receipt_url: '/reports/10/receipt' };
 
-async function openMyReports(reports = [published, rejected, queued]) {
-    fetchMyReports.mockResolvedValue(reports);
+async function openMyReports(reports = [published, rejected, queued], extra = {}) {
+    fetchMyReports.mockResolvedValue(answer(reports, extra));
     const wrapper = mount(MyReports);
     await flushPromises();
     return wrapper;
@@ -81,7 +85,7 @@ describe('La bandeja de salida en Mis Reportes (US-018)', () => {
         signal(false);
         const wrapper = await openMyReports();
         expect(wrapper.get('[data-test="outbox"]').text()).toBe('⏳ 2 reportes esperando conexión');
-        fetchMyReports.mockResolvedValue([{ ...queued, id: 99 }, published]);
+        fetchMyReports.mockResolvedValue(answer([{ ...queued, id: 99 }, published]));
 
         signal(true);
         window.dispatchEvent(new Event('online'));
@@ -149,7 +153,7 @@ describe('Mis Reportes (US-010)', () => {
         expect(mount(MyReports).text()).toContain('Cargando sus reportes…');
 
         fetchMyReports.mockReset();
-        fetchMyReports.mockRejectedValueOnce(new Error('Network Error')).mockResolvedValueOnce([published]);
+        fetchMyReports.mockRejectedValueOnce(new Error('Network Error')).mockResolvedValueOnce(answer([published]));
         const wrapper = mount(MyReports);
         await flushPromises();
         expect(wrapper.get('[role="alert"]').text()).toContain('No se pudo conectar con el servidor.');
@@ -226,5 +230,26 @@ describe('Los estados, de un vistazo (it. 40f)', () => {
         expect(tones(items(wrapper)[0])).toEqual(['good', 'good']);
         expect(tones(items(wrapper)[1])).toEqual(['good', 'bad']);
         expect(tones(items(wrapper)[2])).toEqual(['waiting', 'waiting']);
+    });
+});
+
+// It. 52 — de a una página.
+describe('Mis reportes de a una página (it. 52)', () => {
+    it('Veo 20 reportes y Ver 20 más trae los siguientes: appends the next page and hides the button at the end', async () => {
+        const wrapper = await openMyReports([published], { total: 21, has_more: true });
+        fetchMyReports.mockResolvedValue(answer([{ ...queued, id: 99 }], { total: 21 }));
+
+        await wrapper.get('[data-test="more"]').trigger('click');
+        await flushPromises();
+
+        expect(fetchMyReports).toHaveBeenLastCalledWith({ page: 2 });
+        expect(items(wrapper)).toHaveLength(2);
+        expect(wrapper.find('[data-test="more"]').exists()).toBe(false);
+    });
+
+    it('does not offer Ver 20 más when everything fits in one page', async () => {
+        const wrapper = await openMyReports();
+
+        expect(wrapper.find('[data-test="more"]').exists()).toBe(false);
     });
 });

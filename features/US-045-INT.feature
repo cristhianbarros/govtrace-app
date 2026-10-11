@@ -26,3 +26,25 @@ Característica: Agrupar varios contratos en una ficha de obra
     Dado que existe el contrato de obra "CO1.PCCNTR.5555555" en "Medellín" (05001)
     Cuando intento agruparlo con "CO1.PCCNTR.1111111"
     Entonces la acción es rechazada
+
+  @complexity:medium
+  Escenario: Las obras de la veeduría llegan de a 20 y Ver 20 más trae las siguientes
+    Dado que la organización tiene 45 obras
+    Cuando abro "Obras"
+    Entonces veo 20 obras y "45 obras"
+    Cuando toco "Ver 20 más"
+    Entonces veo 40 obras
+
+  @complexity:low
+  Escenario: Busco una obra por su nombre o por el objeto de sus contratos
+    Dado que la organización tiene las obras "Acueducto Gaira" y "Cancha de Bonda"
+    Cuando escribo "acueducto" en "Buscar una obra"
+    Entonces veo solo "Acueducto Gaira"
+    Y si ninguna coincide, veo "Ninguna obra con esa búsqueda."
+
+  @complexity:medium @edge
+  Escenario: Corregir ubicación desde la Bandeja abre la obra aunque no esté en la primera página
+    Dado que la obra "Cancha de Bonda" es la número 30 de la lista
+    Cuando toco "Corregir ubicación" en una evidencia de esa obra, en la Bandeja
+    Entonces veo la obra "Cancha de Bonda" lista para corregir, con "Mostrando la obra que va a corregir."
+    Y puedo tocar "Ver todas las obras"

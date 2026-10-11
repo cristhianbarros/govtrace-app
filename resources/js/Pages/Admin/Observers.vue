@@ -6,15 +6,18 @@
 // It. 54: los administradores tienen su propia pantalla (Administrators.vue).
 import { onMounted, ref } from 'vue';
 import LoadState from '@/Components/LoadState.vue';
+import MoreButton from '@/Components/MoreButton.vue';
 import RowAction from '@/Components/RowAction.vue';
-import { useLoader } from '@/composables/useLoader.js';
+import { usePagedList } from '@/composables/usePagedList.js';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { isEmail } from '@/lib/credentials.js';
 import { formatDay } from '@/lib/format.js';
 import { deactivateObserver, fetchObservers, inviteObserver, reactivateObserver, resendInvitation, revokeInvitation } from '@/services/api.js';
 import { errorMessage } from '@/services/errors.js';
 
-const { data: team, loading, error, load } = useLoader(fetchObservers);
+const { data: team, meta, loading, loadingMore, error, load, more, search } = usePagedList(fetchObservers);
+// It. 52: de 20 en 20, y se busca por correo.
+const keyword = ref('');
 const email = ref('');
 const sending = ref(false);
 const notice = ref(null);
@@ -77,7 +80,13 @@ onMounted(load);
 
         <p v-if="notice" role="status" class="rounded-lg bg-emerald-50 p-3 text-sm font-semibold text-emerald-800">{{ notice }}</p>
 
-        <LoadState :loading="loading" :error="error" :empty="team?.length === 0" loading-text="Cargando veedores…" empty-text="Aún no ha invitado veedores." illustration="team" @retry="load">
+        <div v-if="meta && (meta.total > 0 || keyword !== '')" class="flex flex-col gap-1">
+            <label for="search-team" class="text-sm font-semibold text-slate-700">Buscar por correo</label>
+            <input id="search-team" v-model="keyword" type="search" autocomplete="off" placeholder="carlos@" class="w-full rounded-lg border border-slate-300 px-3 py-3 text-base" @input="search(keyword)" />
+        </div>
+        <p v-if="meta && meta.total > 0" data-test="total" class="text-base text-slate-700">{{ meta.total }} {{ meta.total === 1 ? 'veedor' : 'veedores' }}</p>
+
+        <LoadState :loading="loading" :error="error" :empty="team?.length === 0" loading-text="Cargando veedores…" :empty-text="keyword.trim() === '' ? 'Aún no ha invitado veedores.' : 'Ningún veedor con ese correo.'" illustration="team" @retry="load">
             <ul class="flex flex-col divide-y divide-slate-100 rounded-lg bg-white">
                 <li v-for="member in team" :key="member.id" class="flex flex-col gap-2 px-3 py-3 text-sm">
                     <div class="flex items-center justify-between gap-2">
@@ -114,6 +123,7 @@ onMounted(load);
                     />
                 </li>
             </ul>
+            <MoreButton v-if="meta?.has_more" class="mt-3 w-full" :loading="loadingMore" @more="more" />
         </LoadState>
     </AdminLayout>
 </template>

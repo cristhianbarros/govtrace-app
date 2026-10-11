@@ -135,6 +135,25 @@ it('lists the veedores of the organization with the status of their invitation',
     ]);
 });
 
+it('Los veedores llegan de a una página y se buscan por correo: with the total and whether there are more (it. 52)', function () {
+    config(['limits.list_page_size' => 2]);
+    foreach (['laura@correo.co', 'pedro@correo.co', 'maria@correo.co'] as $email) {
+        reportingMember($this->tenant, $email);
+    }
+    $page = fn (array $query) => collect(asAdministrator('GET', '/observers?'.http_build_query($query))->assertOk()->json());
+
+    // Por correo: carlos, laura, maria, pedro.
+    expect($page([])->get('total'))->toBe(4)
+        ->and(array_column($page([])->get('data'), 'email'))->toBe(['carlos@correo.co', 'laura@correo.co'])
+        ->and($page([])->get('has_more'))->toBeTrue()
+        ->and(array_column($page(['page' => 2])->get('data'), 'email'))->toBe(['maria@correo.co', 'pedro@correo.co'])
+        ->and($page(['page' => 2])->get('has_more'))->toBeFalse()
+        // La búsqueda no distingue mayúsculas y cuenta solo lo que encuentra.
+        ->and(array_column($page(['q' => 'LAU'])->get('data'), 'email'))->toBe(['laura@correo.co'])
+        ->and($page(['q' => 'LAU'])->get('total'))->toBe(1);
+    asAdministrator('GET', '/observers?page=0')->assertUnprocessable()->assertJsonValidationErrors('page');
+});
+
 it('invites a veedor from the screen, or says why not', function () {
     asAdministrator('POST', '/observers/invite', ['email' => 'laura@correo.co'])
         ->assertCreated()
@@ -249,6 +268,34 @@ it('lists the worksites of the organization with their official location and the
             ['secop_contract_id' => 'CO1.PCCNTR.3333333', 'object' => 'Acueducto Gaira, segunda etapa'],
         ],
     ]]);
+});
+
+it('Las obras llegan de a una página y se buscan por nombre o por el objeto de sus contratos (it. 52)', function () {
+    config(['limits.list_page_size' => 2]);
+    reportableContract('CO1.PCCNTR.1111111', ['object' => 'Acueducto Gaira']);
+    reportableContract('CO1.PCCNTR.3333333', ['object' => 'Pavimentación Calle 30']);
+    reportableContract('CO1.PCCNTR.4444444', ['object' => 'Cancha de Bonda']);
+    $gaira = worksiteWithContracts($this->tenant, ['CO1.PCCNTR.1111111'], [11.2, -74.23]);
+    $calle = worksiteWithContracts($this->tenant, ['CO1.PCCNTR.3333333'], [11.24, -74.2]);
+    $bonda = worksiteWithContracts($this->tenant, ['CO1.PCCNTR.4444444'], [11.22, -74.18]);
+    $this->tenant->run(fn () => $bonda->update(['name' => 'Polideportivo de Bonda'])); // la ficha con nombre propio
+    $page = fn (array $query) => collect(asAdministrator('GET', '/worksites?'.http_build_query($query))->assertOk()->json());
+    $ids = fn ($response) => array_column($response->get('data'), 'id');
+
+    // Las fichas del setup (la de Santa Marta) cuentan: se piden solo las de esta prueba por su búsqueda.
+    expect($page([])->get('has_more'))->toBeTrue()
+        ->and(count($page([])->get('data')))->toBe(2)
+        ->and($page(['page' => 2])->get('total'))->toBe($page([])->get('total'))
+        // Por el objeto de un contrato, o por el nombre de la ficha, sin tildes ni mayúsculas.
+        ->and($ids($page(['q' => 'pavimentacion'])))->toBe([$calle->public_id])
+        ->and($ids($page(['q' => 'POLIDEPORTIVO'])))->toBe([$bonda->public_id])
+        ->and($ids($page(['q' => 'acueducto'])))->toBe([$gaira->public_id])
+        ->and($page(['q' => 'acueducto'])->get('total'))->toBe(1)
+        ->and($ids($page(['q' => 'nada de esto'])))->toBe([])
+        // El enlace de la Bandeja pide una obra por su id, esté en la página que esté.
+        ->and($ids($page(['worksite' => $bonda->public_id])))->toBe([$bonda->public_id]);
+    asAdministrator('GET', '/worksites?worksite=no-es-un-id')->assertUnprocessable()->assertJsonValidationErrors('worksite');
+    asAdministrator('GET', '/worksites?page=0')->assertUnprocessable()->assertJsonValidationErrors('page');
 });
 
 it('only lets the Administrador use the data of the panel', function (string $method, string $path) {

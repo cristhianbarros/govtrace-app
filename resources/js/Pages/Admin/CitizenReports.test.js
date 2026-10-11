@@ -8,6 +8,10 @@ import { answerCitizenReport, discardCitizenReport, fetchCitizenReports } from '
 vi.mock('@inertiajs/vue3', async () => await import('@/testing/inertia.js'));
 vi.mock('@/services/api.js');
 
+/** What the server answers (it. 52): the page, how many there are and whether there are more. */
+const answer = (rows, extra = {}) => ({ data: rows, total: rows.length, has_more: false, ...extra });
+
+
 // It. 46c (US-064-SEC): identificadores públicos, y la referencia corta que recibió el ciudadano.
 const report = (changes = {}) => ({
     id: '01j9xq3m7v8k2d4f6g8h07kq3m',
@@ -25,7 +29,7 @@ const report = (changes = {}) => ({
 const button = (wrapper, text) => wrapper.findAll('button').find((candidate) => candidate.text() === text);
 
 async function openReports(rows = [report()]) {
-    fetchCitizenReports.mockResolvedValue(rows);
+    fetchCitizenReports.mockResolvedValue(answer(rows));
     const wrapper = mount(CitizenReports);
     await flushPromises();
     return wrapper;
@@ -72,7 +76,7 @@ describe('Informes ciudadanos', () => {
     it('La veeduría responde al ciudadano: writes the answer, and the list shows it answered', async () => {
         answerCitizenReport.mockResolvedValue({ message: 'Respuesta enviada al ciudadano.' });
         const wrapper = await openReports();
-        fetchCitizenReports.mockResolvedValue([report({ status: 'answered', status_label: 'Atendido', answer: 'Gracias. El sábado va un veedor.' })]);
+        fetchCitizenReports.mockResolvedValue(answer([report({ status: 'answered', status_label: 'Atendido', answer: 'Gracias. El sábado va un veedor.' })]));
 
         await button(wrapper, 'Responder').trigger('click');
         await wrapper.get('textarea').setValue('Gracias. El sábado va un veedor.');
@@ -96,5 +100,47 @@ describe('Informes ciudadanos', () => {
 
         expect(discardCitizenReport).toHaveBeenCalledWith('01j9xq3m7v8k2d4f6g8h07kq3m');
         expect(wrapper.get('[role="status"]').text()).toBe('Informe descartado.');
+    });
+});
+
+// It. 52 — de a una página, y por estado.
+describe('Los informes de a una página, por estado (it. 52)', () => {
+    it('Veo 20 informes y Ver 20 más trae los siguientes: appends the next page, says how many there are', async () => {
+        const wrapper = await openReports([report()]);
+        fetchCitizenReports.mockResolvedValue(answer([report({ id: 'dos', message: 'Segundo' })], { total: 21, has_more: true }));
+        await wrapper.get('select#status').setValue('new');
+        await flushPromises();
+        expect(wrapper.get('[data-test="more"]').exists()).toBe(true);
+
+        fetchCitizenReports.mockResolvedValue(answer([report({ id: 'tres', message: 'Tercero' })], { total: 21 }));
+        await wrapper.get('[data-test="more"]').trigger('click');
+        await flushPromises();
+
+        expect(fetchCitizenReports).toHaveBeenLastCalledWith({ status: 'new', page: 2 });
+        expect(wrapper.findAll('[data-test="citizen-report"]')).toHaveLength(2);
+        expect(wrapper.find('[data-test="more"]').exists()).toBe(false);
+        expect(wrapper.get('[data-test="total"]').text()).toBe('21 informes');
+    });
+
+    it('Filtro los informes por estado: from the first page, and Todos brings them all back', async () => {
+        const wrapper = await openReports([report()]);
+
+        await wrapper.get('select#status').setValue('answered');
+        await flushPromises();
+        expect(fetchCitizenReports).toHaveBeenLastCalledWith({ status: 'answered', page: 1 });
+
+        await wrapper.get('select#status').setValue('');
+        await flushPromises();
+        expect(fetchCitizenReports).toHaveBeenLastCalledWith({ page: 1 });
+    });
+
+    it('says so when no report has that status', async () => {
+        const wrapper = await openReports([report()]);
+        fetchCitizenReports.mockResolvedValue(answer([]));
+
+        await wrapper.get('select#status').setValue('discarded');
+        await flushPromises();
+
+        expect(wrapper.text()).toContain('Ningún informe con ese estado.');
     });
 });

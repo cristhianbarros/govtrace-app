@@ -9,6 +9,10 @@ import { correctWorksiteLocation, fetchWorksites, groupContracts } from '@/servi
 
 vi.mock('@inertiajs/vue3', async () => await import('@/testing/inertia.js'));
 vi.mock('@/services/api.js');
+
+/** What the server answers (it. 52): the page, how many there are and whether there are more. */
+const answer = (rows, extra = {}) => ({ data: rows, total: rows.length, has_more: false, ...extra });
+
 // El pin: un botón que "lo arrastra" hasta el sitio real de la obra.
 vi.mock('@/Components/LocationMap.vue', () => ({
     default: defineComponent({
@@ -32,7 +36,7 @@ const gaira = {
 };
 
 async function openWorksites(worksites = [gaira]) {
-    fetchWorksites.mockResolvedValue(worksites);
+    fetchWorksites.mockResolvedValue(answer(worksites));
     const wrapper = mount(Worksites);
     await flushPromises();
     return wrapper;
@@ -56,7 +60,7 @@ describe('Obras', () => {
     });
 
     it('says when it could not load them, and lets retry', async () => {
-        fetchWorksites.mockRejectedValueOnce(new Error('Network Error')).mockResolvedValueOnce([gaira]);
+        fetchWorksites.mockRejectedValueOnce(new Error('Network Error')).mockResolvedValueOnce(answer([gaira]));
         const wrapper = mount(Worksites);
         await flushPromises();
 
@@ -98,7 +102,7 @@ describe('Obras', () => {
         ],
     ])('Corrección de la ubicación %s', async (_way, moveThePin) => {
         correctWorksiteLocation.mockResolvedValue({ message: ADJUSTED });
-        fetchWorksites.mockResolvedValue([gaira]);
+        fetchWorksites.mockResolvedValue(answer([gaira]));
         const wrapper = await openWorksites();
 
         await correct(wrapper);
@@ -146,7 +150,7 @@ describe('Agrupar contratos en una ficha (US-045-INT)', () => {
     it('Agrupación de dos contratos: groups them under the name, and shows the worksite with it', async () => {
         groupContracts.mockResolvedValue({ data: { id: 3, name: 'Acueducto Gaira', secop_contract_ids: ['CO1.PCCNTR.1111111', 'CO1.PCCNTR.3333333'] } });
         const wrapper = await openWorksites();
-        fetchWorksites.mockResolvedValue([{ ...gaira, name: 'Acueducto Gaira' }]);
+        fetchWorksites.mockResolvedValue(answer([{ ...gaira, name: 'Acueducto Gaira' }]));
 
         expect(button(wrapper, 'Agrupar').attributes('disabled')).toBeDefined();
         await group(wrapper, 'Acueducto Gaira', ['CO1.PCCNTR.1111111', ' CO1.PCCNTR.3333333 ', '']);
@@ -205,6 +209,59 @@ describe('El expediente de una obra (it. 44b)', () => {
         const wrapper = await openWorksites();
 
         expect(wrapper.find('input#latitude').exists()).toBe(false);
+        window.history.replaceState({}, '', '/admin/worksites');
+    });
+});
+
+// It. 52 — de a una página, con búsqueda, y la obra del enlace de la Bandeja pedida por su id.
+describe('Las obras de a una página, con búsqueda (it. 52)', () => {
+    const field = (wrapper) => wrapper.get('input#search-worksites');
+
+    it('Las obras de la veeduría llegan de a 20 y Ver 20 más trae las siguientes: appends the next page, says how many there are', async () => {
+        fetchWorksites.mockResolvedValue(answer([gaira], { total: 21, has_more: true }));
+        const wrapper = mount(Worksites);
+        await flushPromises();
+        fetchWorksites.mockResolvedValue(answer([{ ...gaira, id: 'otra' }], { total: 21 }));
+
+        await wrapper.get('[data-test="more"]').trigger('click');
+        await flushPromises();
+
+        expect(fetchWorksites).toHaveBeenLastCalledWith({ page: 2 });
+        expect(wrapper.findAll('article')).toHaveLength(2);
+        expect(wrapper.find('[data-test="more"]').exists()).toBe(false);
+        expect(wrapper.get('[data-test="total"]').text()).toBe('21 obras');
+    });
+
+    it('Busco una obra por su nombre o por el objeto de sus contratos: after a pause, and says when nothing matches', async () => {
+        vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+        const wrapper = await openWorksites([gaira]);
+        fetchWorksites.mockResolvedValue(answer([]));
+
+        await field(wrapper).setValue('pavimentación');
+        vi.advanceTimersByTime(300);
+        await flushPromises();
+
+        expect(fetchWorksites).toHaveBeenLastCalledWith({ q: 'pavimentación', page: 1 });
+        expect(wrapper.text()).toContain('Ninguna obra con esa búsqueda.');
+        vi.useRealTimers();
+    });
+
+    it('Corregir ubicación desde la Bandeja abre la obra aunque no esté en la primera página: asks the server for it, and offers all of them back', async () => {
+        const named = { ...gaira, id: '01j9xq3m7v8k2d4f6g8h0jkmnp' };
+        window.history.replaceState({}, '', `/admin/worksites?corregir=${named.id}`);
+
+        const wrapper = await openWorksites([named]);
+
+        expect(fetchWorksites).toHaveBeenCalledWith({ worksite: named.id, page: 1 });
+        expect(wrapper.text()).toContain('Mostrando la obra que va a corregir.');
+        expect(wrapper.find('input#search-worksites').exists()).toBe(false);
+
+        fetchWorksites.mockResolvedValue(answer([named, { ...gaira, id: 'otra' }]));
+        await wrapper.get('[data-test="show-all"]').trigger('click');
+        await flushPromises();
+
+        expect(fetchWorksites).toHaveBeenLastCalledWith({ page: 1 });
+        expect(wrapper.findAll('article')).toHaveLength(2);
         window.history.replaceState({}, '', '/admin/worksites');
     });
 });

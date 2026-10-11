@@ -69,6 +69,13 @@ function receivedReport(array $overrides = []): int
     return test()->tenant->run(fn () => Report::idOf($publicId)); // it. 46c: el API da su identificador público
 }
 
+function myReportsPage(int $page = 1): TestResponse
+{
+    test()->flushSession();
+
+    return test()->actingAs(test()->veedor, 'tenant')->getJson("http://veeduria-smr.govtrace.localhost/me/reports?page={$page}");
+}
+
 function mine(int $reportId): array
 {
     return collect(myReports()->assertOk()->json('data'))->firstWhere('id', publicIdOf(Report::class, $reportId));
@@ -170,4 +177,23 @@ it('is only for veedores, and serves the screen', function () {
     $this->withoutVite()->actingAs($this->veedor, 'tenant')->get('http://veeduria-smr.govtrace.localhost/my-reports')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page->component('Veedor/MyReports'));
+});
+
+// It. 52 — de a una página, no todos los reportes de una vez ------------------
+
+it('Mis reportes llegan de a una página: the most recent first, with the total and whether there are more', function () {
+    config(['limits.list_page_size' => 2]);
+    $ids = array_map(fn () => receivedReport(), range(1, 3));
+
+    $first = myReportsPage()->assertOk()->json();
+    $second = myReportsPage(2)->assertOk()->json();
+
+    // El más reciente primero; ninguno se repite entre páginas.
+    expect(array_column($first['data'], 'id'))->toBe([publicIdOf(Report::class, $ids[2]), publicIdOf(Report::class, $ids[1])])
+        ->and($first['total'])->toBe(3)
+        ->and($first['has_more'])->toBeTrue()
+        ->and(array_column($second['data'], 'id'))->toBe([publicIdOf(Report::class, $ids[0])])
+        ->and($second['has_more'])->toBeFalse();
+    myReportsPage(3)->assertOk()->assertJsonCount(0, 'data');
+    myReportsPage(0)->assertUnprocessable()->assertJsonValidationErrors('page');
 });

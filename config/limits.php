@@ -7,6 +7,9 @@
  */
 return [
     // Por veedor y por hora. La bandeja de salida de la PWA guarda hasta 10: cabe entera.
+    // It. 52: cuántas filas lleva una página de un listado ("Ver 20 más").
+    'list_page_size' => (int) env('LIST_PAGE_SIZE', 20),
+
     'reports_per_veedor_per_hour' => (int) env('REPORTS_PER_VEEDOR_PER_HOUR', 30),
 
     // Por visitante (su IP real, detrás del proxy) y por minuto: el mapa, las obras, las pruebas.
