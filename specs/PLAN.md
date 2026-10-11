@@ -3342,6 +3342,19 @@ El usuario pidió seguir con lo que no espera a nadie: la deuda técnica y los h
 
 **Modelo:** Sonnet medium. Va junto a la 52, que también es de rendimiento.
 
+✅ **Cumplida (2026-10-10), con un hallazgo que cambia lo que se esperaba.**
+- **La caché** (`PublicCache`, `PUBLIC_CACHE_SECONDS`, 60 por defecto, 0 la apaga): los pines, la lista, los filtros, las estadísticas y la vista de cada obra se guardan por organización, con una entrada por combinación de filtros. Guarda con una **versión** por organización: `forget()` la sube, y las respuestas viejas dejan de pedirse. La suben una decisión editorial (publicar, rechazar, retirar), una ubicación corregida, una ficha agrupada y el cálculo diario del riesgo si cambió alguno. Se sube después de confirmar la transacción, para que ninguna visita guarde lo de antes. La sincronización con SECOP no la sube: se ve al vencer los 60 s.
+- **Aislamiento:** dentro de una organización, el almacén lleva su prefijo (`TenantCacheBootstrapper`): la de una veeduría nunca le sirve a otra. Probado.
+- **Una trampa de las pruebas:** con el almacén de arreglo de la suite, la caché se perdía al sellar un reporte (cambio de contexto), y las pruebas de invalidación pasaban sin probar nada. `PublicCacheTest` usa el almacén de base de datos, el mismo de producción; la suite deja la caché en 0 (`phpunit.xml`) para no cambiar las demás.
+
+**El hallazgo: lo caro de una petición pública no era armar el mapa.**
+- Medido en local: una sola petición tarda unos 125–170 ms con o sin caché, y `/up` solo 19 ms. Una ruta mínima de la veeduría (`/manifest.webmanifest`) ya cuesta ~115 ms. El costo está en la petición misma: identificar a la organización, conectar a su base… y **abrir una sesión**.
+- **Cada visitante anónimo abría una sesión en la base de datos** (leer y escribir una fila, y dos cookies) con solo mirar el mapa, y no la usa. Había 84 filas en la tabla de sesiones de un entorno de pruebas.
+- **El cambio:** los endpoints públicos de lectura ya no pasan por sesión, cookies ni CSRF (`withoutMiddleware`). Una petición baja de ~135 ms a ~93 ms (un tercio menos), no quedan filas de sesión por visitante y la pantalla de entrar sigue abriendo la suya. Probado: sin `Set-Cookie`, visto en rojo con el código anterior.
+
+**Lo que NO está comprobado, y por qué:** cuánto más aguanta la máquina de staging. Mi entorno local no sirve para medirlo: su PHP de desarrollo no tiene opcache, y con cualquier cambio satura en unas 20 peticiones por segundo (con 60 por segundo agota las conexiones de PostgreSQL, dentro y fuera de la caché). La ganancia real hay que medirla en staging (imagen `qa`, con opcache) con la prueba de carga de la it. 50b, que exige subir los límites por IP de forma temporal: queda pendiente, con el usuario.
+
+**Lo que queda en el mapa de las mejoras:** el grueso del costo de una petición pública es identificar a la organización y conectar a su base (~70 ms en local). Atacarlo (cachear la identificación del tenant de Stancl, un pool de conexiones) es otra iteración, y se decide con la medida de staging.
 ### Orden de lo que está en espera (2026-10-10)
 
 | Orden | Qué | Por qué en ese lugar |

@@ -115,6 +115,8 @@ it('allows by default 30 reports per veedor per hour, 120 public requests per vi
     expect(config('limits'))->toBe([
         // It. 52: cuántas filas lleva una página de un listado.
         'list_page_size' => 20,
+        // It. 56: segundos que se guarda lo público; 0 en la suite (phpunit.xml), 60 por defecto.
+        'public_cache_seconds' => 0,
         'reports_per_veedor_per_hour' => 30,
         'public_requests_per_minute' => 120,
         'open_data_per_minute' => 10,

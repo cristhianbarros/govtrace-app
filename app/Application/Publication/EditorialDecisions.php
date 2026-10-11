@@ -36,7 +36,7 @@ class EditorialDecisions
     /** @param  Closure(Report): void  $decision */
     private function decide(User $administrator, int $reportId, string $action, Closure $decision): Report
     {
-        return DB::transaction(function () use ($administrator, $reportId, $action, $decision) {
+        $report = DB::transaction(function () use ($administrator, $reportId, $action, $decision) {
             $report = Report::query()->lockForUpdate()->findOrFail($reportId);
             $before = $report->editorial_status;
 
@@ -58,5 +58,11 @@ class EditorialDecisions
 
             return $report;
         });
+
+        // It. 56: lo público (el mapa, la vista de la obra, las estadísticas) cambió: se calcula de nuevo
+        // en la siguiente visita. Después de confirmar, para que ninguna visita guarde lo de antes.
+        PublicCache::forget();
+
+        return $report;
     }
 }

@@ -37,6 +37,8 @@
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="BROADCAST_CONNECTION" value="null"/>
         <env name="CACHE_STORE" value="array"/>
+        <!-- It. 56: la caché de lo público, apagada en la suite: las pruebas cambian los datos entre dos peticiones. PublicCacheTest la enciende. -->
+        <env name="PUBLIC_CACHE_SECONDS" value="0"/>
         <env name="DB_DATABASE" value="testing"/>
         <env name="DB_URL" value=""/>
         <env name="MAIL_MAILER" value="array"/>

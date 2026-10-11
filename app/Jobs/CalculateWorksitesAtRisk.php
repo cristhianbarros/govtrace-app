@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Application\Publication\PublicCache;
 use App\Domain\Contracts\Contract;
 use App\Domain\Worksites\Worksite;
 use App\Infrastructure\Tenancy\Tenant;
@@ -33,7 +34,9 @@ class CalculateWorksitesAtRisk implements ShouldQueue
 
     private function recalculateForCurrentTenant(): void
     {
-        Worksite::query()->with('contracts')->get()->each(function (Worksite $worksite) {
+        $changed = false;
+
+        Worksite::query()->with('contracts')->get()->each(function (Worksite $worksite) use (&$changed) {
             // Una ficha puede agrupar varios contratos (R-INT-05, p. ej.
             // las fases de una obra): basta con que uno siga en ejecución
             // según SECOP ("En ejecución" o "Modificado", R-SEC-07) con su
@@ -45,7 +48,13 @@ class CalculateWorksitesAtRisk implements ShouldQueue
 
             if ($worksite->at_risk !== $atRisk) {
                 $worksite->update(['at_risk' => $atRisk]);
+                $changed = true;
             }
         });
+
+        // It. 56: el color de un pin depende del riesgo (US-034): si cambió alguno, el mapa se calcula de nuevo.
+        if ($changed) {
+            PublicCache::forget();
+        }
     }
 }

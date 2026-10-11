@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Application\Privacy\DataPolicy;
+use App\Application\Publication\PublicCache;
 use App\Application\Publication\PublicStats;
 use App\Application\Publication\StellarForBrowser;
 use App\Domain\Organization\Roles;
@@ -45,7 +46,12 @@ use App\Http\Controllers\Tenant\WorksiteLocationController;
 use App\Http\Middleware\EnsureAccountIsUsable;
 use App\Http\Middleware\EnsureImpedimentsDeclared;
 use App\Http\Middleware\EnsureMapIsOnline;
+use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
+use Illuminate\Cookie\Middleware\EncryptCookies;
+use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
+use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Route;
+use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Inertia\Inertia;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
@@ -82,7 +88,17 @@ Route::middleware([
         Route::get('/stats', fn () => Inertia::render('Public/Stats'))->name('public.stats');
     });
     // It. 41: las API públicas, con un límite por visitante.
-    Route::middleware([EnsureMapIsOnline::class, 'throttle:public'])->group(function () {
+    // It. 56: lo público no necesita una sesión (ni cookies): sin ellas, cada petición anónima ya no abre una
+    // fila en la base de datos, y es un tercio más rápida. El mapa, la lista, los filtros, las estadísticas
+    // y las fotos publicadas son iguales para todos los visitantes.
+    Route::middleware([EnsureMapIsOnline::class, 'throttle:public'])->withoutMiddleware([
+        EncryptCookies::class,
+        AddQueuedCookiesToResponse::class,
+        StartSession::class,
+        ShareErrorsFromSession::class,
+        PreventRequestForgery::class,
+        ScopeSessions::class,
+    ])->group(function () {
         // US-027 / US-029: el mapa público — los pines, y lo que pide un clic en uno (it. 24).
         Route::get('/public/worksites', [PublicWorksiteController::class, 'index'])->name('public.worksites.index');
         Route::get('/public/worksites/filters', [PublicWorksiteController::class, 'filters'])->name('public.worksites.filters');
@@ -90,7 +106,8 @@ Route::middleware([
         Route::get('/public/worksites/list', [PublicWorksiteController::class, 'listing'])->name('public.worksites.list');
         Route::get('/public/worksites/{worksite}', [PublicWorksiteController::class, 'show'])->where('worksite', PublicId::PATTERN)->name('public.worksites.show');
         Route::get('/public/evidences/{evidence}/photo', [PublicEvidenceController::class, 'photo'])->where('evidence', PublicId::PATTERN)->name('public.evidences.photo');
-        Route::get('/public/stats', fn (PublicStats $stats) => response()->json($stats->handle()))->name('public.stats.data');
+        // It. 56: iguales para todos los visitantes: se guardan unos segundos (PublicCache).
+        Route::get('/public/stats', fn (PublicStats $stats) => response()->json(PublicCache::remember('stats', [], fn () => $stats->handle())))->name('public.stats.data');
     });
     // US-059-LEG (it. 44f): el ciudadano informa a la veeduría, con su correo verificado por un código.
     Route::middleware(EnsureMapIsOnline::class)->group(function () {

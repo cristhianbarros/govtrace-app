@@ -2,6 +2,7 @@
 
 namespace App\Application\Worksites;
 
+use App\Application\Publication\PublicCache;
 use App\Domain\Audit\AuditLog;
 use App\Domain\Geography\GeoPoint;
 use App\Domain\Organization\User;
@@ -37,5 +38,8 @@ class CorrectWorksiteLocation
                 after: ['worksite_id' => $worksite->id, 'latitude' => $newLocation->latitude, 'longitude' => $newLocation->longitude],
             );
         });
+
+        // It. 56: el mapa público muestra la ubicación nueva en la siguiente visita, no al vencer su caché.
+        PublicCache::forget();
     }
 }
