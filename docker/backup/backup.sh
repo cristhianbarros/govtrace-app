@@ -24,7 +24,14 @@ exec 9>"$root/.backup.lock"
 flock 9
 # El nombre y la hora de la copia, ya con el turno: dos copias no pueden llevar el mismo.
 started=$(date +%s)
-stamp=$(date -u +%Y%m%dT%H%M%SZ)
+stamp=${BACKUP_STAMP:-$(date -u +%Y%m%dT%H%M%SZ)} # BACKUP_STAMP: solo para make backup-check
+# El nombre es la hora en segundos: con pocos archivos, una copia termina en menos de un
+# segundo y la siguiente tomaba el mismo. Y mv, con el nombre ya usado, metía la copia nueva
+# DENTRO de la anterior. Se espera al siguiente segundo.
+while [ -e "$root/$stamp" ]; do
+    sleep 1
+    stamp=$(date -u +%Y%m%dT%H%M%SZ)
+done
 work="$root/.$stamp.partial"
 find "$root" -mindepth 1 -maxdepth 1 -name '.*.partial' -exec rm -rf {} +
 mkdir -p "$work/postgres" "$work/evidencias"

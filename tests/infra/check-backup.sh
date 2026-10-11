@@ -41,6 +41,20 @@ else
     flunk "dos copias a la vez se pisan (códigos de salida: ${rcs:-?}, copias nuevas: $((after - before)), restos: $partials)"
 fi
 
+# It. 49: un nombre de copia ya usado (dos copias que terminan en el mismo segundo, que con pocos
+# archivos pasa) no se mezcla con la anterior: mv metía la copia nueva DENTRO de la vieja y se
+# perdía. BACKUP_STAMP fija el nombre, solo para esta prueba.
+latest=$(in_backup 'ls -1d /backups/2*Z | tail -1')
+before=$(in_backup 'ls -1d /backups/2*Z | wc -l')
+in_backup "BACKUP_STAMP=$(basename "$latest") backup.sh" >/dev/null 2>&1; rc=$?
+after=$(in_backup 'ls -1d /backups/2*Z | wc -l')
+nested=$(in_backup "ls -1d $latest/.*partial 2>/dev/null | wc -l")
+if [ "$rc" -eq 0 ] && [ "$((after - before))" -eq 1 ] && [ "$nested" -eq 0 ]; then
+    pass "una copia con un nombre ya usado toma otro, y no se mete dentro de la anterior"
+else
+    flunk "una copia con un nombre ya usado se mezcla con la anterior (salida: $rc, copias nuevas: $((after - before)), anidadas: $nested)"
+fi
+
 # Una copia "de hace 31 días", que la próxima debe borrar.
 in_backup 'mkdir -p /backups/20200101T000000Z && touch -d "31 days ago" /backups/20200101T000000Z'
 
