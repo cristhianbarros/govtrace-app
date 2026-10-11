@@ -3139,7 +3139,7 @@ El usuario pidió seguir con lo que no espera a nadie: la deuda técnica y los h
 
 **Entregable:**
 - El subdominio se calcula con `Str::slug()` del nombre: "Veeduría Ciudadana Santa Marta" queda `veeduria-ciudadana-santa-marta`.
-- El formulario lo muestra mientras se escribe el nombre. El servidor lo calcula siempre: ignora lo que mande el formulario.
+- El formulario lo muestra mientras se escribe el nombre. Si el formulario no manda subdominio (la solicitud de alta aprobada, un cliente de la API), el servidor lo calcula del nombre.
 - **Casos borde:**
   1. Máximo 63 caracteres (límite del DNS), sin guion al final.
   2. Si dos nombres dan el mismo slug, el segundo toma `-2`, `-3`…
@@ -3147,7 +3147,7 @@ El usuario pidió seguir con lo que no espera a nadie: la deuda técnica y los h
   4. Las veedurías ya creadas no se tocan: cambiar su subdominio rompería enlaces, invitaciones y correos.
   5. Al aprobar una solicitud de alta (V10), el subdominio sale de su nombre.
 - No se cambia después (R-SA-03).
-- **Pregunta abierta:** ¿el Super Administrador puede ajustar el subdominio calculado antes de registrar? La propuesta es que no.
+- **Decidido por el usuario (2026-10-10):** el campo **se queda editable**, pero se propone calculado desde el nombre de la organización. El Super Administrador lo puede ajustar antes de registrar; el servidor valida lo que llegue con las mismas reglas (formato, 63 caracteres, reservadas, repetido). Una vez registrada, no se cambia.
 - **Historia:** se enmienda US-001 (el criterio dice que el Super Administrador lo asigna).
 
 **Done-when:** los escenarios de US-001 con su prueba, y el caso de colisión y el del nombre largo, en Pest, Vitest y e2e.
@@ -3262,9 +3262,23 @@ El usuario pidió seguir con lo que no espera a nadie: la deuda técnica y los h
 
 **Modelo:** Sonnet medium.
 
+✅ **Cumplida (2026-10-10).**
+- **Cómo quedó:**
+  - `ReviewInbox` devuelve, para una evidencia cuya ubicación se corrigió, `official`: la ubicación oficial de hoy y a cuántos metros quedó del punto del reporte (`null` si no se corrigió).
+  - `LocationMap` acepta `official`: dibuja un segundo pin (el del reporte pasa a gris y la oficial es roja) y encuadra los dos.
+  - La tarjeta (`EvidenceCard`) dice "La ubicación oficial hoy está a N m de donde se tomó este reporte" y trae una leyenda de los colores (los pines solo tenían su título, que no se ve).
+  - La Bandeja ya pedía sus datos al abrirse, así que no se necesitó otro cambio para que se actualice.
+- **Historia:** US-035 enmendada (criterio y un escenario nuevo, "La Bandeja muestra dónde quedó la ubicación corregida").
+- **Pruebas:**
+  - Pest (`ReviewInboxTest`): los cinco con la clave nueva, el de la corrección con la ubicación y los metros, y uno nuevo que dice que sin corregir no trae la oficial.
+  - Vitest: `LocationMap` con segundo pin y sin él; la tarjeta con los dos puntos, la distancia y la leyenda.
+  - Todo visto en rojo antes.
+- **Visto en un navegador real:** se creó un reporte que fija una obra, se corrigió su ubicación desde "Obras" y se abrió la Bandeja: antes, un pin; después, dos ("Donde se tomó el reporte" y "Ubicación oficial hoy") a 1.034 m, con el texto y la leyenda.
+- **Lo que no se hizo:** una prueba e2e permanente. El fixture de `make e2e` no tiene un reporte que haya fijado la ubicación de su obra, y agregarlo movería los conteos de otras pruebas (la Bandeja y la revisión de V4). Queda como idea para una iteración de pruebas.
+
 ### Iteración 56 — La caché de lo público
 
-📝 **Propuesta por Claude el 2026-10-10**, por aprobar. **Por qué:** la segunda corrida de la prueba de carga (it. 50b) mostró que la máquina de staging atiende unas 19 peticiones por segundo, unos 100 ms de CPU cada una. El mapa, la lista, los filtros y las estadísticas públicas **son iguales para todos los visitantes** y hoy se calculan en cada visita.
+✅ **Propuesta por Claude y aprobada por el usuario el 2026-10-10** ("Aprobado"). **Por qué:** la segunda corrida de la prueba de carga (it. 50b) mostró que la máquina de staging atiende unas 19 peticiones por segundo, unos 100 ms de CPU cada una. El mapa, la lista, los filtros y las estadísticas públicas **son iguales para todos los visitantes** y hoy se calculan en cada visita.
 
 **Entregable:**
 - Guardar en caché de 30 a 60 s las respuestas públicas que no dependen de quien las pide (`/public/worksites`, `/list`, `/filters`, `/public/stats`), **por organización**: la caché de una veeduría no puede servirle datos a otra (la caché ya lleva el prefijo de la organización).

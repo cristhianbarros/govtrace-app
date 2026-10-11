@@ -132,7 +132,11 @@ async function decide(decision) {
         <p v-if="distance !== null" data-test="distance" class="text-base text-slate-700">Tomada a {{ distance }} m de la obra.</p>
         <div v-if="anchored" data-test="anchored" class="flex flex-col gap-2 rounded-lg bg-amber-50 p-3 ring-1 ring-amber-200">
             <p class="text-base font-semibold text-amber-900">{{ ANCHORED }}{{ location.corrected ? ' Después se corrigió.' : '' }}</p>
-            <LocationMap :model-value="location.point" readonly />
+            <LocationMap :model-value="location.point" :official="location.official" readonly />
+            <p v-if="location.official" data-test="official-moved" class="text-base text-slate-800">
+                La ubicación oficial hoy está a {{ new Intl.NumberFormat('es-CO').format(location.official.distance_meters) }} m de donde se tomó este reporte.
+            </p>
+            <p v-if="location.official" data-test="official-legend" class="text-base text-slate-700">Rojo: ubicación oficial hoy. Gris: donde se tomó el reporte.</p>
             <a
                 data-test="correct-location"
                 :href="correctHref"

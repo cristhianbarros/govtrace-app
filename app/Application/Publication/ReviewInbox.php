@@ -3,6 +3,7 @@
 namespace App\Application\Publication;
 
 use App\Domain\Contracts\Contract;
+use App\Domain\Geography\GeoPoint;
 use App\Domain\Geography\Municipality;
 use App\Domain\Geography\PlaceName;
 use App\Domain\Reports\Blurring;
@@ -80,25 +81,34 @@ class ReviewInbox
      * proposed as) the worksite's; and whether the location was corrected or
      * confirmed afterwards (US-035).
      *
-     * @return array{anchored_worksite: bool, distance_meters: ?int, point: ?array{latitude: float, longitude: float}, corrected: bool, pending: ?array{reason: string, status: string}}
+     * It. 55: when the location was corrected, where the official one is today and how far
+     * it is from this report's point — the card draws both.
+     *
+     * @return array{anchored_worksite: bool, distance_meters: ?int, point: ?array{latitude: float, longitude: float}, corrected: bool, official: ?array{latitude: float, longitude: float, distance_meters: int}, pending: ?array{reason: string, status: string}}
      */
     private function location(Report $report): array
     {
         $pending = PendingLocation::reason($report);
 
         if (! $report->anchored_worksite && $pending === null) {
-            return ['anchored_worksite' => false, 'distance_meters' => $report->distance_to_worksite_meters, 'point' => null, 'corrected' => false, 'pending' => null];
+            return ['anchored_worksite' => false, 'distance_meters' => $report->distance_to_worksite_meters, 'point' => null, 'corrected' => false, 'official' => null, 'pending' => null];
         }
 
         $point = ['latitude' => round((float) $report->latitude, 7), 'longitude' => round((float) $report->longitude, 7)];
         $official = $report->worksite?->location();
         $atThisPoint = $official !== null && [round($official->latitude, 7), round($official->longitude, 7)] === array_values($point);
+        $corrected = $report->anchored_worksite && ! $atThisPoint;
 
         return [
             'anchored_worksite' => $report->anchored_worksite,
             'distance_meters' => $report->distance_to_worksite_meters,
             'point' => $point,
-            'corrected' => $report->anchored_worksite && ! $atThisPoint,
+            'corrected' => $corrected,
+            'official' => $corrected && $official !== null ? [
+                'latitude' => round($official->latitude, 7),
+                'longitude' => round($official->longitude, 7),
+                'distance_meters' => (int) round((new GeoPoint($point['latitude'], $point['longitude']))->distanceInMetersTo($official)),
+            ] : null,
             'pending' => $pending === null ? null : [
                 'reason' => $pending,
                 // unlocated: the worksite still has no location; confirmed: it was fixed here; elsewhere: somewhere else.
