@@ -24,9 +24,14 @@ async function fillAndSubmit(wrapper, { name = 'Veeduría Ciudadana Santa Marta'
     await flushPromises();
 }
 
+// It. 51: el nombre propone el subdominio tras una pausa de 300 ms. Con temporizadores reales, los de
+// una prueba disparaban durante la siguiente (y llamaban a su mock): en todo el archivo, falsos.
 beforeEach(() => {
     vi.resetAllMocks();
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
 });
+
+afterEach(() => vi.useRealTimers());
 
 describe('Alta de organización', () => {
     it('Alta exitosa de una organización: registers it with name, NIT and subdomain', async () => {
@@ -180,9 +185,6 @@ describe('Consultar el RUES (it. 46b)', () => {
 // It. 51 — el subdominio sale del nombre de la veeduría, y se puede ajustar.
 describe('El subdominio, propuesto desde el nombre (it. 51)', () => {
     const SUGGESTED = { subdomain: 'veeduria-ciudadana-santa-marta', address: 'veeduria-ciudadana-santa-marta.govtrace.localhost' };
-
-    beforeEach(() => vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] }));
-    afterEach(() => vi.useRealTimers());
 
     async function typeName(wrapper, name) {
         await wrapper.get('input#name').setValue(name);
