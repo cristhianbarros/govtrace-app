@@ -3094,6 +3094,10 @@ El usuario pidió seguir con lo que no espera a nadie: la deuda técnica y los h
 
 **Visto en rojo:** el PR #111, con una prueba de Vitest rota a propósito, dejó "Frontend" y "CI completo" en rojo, y con `main` protegida no se pudo fusionar. Se cerró sin fusionar.
 
+**Después, en el CI (2026-10-10): una carrera real en los respaldos.** El chequeo de respaldos falló una vez ("de 5 archivos, 0 se enlazan con la copia anterior") y pasó al reintentar. La causa no era la prueba: `backup.sh` borra **todas** las carpetas `.partial` al empezar, también la de otra copia en curso. El servicio hace una copia al arrancar y cada hora, y `make backup-now` puede coincidir: se pisan, y una falla.
+- **Arreglo:** `backup.sh` toma un candado (`flock`) al empezar: la segunda copia espera su turno. El nombre y la hora de la copia se toman ya con el turno.
+- **Prueba:** `make backup-check` lanza dos copias a la vez. Con el script anterior fallaba (códigos 1 o 2, una sola copia completa, a veces restos); con el candado, las dos terminan. Visto en rojo antes.
+
 **`main` protegida (2026-10-10, por el usuario):**
 - exige "CI completo", también a los administradores;
 - no permite force-push ni borrar la rama.

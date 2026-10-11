@@ -15,11 +15,17 @@ root=${BACKUP_DIR:-/backups}
 bucket=${BACKUP_S3_BUCKET:?Falta BACKUP_S3_BUCKET}
 endpoint=${BACKUP_S3_ENDPOINT:-}
 exclude=" ${BACKUP_EXCLUDE_DATABASES:-} "
+
+mkdir -p "$root"
+# Una copia a la vez: el servicio hace la suya al arrancar y cada hora, y make backup-now
+# puede coincidir. Sin esto, la que empieza borra la carpeta .partial de la que sigue en
+# curso (la línea de abajo), y las dos se pisan. La segunda espera su turno.
+exec 9>"$root/.backup.lock"
+flock 9
+# El nombre y la hora de la copia, ya con el turno: dos copias no pueden llevar el mismo.
 started=$(date +%s)
 stamp=$(date -u +%Y%m%dT%H%M%SZ)
 work="$root/.$stamp.partial"
-
-mkdir -p "$root"
 find "$root" -mindepth 1 -maxdepth 1 -name '.*.partial' -exec rm -rf {} +
 mkdir -p "$work/postgres" "$work/evidencias"
 
