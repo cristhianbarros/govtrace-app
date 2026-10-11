@@ -31,7 +31,7 @@ Característica: Línea de tiempo de evidencias publicadas de una obra
   Escenario: Las coordenadas de cada evidencia se muestran aproximadas
     Dado que una evidencia se capturó en 11.240812, -74.199034
     Cuando veo su tarjeta en la línea de tiempo
-    Entonces si se muestran coordenadas tienen una precisión de unos 100 m y no las exactas
+    Entonces la tarjeta dice "Ubicación aproximada, a unos 100 m del lugar." sin mostrar coordenadas numéricas, que parecerían más precisas de lo que son
 
   @complexity:medium @edge
   Escenario: Una evidencia retirada queda como lápida

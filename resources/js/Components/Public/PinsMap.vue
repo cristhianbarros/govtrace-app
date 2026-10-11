@@ -10,19 +10,25 @@ const props = defineProps({
 
 const emit = defineEmits(['select']);
 
+// It. 53 (R-PRIV-02): la ubicación pública es aproximada, a unos 100 m (se redondea a una grilla,
+// GeoPoint::approximate). Alrededor de cada pin va un círculo de ese radio: se ve una zona, no un
+// punto exacto. No recibe el toque: el que se toca es el pin.
+const APPROXIMATE_METERS = 100;
+
 // El color, y lo que dice un lector de pantalla de cada pin.
 // It. 40b: además del color, un signo (WCAG 1.4.1: el color solo no basta),
 // y un pin de 36 px, fácil de tocar.
 const LOOK = {
-    green: { css: 'bg-green-700 text-white', sign: '✓', title: 'Obra en estado normal' },
-    yellow: { css: 'bg-yellow-400 text-slate-900', sign: '!', title: 'Obra con alerta' },
-    red: { css: 'bg-red-700 text-white', sign: '✕', title: 'Obra en riesgo' },
+    green: { css: 'bg-green-700 text-white', sign: '✓', title: 'Obra en estado normal', zone: '#15803d' },
+    yellow: { css: 'bg-yellow-400 text-slate-900', sign: '!', title: 'Obra con alerta', zone: '#ca8a04' },
+    red: { css: 'bg-red-700 text-white', sign: '✕', title: 'Obra en riesgo', zone: '#b91c1c' },
 };
 
 const container = ref(null);
 const map = shallowRef(null);
 const tiles = shallowRef(null);
 const markers = shallowRef([]);
+const circles = shallowRef([]);
 
 onMounted(async () => {
     const [{ default: L }] = await Promise.all([import('leaflet'), import('leaflet/dist/leaflet.css')]);
@@ -32,6 +38,14 @@ onMounted(async () => {
         maxZoom: 19,
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
     }).addTo(map.value);
+
+    circles.value = props.pins.map((pin) => L.circle([pin.lat, pin.lng], {
+        radius: APPROXIMATE_METERS,
+        color: (LOOK[pin.color_pin] ?? LOOK.green).zone,
+        weight: 1,
+        fillOpacity: 0.12,
+        interactive: false,
+    }).addTo(map.value));
 
     markers.value = props.pins.map((pin) => {
         const look = LOOK[pin.color_pin] ?? LOOK.green;
@@ -51,7 +65,7 @@ onMounted(async () => {
 
 onBeforeUnmount(() => map.value?.remove());
 
-defineExpose({ tiles, markers });
+defineExpose({ tiles, markers, circles });
 </script>
 
 <template>

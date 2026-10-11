@@ -31,6 +31,10 @@ test('Ve el mapa de obras de la veeduría y sus filtros', async ({ page }) => {
     await page.goto(ORG);
 
     await expect(page.locator('.leaflet-marker-icon').first()).toBeVisible();
+    // It. 53 (R-PRIV-02): el punto es aproximado, y se ve: un círculo de unos 100 m por pin, y la nota.
+    await expect(page.locator('.leaflet-overlay-pane svg path').first()).toBeAttached();
+    expect(await page.locator('.leaflet-overlay-pane svg path').count()).toBe(await page.locator('.leaflet-marker-icon').count());
+    await expect(page.locator('[data-test="approximate-note"]')).toHaveText('Cada punto es aproximado: la obra está a unos 100 m de él. Es para proteger a quien tomó la foto.');
     // It. 40b: los estados, junto al mapa y sin desplazarse.
     const states = page.locator('[data-test="state"]');
     await expect(states).toHaveCount(3);

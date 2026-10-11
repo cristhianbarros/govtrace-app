@@ -64,8 +64,8 @@ const original = (index) => (files().length > 1 ? `Descargar archivo original ($
                     >Descargar su prueba</a>
                 </li>
             </ul>
-            <p v-if="evidence.approximate_location" class="mt-2 text-xs text-slate-500">
-                Ubicación aproximada (unos 100 m): {{ evidence.approximate_location.lat }}, {{ evidence.approximate_location.lng }}
+            <p v-if="evidence.approximate_location" data-test="approximate" class="mt-2 text-sm text-slate-700">
+                Ubicación aproximada, a unos 100 m del lugar.
             </p>
         </template>
 

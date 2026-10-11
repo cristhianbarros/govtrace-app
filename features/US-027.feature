@@ -58,6 +58,13 @@ Característica: Pines del mapa por color de estado
     Cuando abro el mapa
     Entonces la carga inicial solo trae id, latitud, longitud y color de cada pin
 
+  @complexity:low @privacy
+  Escenario: El mapa dice que cada punto es aproximado
+    Dado que el mapa de la veeduría tiene obras con evidencias publicadas
+    Cuando abro el mapa
+    Entonces cada pin tiene alrededor un círculo de unos 100 m
+    Y bajo el mapa se lee "Cada punto es aproximado: la obra está a unos 100 m de él. Es para proteger a quien tomó la foto."
+
   @complexity:low
   Escenario: Los estados del mapa se explican junto al mapa, con ícono y palabra
     Cuando abro el mapa público de la organización

@@ -7,6 +7,7 @@ criterios_aceptacion:
     - "Cada tarjeta muestra: fecha/hora, clasificación, comentario, miniaturas de las fotos (con visor) y un botón 'Comprobar que es original' (antes el destacado 'Verificar Sello Blockchain'; lenguaje claro, it. 40c)"
     - "Si se muestran las coordenadas de la evidencia, son aproximadas (redondeadas a ~100 m), nunca las exactas (R-PRIV-02)"
   validaciones_reglas:
+    - "(It. 53, 2026-10-10) La tarjeta de cada evidencia dice 'Ubicación aproximada, a unos 100 m del lugar.' con palabras, sin coordenadas numéricas (tres decimales parecen más precisos de lo que son), en letra de 14 px o más y con buen contraste"
     - "Publicación manual: toda evidencia sellada nace 'Oculta'; solo aparece en el mapa y en la línea de tiempo cuando el Administrador de Organización pulsa 'Publicar' (US-036)"
   manejo_errores: []
   requisitos_ux:
