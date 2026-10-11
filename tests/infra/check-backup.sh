@@ -26,6 +26,21 @@ $COMPOSE up -d --wait backup >/dev/null || { echo "FAIL  el servicio backup no a
 # enlazar ni una base de organización que pueda faltar.
 $COMPOSE exec -T -u workspace app php tests/e2e/fixture.php >/dev/null || { echo "FAIL  no se pudo preparar la organización de pruebas (¿make up?)"; exit 1; }
 
+# It. 49: dos copias a la vez (la del servicio, que hace una al arrancar y cada hora, y una
+# manual) no se pisan: backup.sh borraba las carpetas .partial de TODAS al empezar, también la
+# de la otra copia en curso. Con un candado, la segunda espera su turno y las dos terminan.
+in_backup 'backup.sh >/tmp/a.log 2>&1 & backup.sh >/tmp/b.log 2>&1 & wait -n; wait' >/dev/null 2>&1
+before=$(in_backup 'ls -1d /backups/2*Z | wc -l')
+in_backup 'rm -f /tmp/c1.log /tmp/c2.log; (backup.sh >/tmp/c1.log 2>&1; echo $? >/tmp/c1.rc) & (backup.sh >/tmp/c2.log 2>&1; echo $? >/tmp/c2.rc) & wait'
+after=$(in_backup 'ls -1d /backups/2*Z | wc -l')
+partials=$(in_backup 'ls -1d /backups/.*.partial 2>/dev/null | wc -l')
+rcs=$(in_backup 'cat /tmp/c1.rc /tmp/c2.rc | sort -u | tr -d "\n"')
+if [ "$rcs" = 0 ] && [ "$((after - before))" -ge 2 ] && [ "$partials" -eq 0 ]; then
+    pass "dos copias a la vez terminan las dos, completas y sin dejar restos"
+else
+    flunk "dos copias a la vez se pisan (códigos de salida: ${rcs:-?}, copias nuevas: $((after - before)), restos: $partials)"
+fi
+
 # Una copia "de hace 31 días", que la próxima debe borrar.
 in_backup 'mkdir -p /backups/20200101T000000Z && touch -d "31 days ago" /backups/20200101T000000Z'
 
