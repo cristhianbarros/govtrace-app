@@ -30,12 +30,16 @@ beforeEach(function () {
 
     // Antecedentes: 3 entradas de Santa Marta y 2 de Ciénaga, y nada más.
     DB::table('audit_logs')->delete();
-    $this->travel(-5)->minutes();
+    // El mediodía de Bogotá: las entradas "de hace 5 minutos" quedan dentro del día de Bogotá
+    // aunque la prueba corra en los primeros minutos tras su medianoche (05:00 UTC), que
+    // dejaba dos en el día anterior y fallaba el CI.
+    $noon = now('America/Bogota')->setTime(12, 0);
+    $this->travelTo($noon->copy()->subMinutes(5));
     $this->smrEntries = [
         AuditLog::record('worksite.location_corrected', $this->smr->id, 'organization_admin', (string) $this->administrator->id, 'Ana Pérez', ['latitude' => 11.2], ['latitude' => 11.2408]),
         AuditLog::record('evidence.published', $this->smr->id, 'organization_admin', (string) $this->administrator->id, 'Ana Pérez', ['editorial_status' => 'hidden'], ['editorial_status' => 'published']),
     ];
-    $this->travelBack();
+    $this->travelTo($noon);
     $this->smrEntries[] = AuditLog::record('organization.legal_data_updated', $this->smr->id, 'super_admin', (string) $this->superAdmin->id, 'Root', ['nit' => '900123456-8'], ['nit' => '901234567-7']);
     $this->cienagaEntries = [
         AuditLog::record('observer.deactivated', $this->cienaga->id, 'organization_admin', '1', 'Pedro Ruiz', ['is_active' => true], ['is_active' => false]),
@@ -44,6 +48,7 @@ beforeEach(function () {
 });
 
 afterEach(function () {
+    $this->travelBack();
     if (tenant()) {
         tenancy()->end();
     }
