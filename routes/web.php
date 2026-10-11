@@ -88,6 +88,8 @@ foreach (config('tenancy.central_domains') as $domain) {
             Route::get('/admin/organizations/{tenant}/registration-document', [OrganizationController::class, 'registrationDocument'])->name('admin.organizations.registration-document');
             Route::post('/admin/organization-requests/{organizationRequest}/reject', [OrganizationRequestController::class, 'reject'])->where('organizationRequest', PublicId::PATTERN)->name('admin.organization-requests.reject');
             Route::get('/admin/organizations/data', [OrganizationController::class, 'index'])->name('admin.organizations.index');
+            // It. 51: el subdominio que propone el nombre de una veeduría (antes que {tenant}, que no lo confunda).
+            Route::get('/admin/organizations/subdomain', [OrganizationController::class, 'subdomain'])->name('admin.organizations.subdomain');
             Route::post('/admin/organizations', [OrganizationController::class, 'store'])->name('admin.organizations.store');
             Route::get('/admin/organizations/{tenant}', [OrganizationController::class, 'show'])->name('admin.organizations.detail');
             Route::put('/admin/organizations/{tenant}/nit', [OrganizationController::class, 'updateNit'])->name('admin.organizations.update-nit');

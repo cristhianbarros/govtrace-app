@@ -7,6 +7,7 @@ criterios_aceptacion:
     - "Al enviar, el sistema valida los datos, crea la instancia del tenant y el subdominio queda habilitado para responder peticiones"
     - "La organización queda aprobada y activa (no existe paso de aprobación separado)"
   validaciones_reglas:
+    - "(It. 51, 2026-10-10; pedido por el usuario) El subdominio sale del nombre de la veeduría con Str::slug() (sin tildes ni eñe, en minúsculas, con guiones), cortado a 63 caracteres (el límite del DNS) sin guion al final. El formulario lo propone mientras se escribe el nombre y el Super Administrador lo puede ajustar antes de registrar (decisión del usuario); sin uno escrito, el servidor lo calcula. Uno escrito se respeta y se valida como siempre (si está tomado, error); uno calculado que ya existe toma -2, -3… Un nombre cuyo slug es una palabra reservada, o sin letras, se rechaza con el mensaje de siempre. Las veedurías ya creadas no se tocan, y el subdominio no cambia una vez registrada (R-SA-03)"
     - "NIT: numérico, con dígito de verificación OBLIGATORIO, comprobado con el algoritmo oficial de la DIAN (se rechaza si no coincide), y único en la base de datos"
     - "Subdominio: solo minúsculas, números y guiones medios (^[a-z0-9-]+$), mínimo 3 caracteres, único"
     - "Subdominio: no puede ser una palabra reservada del sistema: api, admin, app, www, auth, assets"

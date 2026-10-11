@@ -9,6 +9,7 @@ use App\Application\Organization\ReactivateOrganization;
 use App\Application\Organization\RegisterOrganizationWithAdministrator;
 use App\Application\Organization\RegistrationDocuments;
 use App\Application\Organization\RuesLookup;
+use App\Application\Organization\SuggestSubdomain;
 use App\Application\Organization\SuspendOrganization;
 use App\Application\Organization\UpdateOrganizationLegalData;
 use App\Domain\Organization\Exceptions\OrganizationValidationException;
@@ -63,7 +64,8 @@ class OrganizationController extends Controller
             'nit' => ['nullable', 'string'],
             'registration_number' => ['nullable', 'string', 'max:100'],
             'registration_authority' => ['nullable', 'string', 'max:150'],
-            'subdomain' => ['required', 'string'],
+            // It. 51: opcional. Sin uno, sale del nombre de la veeduría; con uno, se respeta.
+            'subdomain' => ['nullable', 'string'],
             'administrator_name' => ['nullable', 'string', 'required_with:administrator_email'],
             'administrator_email' => ['nullable', 'string', 'required_with:administrator_name'],
             'request_id' => ['nullable', 'string'], // it. 43k: la solicitud de alta de la que sale; 46c: su identificador público
@@ -75,7 +77,7 @@ class OrganizationController extends Controller
             $tenant = (new RegisterOrganizationWithAdministrator)->handle(
                 $data['nit'] ?? null,
                 $data['name'],
-                $data['subdomain'],
+                $data['subdomain'] ?? null,
                 $data['administrator_name'] ?? null,
                 $data['administrator_email'] ?? null,
                 $data['registration_number'] ?? null,
@@ -101,6 +103,22 @@ class OrganizationController extends Controller
         $organization = Tenant::query()->findOrFail($tenant);
 
         return RegistrationDocuments::download($organization->registration_document_path, "Inscripción {$organization->name}");
+    }
+
+    /**
+     * It. 51 (US-001): el subdominio que propone el nombre de una veeduría, con su dirección, para
+     * mostrarlo en el formulario mientras se escribe. Si el nombre no da uno válido, nada: el campo
+     * queda libre para escribirlo a mano.
+     */
+    public function subdomain(Request $request, SuggestSubdomain $suggest): JsonResponse
+    {
+        $data = $request->validate(['name' => ['required', 'string', 'max:200']]);
+        $subdomain = $suggest->handle($data['name']);
+
+        return response()->json([
+            'subdomain' => $subdomain?->value,
+            'address' => $subdomain === null ? null : $suggest->addressOf($subdomain->value),
+        ]);
     }
 
     /** It. 46b (US-001): lo que dice el RUES de un NIT o una inscripción, antes de registrar la organización. */

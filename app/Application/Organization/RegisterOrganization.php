@@ -33,7 +33,7 @@ class RegisterOrganization
      * or acta and the personería or cámara de comercio that registered it —,
      * or both; never neither.
      */
-    public function handle(?string $nit, string $name, string $subdomain, ?string $registrationNumber = null, ?string $registrationAuthority = null): Tenant
+    public function handle(?string $nit, string $name, ?string $subdomain, ?string $registrationNumber = null, ?string $registrationAuthority = null): Tenant
     {
         // Structural guard for R-TA-01: the Super Administrator operates
         // from the central domain, where tenancy is never initialized.
@@ -50,8 +50,13 @@ class RegisterOrganization
         if ($nit === null && $registration === null) {
             throw OrganizationValidationException::identificationRequired();
         }
-        $subdomain = Subdomain::fromString($subdomain);
         $name = OrganizationName::fromString($name);
+        // It. 51: uno escrito se respeta y se valida (si está tomado, es un error); sin uno, sale del
+        // nombre, y si ya está tomado, toma -2, -3… Un nombre que no da un subdominio válido se
+        // rechaza con el mensaje de siempre.
+        $subdomain = filled($subdomain)
+            ? Subdomain::fromString(trim($subdomain))
+            : ((new SuggestSubdomain)->handle($name->value) ?? Subdomain::fromString(Subdomain::slugOf($name->value)));
 
         if ($nit && Tenant::query()->where('nit', $nit->value())->exists()) {
             throw OrganizationValidationException::duplicateNit();

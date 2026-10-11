@@ -207,4 +207,6 @@ export const rejectOrganizationRequest = (id, reason) => dataOf(http.post(`/admi
 // It. 46b: lo que dicen los datos abiertos del RUES de una solicitud, o de un NIT o una inscripción.
 export const fetchOrganizationRequestRues = (id) => dataOf(http.get(`/admin/organization-requests/${id}/rues`));
 export const lookupRues = (query) => dataOf(http.get('/admin/rues', { params: query }));
+/** It. 51: el subdominio que propone el nombre de una veeduría: { subdomain, address }, o ambos null si el nombre no da uno válido. */
+export const suggestSubdomain = (name) => dataOf(http.get('/admin/organizations/subdomain', { params: { name } }));
 
