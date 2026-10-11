@@ -3097,6 +3097,7 @@ El usuario pidió seguir con lo que no espera a nadie: la deuda técnica y los h
 **Después, en el CI (2026-10-10): una carrera real en los respaldos.** El chequeo de respaldos falló una vez ("de 5 archivos, 0 se enlazan con la copia anterior") y pasó al reintentar. La causa no era la prueba: `backup.sh` borra **todas** las carpetas `.partial` al empezar, también la de otra copia en curso. El servicio hace una copia al arrancar y cada hora, y `make backup-now` puede coincidir: se pisan, y una falla.
 - **Arreglo:** `backup.sh` toma un candado (`flock`) al empezar: la segunda copia espera su turno. El nombre y la hora de la copia se toman ya con el turno.
 - **Prueba:** `make backup-check` lanza dos copias a la vez. Con el script anterior fallaba (códigos 1 o 2, una sola copia completa, a veces restos); con el candado, las dos terminan. Visto en rojo antes.
+- **Segunda falla, que apareció al fusionar la 55:** con pocos archivos (como en el CI, 5), una copia termina en menos de un segundo y la siguiente toma **el mismo nombre** (la hora en segundos). Y `mv "$work" "$root/$stamp"`, con el nombre ya usado, metía la copia nueva **dentro** de la anterior: salida 0, ninguna copia nueva, y una carpeta anidada. Ahora, si el nombre existe, espera al siguiente segundo. `BACKUP_STAMP` fija el nombre solo para `make backup-check`, que ahora prueba esa colisión directamente (rojo: salida 0, 0 copias nuevas, 1 anidada).
 
 **`main` protegida (2026-10-10, por el usuario):**
 - exige "CI completo", también a los administradores;
