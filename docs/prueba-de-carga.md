@@ -59,3 +59,11 @@ La app limita las peticiones por diseño (`config/limits.php`): 120 por minuto y
 - Cada reporte es real: queda guardado, sellado en testnet y en la Bandeja de la veeduría. Conviene una veeduría solo para pruebas.
 - La patrocinadora paga cada sello (XLM de testnet, gratis). Con ráfagas largas, el sellado va por turnos, uno por ledger (it. 39): la cola de sellos crece y se vacía después.
 - Los reportes de una prueba se ven en la Bandeja. Hay que rechazarlos o dar de baja la veeduría de pruebas al terminar.
+
+## Lo público, con la caché (it. 56)
+
+`PUBLIC_CACHE_SECONDS` (60 por defecto; 0 la apaga) guarda el mapa, la lista, los filtros, las estadísticas y la vista de cada obra por organización. Para medir lo público **sin** caché, ponga `PUBLIC_CACHE_SECONDS=0` en el entorno de la prueba; con ella, el valor de siempre.
+
+Dos cosas que conviene saber antes de medir:
+- **Local no sirve para medir la capacidad de lo público.** El PHP de desarrollo no tiene opcache (cada petición recompila Laravel) y satura en unas 20 peticiones por segundo con o sin caché. La medida buena es en staging (imagen `qa`).
+- **Lo caro de una petición pública no es armar el mapa:** es identificar a la organización y conectar a su base. La caché evita las consultas de las obras y los reportes (probado: cero consultas en la segunda petición); lo demás sigue ahí. Los endpoints públicos de lectura tampoco abren una sesión por visitante (it. 56).

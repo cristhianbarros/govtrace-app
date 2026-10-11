@@ -2,6 +2,7 @@
 
 namespace App\Application\Worksites;
 
+use App\Application\Publication\PublicCache;
 use App\Domain\Audit\AuditLog;
 use App\Domain\Contracts\Contract;
 use App\Domain\Organization\User;
@@ -54,7 +55,11 @@ class GroupWorksiteContracts
 
         try {
             // El log vive en la base central; si falla, las fichas no cambian.
-            return DB::transaction(fn () => $this->group($administrator, $name, $secopContractIds));
+            $worksite = DB::transaction(fn () => $this->group($administrator, $name, $secopContractIds));
+            // It. 56: las obras del mapa público cambiaron (una ficha agrupa varias): se calculan de nuevo.
+            PublicCache::forget();
+
+            return $worksite;
         } catch (UniqueConstraintViolationException) {
             throw WorksiteGroupingRejected::reportedMeanwhile();
         }

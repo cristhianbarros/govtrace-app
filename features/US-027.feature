@@ -65,6 +65,31 @@ Característica: Pines del mapa por color de estado
     Entonces cada pin tiene alrededor un círculo de unos 100 m
     Y bajo el mapa se lee "Cada punto es aproximado: la obra está a unos 100 m de él. Es para proteger a quien tomó la foto."
 
+  @complexity:medium
+  Escenario: Lo público se calcula una vez por minuto
+    Dado que alguien abrió el mapa de la veeduría hace unos segundos
+    Cuando otro visitante pide el mapa, la lista, los filtros o las estadísticas
+    Entonces la respuesta sale de la memoria, sin volver a consultar las obras ni los reportes
+    Y la de cada combinación de filtros se guarda aparte
+
+  @complexity:medium
+  Escenario: Una publicación se ve de inmediato
+    Dado que el mapa de la veeduría está guardado en la memoria
+    Cuando el Administrador publica, rechaza o retira una evidencia, corrige la ubicación de una obra o agrupa contratos
+    Entonces el siguiente visitante ve el mapa y la obra ya cambiados, sin esperar el minuto
+
+  @complexity:medium @privacy
+  Escenario: La caché de una veeduría no le sirve a otra
+    Dado que el mapa de "Veeduría Ciudadana Santa Marta" está guardado en la memoria
+    Cuando un visitante pide el mapa de "Veeduría Ciénaga"
+    Entonces ve solo las obras de "Veeduría Ciénaga"
+
+  @complexity:low
+  Escenario: Lo público no abre una sesión ni pone cookies
+    Cuando un visitante sin cuenta pide el mapa, la lista, los filtros o las estadísticas
+    Entonces la respuesta no trae cookies y no queda una sesión guardada
+    Pero la pantalla de entrar sí abre su sesión
+
   @complexity:low
   Escenario: Los estados del mapa se explican junto al mapa, con ícono y palabra
     Cuando abro el mapa público de la organización

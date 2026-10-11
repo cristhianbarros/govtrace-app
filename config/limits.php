@@ -10,6 +10,11 @@ return [
     // It. 52: cuántas filas lleva una página de un listado ("Ver 20 más").
     'list_page_size' => (int) env('LIST_PAGE_SIZE', 20),
 
+    // It. 56: cuántos segundos se guarda lo público (el mapa, la lista, los filtros, las estadísticas y la
+    // vista de cada obra), por organización. Una decisión editorial, una ubicación corregida o una ficha
+    // agrupada lo borran al instante; con 0, no se guarda nada.
+    'public_cache_seconds' => (int) env('PUBLIC_CACHE_SECONDS', 60),
+
     'reports_per_veedor_per_hour' => (int) env('REPORTS_PER_VEEDOR_PER_HOUR', 30),
 
     // Por visitante (su IP real, detrás del proxy) y por minuto: el mapa, las obras, las pruebas.

@@ -7,6 +7,7 @@ criterios_aceptacion:
     - "🟡 Amarillo (Alerta/Retraso): obra en plazo cuya evidencia PUBLICADA más reciente fue clasificada como 'Retraso'"
     - "🔴 Rojo (En riesgo/Vencida): la fecha de terminación expiró y SECOP la sigue mostrando 'En ejecución' (US-034), o la evidencia PUBLICADA más reciente es de 'Abandono'"
   validaciones_reglas:
+    - "(It. 56, 2026-10-10; propuesta de Claude, aprobada por el usuario) Lo público (los pines, la lista, los filtros, las estadísticas y la vista de cada obra) se guarda 60 segundos por organización (PUBLIC_CACHE_SECONDS; 0 apaga la caché), con una entrada por cada combinación de filtros; la caché lleva el prefijo de la organización y nunca le sirve a otra. Una decisión editorial (publicar, rechazar, retirar), una ubicación corregida, una ficha agrupada o el cambio de riesgo del cálculo diario la borran al instante. Los endpoints públicos de lectura no abren una sesión ni ponen cookies"
     - "(It. 53, 2026-10-10; pedido por el usuario) El punto público es aproximado (R-PRIV-02) y el mapa lo dice: un círculo de unos 100 m alrededor de cada pin (no recibe el toque) y la nota 'Cada punto es aproximado: la obra está a unos 100 m de él. Es para proteger a quien tomó la foto.' Lo que confundió fue que el pin parecía exacto; la regla de privacidad no cambia"
     - "R-MAP-01: cada organización tiene su mapa público aislado en su subdominio"
     - "R-MAP-02: la carga inicial solo trae [{id, lat, lng, color_pin}]"
