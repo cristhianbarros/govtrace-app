@@ -3224,6 +3224,21 @@ El usuario pidió seguir con lo que no espera a nadie: la deuda técnica y los h
 
 **Modelo:** Sonnet medium.
 
+✅ **Cumplida (2026-10-10).**
+- **Cómo quedó:**
+  - `Admin/Administrators.vue` es la pantalla nueva (`/admin/administrators`), con su lista, su estado, "Reintentar" si falla y su formulario de invitar.
+  - `Admin/Observers.vue` ya no trae la sección de administradores, ni los pide al servidor.
+  - El menú gana "Administradores" en el grupo "Equipo". No es una de las tres pestañas de abajo en el celular: está en "Más".
+  - **Los permisos no cambian**: las rutas de la API (`/administrators`, `/administrators/invite`) son las mismas, y la pantalla va en el mismo grupo del Administrador.
+- **Historias:** US-061-USR enmendada (criterio, historia y un escenario nuevo, "Veedores y Administradores van en pantallas separadas"); el escenario de invitar dice ahora "desde Administradores".
+- **Pruebas:**
+  - Vitest: las pruebas de administradores se movieron a `Administrators.test.js` y suman siete (carga, error y "Reintentar", la lista, la explicación, invitar, un rechazo del servidor y que no trae veedores ni los pide); la de Veedores comprueba que no trae administradores.
+  - Pest: la pantalla nueva sirve solo al Administrador (`AdminPanelTest`).
+  - e2e: V3 invita a otro Administrador desde su pantalla, y comprueba que no está el formulario de veedores.
+  - `make trace-check`: 433 de 433.
+- **`make ux-check`:** sin retroceso. La línea base suma las dos pantallas nuevas (móvil y escritorio); las demás quedan como estaban.
+- **Lo que encontró:** los conteos de `ux-check` dependen de lo que el e2e dejó en la base antes (una invitación de más suma una fila). Por eso la línea base solo agrega lo nuevo y el diff se revisa fácil.
+
 ### Iteración 55 — La Bandeja muestra dónde quedó la ubicación corregida
 
 ✅ **Aprobada por el usuario el 2026-10-10** ("Añádelo en las mejoras"). **Qué se vio:** el Administrador corrigió la ubicación de una obra, y la tarjeta de la Bandeja siguió mostrando el mismo punto. Al abrir "Corregir ubicación" otra vez, el punto sí estaba actualizado.

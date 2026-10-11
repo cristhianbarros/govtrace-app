@@ -19,9 +19,18 @@ Característica: Varios administradores por organización
   @complexity:low
   Escenario: Un Administrador invita a otro administrador
     Dado que estoy autenticado como "Marta Ospina"
-    Cuando desde "Veedores" invito como administrador a "Ana Pérez" con el correo "ana@veeduria.org"
+    Cuando desde "Administradores" invito como administrador a "Ana Pérez" con el correo "ana@veeduria.org"
     Entonces "Ana Pérez" recibe la invitación para crear su contraseña
     Y queda en el log de auditoría quién la invitó
+
+  @complexity:low
+  Escenario: Veedores y Administradores van en pantallas separadas
+    Dado que estoy autenticado como "Marta Ospina"
+    Y que la organización tiene al veedor "Carlos Ruiz" y al Administrador "Ana Pérez"
+    Cuando abro "Veedores"
+    Entonces veo a "Carlos Ruiz" y no veo a "Ana Pérez"
+    Cuando abro "Administradores"
+    Entonces veo a "Ana Pérez" y no veo a "Carlos Ruiz"
 
   @complexity:medium
   Escenario: El Super Administrador desactiva a un Administrador que se fue

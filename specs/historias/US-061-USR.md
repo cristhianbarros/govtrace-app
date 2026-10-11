@@ -18,7 +18,7 @@
 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 
 **Notas:**
-- **Agregar:** el Super Administrador, desde el panel global, y cada Administrador, desde "Veedores". Es la misma invitación por correo del Administrador inicial (US-002, US-030).
+- **Agregar:** el Super Administrador, desde el panel global, y cada Administrador, desde "Administradores" (it. 54: antes, una sección de "Veedores"). Es la misma invitación por correo del Administrador inicial (US-002, US-030).
 - **Desactivar y reactivar a un Administrador:** solo el Super Administrador. Es una decisión de gobierno de la organización, como suspenderla (US-003a).
 - **Nunca sin uno activo:** no se desactiva al único Administrador que ya activó su cuenta. Primero se agrega otro.
 - **El mismo correo no se repite** en la organización (R-USR-01): ni como administrador ni como veedor.

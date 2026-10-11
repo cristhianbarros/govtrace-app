@@ -23,6 +23,7 @@ describe('AdminLayout', () => {
             ['Contratos', '/admin/contracts'],
             ['Obras', '/admin/worksites'],
             ['Veedores', '/admin/observers'],
+            ['Administradores', '/admin/administrators'],
             ['Organización', '/admin/organization'],
             ['Auditoría', '/admin/audit'],
             ['Autorización', '/admin/authorization'],
@@ -43,7 +44,7 @@ describe('AdminLayout', () => {
         expect(more.attributes('data-current')).toBe('true'); // Territorio vive en "Más"
 
         await more.trigger('click');
-        expect(wrapper.get('[data-test="more"]').findAll('a').map((link) => link.text())).toEqual(['Informes ciudadanos', 'Resumen', 'Territorio', 'Contratos', 'Organización', 'Auditoría', 'Autorización']);
+        expect(wrapper.get('[data-test="more"]').findAll('a').map((link) => link.text())).toEqual(['Informes ciudadanos', 'Resumen', 'Territorio', 'Contratos', 'Administradores', 'Organización', 'Auditoría', 'Autorización']);
         wrapper.unmount();
     });
 
