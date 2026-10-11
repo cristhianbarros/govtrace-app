@@ -16,6 +16,29 @@ BASE_URL=https://<veeduría>.govtrace.duckdns.org VEEDOR_EMAIL=… VEEDOR_PASSWO
 
 El resumen queda en `storage/framework/testing/load/resumen.json`.
 
+Cada escenario se prende con su cantidad (con 0, no corre): `PUBLIC_RATE` (peticiones por segundo), `VEEDORES` y `ADMINS`.
+
+### La bandeja del Administrador (it. 52)
+
+Un tercer escenario, `ADMINS=n`: administradores que abren su bandeja y piden la segunda página. Para que importe, la veeduría necesita muchas evidencias por revisar:
+
+```sh
+make e2e                                    # la organización de pruebas
+make load-seed N=5000                       # 5.000 evidencias por revisar (clones de una)
+KEEP_DATA=1 PUBLIC_RATE=0 VEEDORES=0 ADMINS=20 DURATION=30s make load-test
+```
+
+`KEEP_DATA=1` es necesario: sin él, `make load-test` rehace la organización de pruebas (como `make e2e`) y borra lo sembrado.
+
+**Medido el 2026-10-10, en local, con 5.002 evidencias por revisar y 20 administradores a la vez durante 30 s:**
+
+| | Antes (todas de una vez) | Después (20 por página) |
+|---|---|---|
+| Una petición | 4,5 MB, 0,74 s | 18 KB, 0,17 s |
+| Bandeja, mediana | 1.692 ms | 322 ms |
+| Bandeja, p95 | 2.701 ms | 750 ms |
+| Datos recibidos en 30 s | 485 MB | 6,5 MB |
+
 ## Qué mira
 
 | Umbral | Valor |

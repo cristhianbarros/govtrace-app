@@ -11,6 +11,10 @@ criterios_aceptacion:
     - "Toda evidencia sellada nace 'Oculta'"
     - "Solo el Administrador de su organización puede publicar o rechazar"
     - "Los reportes marcados por hora sospechosa (R-SEC-05) muestran la marca en la bandeja; no se bloquean ni se rechazan: decide el Administrador"
+    - "(It. 52, 2026-10-10; pedido por el usuario) La bandeja nunca carga todas las evidencias de una vez: llegan de 20 en 20 ('Ver 20 más'), en el mismo orden (la más antigua primero). Con 5.002 por revisar, abrirla traía 4,5 MB en una sola respuesta"
+    - "(It. 52) Filtros por obra, veedor, clasificación (Avance, Retraso, Abandono) y hora de captura sospechosa, que se aplican en la consulta del servidor y se suman entre sí; las opciones de obra y de veedor son las que tienen algo en la pestaña. Un filtro desconocido es un 422"
+    - "(It. 52) Cada pestaña dice cuántas evidencias tiene ('Por revisar', 'Publicadas'), y la bandeja, cuántas cumplen los filtros; bajan con cada decisión"
+    - "(It. 52) Sin resultados con los filtros puestos, dice 'Ninguna evidencia con esos filtros.' y ofrece 'Quitar filtros'"
   manejo_errores: []
   requisitos_ux:
     - "Publicación de una evidencia a la vez, para forzar la revisión responsable"

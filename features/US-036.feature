@@ -94,3 +94,39 @@ Característica: Bandeja de revisión y publicación de evidencias
     Entonces esa evidencia dice "📍 Ubicación por confirmar: es el primer reporte de la obra, pero se tomó a 42.3 km de Santa Marta, y para fijar una obra hay que estar a menos de 30 km de su municipio. La obra sigue sin ubicación oficial."
     Y muestra ese punto en un mapa pequeño
     Y ofrece "Confirmar esta ubicación" y "Corregir ubicación"
+
+  @complexity:medium
+  Escenario: Veo 20 evidencias y Ver 20 más trae las siguientes
+    Dado que la organización tiene 45 evidencias por revisar
+    Cuando abro la Bandeja
+    Entonces veo 20 evidencias
+    Cuando toco "Ver 20 más"
+    Entonces veo 40 evidencias
+    Cuando toco "Ver 20 más"
+    Entonces veo 45 evidencias
+    Y no veo "Ver 20 más"
+
+  @complexity:medium
+  Escenario: La bandeja dice cuántas evidencias hay en cada pestaña
+    Dado que la organización tiene 14 evidencias por revisar y 3 publicadas
+    Cuando abro la Bandeja
+    Entonces la pestaña "Por revisar" dice 14 y la pestaña "Publicadas" dice 3
+    Y la bandeja dice "14 evidencias"
+
+  @complexity:medium
+  Escenario: Filtro la bandeja por obra, veedor, clasificación y hora sospechosa
+    Dado que la bandeja tiene evidencias de dos obras, de dos veedores, de clasificaciones distintas y una con hora de captura sospechosa
+    Cuando filtro por la obra "Acueducto Gaira"
+    Entonces veo solo las evidencias de "Acueducto Gaira"
+    Cuando además filtro por el veedor "Laura Gómez" y por la clasificación "Abandono"
+    Entonces veo solo las evidencias que cumplen las tres condiciones
+    Y el total dice cuántas son, no cuántas hay en la pestaña
+    Y puedo filtrar por "Solo sospechosas" las de hora de captura sospechosa
+
+  @complexity:low @edge
+  Escenario: Sin resultados con esos filtros
+    Dado que la bandeja tiene evidencias por revisar
+    Cuando filtro por una clasificación que ninguna tiene
+    Entonces veo "Ninguna evidencia con esos filtros."
+    Cuando toco "Quitar filtros"
+    Entonces vuelvo a ver todas las evidencias por revisar

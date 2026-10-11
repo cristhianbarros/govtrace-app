@@ -3,11 +3,13 @@
 use App\Application\Organization\ConfigureTerritory;
 use App\Application\Organization\RegisterOrganization;
 use App\Application\Publication\PublicTimeline;
+use App\Application\Publication\ReviewInbox;
 use App\Application\Sealing\SealingNetwork;
 use App\Domain\Audit\AuditLog;
 use App\Domain\Geography\GeoPoint;
 use App\Domain\Organization\Roles;
 use App\Domain\Organization\User as OrganizationUser;
+use App\Domain\Reports\EditorialStatus;
 use App\Domain\Reports\Report;
 use App\Infrastructure\Tenancy\Tenant;
 use Database\Seeders\DivipolaSeeder;
@@ -410,4 +412,78 @@ it('explains a poor GPS signal as the reason to confirm', function () {
 
     expect(inboxEvidence($this->administrator, $reportId)['location']['pending']['reason'])
         ->toBe('la señal del GPS tenía una precisión de 35 m, y para fijar una obra se necesitan 20 m o menos');
+});
+
+/*
+ * Iteración 52 — la bandeja ya no carga todo: de 20 en 20, con filtros que se
+ * aplican en la consulta, el total y lo que hay en cada pestaña.
+ */
+
+/** Una evidencia más, de otro veedor, en otra obra, con otra clasificación: para los filtros. */
+function anotherVeedorsEvidence(object $test): array
+{
+    reportableContract('CO1.PCCNTR.7654321');
+    $worksite = worksiteWithContracts($test->tenant, ['CO1.PCCNTR.7654321'], santaMartaWorksiteLocation());
+    $laura = reportingMember($test->tenant, 'laura@correo.co');
+    $reportId = sealedReport($test->tenant, $laura, ['secop_contract_id' => 'CO1.PCCNTR.7654321', 'classification' => 'Abandono']);
+
+    return [$worksite, $laura, $reportId];
+}
+
+it('Con muchas evidencias, la bandeja llega de a una página: with the total, whether there are more, and no repeats', function () {
+    $page = fn (int $number) => $this->tenant->run(fn () => (new ReviewInbox)->handle(EditorialStatus::Hidden, [], $number, 3));
+    $first = $page(1);
+    $second = $page(2);
+
+    expect(count($first['data']))->toBe(3)
+        ->and($first['has_more'])->toBeTrue()
+        ->and($first['total'])->toBe(4)
+        ->and(count($second['data']))->toBe(1)
+        ->and($second['has_more'])->toBeFalse()
+        ->and($second['total'])->toBe(4)
+        // En el mismo orden de siempre (la más antigua primero), sin repetir ninguna.
+        ->and([...array_column($first['data'], 'id'), ...array_column($second['data'], 'id')])
+        ->toBe(array_map(fn (int $id) => publicIdOf(Report::class, $id), $this->hidden));
+});
+
+it('GET /inbox says how many there are, what each tab holds, and answers a page past the end with none', function () {
+    editorialDecision($this->administrator, 'publish', $this->hidden[0])->assertOk();
+
+    inbox($this->administrator)->assertOk()
+        ->assertJsonCount(3, 'data')
+        ->assertJson(['total' => 3, 'has_more' => false, 'counts' => ['hidden' => 3, 'published' => 1]]);
+    inbox($this->administrator, query: ['page' => 2])->assertOk()->assertJsonCount(0, 'data')->assertJson(['total' => 3, 'has_more' => false]);
+    inbox($this->administrator, query: ['status' => 'published'])->assertOk()->assertJsonCount(1, 'data')->assertJson(['total' => 1]);
+});
+
+it('Filtro la bandeja por obra, veedor, clasificación y hora sospechosa: only those, and the total follows the filter', function () {
+    [$worksite, $laura, $abandonment] = anotherVeedorsEvidence($this);
+    $suspicious = sealedReport($this->tenant, $this->veedor, ['captured_at' => now()->addHour()->toIso8601String()]);
+    $ids = fn (array $query) => array_column(inbox($this->administrator, query: $query)->assertOk()->json('data'), 'id');
+    $publicId = fn (int $id) => publicIdOf(Report::class, $id);
+
+    expect(inbox($this->administrator)->json('total'))->toBe(6)
+        ->and($ids(['worksite' => $worksite->public_id]))->toBe([$publicId($abandonment)])
+        ->and($ids(['observer' => $laura->public_id]))->toBe([$publicId($abandonment)])
+        ->and($ids(['classification' => 'Abandono']))->toBe([$publicId($abandonment)])
+        ->and($ids(['suspicious' => 1]))->toBe([$publicId($suspicious)])
+        ->and(inbox($this->administrator, query: ['classification' => 'Retraso'])->json('total'))->toBe(5)
+        // Combinados, se suman las condiciones.
+        ->and($ids(['observer' => $laura->public_id, 'classification' => 'Retraso']))->toBe([]);
+});
+
+it('offers the worksites and the veedores that have something in the tab, whatever the filter', function () {
+    [$worksite, $laura] = anotherVeedorsEvidence($this);
+
+    $filters = inbox($this->administrator, query: ['classification' => 'Abandono'])->assertOk()->json('filters');
+
+    expect(array_column($filters['worksites'], 'id'))->toEqualCanonicalizing([$this->worksite->public_id, $worksite->public_id])
+        ->and(array_column($filters['observers'], 'id'))->toEqualCanonicalizing([$this->veedor->public_id, $laura->public_id])
+        ->and($filters['classifications'])->toBe(['Avance', 'Retraso', 'Abandono']);
+});
+
+it('rejects a filter it does not know: a classification that does not exist, an id that is not one', function () {
+    inbox($this->administrator, query: ['classification' => 'Terminada'])->assertUnprocessable()->assertJsonValidationErrors('classification');
+    inbox($this->administrator, query: ['worksite' => 'no-es-un-id'])->assertUnprocessable()->assertJsonValidationErrors('worksite');
+    inbox($this->administrator, query: ['page' => 0])->assertUnprocessable()->assertJsonValidationErrors('page');
 });
