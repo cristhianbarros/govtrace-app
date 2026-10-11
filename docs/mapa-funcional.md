@@ -238,6 +238,7 @@ flowchart TB
 | Veeduría | Mis reportes y recibo | `/my-reports` | Veedor | US-010, US-023 |
 | Veeduría | Bandeja | `/admin/inbox` | Administrador | US-036, US-037 |
 | Veeduría | Veedores | `/admin/observers` | Administrador | US-005, US-006, US-040-USR, US-041-USR |
+| Veeduría | Administradores | `/admin/administrators` | Administrador | US-061-USR |
 | Veeduría | Territorio | `/admin/territory` | Administrador | US-012 |
 | Veeduría | Contratos | `/admin/contracts` | Administrador | US-015 |
 | Veeduría | Obras, con "Descargar expediente" | `/admin/worksites` | Administrador | US-035, US-045-INT, US-056-LEG |

@@ -4,7 +4,8 @@ bloque: "Flujos completos — V3"
 criterios_aceptacion:
   escenarios_exito:
     - "El Super Administrador agrega un Administrador a una organización que ya tiene uno: le llega la invitación para crear su contraseña"
-    - "Un Administrador invita a otro administrador desde 'Veedores': le llega la invitación"
+    - "Un Administrador invita a otro administrador desde 'Administradores' (hasta la it. 54, desde 'Veedores'): le llega la invitación"
+    - "(It. 54, 2026-10-10; pedido por el usuario) Veedores y Administradores van en pantallas separadas del grupo 'Equipo': la de Veedores solo trae veedores y la de Administradores solo trae administradores, cada una con su lista, su estado y su invitación. Los permisos no cambian"
     - "El Super Administrador desactiva a un Administrador que se fue (su sesión se cierra en la siguiente petición) y lo reactiva si vuelve"
     - "Cada cambio queda en el log de auditoría: quién, a quién y cuándo (R-AUD-04)"
   validaciones_reglas:

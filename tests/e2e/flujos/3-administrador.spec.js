@@ -65,8 +65,11 @@ test('Arma su equipo: invita a un veedor, que queda pendiente', async ({ page })
     await expect(page.getByText('Invitación pendiente')).toBeVisible();
 });
 
-test('V3: invita a otro Administrador a su organización (it. 43j)', async ({ page }) => {
-    await enter(page, 'observers');
+test('V3: invita a otro Administrador a su organización, desde su propia pantalla (it. 43j, 54)', async ({ page }) => {
+    await enter(page, 'administrators');
+    // It. 54: los administradores ya no van en la pantalla de Veedores.
+    await expect(page.getByRole('heading', { name: 'Administradores', level: 2 })).toBeVisible();
+    await expect(page.getByLabel('Invitar un veedor de campo')).toHaveCount(0);
     const administrators = page.locator('[data-test="administrators"]');
     const email = `e2e.coadmin.${Date.now()}@correo.co`;
 

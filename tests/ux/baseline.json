@@ -1,4 +1,11 @@
 {
+  "escritorio/admin-administrators": {
+    "axe": {},
+    "textUnder16": 1,
+    "textUnder14": 0,
+    "smallTargets": 0,
+    "targets": 15
+  },
   "escritorio/admin-audit": {
     "axe": {},
     "textUnder16": 66,
@@ -222,6 +229,13 @@
     "textUnder14": 0,
     "smallTargets": 5,
     "targets": 22
+  },
+  "movil/admin-administrators": {
+    "axe": {},
+    "textUnder16": 2,
+    "textUnder14": 0,
+    "smallTargets": 0,
+    "targets": 8
   },
   "movil/admin-audit": {
     "axe": {},

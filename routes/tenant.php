@@ -192,7 +192,7 @@ Route::middleware([
 
             // El panel del Administrador (it. 18): cada pantalla pide sus datos al JSON de abajo.
             foreach ([
-                'inbox' => 'Admin/Inbox', 'observers' => 'Admin/Observers', 'territory' => 'Admin/Territory', 'contracts' => 'Admin/Contracts',
+                'inbox' => 'Admin/Inbox', 'observers' => 'Admin/Observers', 'administrators' => 'Admin/Administrators', 'territory' => 'Admin/Territory', 'contracts' => 'Admin/Contracts',
                 'worksites' => 'Admin/Worksites', 'organization' => 'Admin/Organization', 'audit' => 'Admin/Audit', 'citizen-reports' => 'Admin/CitizenReports',
                 'summary' => 'Admin/Summary', 'authorization' => 'Admin/SuperAdminAuthorization',
             ] as $screen => $component) {

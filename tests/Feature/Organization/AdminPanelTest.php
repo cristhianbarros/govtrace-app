@@ -73,6 +73,7 @@ it('serves each screen of the panel to the Administrador, and none to the veedor
 })->with([
     'bandeja de entrada' => ['/admin/inbox', 'Admin/Inbox'],
     'veedores' => ['/admin/observers', 'Admin/Observers'],
+    'administradores' => ['/admin/administrators', 'Admin/Administrators'],
     'territorio' => ['/admin/territory', 'Admin/Territory'],
     'contratos' => ['/admin/contracts', 'Admin/Contracts'],
     'obras' => ['/admin/worksites', 'Admin/Worksites'],

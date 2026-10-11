@@ -13,6 +13,7 @@ import {
     InboxIcon,
     MapPinIcon,
     ShieldCheckIcon,
+    UserGroupIcon,
     UsersIcon,
 } from '@heroicons/vue/24/outline';
 import { Head, usePage } from '@inertiajs/vue3';
@@ -37,6 +38,7 @@ const screens = [
     { href: '/admin/contracts', label: 'Contratos', icon: DocumentTextIcon, group: 'Territorio y obras' },
     { href: '/admin/worksites', label: 'Obras', icon: BuildingOffice2Icon, group: 'Territorio y obras', primary: true },
     { href: '/admin/observers', label: 'Veedores', icon: UsersIcon, group: 'Equipo', primary: true },
+    { href: '/admin/administrators', label: 'Administradores', icon: UserGroupIcon, group: 'Equipo' },
     { href: '/admin/organization', label: 'Organización', icon: Cog6ToothIcon, group: 'Organización' },
     { href: '/admin/audit', label: 'Auditoría', icon: ClipboardDocumentListIcon, group: 'Organización' },
     { href: '/admin/authorization', label: 'Autorización', icon: ShieldCheckIcon, group: 'Organización' },
