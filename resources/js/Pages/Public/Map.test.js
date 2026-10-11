@@ -187,6 +187,12 @@ describe('Los estados, junto al mapa (it. 40b)', () => {
         expect(states(wrapper)[2].attributes('aria-pressed')).toBe('false');
     });
 
+    it('El mapa dice que cada punto es aproximado: a note under the map, in words and not only in the circle', async () => {
+        const wrapper = await openMap();
+
+        expect(wrapper.get('[data-test="approximate-note"]').text()).toBe('Cada punto es aproximado: la obra está a unos 100 m de él. Es para proteger a quien tomó la foto.');
+    });
+
     it('names the map and says what to do with it', async () => {
         const wrapper = await openMap();
 

@@ -3239,6 +3239,17 @@ El usuario pidió seguir con lo que no espera a nadie: la deuda técnica y los h
 
 **Modelo:** Sonnet medium.
 
+✅ **Cumplida (2026-10-10).**
+- **Cómo quedó:**
+  - `PinsMap` dibuja, bajo cada pin, un círculo de 100 m del color de su estado (`L.circle`, sin recibir el toque: el que se toca es el pin).
+  - La página del mapa (`Public/Map.vue`) dice bajo el mapa: "Cada punto es aproximado: la obra está a unos 100 m de él. Es para proteger a quien tomó la foto."
+  - La tarjeta de cada evidencia (`Public/EvidenceCard.vue`) ya no muestra "11.241, -74.199" (tres decimales parecen más precisos de lo que son): dice "Ubicación aproximada, a unos 100 m del lugar.", en letra de 14 px y mejor contraste (antes 12 px, gris claro).
+  - El API no cambió: sigue dando `approximate_location` (lo usan los datos abiertos y el expediente).
+- **La regla de privacidad no cambia** (R-PRIV-02). Era el aviso lo que faltaba.
+- **Historias:** US-027 (un escenario nuevo, "El mapa dice que cada punto es aproximado") y US-029 (el escenario de las coordenadas dice cómo se muestran ahora).
+- **Pruebas:** Vitest (los círculos, la nota y la tarjeta; vistas en rojo antes), e2e en un navegador real (un círculo por pin y la nota), trace-check 447 de 447.
+- **Para el piloto, sin decidir:** un parámetro por organización para mostrar el punto exacto, si una veeduría pide más precisión.
+
 ### Iteración 54 — Veedores y Administradores, en pantallas separadas
 
 ✅ **Aprobada por el usuario el 2026-10-10** ("Sí, tenga en cuenta las otras mejoras que están en espera"). **Qué se vio:** la pestaña "Veedores" (`/admin/observers`, `Observers.vue`) mezcla dos asuntos: arriba, invitar y gestionar veedores de campo; abajo, la sección "Administradores" con su lista y su formulario para invitar a otro (V3, it. 43j). Esa sección se puso ahí porque ya existía la pantalla de invitaciones.

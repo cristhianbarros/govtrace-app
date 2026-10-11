@@ -204,6 +204,8 @@ onMounted(async () => {
             @retry="load(active)"
         >
             <PinsMap :pins="pins ?? []" @select="(id) => router.visit(`/worksite/${id}`)" />
+            <!-- It. 53 (R-PRIV-02): el punto es aproximado, y se dice con palabras, no solo con el círculo. -->
+            <p data-test="approximate-note" class="mt-2 text-base text-slate-700">Cada punto es aproximado: la obra está a unos 100 m de él. Es para proteger a quien tomó la foto.</p>
         </LoadState>
     </AppLayout>
 </template>

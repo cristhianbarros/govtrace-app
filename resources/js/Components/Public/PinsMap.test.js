@@ -17,7 +17,20 @@ async function mountMap() {
     return wrapper;
 }
 
+// It. 53 — el punto del mapa público es aproximado (R-PRIV-02): se ve una zona, no un punto exacto.
+
 describe('PinsMap', () => {
+    it('El mapa dice que cada punto es aproximado: a circle of about 100 m around each pin, that does not take the touch', async () => {
+        const wrapper = await mountMap();
+
+        expect(wrapper.vm.circles).toHaveLength(3);
+        expect(wrapper.vm.circles.map((circle) => circle.getRadius())).toEqual([100, 100, 100]);
+        expect(wrapper.vm.circles[0].getLatLng()).toMatchObject({ lat: 11.241, lng: -74.199 });
+        // El que se toca es el pin, no el círculo.
+        expect(wrapper.vm.circles.every((circle) => circle.options.interactive === false)).toBe(true);
+        wrapper.unmount();
+    });
+
     it('shows the OpenStreetMap tiles, with their attribution', async () => {
         const wrapper = await mountMap();
 

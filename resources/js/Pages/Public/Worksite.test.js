@@ -146,7 +146,10 @@ describe('Vista de obra — la línea de tiempo (US-029)', () => {
     it('Las coordenadas de cada evidencia se muestran aproximadas', async () => {
         const wrapper = await openWorksite();
 
-        expect(cards(wrapper)[0].text()).toContain('Ubicación aproximada (unos 100 m): 11.241, -74.199');
+        // It. 53: se dice con palabras; unas coordenadas con tres decimales parecen más precisas de lo que son.
+        expect(cards(wrapper)[0].text()).toContain('Ubicación aproximada, a unos 100 m del lugar.');
+        expect(cards(wrapper)[0].text()).not.toContain('11.241');
+        expect(cards(wrapper)[0].text()).not.toContain('-74.199');
         wrapper.unmount();
     });
 
