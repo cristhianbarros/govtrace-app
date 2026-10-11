@@ -3224,17 +3224,50 @@ El usuario pidió seguir con lo que no espera a nadie: la deuda técnica y los h
 
 **Modelo:** Sonnet medium.
 
+### Iteración 55 — La Bandeja muestra dónde quedó la ubicación corregida
+
+✅ **Aprobada por el usuario el 2026-10-10** ("Añádelo en las mejoras"). **Qué se vio:** el Administrador corrigió la ubicación de una obra, y la tarjeta de la Bandeja siguió mostrando el mismo punto. Al abrir "Corregir ubicación" otra vez, el punto sí estaba actualizado.
+
+**No es un error de guardado.** Se reprodujo en un navegador real: en "Obras", al guardar, la ubicación oficial se actualiza al instante.
+
+**La causa:** la tarjeta del primer reporte de una obra (`EvidenceCard.vue`) dice "Este reporte fijó la ubicación oficial de la obra" y dibuja un mapa con `location.point`: **el punto donde se tomó ese reporte**, que no cambia. Tras corregir, agrega "Después se corrigió", pero el mapa sigue en el punto viejo y no dice dónde quedó el nuevo.
+
+**Entregable:**
+- Dos puntos en el mismo mapa de la tarjeta: **"Donde se tomó"** (gris) y **"Ubicación oficial hoy"** (rojo), cuando la ubicación se corrigió.
+- El texto dice a cuántos metros quedó la corrección respecto de ese reporte.
+- La Bandeja pide sus datos de nuevo al volver de "Obras", para no mostrar la ubicación de antes.
+- **Historia:** se enmienda US-035 (corregir la ubicación oficial), con un escenario nuevo.
+
+**Done-when:** el escenario de Gherkin con su prueba (Vitest de `EvidenceCard` y e2e con la obra del e2e: corregir, volver a la Bandeja y ver los dos puntos).
+
+**Modelo:** Sonnet medium.
+
+### Iteración 56 — La caché de lo público
+
+📝 **Propuesta por Claude el 2026-10-10**, por aprobar. **Por qué:** la segunda corrida de la prueba de carga (it. 50b) mostró que la máquina de staging atiende unas 19 peticiones por segundo, unos 100 ms de CPU cada una. El mapa, la lista, los filtros y las estadísticas públicas **son iguales para todos los visitantes** y hoy se calculan en cada visita.
+
+**Entregable:**
+- Guardar en caché de 30 a 60 s las respuestas públicas que no dependen de quien las pide (`/public/worksites`, `/list`, `/filters`, `/public/stats`), **por organización**: la caché de una veeduría no puede servirle datos a otra (la caché ya lleva el prefijo de la organización).
+- Que una decisión editorial (publicar, retirar), una corrección de ubicación o el cambio de una obra **borre lo que corresponde**, para que el público no vea datos viejos más de 60 s.
+- Medir antes y después con `make load-test` (it. 50), con el mismo guion.
+
+**Done-when:** las pruebas de que la caché no mezcla veedurías y de que una publicación se ve a lo sumo 60 s después; el p95 público y las peticiones por segundo, antes y después, en staging.
+
+**Modelo:** Sonnet medium. Va junto a la 52, que también es de rendimiento.
+
 ### Orden de lo que está en espera (2026-10-10)
 
 | Orden | Qué | Por qué en ese lugar |
 |---|---|---|
-| 0 | **Segunda corrida de la prueba de carga** en staging (it. 50b) y volver a desplegar `main`, que restaura los límites | Verifica el tope de Apache. Lo hace el usuario con Claude |
+| 0 | ✅ **Segunda corrida de la prueba de carga** en staging (it. 50b), hecha el 2026-10-10: 0 errores 500 (antes 3.840), y la máquina atiende unas 19 peticiones por segundo. Los límites de staging, restaurados | El tope de Apache funcionó. Quedan sus ~240 reportes de prueba en la Bandeja de la veeduría de pruebas, por rechazar |
 | 1 | **It. 54** — Veedores y Administradores, separados | Corta. La 52 va a paginar esas dos listas: conviene que ya estén separadas |
-| 2 | **It. 52** — Paginar y filtrar | Rendimiento antes del piloto, con el escenario de carga de la bandeja |
-| 3 | **It. 53** — El mapa público dice que el punto es aproximado | Confunde a quien mira el mapa |
-| 4 | **It. 51** — El subdominio sale del nombre | Comodidad para el Super Administrador |
-| 5 | **El piloto** con una veeduría real | Con lo que muestre se decide V20 (elegir la obra sin señal) y V17 (correo al veedor) |
-| 6 | **Imagen en un registro** (GitHub Container Registry) y **la red principal** (37b) | Cuando estén el dominio, el operador y los fondos |
+| 2 | **It. 55** — La Bandeja muestra dónde quedó la ubicación corregida | Corta. Hoy parece que la corrección no tuvo efecto |
+| 3 | **It. 52** — Paginar y filtrar | Rendimiento antes del piloto, con el escenario de carga de la bandeja |
+| 4 | **It. 56** — La caché de lo público | Rendimiento: se mide con el mismo guion de carga que la 52 |
+| 5 | **It. 53** — El mapa público dice que el punto es aproximado | Confunde a quien mira el mapa |
+| 6 | **It. 51** — El subdominio sale del nombre | Comodidad para el Super Administrador |
+| 7 | **El piloto** con una veeduría real | Con lo que muestre se decide V20 (elegir la obra sin señal) y V17 (correo al veedor) |
+| 8 | **Imagen en un registro** (GitHub Container Registry) y **la red principal** (37b) | Cuando estén el dominio, el operador y los fondos |
 
 Cada una se aprueba por separado y pasa por el CI (it. 49) antes de fusionarse.
 
