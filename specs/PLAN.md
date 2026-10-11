@@ -3181,6 +3181,23 @@ El usuario pidió seguir con lo que no espera a nadie: la deuda técnica y los h
 
 **Done-when:** la bandeja y las otras pantallas de la tabla, con su escenario Gherkin; el escenario de carga de la bandeja, con su p95 antes y después.
 
+**Avance de la 52 — parte 1: la bandeja del Administrador ✅ (2026-10-10).**
+- **Servidor:** `ReviewInbox` pagina de 20 en 20 en la consulta (`offset`/`limit`), sin cargar el resto. Devuelve la página, `total` (los que cumplen los filtros), `has_more`, `counts` (lo que tiene cada pestaña) y `filters` (las obras y los veedores con algo en la pestaña: acotado por cuántas obras y veedores hay, no por cuántas evidencias). `GET /inbox?page=&worksite=&observer=&classification=&suspicious=`; un filtro desconocido es un 422. Mismo orden de siempre (la más antigua primero).
+- **Pantalla:** "Ver 20 más", los conteos en las pestañas, "N evidencias", y un `Filtrar` (con selectores de obra, veedor, clasificación y hora de captura; sin casillas, porque no hay selección masiva) y "Quitar filtros". Cambiar de pestaña quita los filtros.
+- **Historia:** US-036 enmendada (criterios y 4 escenarios nuevos). Trazabilidad: 438 de 438.
+- **Pruebas:** Pest (5 nuevas, vistas en rojo antes), Vitest (las de la bandeja pasan a la forma nueva y suman 8), e2e (filtrar y quitar filtros, en un navegador real; 57 en verde), `make ux-check` sin retroceso.
+- **Medido** (`make load-seed N=5000` y `ADMINS=20 make load-test`, en local, 5.002 evidencias por revisar y 20 administradores a la vez durante 30 s):
+
+| | Antes | Después |
+|---|---|---|
+| Una petición | 4,5 MB, 0,74 s | 18 KB, 0,17 s |
+| Bandeja, mediana | 1.692 ms | 322 ms |
+| Bandeja, p95 | 2.701 ms | 750 ms |
+| Datos recibidos en 30 s | 485 MB | 6,5 MB |
+
+- **Lo que encontró la medición:** `make load-test` rehace la organización de pruebas y borraría lo sembrado: `KEEP_DATA=1` lo evita. Y el jar de cookies de k6 se vaciaba tras la primera respuesta grande (con curl, la sesión sigue valiendo): el escenario del administrador entra en cada iteración, con el login en su propia etiqueta.
+- **Falta de la 52:** las demás pantallas de la tabla (informes de ciudadanos, Mis reportes, veedores y obras del Administrador, línea de tiempo, panel global, búsqueda de territorios y datos abiertos). Se hacen en partes siguientes, por orden.
+
 **Modelo:** Sonnet medium. Es rendimiento y pantallas; no toca la evidencia ni los sellos.
 
 ### Iteración 53 — El mapa público dice que el punto es aproximado

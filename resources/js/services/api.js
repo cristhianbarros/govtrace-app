@@ -44,7 +44,8 @@ export const fetchMyReports = async () => (await dataOf(http.get('/me/reports'))
 // El Administrador -----------------------------------------------------------
 
 /** US-036 / US-037: "hidden" (por revisar) o "published". */
-export const fetchInbox = async (status) => (await dataOf(http.get('/inbox', { params: { status } }))).data;
+/** It. 52: una página de la bandeja ({ status, page, worksite, observer, classification, suspicious }) con su total, sus conteos y las opciones de los filtros. */
+export const fetchInbox = (params) => dataOf(http.get('/inbox', { params }));
 
 /** decision: "publish", "reject" o "withdraw"; los dos últimos, con motivo. */
 export const decideOnEvidence = (reportId, decision, reason) => dataOf(http.post(`/reports/${reportId}/${decision}`, { reason }));

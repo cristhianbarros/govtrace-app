@@ -22,6 +22,26 @@ test('Entra y llega a su Bandeja, con las evidencias por revisar', async ({ page
     await expect(page.locator('article').filter({ hasText: 'Enviada por Veedor E2E' }).getByRole('button', { name: 'Publicar' })).toHaveCount(2);
 });
 
+test('Filtra la Bandeja por clasificación y la deja como estaba (it. 52)', async ({ page }) => {
+    await enter(page);
+    const abandonment = page.locator('article').filter({ hasText: 'La obra quedó sin cerramiento ni vigilancia.' });
+    const progress = page.locator('article').filter({ hasText: 'Instalan las luminarias de la cancha.' });
+    await expect(abandonment).toHaveCount(1);
+    await expect(progress).toHaveCount(1);
+
+    await page.getByText('Filtrar', { exact: true }).click();
+    await page.getByLabel('Clasificación').selectOption('Abandono');
+    await expect(progress).toHaveCount(0);
+    await expect(abandonment).toHaveCount(1);
+
+    // Sin ninguna con esos filtros, lo dice; y "Quitar filtros" las trae todas.
+    await page.getByLabel('Clasificación').selectOption('Retraso');
+    await expect(page.getByText('Ninguna evidencia con esos filtros.')).toBeVisible();
+    await page.getByRole('button', { name: 'Quitar filtros' }).click();
+    await expect(abandonment).toHaveCount(1);
+    await expect(progress).toHaveCount(1);
+});
+
 test('Cada evidencia de la Bandeja dice de qué obra es y qué veedor la envió (V4)', async ({ page }) => {
     await enter(page);
     const card = page.locator('article').first();

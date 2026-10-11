@@ -40,8 +40,24 @@ const evidence = (overrides = {}) => ({
     ...overrides,
 });
 
-async function openInbox(rows) {
-    fetchInbox.mockResolvedValue(rows);
+const FILTERS = {
+    worksites: [{ id: 'obra-a', name: 'Pavimentación Calle 30' }, { id: 'obra-b', name: 'Acueducto Gaira' }],
+    observers: [{ id: 'vee-a', name: 'Carlos Pérez' }, { id: 'vee-b', name: 'Laura Gómez' }],
+    classifications: ['Avance', 'Retraso', 'Abandono'],
+};
+
+/** What GET /inbox answers (it. 52): the page, how many match, whether there are more, what each tab holds and what the filters offer. */
+const answer = (rows, extra = {}) => ({
+    data: rows,
+    total: rows.length,
+    has_more: false,
+    counts: { hidden: rows.length, published: 0 },
+    filters: FILTERS,
+    ...extra,
+});
+
+async function openInbox(rows, extra) {
+    fetchInbox.mockResolvedValue(answer(rows, extra));
     const wrapper = mount(Inbox);
     await flushPromises();
     return wrapper;
@@ -61,7 +77,7 @@ describe('Bandeja de entrada', () => {
     });
 
     it('says when it could not load them, and lets retry', async () => {
-        fetchInbox.mockRejectedValueOnce(new Error('Network Error')).mockResolvedValueOnce([evidence()]);
+        fetchInbox.mockRejectedValueOnce(new Error('Network Error')).mockResolvedValueOnce(answer([evidence()]));
         const wrapper = mount(Inbox);
         await flushPromises();
 
@@ -75,7 +91,7 @@ describe('Bandeja de entrada', () => {
     it('says when there is nothing to review', async () => {
         const wrapper = await openInbox([]);
 
-        expect(fetchInbox).toHaveBeenCalledWith('hidden');
+        expect(fetchInbox).toHaveBeenCalledWith({ status: 'hidden', page: 1 });
         expect(wrapper.text()).toContain('No hay evidencias por revisar.');
     });
 
@@ -171,8 +187,8 @@ describe('Bandeja de entrada', () => {
 describe('Publicadas', () => {
     async function openPublished(rows) {
         const wrapper = await openInbox([]);
-        fetchInbox.mockResolvedValue(rows);
-        await button(wrapper, 'Publicadas').trigger('click');
+        fetchInbox.mockResolvedValue(answer(rows, { counts: { hidden: 0, published: rows.length } }));
+        await wrapper.findAll('[role="tab"]').find((tab) => tab.text().startsWith('Publicadas')).trigger('click');
         await flushPromises();
         return wrapper;
     }
@@ -180,7 +196,7 @@ describe('Publicadas', () => {
     it('says when there is nothing published', async () => {
         const wrapper = await openPublished([]);
 
-        expect(fetchInbox).toHaveBeenLastCalledWith('published');
+        expect(fetchInbox).toHaveBeenLastCalledWith({ status: 'published', page: 1 });
         expect(wrapper.text()).toContain('No hay evidencias publicadas.');
     });
 
@@ -382,5 +398,102 @@ describe('Lo difuminado en el celular (it. 46e)', () => {
         const wrapper = await openInbox([photoWith(null)]);
 
         expect(wrapper.find('[data-test="blurring"]').exists()).toBe(false);
+    });
+});
+
+// It. 52 — la bandeja ya no carga todo: de 20 en 20, con filtros y con lo que hay en cada pestaña.
+describe('La bandeja de a páginas, con filtros (it. 52)', () => {
+    const tab = (wrapper, name) => wrapper.findAll('[role="tab"]').find((candidate) => candidate.text().startsWith(name));
+    // La etiqueta envuelve su selector: su texto empieza con el nombre del filtro.
+    const selectOf = (wrapper, label) => wrapper.findAll('select').find((candidate) => wrapper.get(`label[for="${candidate.attributes('id')}"]`).text().startsWith(label));
+
+    it('Veo 20 evidencias y Ver 20 más trae las siguientes: appends the next page and hides the button at the end', async () => {
+        const first = Array.from({ length: 20 }, (_, index) => evidence({ id: index + 1, comment: `Evidencia ${index + 1}` }));
+        const wrapper = await openInbox(first, { total: 25, has_more: true });
+
+        expect(wrapper.findAll('article')).toHaveLength(20);
+        fetchInbox.mockResolvedValue(answer(Array.from({ length: 5 }, (_, index) => evidence({ id: 21 + index, comment: `Evidencia ${21 + index}` })), { total: 25 }));
+        await wrapper.get('[data-test="more"]').trigger('click');
+        await flushPromises();
+
+        expect(fetchInbox).toHaveBeenLastCalledWith({ status: 'hidden', page: 2 });
+        expect(wrapper.findAll('article')).toHaveLength(25);
+        expect(wrapper.find('[data-test="more"]').exists()).toBe(false);
+    });
+
+    it('does not offer Ver 20 más when everything fits in one page', async () => {
+        const wrapper = await openInbox([evidence(), evidence({ id: 8 })]);
+
+        expect(wrapper.find('[data-test="more"]').exists()).toBe(false);
+    });
+
+    it('La bandeja dice cuántas evidencias hay en cada pestaña: and how many match when it is filtered', async () => {
+        const wrapper = await openInbox([evidence()], { total: 14, has_more: false, counts: { hidden: 14, published: 3 } });
+
+        expect(tab(wrapper, 'Por revisar').text()).toContain('14');
+        expect(tab(wrapper, 'Publicadas').text()).toContain('3');
+        expect(wrapper.get('[data-test="total"]').text()).toBe('14 evidencias');
+    });
+
+    it('Filtro la bandeja por obra, veedor, clasificación y hora sospechosa: asks the server with the filter, from the first page', async () => {
+        const wrapper = await openInbox([evidence()]);
+        await wrapper.get('[data-test="filters"] summary').trigger('click');
+
+        await selectOf(wrapper, 'Obra').setValue('obra-b');
+        await flushPromises();
+        expect(fetchInbox).toHaveBeenLastCalledWith({ status: 'hidden', page: 1, worksite: 'obra-b' });
+
+        await selectOf(wrapper, 'Veedor').setValue('vee-a');
+        await selectOf(wrapper, 'Clasificación').setValue('Abandono');
+        await selectOf(wrapper, 'Hora de captura').setValue('suspicious');
+        await flushPromises();
+        expect(fetchInbox).toHaveBeenLastCalledWith({ status: 'hidden', page: 1, worksite: 'obra-b', observer: 'vee-a', classification: 'Abandono', suspicious: 1 });
+    });
+
+    it('offers the worksites and the veedores of the tab in the filters', async () => {
+        const wrapper = await openInbox([evidence()]);
+
+        expect(selectOf(wrapper, 'Obra').findAll('option').map((option) => option.text())).toEqual(['Todas', 'Pavimentación Calle 30', 'Acueducto Gaira']);
+        expect(selectOf(wrapper, 'Veedor').findAll('option').map((option) => option.text())).toEqual(['Todos', 'Carlos Pérez', 'Laura Gómez']);
+        expect(selectOf(wrapper, 'Clasificación').findAll('option').map((option) => option.text())).toEqual(['Todas', 'Avance', 'Retraso', 'Abandono']);
+    });
+
+    it('Sin resultados con esos filtros: says so, and Quitar filtros brings them all back', async () => {
+        const wrapper = await openInbox([evidence()]);
+        fetchInbox.mockResolvedValue(answer([], { total: 0, counts: { hidden: 4, published: 0 } }));
+        await selectOf(wrapper, 'Clasificación').setValue('Abandono');
+        await flushPromises();
+
+        expect(wrapper.text()).toContain('Ninguna evidencia con esos filtros.');
+
+        fetchInbox.mockResolvedValue(answer([evidence()]));
+        await wrapper.get('[data-test="clear-filters"]').trigger('click');
+        await flushPromises();
+
+        expect(fetchInbox).toHaveBeenLastCalledWith({ status: 'hidden', page: 1 });
+        expect(wrapper.text()).toContain('Obra detenida hace 2 meses');
+    });
+
+    it('starts over without the filters when it changes tab', async () => {
+        const wrapper = await openInbox([evidence()]);
+        await selectOf(wrapper, 'Clasificación').setValue('Retraso');
+        await flushPromises();
+
+        fetchInbox.mockResolvedValue(answer([], { counts: { hidden: 1, published: 0 } }));
+        await tab(wrapper, 'Publicadas').trigger('click');
+        await flushPromises();
+
+        expect(fetchInbox).toHaveBeenLastCalledWith({ status: 'published', page: 1 });
+    });
+
+    it('the count of the tab goes down with each decision', async () => {
+        decideOnEvidence.mockResolvedValue({ message: PUBLISHED, status: 'Publicado' });
+        const wrapper = await openInbox([evidence(), evidence({ id: 8 })]);
+
+        await button(wrapper, 'Publicar').trigger('click');
+        await flushPromises();
+
+        expect(tab(wrapper, 'Por revisar').text()).toContain('1');
+        expect(wrapper.get('[data-test="total"]').text()).toBe('1 evidencia');
     });
 });

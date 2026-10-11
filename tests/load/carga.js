@@ -1,7 +1,9 @@
 // It. 50 — prueba de carga (make load-test): k6 contra una organización de
-// pruebas (la que deja tests/e2e/fixture.php). Dos escenarios a la vez:
+// pruebas (la que deja tests/e2e/fixture.php). Tres escenarios a la vez:
 //   publico: ciudadanos mirando el mapa, la lista de obras y las estadísticas;
-//   veedor:  veedores que entran, buscan su obra y envían un reporte con foto.
+//   veedor:  veedores que entran, buscan su obra y envían un reporte con foto;
+//   administrador (it. 52, ADMINS=n): administradores que abren su bandeja y piden las siguientes páginas.
+//   Cada escenario se prende con su cantidad (PUBLIC_RATE, VEEDORES, ADMINS): con 0, no corre.
 // Los límites de la app (PUBLIC_REQUESTS_PER_MINUTE por IP, REPORTS_PER_VEEDOR_PER_HOUR)
 // existen para esto: un solo generador sale por una IP y los alcanza pronto. Un 429
 // se cuenta aparte (`limitadas`), no como error. Para medir la capacidad sin
@@ -18,8 +20,11 @@ const PASSWORD = __ENV.VEEDOR_PASSWORD || 'Veeduria#2026';
 const CONTRACT = __ENV.CONTRACT_ID || '';
 const LAT = __ENV.LAT || '11.2419';
 const LNG = __ENV.LNG || '-74.1990';
-const PUBLIC_RATE = Number(__ENV.PUBLIC_RATE || 5); // peticiones por segundo
-const VEEDORES = Number(__ENV.VEEDORES || 3);
+const PUBLIC_RATE = Number(__ENV.PUBLIC_RATE ?? 5); // peticiones por segundo
+const VEEDORES = Number(__ENV.VEEDORES ?? 3);
+const ADMINS = Number(__ENV.ADMINS ?? 0);
+const ADMIN_EMAIL = __ENV.ADMIN_EMAIL || 'e2e.admin@correo.co';
+const ADMIN_PASSWORD = __ENV.ADMIN_PASSWORD || PASSWORD;
 const DURATION = __ENV.DURATION || '2m';
 
 const photo = open('../fixtures/evidence/rostros-lejanos.jpg', 'b');
@@ -30,16 +35,20 @@ const reportes = new Counter('reportes_recibidos');
 const rechazados = new Counter('reportes_rechazados');
 const envioDeReporte = new Trend('envio_de_reporte', true);
 
+const scenarios = {};
+if (PUBLIC_RATE > 0) scenarios.publico = { executor: 'constant-arrival-rate', rate: PUBLIC_RATE, timeUnit: '1s', duration: DURATION, preAllocatedVUs: 20, maxVUs: 100, exec: 'publico' };
+if (VEEDORES > 0) scenarios.veedor = { executor: 'constant-vus', vus: VEEDORES, duration: DURATION, exec: 'veedor' };
+if (ADMINS > 0) scenarios.administrador = { executor: 'constant-vus', vus: ADMINS, duration: DURATION, exec: 'administrador' };
+
 export const options = {
-    scenarios: {
-        publico: { executor: 'constant-arrival-rate', rate: PUBLIC_RATE, timeUnit: '1s', duration: DURATION, preAllocatedVUs: 20, maxVUs: 100, exec: 'publico' },
-        veedor: { executor: 'constant-vus', vus: VEEDORES, duration: DURATION, exec: 'veedor' },
-    },
+    scenarios,
     thresholds: {
         // Lo que importa: que lo que la app acepta no falle ni se arrastre.
         'http_req_failed{expected_response:true}': ['rate<0.01'],
         'http_req_duration{scenario:publico}': ['p(95)<1500'],
         'http_req_duration{name:reporte}': ['p(95)<5000'],
+        // It. 52: abrir la bandeja con miles de evidencias por revisar.
+        'http_req_duration{name:bandeja}': ['p(95)<1000'],
         checks: ['rate>0.99'],
     },
 };
@@ -108,4 +117,27 @@ export function veedor() {
         check(sent, { 'veedor: reporte recibido, limitado o fuera de la geocerca': (r) => [200, 201, 422, 429].includes(r.status) });
     });
     sleep(5 + Math.random() * 5);
+}
+
+// It. 52: un administrador abre su bandeja (la primera página) y, a veces, pide la siguiente.
+// Entra en cada iteración: el jar de cookies de k6 se vaciaba tras la primera respuesta grande
+// (con curl, la misma sesión sigue valiendo), así que no se reutiliza. El login lleva su
+// etiqueta, y la medición de la bandeja queda limpia.
+export function administrador() {
+    http.get(`${BASE}/login`);
+    const login = http.post(`${BASE}/login`, JSON.stringify({ email: ADMIN_EMAIL, password: ADMIN_PASSWORD }), {
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-XSRF-TOKEN': xsrf() },
+        tags: { name: 'login' },
+    });
+    if (!check(login, { 'administrador: entró': (r) => r.status < 400 })) {
+        sleep(5);
+        return;
+    }
+    const inbox = watch(http.get(`${BASE}/inbox`, { headers: { Accept: 'application/json' }, tags: { name: 'bandeja' } }));
+    check(inbox, { 'administrador: bandeja': (r) => r.status === 200 || r.status === 429 });
+    if (inbox.status === 200 && inbox.json('has_more')) {
+        const next = watch(http.get(`${BASE}/inbox?page=2`, { headers: { Accept: 'application/json' }, tags: { name: 'bandeja-pagina-2' } }));
+        check(next, { 'administrador: página 2': (r) => r.status === 200 || r.status === 429 });
+    }
+    sleep(2 + Math.random() * 2);
 }

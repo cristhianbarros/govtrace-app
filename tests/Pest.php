@@ -219,9 +219,9 @@ function sealedReport(Tenant $tenant, OrganizationUser $veedor, array $overrides
 }
 
 /** GET /inbox: the Administrador's review inbox (US-036). */
-function inbox(OrganizationUser $member, string $host = 'veeduria-smr.govtrace.localhost'): TestResponse
+function inbox(OrganizationUser $member, string $host = 'veeduria-smr.govtrace.localhost', array $query = []): TestResponse
 {
-    return test()->actingAs($member, 'tenant')->getJson("http://{$host}/inbox");
+    return test()->actingAs($member, 'tenant')->getJson("http://{$host}/inbox".($query === [] ? '' : '?'.http_build_query($query)));
 }
 
 /**
