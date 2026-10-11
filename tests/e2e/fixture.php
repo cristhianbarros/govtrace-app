@@ -114,7 +114,8 @@ Contract::fromSecop(fn () => Contract::query()->updateOrCreate(['secop_contract_
     'contract_type' => 'Obra',
     'status' => 'En ejecución',
     'signed_at' => now()->subMonths(4)->toDateString(),
-    'end_date' => now()->subDays(10)->toDateString(),
+    // El día de Bogotá, que es el que ve el navegador de la prueba: entre las 00:00 y las 05:00 UTC, la fecha UTC va un día adelante.
+    'end_date' => now('America/Bogota')->subDays(10)->toDateString(),
     'department_code' => '47',
     'municipality_code' => '47001',
     'process_number' => 'E2E-001-B',
