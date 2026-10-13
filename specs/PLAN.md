@@ -3355,6 +3355,51 @@ El usuario pidió seguir con lo que no espera a nadie: la deuda técnica y los h
 **Lo que NO está comprobado, y por qué:** cuánto más aguanta la máquina de staging. Mi entorno local no sirve para medirlo: su PHP de desarrollo no tiene opcache, y con cualquier cambio satura en unas 20 peticiones por segundo (con 60 por segundo agota las conexiones de PostgreSQL, dentro y fuera de la caché). La ganancia real hay que medirla en staging (imagen `qa`, con opcache) con la prueba de carga de la it. 50b, que exige subir los límites por IP de forma temporal: queda pendiente, con el usuario.
 
 **Lo que queda en el mapa de las mejoras:** el grueso del costo de una petición pública es identificar a la organización y conectar a su base (~70 ms en local). Atacarlo (cachear la identificación del tenant de Stancl, un pool de conexiones) es otra iteración, y se decide con la medida de staging.
+
+### Iteración 57 — El cupo de sellado por organización
+
+⬜ **Propuesta por Claude el 2026-10-13; el usuario pidió agregarla al plan.** Se implementa cuando la apruebe, como las demás.
+
+**Por qué:** el usuario preguntó por una cuenta patrocinadora por organización, porque con una sola "se mezclan los scopes". Hoy hay separación en tres cosas:
+- los datos: cada veeduría tiene su base;
+- la contabilidad: cada sello guarda su comisión, y el Super Administrador ve el costo por organización y por mes (US-004, `SealingCosts`);
+- lo sellado: la referencia de la obra lleva la organización.
+
+Se comparten **el dinero y el riesgo**. Una sola patrocinadora paga todo: si una organización sella de más, por uso o por abuso, agota el saldo, y bajo 2 XLM el sellado **se pausa para todas**.
+
+**Una patrocinadora por organización se descartó para el MVP:**
+- N llaves que custodiar (en KMS, 1 USD al mes cada una);
+- capital quieto en cada cuenta (la reserva y el colchón);
+- recargas y alertas por cuenta, y cuentas que crear al dar de alta y fusionar al dar de baja;
+- en la red pública, cualquiera vería cuándo y cuánto sella cada veeduría, y eso delata el ritmo de sus visitas;
+- si una veeduría pusiera su propia plata, el operador custodiaría criptoactivos de terceros ❓;
+- y no acelera nada: el cuello de botella es la selladora, porque el *fee bump* no usa la secuencia de la patrocinadora.
+
+Queda para la V2, opcional, con el modelo de financiación (`docs/viabilidad-legal.md` §5).
+
+**Entregable:**
+- **El cupo:** sellos al mes por organización. El Super Administrador fija uno por defecto (un parámetro global, US-038-CFG) y puede cambiarlo para una organización. El mes es el de Colombia. Los reportes que el Super Administrador hace en nombre de una organización (US-042-SEC) cuentan para ella.
+- **Al agotarse:** el reporte se recibe y se guarda como siempre (huella comprobada), pero su sello **espera el cupo**, en un estado propio, "Esperando cupo". No gasta intentos ni dispara la alerta de cola detenida (US-021, 2 horas). Al empezar el mes, o si el Super Administrador sube el cupo, los que esperaban se encolan en orden. Nada se pierde. Las demás organizaciones siguen sellando.
+- **El aviso:** al 80 % y al 100 %, al Administrador de la organización y a los Super Administradores, por correo y al webhook de alertas.
+- **A la vista:** el Administrador ve "X de Y sellos este mes" en su resumen; el Super Administrador, el uso de cada organización junto a sus costos.
+- **El veedor** ve su reporte como recibido y pendiente de sello, igual que en la pausa por saldo.
+
+**Una advertencia del código actual:** el trabajo `SealReport` reintenta hasta un día (`retryUntil`). Una espera de semanas no puede vivir en sus reintentos, como la pausa por saldo (`SealingPause`, cada 5 minutos). Por eso el estado propio, y un trabajo programado que encola lo que esperaba.
+
+**Done-when:**
+- una organización con el cupo agotado no sella, y las demás sí;
+- lo que espera se sella al empezar el mes y al subir el cupo, en orden, sin perder ninguno;
+- no gasta intentos ni dispara la alerta de cola detenida;
+- los avisos al 80 % y al 100 % llegan una sola vez por mes;
+- el contador del Administrador es correcto en el cambio de mes, en hora de Colombia;
+- cada escenario de su `.feature` tiene su prueba.
+
+**Decisiones del usuario ❓:**
+1. El cupo por defecto. Una referencia: con ~0,25 XLM por sello, 200 sellos al mes son ~50 XLM.
+2. ¿Sellos o XLM? La propuesta es sellos: los entiende una veeduría, y la comisión por sello casi no cambia.
+3. ¿El Administrador puede pedir más cupo desde su panel, o lo pide por fuera?
+
+**Modelo:** Opus xhigh. Al proponerla dije Sonnet medium. Al leer `SealReport` cambió: toca la máquina de estados del sellado, los reintentos y las alertas de cola, y un error ahí deja reportes sin sellar.
 ### Orden de lo que está en espera (2026-10-10)
 
 | Orden | Qué | Por qué en ese lugar |
@@ -3368,6 +3413,7 @@ El usuario pidió seguir con lo que no espera a nadie: la deuda técnica y los h
 | 6 | **It. 51** — El subdominio sale del nombre | Comodidad para el Super Administrador |
 | 7 | **El piloto** con una veeduría real | Con lo que muestre se decide V20 (elegir la obra sin señal) y V17 (correo al veedor) |
 | 8 | **Imagen en un registro** (GitHub Container Registry) y **la red principal** (37b) | Cuando estén el dominio, el operador y los fondos |
+| 9 | **It. 57** — El cupo de sellado por organización (propuesta del 2026-10-13) | Antes de que haya varias veedurías sellando en la red principal: hoy una sola puede agotar el saldo de todas |
 
 Cada una se aprueba por separado y pasa por el CI (it. 49) antes de fusionarse.
 
