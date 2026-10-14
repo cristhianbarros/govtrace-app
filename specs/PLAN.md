@@ -3355,19 +3355,181 @@ El usuario pidió seguir con lo que no espera a nadie: la deuda técnica y los h
 **Lo que NO está comprobado, y por qué:** cuánto más aguanta la máquina de staging. Mi entorno local no sirve para medirlo: su PHP de desarrollo no tiene opcache, y con cualquier cambio satura en unas 20 peticiones por segundo (con 60 por segundo agota las conexiones de PostgreSQL, dentro y fuera de la caché). La ganancia real hay que medirla en staging (imagen `qa`, con opcache) con la prueba de carga de la it. 50b, que exige subir los límites por IP de forma temporal: queda pendiente, con el usuario.
 
 **Lo que queda en el mapa de las mejoras:** el grueso del costo de una petición pública es identificar a la organización y conectar a su base (~70 ms en local). Atacarlo (cachear la identificación del tenant de Stancl, un pool de conexiones) es otra iteración, y se decide con la medida de staging.
-### Orden de lo que está en espera (2026-10-10)
+
+### Iteración 57 — El cupo de sellado por organización
+
+⬜ **Propuesta por Claude el 2026-10-13; el usuario pidió agregarla al plan.** Se implementa cuando la apruebe, como las demás.
+
+**Por qué:** el usuario preguntó por una cuenta patrocinadora por organización, porque con una sola "se mezclan los scopes". Hoy hay separación en tres cosas:
+- los datos: cada veeduría tiene su base;
+- la contabilidad: cada sello guarda su comisión, y el Super Administrador ve el costo por organización y por mes (US-004, `SealingCosts`);
+- lo sellado: la referencia de la obra lleva la organización.
+
+Se comparten **el dinero y el riesgo**. Una sola patrocinadora paga todo: si una organización sella de más, por uso o por abuso, agota el saldo, y bajo 2 XLM el sellado **se pausa para todas**.
+
+**Una patrocinadora por organización se descartó para el MVP:**
+- N llaves que custodiar (en KMS, 1 USD al mes cada una);
+- capital quieto en cada cuenta (la reserva y el colchón);
+- recargas y alertas por cuenta, y cuentas que crear al dar de alta y fusionar al dar de baja;
+- en la red pública, cualquiera vería cuándo y cuánto sella cada veeduría, y eso delata el ritmo de sus visitas;
+- si una veeduría pusiera su propia plata, el operador custodiaría criptoactivos de terceros ❓;
+- y no acelera nada: el cuello de botella es la selladora, porque el *fee bump* no usa la secuencia de la patrocinadora.
+
+Queda para la V2, opcional, con el modelo de financiación (`docs/viabilidad-legal.md` §5).
+
+**Entregable:**
+- **El cupo:** sellos al mes por organización. El Super Administrador fija uno por defecto (un parámetro global, US-038-CFG) y puede cambiarlo para una organización. El mes es el de Colombia. Los reportes que el Super Administrador hace en nombre de una organización (US-042-SEC) cuentan para ella.
+- **Al agotarse:** el reporte se recibe y se guarda como siempre (huella comprobada), pero su sello **espera el cupo**, en un estado propio, "Esperando cupo". No gasta intentos ni dispara la alerta de cola detenida (US-021, 2 horas). Al empezar el mes, o si el Super Administrador sube el cupo, los que esperaban se encolan en orden. Nada se pierde. Las demás organizaciones siguen sellando.
+- **El aviso:** al 80 % y al 100 %, al Administrador de la organización y a los Super Administradores, por correo y al webhook de alertas.
+- **A la vista:** el Administrador ve "X de Y sellos este mes" en su resumen; el Super Administrador, el uso de cada organización junto a sus costos.
+- **El veedor** ve su reporte como recibido y pendiente de sello, igual que en la pausa por saldo.
+
+**Una advertencia del código actual:** el trabajo `SealReport` reintenta hasta un día (`retryUntil`). Una espera de semanas no puede vivir en sus reintentos, como la pausa por saldo (`SealingPause`, cada 5 minutos). Por eso el estado propio, y un trabajo programado que encola lo que esperaba.
+
+**Done-when:**
+- una organización con el cupo agotado no sella, y las demás sí;
+- lo que espera se sella al empezar el mes y al subir el cupo, en orden, sin perder ninguno;
+- no gasta intentos ni dispara la alerta de cola detenida;
+- los avisos al 80 % y al 100 % llegan una sola vez por mes;
+- el contador del Administrador es correcto en el cambio de mes, en hora de Colombia;
+- cada escenario de su `.feature` tiene su prueba.
+
+**Decisiones del usuario ❓:**
+1. El cupo por defecto. Una referencia: con ~0,25 XLM por sello, 200 sellos al mes son ~50 XLM.
+2. ¿Sellos o XLM? La propuesta es sellos: los entiende una veeduría, y la comisión por sello casi no cambia.
+3. ¿El Administrador puede pedir más cupo desde su panel, o lo pide por fuera?
+
+**Modelo:** Opus xhigh. Al proponerla dije Sonnet medium. Al leer `SealReport` cambió: toca la máquina de estados del sellado, los reintentos y las alertas de cola, y un error ahí deja reportes sin sellar.
+
+### Iteración 58 — El ciudadano informa sobre cualquier obra del territorio
+
+⬜ **Propuesta por Claude el 2026-10-14, a partir de un vacío que encontró el usuario; el usuario pidió agregarla al plan** ("si, agrégalas al plan con ese orden"). Se implementa cuando la apruebe.
+
+**Por qué:** hoy el ciudadano solo puede informar sobre obras que un veedor ya visitó.
+- El mapa y la Lista muestran solo las fichas con ubicación (`PublicMap`, `whereNotNull('latitude')`), y el filtro de municipio también.
+- El informe (US-059-LEG) exige una ficha que ya exista. Una ficha nace con el primer reporte de un veedor (`CreateReport`) o al agrupar contratos (US-045-INT).
+- La obra abandonada que nadie visita, la que más importa, es justo la que el ciudadano no puede reportar.
+
+**Se descartó usar la foto del ciudadano como ubicación de la obra:**
+- El GPS de la foto dice dónde estaba la persona. Se quita en el teléfono (R-PRIV-01), y guardarlo sería un tratamiento nuevo de sus datos (Ley 1581).
+- El ciudadano no tiene cuenta, solo un código por correo: cualquiera, también el contratista, podría mover el pin. El veedor fija la ubicación porque es una persona conocida, su reporte queda sellado y se le exigen 20 m de precisión y 30 km a la cabecera del municipio (R-GEO-01).
+
+**Entregable:**
+- **Las obras sin ubicación, en la Lista:** una sección "Obras sin ubicación todavía", con los contratos de obra del territorio que aún no están en el mapa y la misma búsqueda por nombre y municipio. La búsqueda va al servidor y por páginas: en Medellín son cientos de contratos de obra.
+- **Informar sobre un contrato sin ficha:** el informe acepta el contrato, y la ficha se crea sin ubicación, como al primer reporte del veedor, con el mismo cuidado si los dos llegan a la vez.
+- **"¿Dónde queda la obra?"**, opcional en el formulario: el ciudadano marca un punto en un mapa. Es el lugar de la obra, no el de la persona: no sale de la foto ni del GPS del teléfono. Una propuesta a más de 30 km de la cabecera del municipio del contrato (el parámetro de R-GEO-01) se rechaza al enviarla, con un mensaje.
+- **La veeduría confirma:** la propuesta llega a la Bandeja de informes ciudadanos como "ubicación propuesta por un ciudadano". El Administrador la confirma con un clic (la corrección de US-035, que queda en la auditoría) o manda a un veedor. Hasta entonces la obra no tiene pin. Al confirmarla, aparece en el mapa y la geocerca de los veedores queda activa.
+- Si varios ciudadanos proponen una ubicación para la misma obra, la Bandeja las muestra juntas, y confirmar una cierra las demás. Una ficha que ya tiene ubicación no recibe propuestas: el ciudadano solo informa.
+- **Historias:** se enmiendan US-059-LEG (informar sobre cualquier obra del territorio y proponer su ubicación) y US-035 (confirmar una ubicación propuesta), con sus escenarios.
+- Los comentarios del código que citan R-PRIV-06 al rechazar una foto con metadatos citan también R-PRIV-01, la regla que los prohíbe (la 06 es la optimización que los quita).
+
+**Done-when:**
+- un ciudadano encuentra en la Lista un contrato de obra sin ficha y le informa a la veeduría;
+- la ficha se crea una sola vez, aunque un veedor reporte el mismo contrato al mismo tiempo;
+- la ubicación propuesta no aparece en el mapa hasta que el Administrador la confirma; al confirmarla, sí, con su registro en la auditoría;
+- una propuesta lejos del municipio se rechaza, y una foto con ubicación sigue sin entrar;
+- cada escenario de los `.feature` enmendados tiene su prueba, más un e2e del recorrido del ciudadano.
+
+**Decisión tomada por defecto (2026-10-14), salvo que el usuario diga otra cosa:** la ubicación propuesta por un ciudadano siempre espera la confirmación de la veeduría.
+
+**Modelo:** Opus xhigh. Toca el informe ciudadano, la creación de fichas con su concurrencia y la Bandeja.
+
+### Iteración 59 — GovTrace sugiere la veeduría: el Inicio empieza por la obra
+
+⬜ **Propuesta por Claude el 2026-10-14, a partir de una idea del usuario** (que el sistema le sugiera la veeduría a quien quiere ayudar y no sabe a cuál informar); **el usuario pidió agregarla al plan.** Se implementa cuando la apruebe.
+
+**Por qué:**
+- En el Inicio, el ciudadano elige primero la veeduría (el directorio de la it. 40d), y quien quiere ayudar no sabe a cuál escribirle.
+- Dos veedurías pueden cubrir el mismo territorio: nada lo impide (`ConfigureTerritory`). En Medellín pasará, y una veeduría de todo Antioquia también cubre Medellín.
+
+**El sistema sugiere, no elige.** Elegir la veeduría es elegir a quién se le entregan el informe y el correo: esa veeduría es la responsable de los datos (Ley 1581) y de su mapa (R-MAP-01).
+
+**Entregable:**
+- **El Inicio pregunta "¿Qué obra quiere reportar?"**, con búsqueda por nombre o lugar sobre los contratos de SECOP. Están en la base central, con el texto de búsqueda de la it. 47a.
+- **Por municipio o con "Usar mi ubicación":** la ubicación se compara en el navegador con la cabecera de municipio más cercana, y no viaja al servidor. El ciudadano confirma el municipio, porque cerca de un límite la cabecera más cercana puede ser la de otro.
+- **Quién puede atenderla**, con reglas públicas, escritas en la spec y a la vista en la pantalla, sin un puntaje oculto:
+  - requisito: su territorio cubre el municipio de la obra y recibe informes (activa, no suspendida);
+  - primero, la que ya sigue la obra (tiene su ficha o evidencias publicadas): "Ya sigue esta obra: 3 evidencias publicadas";
+  - después, la de territorio más específico: el municipio antes que el departamento entero;
+  - después, la que publicó evidencias en los últimos 90 días: "Activa";
+  - en un empate, el orden alfabético, y se muestran como iguales.
+- **La primera va como "Le sugerimos"**, con su porqué, y debajo "También cubren esta obra". Un toque lleva a esa obra en esa veeduría, con el formulario del informe. Si la veeduría no tiene ficha de esa obra, la crea la it. 58.
+- **Si ninguna la cubre,** se dice así, con tres caminos:
+  - la Personería del municipio, donde se inscriben las veedurías (Ley 850 de 2003, art. 3);
+  - la Contraloría;
+  - la solicitud de alta de una veeduría (US-062-ALT).
+- **Un resumen en la base central** de qué veedurías siguen qué contratos: si tiene ficha y cuántas evidencias publicadas. Hace falta porque las fichas viven en la base de cada veeduría. Se actualiza al crear una ficha y al publicar o retirar una evidencia, no consultando todas las bases en cada búsqueda.
+- **Privacidad:** la búsqueda no abre sesión (como lo público desde la it. 56), y no se registra quién buscó qué obra.
+- **R-MAP-01 se mantiene, con una aclaración:** el Inicio muestra contratos de SECOP, quién los cubre y un conteo de evidencias. Nunca evidencias ni pines de varias veedurías juntas: cada evidencia sigue en el mapa de su veeduría.
+- **Historia:** una nueva (US-066), con su YAML y su `.feature`, antes de las pruebas.
+
+**Done-when:**
+- las reglas se prueban con veedurías que se solapan: municipio contra departamento, una que ya sigue la obra, una suspendida y ninguna;
+- el resumen central coincide con las fichas y las evidencias de cada veeduría al publicar y al retirar;
+- la ubicación del ciudadano no llega al servidor;
+- un e2e: buscar una obra en el Inicio, entrar a la veeduría sugerida e informar;
+- cada escenario de su `.feature` tiene su prueba.
+
+**Decisiones tomadas por defecto (2026-10-14), salvo que el usuario diga otra cosa:**
+1. Ya seguir la obra pesa más que tener el territorio más específico: esa veeduría tiene el contexto y puede actuar antes.
+2. Cuánto y qué tan rápido responde una veeduría no ordena la lista. Al principio castigaría a las nuevas y a las pequeñas, y se puede inflar descartando informes rápido. Más adelante podría mostrarse como un dato.
+3. Un informe va a una sola veeduría. Enviarlo a varias queda para la V2: cada una es responsable de los datos por separado. Al terminar se ofrece "¿Quiere informar también a otra?".
+
+**Depende de:** la 58.
+
+**Modelo:** Opus xhigh. El resumen cruza la frontera entre la base central y las bases de las veedurías.
+
+### Iteración 60 — La tarjeta de la obra en el mapa
+
+⬜ **Propuesta del usuario el 2026-10-14** (al tocar un pin, la información de la obra "estilo Google Maps", con fotos en miniatura); **el usuario pidió agregarla al plan.** Se implementa cuando la apruebe.
+
+**Por qué:** hoy, tocar un pin saca del mapa y lleva a la página de la obra. Para comparar varias obras hay que ir y volver.
+
+**Una tarjeta, no un tooltip:** en el celular no hay cursor, y lo que solo aparece al pasarlo por encima falla con los adultos mayores y con WCAG 1.4.13.
+
+**Entregable:**
+- **Al tocar un pin sube una tarjeta desde abajo,** y en escritorio va en un panel lateral, para no tapar los demás pines. Trae:
+  - el estado, con su signo y en palabras (`WorksiteCondition`);
+  - el nombre, el municipio y el valor;
+  - hasta 3 miniaturas de las evidencias publicadas más recientes, y la fecha de la última ("Sin evidencias todavía" si no hay);
+  - dos botones: "Ver la obra" e "Informar a la veeduría".
+- Una miniatura abre la página de la obra en esa evidencia, con su verificación.
+- **Con el teclado:** Enter sobre el pin abre la tarjeta y el foco pasa a ella; Esc la cierra y devuelve el foco al pin.
+- **Sus datos, por una consulta ligera** (R-MAP-02), no la de la página completa, que trae toda la línea de tiempo. Va con la caché de lo público (it. 56).
+- **Las miniaturas, que hoy no existen:** la página de la obra muestra la foto completa achicada (`EvidenceCard.vue`), de hasta 1920 px (R-PRIV-06). Se genera una de unos 320 px al publicarse la evidencia:
+  - es una copia para ver: lo sellado y verificable sigue siendo el original;
+  - desaparece con la foto al retirarla (US-037) y al borrarse los archivos tras la baja (US-003b), y se sirve sin caché, como la foto;
+  - las evidencias ya publicadas reciben la suya con un comando, una sola vez;
+  - la página de la obra también la usa, y descarga menos.
+- `make ux-check` recorre la tarjeta, en celular y en escritorio.
+- **Historias:** se enmiendan US-029 (lo que trae el toque en un pin) y US-027, con sus escenarios.
+
+**Done-when:**
+- tocar un pin abre la tarjeta con los datos de esa obra, y "Ver la obra" lleva a su página;
+- la miniatura existe al publicar, y desaparece al retirar y al borrarse los archivos; la de una evidencia oculta o rechazada nunca es pública;
+- la tarjeta se usa con el teclado;
+- `make ux-check` no empeora;
+- cada escenario de los `.feature` enmendados tiene su prueba, más un e2e: tocar un pin, ver la tarjeta y entrar a la obra.
+
+**Modelo:** Sonnet medium. Lo delicado es que la miniatura siga la vida de la foto, y eso lo cubren las pruebas.
+
+### Orden de lo que está en espera (2026-10-14)
 
 | Orden | Qué | Por qué en ese lugar |
 |---|---|---|
 | 0 | ✅ **Segunda corrida de la prueba de carga** en staging (it. 50b), hecha el 2026-10-10: 0 errores 500 (antes 3.840), y la máquina atiende unas 19 peticiones por segundo. Los límites de staging, restaurados | El tope de Apache funcionó. Quedan sus ~240 reportes de prueba en la Bandeja de la veeduría de pruebas, por rechazar |
-| 1 | **It. 54** — Veedores y Administradores, separados | Corta. La 52 va a paginar esas dos listas: conviene que ya estén separadas |
-| 2 | **It. 55** — La Bandeja muestra dónde quedó la ubicación corregida | Corta. Hoy parece que la corrección no tuvo efecto |
-| 3 | **It. 52** — Paginar y filtrar | Rendimiento antes del piloto, con el escenario de carga de la bandeja |
-| 4 | **It. 56** — La caché de lo público | Rendimiento: se mide con el mismo guion de carga que la 52 |
-| 5 | **It. 53** — El mapa público dice que el punto es aproximado | Confunde a quien mira el mapa |
-| 6 | **It. 51** — El subdominio sale del nombre | Comodidad para el Super Administrador |
-| 7 | **El piloto** con una veeduría real | Con lo que muestre se decide V20 (elegir la obra sin señal) y V17 (correo al veedor) |
-| 8 | **Imagen en un registro** (GitHub Container Registry) y **la red principal** (37b) | Cuando estén el dominio, el operador y los fondos |
+| 1 | ✅ **It. 54** — Veedores y Administradores, separados | Corta. La 52 va a paginar esas dos listas: conviene que ya estén separadas |
+| 2 | ✅ **It. 55** — La Bandeja muestra dónde quedó la ubicación corregida | Corta. Hoy parece que la corrección no tuvo efecto |
+| 3 | ✅ **It. 52** — Paginar y filtrar | Rendimiento antes del piloto, con el escenario de carga de la bandeja |
+| 4 | ✅ **It. 56** — La caché de lo público | Rendimiento: se mide con el mismo guion de carga que la 52 |
+| 5 | ✅ **It. 53** — El mapa público dice que el punto es aproximado | Confunde a quien mira el mapa |
+| 6 | ✅ **It. 51** — El subdominio sale del nombre | Comodidad para el Super Administrador |
+| 7 | **It. 58** — El ciudadano informa sobre cualquier obra del territorio (propuesta del 2026-10-14) | Cierra el vacío del ciudadano: hoy solo puede informar sobre obras que un veedor ya visitó. Antes del piloto, para que la veeduría pruebe también el lado del ciudadano |
+| 8 | **It. 60** — La tarjeta de la obra en el mapa (propuesta del 2026-10-14) | Corta y no depende de otra. Es la que más se ve en una presentación: si la de Todos por Medellín se adelanta, va primero |
+| 9 | **It. 59** — GovTrace sugiere la veeduría (propuesta del 2026-10-14) | Necesita la 58 |
+| 10 | **El piloto** con una veeduría real | Con lo que muestre se decide V20 (elegir la obra sin señal) y V17 (correo al veedor) |
+| 11 | **Imagen en un registro** (GitHub Container Registry) y **la red principal** (37b) | Cuando estén el dominio, el operador y los fondos |
+| 12 | **It. 57** — El cupo de sellado por organización (propuesta del 2026-10-13) | Antes de que haya varias veedurías sellando en la red principal: hoy una sola puede agotar el saldo de todas |
 
 Cada una se aprueba por separado y pasa por el CI (it. 49) antes de fusionarse.
 
