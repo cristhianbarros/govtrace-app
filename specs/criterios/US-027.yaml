@@ -11,6 +11,7 @@ criterios_aceptacion:
     - "(It. 53, 2026-10-10; pedido por el usuario) El punto público es aproximado (R-PRIV-02) y el mapa lo dice: un círculo de unos 100 m alrededor de cada pin (no recibe el toque) y la nota 'Cada punto es aproximado: la obra está a unos 100 m de él. Es para proteger a quien tomó la foto.' Lo que confundió fue que el pin parecía exacto; la regla de privacidad no cambia"
     - "R-MAP-01: cada organización tiene su mapa público aislado en su subdominio"
     - "R-MAP-02: la carga inicial solo trae [{id, lat, lng, color_pin}]"
+    - "(It. 60) La tarjeta de una obra se pide al tocar su pin, con lo que la tarjeta muestra y nada más: no trae la línea de tiempo ni las fotos completas"
     - "Solo tienen pin las obras con ubicación (First-Touch)"
     - "Las obras Terminadas/Liquidadas dentro de la ventana de 12 meses siguen las mismas reglas de color (según su evidencia publicada más reciente) y son verdes si no tienen ninguna"
     - "Si una ficha agrupa varios contratos (US-045-INT), el pin toma el peor estado entre sus contratos"

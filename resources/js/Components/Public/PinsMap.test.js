@@ -71,4 +71,33 @@ describe('PinsMap, ícono además del color (it. 40b)', () => {
         expect(wrapper.vm.markers[0].options.icon.options.iconSize).toEqual([36, 36]);
         wrapper.unmount();
     });
+
+    // It. 60: el pin es un botón: Enter o Espacio lo tocan (Leaflet le pone el rol, pero no la tecla).
+    it('La tarjeta se usa con el teclado: Enter or Space on a pin select it, and other keys do not', async () => {
+        const wrapper = await mountMap();
+        const press = (key) => {
+            const originalEvent = new KeyboardEvent('keydown', { key, cancelable: true });
+            wrapper.vm.markers[1].fire('keydown', { originalEvent });
+            return originalEvent;
+        };
+
+        press('Enter');
+        const space = press(' ');
+        press('a');
+
+        expect(wrapper.emitted('select')).toEqual([[7], [7]]);
+        // El espacio no desplaza la página.
+        expect(space.defaultPrevented).toBe(true);
+        wrapper.unmount();
+    });
+
+    // It. 60: al cerrar la tarjeta de una obra, el foco vuelve a su pin.
+    it('La tarjeta se usa con el teclado: focusPin gives the focus back to that pin', async () => {
+        const wrapper = await mountMap();
+
+        wrapper.vm.focusPin(7);
+
+        expect(document.activeElement).toBe(wrapper.vm.markers[1].getElement());
+        wrapper.unmount();
+    });
 });

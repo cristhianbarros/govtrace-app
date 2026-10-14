@@ -13,6 +13,8 @@ test.describe.configure({ mode: 'serial' });
 async function openTheWorksite(page) {
     await page.goto(ORG);
     await page.locator('.leaflet-marker-icon').first().click();
+    // It. 60: el pin abre la tarjeta de la obra; "Ver la obra" lleva a su página.
+    await page.locator('[data-test="worksite-card"]').getByRole('link', { name: 'Ver la obra' }).click();
     await page.waitForURL('**/worksite/*');
 }
 
@@ -71,6 +73,35 @@ test('Abre una obra: el contrato de SECOP y sus evidencias publicadas', async ({
     await expect(page.getByRole('heading', { name: '¿Sabe de un problema en esta obra?' })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Línea gratuita 199' })).toHaveAttribute('href', 'tel:199');
     await expect(page.getByRole('button', { name: 'Comprobar que es original' }).first()).toBeVisible();
+});
+
+// It. 60 (US-029): al tocar un pin, la tarjeta de la obra, sin salir del mapa.
+test('Toca un pin y ve la tarjeta de la obra, con sus miniaturas; también con el teclado (it. 60)', async ({ page }) => {
+    await page.goto(ORG);
+    const pin = page.locator('.leaflet-marker-icon').first();
+    await pin.click();
+
+    const card = page.locator('[data-test="worksite-card"]');
+    await expect(card.getByRole('heading', { name: WORKSITE })).toBeVisible();
+    expect(page.url()).not.toContain('/worksite/');
+    await expect(card.getByRole('link', { name: 'Informar a la veeduría' })).toBeVisible();
+    // Las miniaturas son livianas: 320 px como mucho, no la foto de 1920.
+    const thumbnail = card.locator('[data-test="card-thumbnail"] img').first();
+    await expect(thumbnail).toHaveAttribute('src', /\/thumbnail$/);
+    await expect.poll(() => thumbnail.evaluate((image) => image.naturalWidth)).toBeGreaterThan(0);
+    expect(await thumbnail.evaluate((image) => Math.max(image.naturalWidth, image.naturalHeight))).toBeLessThanOrEqual(320);
+
+    // Esc la cierra y el foco vuelve al pin; Enter sobre el pin la abre otra vez, con el foco en ella.
+    await page.keyboard.press('Escape');
+    await expect(card).toHaveCount(0);
+    await expect(pin).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(card).toBeFocused();
+
+    // Una miniatura lleva a esa evidencia, en la página de la obra.
+    await card.locator('[data-test="card-thumbnail"]').first().click();
+    await page.waitForURL(/\/worksite\/[^#]+#evidencia-/);
+    await expect(page.locator(`[id="${new URL(page.url()).hash.slice(1)}"]`)).toBeInViewport();
 });
 
 test('Comprueba una evidencia: su recibo, su descarga y su prueba', async ({ page }) => {

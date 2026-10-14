@@ -4,7 +4,18 @@ Al 2026-10-04. Empezó sobre `77e6030` (iteración 39) y se actualizó en las it
 
 ✅ hecho y probado · ⚠️ a medias · ⬜ falta · 🔒 espera algo externo · ❓ decisión tuya
 
-## Dónde quedó (2026-10-14)
+## Dónde quedó (2026-10-14, más tarde)
+
+| Qué | PR |
+|---|---|
+| 60: al tocar un pin, la tarjeta de la obra sobre el mapa, con miniaturas de sus fotos (US-029, US-027) | este |
+
+- **Tests:** Pest 1227, Vitest 712, `make e2e` 59 pasan y 1 `fixme` (V20), trace-check 475 de 475, `make ux-check` sin retroceso (con la tarjeta en la línea base).
+- **60, en una frase:** tocar un pin ya no saca del mapa: abre una tarjeta con el estado, el nombre, el municipio, el valor, la última evidencia y hasta 3 miniaturas, y los botones "Ver la obra" e "Informar a la veeduría". Se usa con el teclado.
+- **Las miniaturas** se hacen al publicar (320 px, al lado del original, que no se toca) y se borran al retirar y tras la baja. Las fotos ya publicadas reciben la suya en el siguiente despliegue (`deploy/deploy.sh` corre `php artisan evidence:thumbnails`).
+- **La imagen de PHP suma GD:** hay que reconstruirla (`make setup` en local; el despliegue la construye solo).
+
+## Antes (2026-10-14)
 
 | Qué | PR |
 |---|---|

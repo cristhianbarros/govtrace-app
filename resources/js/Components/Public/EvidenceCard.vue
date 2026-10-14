@@ -47,7 +47,8 @@ const original = (index) => (files().length > 1 ? `Descargar archivo original ($
                     :aria-label="`Ver la foto de la evidencia del ${formatDateTime(evidence.captured_at)}`"
                     @click="viewing = photo"
                 >
-                    <img :src="photo.photo_url" loading="lazy" alt="" class="size-full object-cover" />
+                    <!-- It. 60: la miniatura, liviana; sin ella, la foto. El visor abre siempre la foto. -->
+                    <img :src="photo.thumbnail_url ?? photo.photo_url" loading="lazy" alt="" class="size-full object-cover" />
                 </button>
             </div>
             <ul v-if="files().length" class="mt-3 flex flex-col gap-2">

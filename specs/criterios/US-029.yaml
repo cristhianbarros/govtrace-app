@@ -6,12 +6,18 @@ criterios_aceptacion:
     - "Al hacer clic en un pin se abre una línea de tiempo vertical ordenada por fecha (datos cargados bajo demanda, R-MAP-02)"
     - "Cada tarjeta muestra: fecha/hora, clasificación, comentario, miniaturas de las fotos (con visor) y un botón 'Comprobar que es original' (antes el destacado 'Verificar Sello Blockchain'; lenguaje claro, it. 40c)"
     - "Si se muestran las coordenadas de la evidencia, son aproximadas (redondeadas a ~100 m), nunca las exactas (R-PRIV-02)"
+    - "(It. 60, 2026-10-14; propuesta del usuario) Tocar un pin abre una tarjeta sobre el mapa, sin salir de él: el estado de la obra y por qué, su nombre, su municipio y su valor, la fecha de la evidencia publicada más reciente ('Sin evidencias publicadas todavía.' si no hay), hasta 3 miniaturas de las fotos publicadas más recientes, y los botones 'Ver la obra' e 'Informar a la veeduría'. En el celular sube desde abajo; en el escritorio va al costado"
+    - "(It. 60) Una miniatura lleva a esa evidencia en la página de la obra"
   validaciones_reglas:
     - "(It. 53, 2026-10-10) La tarjeta de cada evidencia dice 'Ubicación aproximada, a unos 100 m del lugar.' con palabras, sin coordenadas numéricas (tres decimales parecen más precisos de lo que son), en letra de 14 px o más y con buen contraste"
     - "Publicación manual: toda evidencia sellada nace 'Oculta'; solo aparece en el mapa y en la línea de tiempo cuando el Administrador de Organización pulsa 'Publicar' (US-036)"
-  manejo_errores: []
+    - "(It. 60) Las miniaturas son copias livianas para ver (lado mayor de 320 px): lo sellado y lo que se verifica sigue siendo el archivo original. Se generan al publicar la evidencia; las ya publicadas reciben la suya con un comando. Solo se sirven las de una evidencia publicada, sin caché, como la foto"
+    - "(It. 60) La miniatura se borra al retirar la evidencia (US-037) y al borrarse los archivos tras la baja de la organización (US-003b)"
+  manejo_errores:
+    - "(It. 60) Si no se puede generar una miniatura, la evidencia se publica igual y se muestra la foto completa"
   requisitos_ux:
     - "Visor de fotos al tocar una miniatura"
+    - "(It. 60) La tarjeta se usa con el teclado: Enter sobre el pin la abre y el foco pasa a ella; Esc o 'Cerrar' la cierran y el foco vuelve al pin. Es una tarjeta que se toca, no un tooltip que aparece al pasar el cursor (WCAG 1.4.13)"
     - "(It. 40b, 2026-09-29) La vista de la obra dice su estado (el color de su pin) y por qué, en palabras, según las reglas de US-027"
   casos_edge:
     - {caso: "El Administrador revoca una evidencia que ya estaba publicada", resultado: "La tarjeta NO desaparece: se convierte en una 'lápida' que oculta fotos y comentario y muestra \"🚫 Evidencia retirada por la organización por incumplimiento de políticas.\"; el sello criptográfico sigue disponible para auditoría externa (US-037)"}

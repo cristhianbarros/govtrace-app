@@ -34,8 +34,9 @@ class PurgeDecommissionedEvidence implements ShouldQueue
         foreach ($due as $tenant) {
             $deleted = $tenant->run(function () {
                 $deleted = 0;
-                Evidence::query()->select(['id', 'storage_path'])->chunkById(500, function ($files) use (&$deleted) {
-                    Storage::disk('evidencias')->delete($files->pluck('storage_path')->all());
+                Evidence::query()->select(['id', 'storage_path', 'thumbnail_path'])->chunkById(500, function ($files) use (&$deleted) {
+                    // It. 60: la miniatura, con su foto.
+                    Storage::disk('evidencias')->delete([...$files->pluck('storage_path'), ...$files->pluck('thumbnail_path')->filter()]);
                     $deleted += $files->count();
                 });
 

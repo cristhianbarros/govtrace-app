@@ -2,7 +2,7 @@
 // US-029 / US-017: la vista pública de una obra — sus contratos y la línea
 // de tiempo de sus evidencias publicadas, pedidas al abrirla (R-MAP-02).
 import { Head, Link, usePage } from '@inertiajs/vue3';
-import { onMounted } from 'vue';
+import { nextTick, onMounted } from 'vue';
 import Illustration from '@/Components/Brand/Illustration.vue';
 import LoadState from '@/Components/LoadState.vue';
 import CitizenReportForm from '@/Components/Public/CitizenReportForm.vue';
@@ -26,7 +26,16 @@ const CONDITION = {
 };
 const { data: worksite, loading, error, load } = useLoader(() => fetchWorksite(props.worksiteId));
 
-onMounted(load);
+// It. 60: desde la tarjeta del mapa se llega a una evidencia (#evidencia-…) o a "Informar" (#informar).
+// Esas partes existen solo después de cargar la obra: entonces se va a la que pide la dirección.
+onMounted(async () => {
+    await load();
+    const anchor = window.location.hash.slice(1);
+    if (anchor) {
+        await nextTick();
+        document.getElementById(anchor)?.scrollIntoView({ block: 'start' });
+    }
+});
 </script>
 
 <template>
@@ -73,7 +82,7 @@ onMounted(load);
                     <p class="text-base text-slate-700">Aún no hay evidencias publicadas de esta obra.</p>
                 </div>
                 <ol v-else class="flex flex-col gap-3">
-                    <li v-for="evidence in worksite.timeline" :key="evidence.report_id">
+                    <li v-for="evidence in worksite.timeline" :id="`evidencia-${evidence.report_id}`" :key="evidence.report_id" class="scroll-mt-28">
                         <EvidenceCard :evidence="evidence" />
                     </li>
                 </ol>
