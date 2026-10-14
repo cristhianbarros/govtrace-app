@@ -4,14 +4,24 @@
 // pasos: el correo, que se verifica con un código, y después el código, el
 // mensaje y una foto opcional, que el navegador limpia como la del veedor.
 // El informe no se sella ni se publica.
+// It. 58: también de un contrato sin ficha (contractId), y, si la obra no tiene
+// ubicación (proposeFrom: dónde empieza el mapa), el ciudadano puede marcar
+// dónde queda. Es el lugar de la obra, no el suyo: lo marca en el mapa, no sale
+// del GPS del teléfono. La veeduría lo confirma antes de ponerla en el mapa.
 import { computed, ref } from 'vue';
 import EvidencePicker from '@/Components/EvidencePicker.vue';
+import LocationMap from '@/Components/LocationMap.vue';
 import { requestCitizenCode, sendCitizenReport } from '@/services/api.js';
 import { errorMessage } from '@/services/errors.js';
 
 const props = defineProps({
-    worksiteId: { type: String, required: true }, // it. 46c: su identificador público
+    worksiteId: { type: String, default: null }, // it. 46c: su identificador público
+    contractId: { type: String, default: null }, // it. 58: el contrato, si aún no tiene ficha
+    proposeFrom: { type: Object, default: null }, // it. 58: { latitude, longitude }, si la obra no tiene ubicación
 });
+
+// It. 58: la obra de la que se informa — su ficha o, si no tiene, su contrato.
+const work = () => (props.worksiteId ? { worksite_id: props.worksiteId } : { contract_id: props.contractId });
 
 const MIN_MESSAGE = 20;
 const MAX_MESSAGE = 2000;
@@ -26,6 +36,7 @@ const busy = ref(false);
 const notice = ref(null);
 const refused = ref(null);
 const number = ref(null);
+const place = ref(null); // it. 58: { latitude, longitude } donde el ciudadano dice que queda la obra
 const remaining = computed(() => MAX_MESSAGE - message.value.length);
 
 async function askForCode() {
@@ -39,7 +50,7 @@ async function askForCode() {
     }
     busy.value = true;
     try {
-        notice.value = (await requestCitizenCode({ email: email.value.trim(), worksite_id: props.worksiteId, data_authorization: true })).message;
+        notice.value = (await requestCitizenCode({ email: email.value.trim(), ...work(), data_authorization: true })).message;
         step.value = 'code';
     } catch (failure) {
         refused.value = errorMessage(failure);
@@ -60,8 +71,14 @@ async function send() {
     const form = new FormData();
     form.append('email', email.value.trim());
     form.append('code', code.value.trim());
-    form.append('worksite_id', String(props.worksiteId));
+    for (const [field, value] of Object.entries(work())) {
+        form.append(field, String(value));
+    }
     form.append('message', message.value.trim());
+    if (place.value) {
+        form.append('latitude', String(place.value.latitude));
+        form.append('longitude', String(place.value.longitude));
+    }
     for (const photo of photos.value) {
         form.append('photos[]', photo.file);
     }
@@ -119,6 +136,16 @@ const BUTTON = 'min-h-12 rounded-xl bg-brand-700 px-4 py-3 text-base font-semibo
             <!-- It. 46h: el mismo selector del veedor — la cámara y la galería, y cada foto se revisa con los rostros ya difuminados. -->
             <EvidencePicker v-model="photos" v-model:processing="preparing" :max="3" photos-only label="Fotos (opcional): hasta 3" />
             <p class="text-sm text-slate-700">Se les quitan la ubicación y los datos del teléfono antes de enviarlas, y los rostros de las personas se difuminan.</p>
+            <!-- It. 58: una obra sin ubicación — el ciudadano puede decir dónde queda. -->
+            <fieldset v-if="proposeFrom" data-test="propose-place" class="flex flex-col gap-2">
+                <legend class="font-semibold">¿Dónde queda la obra? (opcional)</legend>
+                <p class="text-sm text-slate-700">Esta obra aún no está en el mapa. Si sabe dónde queda, márquela: toque el mapa o mueva el punto. Es el lugar de la obra, no el suyo. La veeduría lo revisa antes de ponerla en el mapa.</p>
+                <button v-if="!place" type="button" class="min-h-12 self-start rounded-xl border-2 border-brand-700 bg-white px-4 font-semibold text-brand-800 hover:bg-brand-50" @click="place = { ...proposeFrom }">Marcar dónde queda la obra</button>
+                <template v-else>
+                    <LocationMap v-model="place" tap-to-move label="Donde queda la obra" />
+                    <button type="button" class="inline-flex min-h-11 items-center self-start font-semibold underline" @click="place = null">Quitar la ubicación</button>
+                </template>
+            </fieldset>
             <button type="button" :disabled="busy || preparing" :class="BUTTON" @click="send">Enviar a la veeduría</button>
             <button type="button" class="inline-flex min-h-11 items-center self-start font-semibold underline" @click="startOver">Pedir otro código</button>
         </template>

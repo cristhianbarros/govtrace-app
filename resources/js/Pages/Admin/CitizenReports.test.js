@@ -2,11 +2,20 @@
 // Administrador — sin el correo de quien los envió — para responder o descartar.
 import { flushPromises, mount } from '@vue/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { defineComponent, h } from 'vue';
 import CitizenReports from './CitizenReports.vue';
-import { answerCitizenReport, discardCitizenReport, fetchCitizenReports } from '@/services/api.js';
+import { answerCitizenReport, confirmCitizenLocation, discardCitizenReport, fetchCitizenReports } from '@/services/api.js';
 
 vi.mock('@inertiajs/vue3', async () => await import('@/testing/inertia.js'));
 vi.mock('@/services/api.js');
+// It. 58: el mapa de Leaflet se prueba en LocationMap.test.js; aquí, qué puntos recibe.
+vi.mock('@/Components/LocationMap.vue', () => ({
+    default: defineComponent({
+        name: 'LocationMap',
+        props: { modelValue: { type: Object, required: true }, others: { type: Array, default: () => [] }, label: { type: String, default: null }, readonly: Boolean },
+        setup: () => () => h('div', { 'data-test': 'location-map' }),
+    }),
+}));
 
 /** What the server answers (it. 52): the page, how many there are and whether there are more. */
 const answer = (rows, extra = {}) => ({ data: rows, total: rows.length, has_more: false, ...extra });
@@ -142,5 +151,52 @@ describe('Los informes de a una página, por estado (it. 52)', () => {
         await flushPromises();
 
         expect(wrapper.text()).toContain('Ningún informe con ese estado.');
+    });
+});
+
+// It. 58 (US-035): la ubicación que propuso el ciudadano para una obra sin ubicación.
+describe('La ubicación que propuso el ciudadano (it. 58)', () => {
+    const MINCA = { latitude: 11.1427, longitude: -74.1173 };
+    const OTHER = { latitude: 11.15, longitude: -74.12 };
+    const proposed = (changes = {}) => report({ worksite: 'Construcción de la vía a Minca', photo_urls: [], proposed_location: { ...MINCA, status: 'unlocated', others: [], ...changes } });
+
+    it('Confirmar la ubicación que propuso un ciudadano: shows the point on a map, asks to confirm, and reloads the list', async () => {
+        confirmCitizenLocation.mockResolvedValue({ message: 'La ubicación de la obra quedó confirmada: ya aparece en el mapa, y la geocerca de 500 m está activa para los veedores.' });
+        const wrapper = await openReports([proposed()]);
+        const block = wrapper.get('[data-test="proposed-location"]');
+
+        expect(block.text()).toContain('El ciudadano dice que la obra queda aquí.');
+        expect(block.text()).toContain('La obra aún no tiene ubicación oficial.');
+        expect(wrapper.findComponent({ name: 'LocationMap' }).props()).toMatchObject({ modelValue: MINCA, others: [], readonly: true, label: 'Donde el ciudadano dice que queda la obra' });
+
+        fetchCitizenReports.mockResolvedValue(answer([proposed({ status: 'confirmed' })]));
+        await button(wrapper, 'Confirmar esta ubicación').trigger('click');
+        expect(confirmCitizenLocation).not.toHaveBeenCalled();
+        expect(wrapper.text()).toContain('La obra aparecerá en el mapa en este punto, y la geocerca de los veedores se medirá desde aquí.');
+        await button(wrapper, 'Sí, confirmar').trigger('click');
+        await flushPromises();
+
+        expect(confirmCitizenLocation).toHaveBeenCalledWith('01j9xq3m7v8k2d4f6g8h07kq3m');
+        expect(wrapper.get('[role="status"]').text()).toBe('La ubicación de la obra quedó confirmada: ya aparece en el mapa, y la geocerca de 500 m está activa para los veedores.');
+        expect(wrapper.get('[data-test="proposed-location"]').text()).toContain('Ubicación confirmada aquí.');
+        expect(button(wrapper, 'Confirmar esta ubicación')).toBeUndefined();
+    });
+
+    it('Con varias ubicaciones propuestas, confirmar una cierra las demás: the map shows the other one, and once the work has its location there is nothing to confirm', async () => {
+        const wrapper = await openReports([proposed({ others: [OTHER] })]);
+        expect(wrapper.findComponent({ name: 'LocationMap' }).props('others')).toEqual([OTHER]);
+        expect(wrapper.get('[data-test="other-proposals"]').text()).toBe('Gris: otra ubicación que propuso un ciudadano para esta obra.');
+
+        // Otro informe confirmó la suya: esta ya no se ofrece.
+        const closed = await openReports([proposed({ status: 'elsewhere' })]);
+        expect(closed.get('[data-test="proposed-location"]').text()).toContain('La obra ya tiene ubicación oficial, en otro lugar.');
+        expect(button(closed, 'Confirmar esta ubicación')).toBeUndefined();
+    });
+
+    it('offers nothing to confirm for a discarded report, and shows no block for a report without a place', async () => {
+        const wrapper = await openReports([proposed(), report({ id: '01j9xq3m7v8k2d4f6g8h07kq3n', proposed_location: null })].map((row, index) => (index === 0 ? { ...row, status: 'discarded', status_label: 'Descartado' } : row)));
+
+        expect(wrapper.findAll('[data-test="proposed-location"]')).toHaveLength(1);
+        expect(button(wrapper, 'Confirmar esta ubicación')).toBeUndefined();
     });
 });

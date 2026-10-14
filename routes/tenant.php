@@ -6,8 +6,10 @@ use App\Application\Privacy\DataPolicy;
 use App\Application\Publication\PublicCache;
 use App\Application\Publication\PublicStats;
 use App\Application\Publication\StellarForBrowser;
+use App\Application\Worksites\WorksiteOfContract;
 use App\Domain\Organization\Roles;
 use App\Domain\Shared\PublicId;
+use App\Domain\Worksites\Worksite;
 use App\Http\Controllers\Auth\ChangePasswordController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Tenant\AdministratorController;
@@ -29,6 +31,7 @@ use App\Http\Controllers\Tenant\ObserverController;
 use App\Http\Controllers\Tenant\OpenDataController;
 use App\Http\Controllers\Tenant\OrganizationLogoController;
 use App\Http\Controllers\Tenant\OrganizationProfileController;
+use App\Http\Controllers\Tenant\PublicContractController;
 use App\Http\Controllers\Tenant\PublicEvidenceController;
 use App\Http\Controllers\Tenant\PublicProofController;
 use App\Http\Controllers\Tenant\PublicWorksiteController;
@@ -84,6 +87,14 @@ Route::middleware([
     Route::middleware(EnsureMapIsOnline::class.':screen')->group(function () {
         Route::get('/', fn () => Inertia::render('Public/Map'))->name('public.map');
         Route::get('/worksite/{worksite}', fn (string $worksite) => Inertia::render('Public/Worksite', ['worksiteId' => $worksite, 'stellar' => StellarForBrowser::props()]))->where('worksite', PublicId::PATTERN)->name('public.worksite');
+        // It. 58 (US-059-LEG): un contrato del territorio sin ficha todavía; si ya la tiene, su obra.
+        Route::get('/contract/{contract}', function (string $contract) {
+            $sheet = WorksiteOfContract::existingIdFor($contract);
+
+            return $sheet !== null
+                ? redirect('/worksite/'.Worksite::query()->whereKey($sheet)->value('public_id'))
+                : Inertia::render('Public/Contract', ['contractId' => $contract]);
+        })->where('contract', PublicContractController::PATTERN)->name('public.contract');
         // US-051-RPT: las estadísticas del territorio.
         Route::get('/stats', fn () => Inertia::render('Public/Stats'))->name('public.stats');
     });
@@ -104,6 +115,9 @@ Route::middleware([
         Route::get('/public/worksites/filters', [PublicWorksiteController::class, 'filters'])->name('public.worksites.filters');
         // It. 40c: el mapa como lista, al abrirla (la carga del mapa no cambia, R-MAP-02).
         Route::get('/public/worksites/list', [PublicWorksiteController::class, 'listing'])->name('public.worksites.list');
+        // It. 58 (US-059-LEG): las obras del territorio que aún no están en el mapa, y cada contrato sin ficha.
+        Route::get('/public/unlocated-worksites', [PublicWorksiteController::class, 'unlocated'])->name('public.worksites.unlocated');
+        Route::get('/public/contracts/{contract}', [PublicContractController::class, 'show'])->where('contract', PublicContractController::PATTERN)->name('public.contracts.show');
         Route::get('/public/worksites/{worksite}', [PublicWorksiteController::class, 'show'])->where('worksite', PublicId::PATTERN)->name('public.worksites.show');
         Route::get('/public/evidences/{evidence}/photo', [PublicEvidenceController::class, 'photo'])->where('evidence', PublicId::PATTERN)->name('public.evidences.photo');
         // It. 56: iguales para todos los visitantes: se guardan unos segundos (PublicCache).
@@ -188,6 +202,8 @@ Route::middleware([
             Route::get('/citizen-reports/{report}/photos/{position}', [CitizenReportInboxController::class, 'photo'])->where('report', PublicId::PATTERN)->whereIn('position', ['1', '2', '3'])->name('citizen-reports.photo');
             Route::post('/citizen-reports/{report}/answer', [CitizenReportInboxController::class, 'answer'])->where('report', PublicId::PATTERN)->name('citizen-reports.answer');
             Route::post('/citizen-reports/{report}/discard', [CitizenReportInboxController::class, 'discard'])->where('report', PublicId::PATTERN)->name('citizen-reports.discard');
+            // It. 58 (US-035): la ubicación que propuso el ciudadano, como la oficial de la obra.
+            Route::post('/citizen-reports/{report}/confirm-location', [CitizenReportInboxController::class, 'confirmLocation'])->where('report', PublicId::PATTERN)->name('citizen-reports.confirm-location');
 
             // US-042-SEC: autorizar al Super Administrador a reportar en nombre de la organización (30 días).
             Route::get('/authorizations/super-admin', [SuperAdminAuthorizationController::class, 'show'])->name('authorizations.super-admin.show');

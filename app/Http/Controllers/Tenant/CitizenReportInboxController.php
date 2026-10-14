@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Tenant;
 
 use App\Application\CitizenReports\CitizenReportInbox;
 use App\Domain\CitizenReports\CitizenReport;
+use App\Domain\Configuration\Parameters;
 use App\Http\Controllers\Controller;
 use Closure;
 use DomainException;
@@ -46,6 +47,17 @@ class CitizenReportInboxController extends Controller
     public function discard(Request $request, string $report, CitizenReportInbox $inbox): JsonResponse
     {
         return $this->handling(fn () => $inbox->discard($request->user('tenant'), CitizenReport::idOf($report)), 'Informe descartado.');
+    }
+
+    /** It. 58 (US-035): la ubicación que propuso el ciudadano pasa a ser la oficial de la obra. */
+    public function confirmLocation(Request $request, string $report, CitizenReportInbox $inbox): JsonResponse
+    {
+        $radiusMeters = Parameters::current('geofence_radius_meters');
+
+        return $this->handling(
+            fn () => $inbox->confirmLocation($request->user('tenant'), CitizenReport::idOf($report)),
+            "La ubicación de la obra quedó confirmada: ya aparece en el mapa, y la geocerca de {$radiusMeters} m está activa para los veedores.",
+        );
     }
 
     private function handling(Closure $work, string $done): JsonResponse

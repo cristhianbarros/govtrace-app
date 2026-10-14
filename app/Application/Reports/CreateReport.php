@@ -3,6 +3,7 @@
 namespace App\Application\Reports;
 
 use App\Application\Sealing\QueueReportForSealing;
+use App\Application\Worksites\WorksiteOfContract;
 use App\Domain\Configuration\Parameters;
 use App\Domain\Contracts\Contract;
 use App\Domain\Contracts\ContractArchive;
@@ -24,9 +25,7 @@ use App\Domain\Sealing\ReportSeal;
 use App\Domain\Sealing\SealStatus;
 use App\Domain\Worksites\FirstTouch;
 use App\Domain\Worksites\Worksite;
-use App\Domain\Worksites\WorksiteContract;
 use Carbon\CarbonInterface;
-use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
@@ -210,25 +209,10 @@ class CreateReport
     /** The worksite grouping the contract, locked until the transaction ends; created if it doesn't exist yet. */
     private function lockedWorksiteOf(Contract $contract): Worksite
     {
-        $link = WorksiteContract::query()->where('secop_contract_id', $contract->secop_contract_id)->first();
-
-        if ($link === null) {
-            try {
-                // Savepoint: si falla, solo se deshace esta creación.
-                return DB::transaction(function () use ($contract) {
-                    $worksite = Worksite::create();
-                    $worksite->contracts()->create(['secop_contract_id' => $contract->secop_contract_id]);
-
-                    return $worksite;
-                });
-            } catch (UniqueConstraintViolationException) {
-                // Otro veedor creó la ficha de este contrato al mismo tiempo: se usa la suya.
-                $link = WorksiteContract::query()->where('secop_contract_id', $contract->secop_contract_id)->firstOrFail();
-            }
-        }
+        $id = WorksiteOfContract::idFor($contract->secop_contract_id);
 
         // Si mientras tanto el Administrador la fundió en otra ficha (US-045-INT), la de ahora.
-        return Worksite::query()->lockForUpdate()->find($link->worksite_id)
+        return Worksite::query()->lockForUpdate()->find($id)
             ?? $this->lockedWorksiteOf($contract);
     }
 }

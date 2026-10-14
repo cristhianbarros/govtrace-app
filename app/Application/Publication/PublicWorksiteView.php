@@ -35,6 +35,9 @@ class PublicWorksiteView
             'timeline' => (new PublicTimeline)->handle($worksite->id),
             // It. 40b: el color de su pin y por qué, en palabras.
             'condition' => (new WorksiteCondition)->of($worksite, $contracts),
+            // It. 58: sin ubicación, el ciudadano puede proponerla; el mapa empieza en la cabecera de su municipio.
+            'located' => $worksite->location() !== null,
+            'seat' => $worksite->location() === null ? PublicContractView::seatOf($contracts->first()) : null,
         ];
     }
 }

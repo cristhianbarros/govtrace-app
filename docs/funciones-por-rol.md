@@ -71,6 +71,7 @@ El sitio tiene tres pestañas: **Obras**, **Estadísticas** y **Validar**. Al pi
 - **Los tres estados como fichas grandes,** con cuántas obras hay de cada uno. Tocar una muestra solo esas.
 - **"Más filtros":** el estado, las fechas de las evidencias, el presupuesto mínimo y el municipio. Si nada coincide, el mapa lo dice con una ilustración.
 - **El mapa también como lista,** con un buscador por nombre que ignora tildes y mayúsculas.
+- **"Obras sin ubicación todavía"** (it. 58), debajo de la lista: los contratos del territorio que aún no están en el mapa, porque ningún veedor los ha visitado o su ubicación está por confirmar. El mismo buscador y el filtro de municipio, de a 20. Cada una lleva a su página, para informar a la veeduría.
 - **"¿Cómo funciona?"** en tres pasos. Los colores son alertas de GovTrace, no decisiones de una autoridad (it. 44a).
 - **Si la veeduría está suspendida,** un aviso, y el mapa sigue a la vista. Si está **dada de baja**, el mapa sale de línea, pero el validador sigue sirviendo (US-003b).
 
@@ -91,6 +92,9 @@ El sitio tiene tres pestañas: **Obras**, **Estadísticas** y **Validar**. Al pi
   3. Le llega un correo con la referencia de su informe, como `7KQ3-M9XD` (it. 46c: no un número consecutivo, que decía cuántos había). La veeduría le responde desde GovTrace **sin ver su correo**, que se guarda cifrado.
   - Límites: 3 informes por correo al día, 1 por obra, y límites por conexión.
   - El informe no se sella, no se publica y no cambia el estado de la obra.
+  - **Una obra sin ubicación** (it. 58): el ciudadano puede marcar en un mapa dónde queda, tocándolo o moviendo el punto, desde la cabecera de su municipio. Es el lugar de la obra, no el suyo. Un punto a más de 30 km de la cabecera se rechaza. La obra no aparece en el mapa hasta que la veeduría lo confirma.
+
+**La página de un contrato sin ficha** (`/contract/{número de SECOP}`, it. 58): un contrato que ningún veedor ha reportado. Sus datos de SECOP II, el aviso de que aún no está en el mapa, "Informar a esta veeduría" con la pregunta de dónde queda, y los canales de la Contraloría.
 
 **Estadísticas del territorio** (`/stats`, US-051-RPT, it. 40f)
 - Obras en riesgo, contratos anulados con evidencias y evidencias publicadas por mes, en barras.
@@ -208,6 +212,7 @@ Todo queda en el log de auditoría: quién, cuándo, antes y después.
 - **"Informes ciudadanos":** lo que los ciudadanos le escriben desde cada obra, con la foto si la hay, **sin el correo** de quien lo envió.
 - **Responder:** la respuesta le llega al ciudadano por correo, desde GovTrace.
 - **Descartar:** queda registrado.
+- **La ubicación que propuso el ciudadano** (it. 58): su punto en un mapa, con las demás propuestas para la misma obra en gris. **"Confirmar esta ubicación"** la vuelve la oficial: la obra aparece en el mapa y la geocerca de los veedores se mide desde ahí. Queda en el log como una corrección (US-035). Si la obra ya tiene ubicación, la propuesta lo dice y no se confirma.
 - **Retención** (it. 45c): 30 días después de atendido, se borra el correo del informe; 30 días después de descartado, se borra entero.
 
 ### 5.5 La organización

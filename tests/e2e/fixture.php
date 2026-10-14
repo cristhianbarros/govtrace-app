@@ -122,6 +122,21 @@ Contract::fromSecop(fn () => Contract::query()->updateOrCreate(['secop_contract_
     'process_number' => 'E2E-001-B',
 ]));
 
+// It. 58 (US-059-LEG): una obra que ningún veedor ha visitado, de la que informa el ciudadano.
+// Otro número de proceso (E2E-002): las búsquedas del veedor por E2E-001 no la traen.
+Contract::fromSecop(fn () => Contract::query()->updateOrCreate(['secop_contract_id' => E2E_CONTRACT.'-CIUDADANO'], [
+    'entity_name' => 'Alcaldía Distrital de Santa Marta',
+    'contractor_name' => 'Constructora de Pruebas S.A.S.',
+    'object' => 'Polideportivo de pruebas del ciudadano',
+    'contract_type' => 'Obra',
+    'status' => 'En ejecución',
+    'signed_at' => now()->subMonths(1)->toDateString(),
+    'end_date' => now()->addMonths(8)->toDateString(),
+    'department_code' => '47',
+    'municipality_code' => '47001',
+    'process_number' => 'E2E-002',
+]));
+
 $tenant->run(function () {
     foreach ([
         ['Administradora E2E', 'e2e.admin@correo.co', Roles::Administrator, null],

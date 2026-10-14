@@ -3,6 +3,7 @@
 // aquí, los dos pasos de la pantalla.
 import { flushPromises, mount } from '@vue/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { defineComponent, h } from 'vue';
 import CitizenReportForm from './CitizenReportForm.vue';
 import PhotoReview from '@/Components/PhotoReview.vue';
 import { draftPhoto, finishPhoto } from '@/lib/evidence/prepare.js';
@@ -11,6 +12,15 @@ import { requestCitizenCode, sendCitizenReport } from '@/services/api.js';
 vi.mock('@/services/api.js');
 vi.mock('@/lib/evidence/prepare.js', async (importOriginal) => ({ ...(await importOriginal()), draftPhoto: vi.fn(), finishPhoto: vi.fn(), prepareEvidence: vi.fn() }));
 vi.mock('@/lib/evidence/blur.js', async (importOriginal) => ({ ...(await importOriginal()), renderPreview: vi.fn() }));
+// It. 58: el mapa de Leaflet se prueba en LocationMap.test.js; aquí, lo que el formulario le pasa y lo que recibe.
+vi.mock('@/Components/LocationMap.vue', () => ({
+    default: defineComponent({
+        name: 'LocationMap',
+        props: { modelValue: { type: Object, required: true }, tapToMove: Boolean, label: { type: String, default: null } },
+        emits: ['update:modelValue'],
+        setup: () => () => h('div', { 'data-test': 'location-map' }),
+    }),
+}));
 
 // It. 46c (US-064-SEC): la obra, por su identificador público.
 const WORKSITE = '01j9xq3m7v8k2d4f6g8h0jkmnp';
@@ -212,3 +222,80 @@ describe('Las fotos del informe, de 1 a 3 (it. 46h)', () => {
     });
 });
 
+
+// It. 58: también de un contrato sin ficha, y dónde queda la obra si no tiene ubicación.
+describe('Una obra sin ubicación (it. 58)', () => {
+    const CONTRACT = 'CO1.PCCNTR.7654321';
+    const SEAT = { latitude: 11.204679, longitude: -74.199829 };
+    const FAR = 'Ese punto queda a más de 30 km de Santa Marta. Revise dónde marcó la obra, o envíe el informe sin la ubicación.';
+
+    async function writeTheReport(wrapper) {
+        await askForTheCode(wrapper);
+        await wrapper.get('input#citizen-code').setValue('123456');
+        await wrapper.get('textarea#citizen-message').setValue(MESSAGE);
+    }
+
+    async function markThePlace(wrapper, place) {
+        await button(wrapper, 'Marcar dónde queda la obra').trigger('click');
+        wrapper.findComponent({ name: 'LocationMap' }).vm.$emit('update:modelValue', place);
+        await flushPromises();
+    }
+
+    it('El ciudadano propone dónde queda una obra sin ubicación: the map starts at the seat of its municipality, and the place goes with the report', async () => {
+        sendCitizenReport.mockResolvedValue({ message: 'Su informe llegó a la veeduría. Si lo atiende, le responde a su correo.', number: '7KQ3-M9XD' });
+        const wrapper = mount(CitizenReportForm, { props: { contractId: CONTRACT, proposeFrom: SEAT } });
+
+        await writeTheReport(wrapper);
+        expect(requestCitizenCode).toHaveBeenCalledWith({ email: 'vecina@correo.co', contract_id: CONTRACT, data_authorization: true });
+        const question = wrapper.get('[data-test="propose-place"]');
+        expect(question.get('legend').text()).toBe('¿Dónde queda la obra? (opcional)');
+        expect(question.text()).toContain('Es el lugar de la obra, no el suyo.');
+        expect(wrapper.find('[data-test="location-map"]').exists()).toBe(false);
+
+        await button(wrapper, 'Marcar dónde queda la obra').trigger('click');
+        const map = wrapper.findComponent({ name: 'LocationMap' });
+        expect(map.props()).toMatchObject({ modelValue: SEAT, tapToMove: true, label: 'Donde queda la obra' });
+        map.vm.$emit('update:modelValue', { latitude: 11.1427, longitude: -74.1173 });
+        await flushPromises();
+        await button(wrapper, 'Enviar a la veeduría').trigger('click');
+        await flushPromises();
+
+        const form = sendCitizenReport.mock.calls[0][0];
+        expect(Object.fromEntries(['contract_id', 'latitude', 'longitude'].map((field) => [field, form.get(field)]))).toEqual({ contract_id: CONTRACT, latitude: '11.1427', longitude: '-74.1173' });
+        expect(form.has('worksite_id')).toBe(false);
+    });
+
+    it('sends the report without the place once the citizen takes it away', async () => {
+        sendCitizenReport.mockResolvedValue({ message: 'Su informe llegó a la veeduría. Si lo atiende, le responde a su correo.', number: '7KQ3-M9XD' });
+        const wrapper = mount(CitizenReportForm, { props: { contractId: CONTRACT, proposeFrom: SEAT } });
+        await writeTheReport(wrapper);
+        await markThePlace(wrapper, { latitude: 11.1427, longitude: -74.1173 });
+
+        await button(wrapper, 'Quitar la ubicación').trigger('click');
+        expect(wrapper.find('[data-test="location-map"]').exists()).toBe(false);
+        await button(wrapper, 'Enviar a la veeduría').trigger('click');
+        await flushPromises();
+
+        expect(sendCitizenReport.mock.calls[0][0].has('latitude')).toBe(false);
+    });
+
+    it('Una obra que ya tiene ubicación no la pide: without a starting point there is no question', async () => {
+        const wrapper = mount(CitizenReportForm, { props: { worksiteId: WORKSITE } });
+        await askForTheCode(wrapper);
+
+        expect(wrapper.find('[data-test="propose-place"]').exists()).toBe(false);
+    });
+
+    it('Una ubicación propuesta lejos del municipio se rechaza: it shows what the server says, and the citizen can fix it', async () => {
+        sendCitizenReport.mockRejectedValue({ response: { status: 422, data: { message: FAR, errors: { location: [FAR] } } } });
+        const wrapper = mount(CitizenReportForm, { props: { contractId: CONTRACT, proposeFrom: SEAT } });
+        await writeTheReport(wrapper);
+        await markThePlace(wrapper, { latitude: 10.48, longitude: -73.25 });
+
+        await button(wrapper, 'Enviar a la veeduría').trigger('click');
+        await flushPromises();
+
+        expect(wrapper.get('[role="alert"]').text()).toBe(FAR);
+        expect(wrapper.find('[data-test="location-map"]').exists()).toBe(true);
+    });
+});

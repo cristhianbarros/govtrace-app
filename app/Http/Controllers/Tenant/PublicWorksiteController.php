@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Tenant;
 use App\Application\Publication\PublicCache;
 use App\Application\Publication\PublicMap;
 use App\Application\Publication\PublicWorksiteView;
+use App\Application\Publication\UnlocatedWorksites;
 use App\Domain\Worksites\Worksite;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
@@ -33,6 +34,18 @@ class PublicWorksiteController extends Controller
         $filters = $this->validatedFilters($request);
 
         return response()->json(['data' => PublicCache::remember('list', $filters, fn () => (new PublicMap)->listing($filters))]);
+    }
+
+    /** It. 58: the works of the territory not on the map yet, to inform the veeduría about any of them. */
+    public function unlocated(Request $request): JsonResponse
+    {
+        $filters = $request->validate([
+            'q' => ['sometimes', 'nullable', 'string', 'max:100'],
+            'municipality' => ['sometimes', 'nullable', 'digits:5'],
+            'page' => ['sometimes', 'integer', 'min:1'],
+        ]);
+
+        return response()->json(PublicCache::remember('unlocated', $filters, fn () => (new UnlocatedWorksites)->handle($filters)));
     }
 
     /** @return array<string, mixed> */

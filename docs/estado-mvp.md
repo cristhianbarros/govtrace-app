@@ -4,7 +4,18 @@ Al 2026-10-04. Empezó sobre `77e6030` (iteración 39) y se actualizó en las it
 
 ✅ hecho y probado · ⚠️ a medias · ⬜ falta · 🔒 espera algo externo · ❓ decisión tuya
 
-## Dónde quedó (2026-10-06)
+## Dónde quedó (2026-10-14)
+
+| Qué | PR |
+|---|---|
+| 58: el ciudadano informa sobre cualquier obra del territorio, también sin ubicación, y propone dónde queda; la veeduría lo confirma (US-059-LEG, US-035) | este |
+
+- **Tests:** Pest 1219, Vitest 703, `make e2e` 58 pasan y 1 `fixme` (V20), trace-check 466 de 466, `make ux-check` sin retroceso (con la pantalla nueva del contrato en la línea base).
+- **58, en una frase:** la Lista del mapa suma "Obras sin ubicación todavía"; un contrato sin ficha tiene su página para informar; el ciudadano puede marcar en un mapa dónde queda la obra, y la veeduría lo confirma desde "Informes ciudadanos", con su registro en el log.
+- **La política de datos** cambió de versión (2026-10-14.1): dice que, de quien informa, se guarda también la ubicación de la obra que marque.
+- **Algo que se vio en los datos:** SECOP II clasifica como "Obra" contratos que no lo son (en el Magdalena, varios de prestación de servicios del ICBF). Salen en la lista del ciudadano y en la del veedor por igual: es la calidad del dato en la fuente.
+
+## Antes (2026-10-06)
 
 | Qué | PR |
 |---|---|

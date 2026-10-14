@@ -2,6 +2,7 @@
 
 namespace App\Domain\CitizenReports;
 
+use App\Domain\Geography\GeoPoint;
 use App\Domain\Shared\HasPublicId;
 use App\Domain\Worksites\Worksite;
 use Illuminate\Database\Eloquent\Model;
@@ -18,7 +19,7 @@ class CitizenReport extends Model
 
     public const STATUS_LABELS = ['new' => 'Nuevo', 'answered' => 'Atendido', 'discarded' => 'Descartado'];
 
-    protected $fillable = ['worksite_id', 'email', 'email_hash', 'message', 'photo_paths', 'status', 'answer', 'handled_at', 'handled_by', 'data_authorized_at', 'data_policy_version'];
+    protected $fillable = ['worksite_id', 'email', 'email_hash', 'message', 'photo_paths', 'status', 'answer', 'handled_at', 'handled_by', 'data_authorized_at', 'data_policy_version', 'proposed_latitude', 'proposed_longitude', 'location_confirmed_at'];
 
     protected $hidden = ['email', 'email_hash'];
 
@@ -28,6 +29,7 @@ class CitizenReport extends Model
         'photo_paths' => 'array',
         'handled_at' => 'datetime',
         'data_authorized_at' => 'datetime',
+        'location_confirmed_at' => 'datetime',
     ];
 
     /**
@@ -41,6 +43,16 @@ class CitizenReport extends Model
     }
 
     public const MAX_PHOTOS = 3;
+
+    /** It. 58: where the citizen says the work is, if they said it; null otherwise. */
+    public function proposedLocation(): ?GeoPoint
+    {
+        if ($this->proposed_latitude === null || $this->proposed_longitude === null) {
+            return null;
+        }
+
+        return new GeoPoint((float) $this->proposed_latitude, (float) $this->proposed_longitude);
+    }
 
     public function worksite(): BelongsTo
     {

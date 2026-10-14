@@ -28,6 +28,11 @@
 - **La autorización** del tratamiento de datos (Ley 1581, art. 9) se da al pedir el código, con la misma política.
 - **It. 46h:** de 1 a 3 fotos opcionales, con las mismas opciones del veedor (la cámara trasera y la galería, sin PDF). Una foto de contexto y otra de detalle suelen hacer falta para que se entienda. Las fotos del ciudadano nunca se publican: solo las ve la veeduría. Si una foto se rechaza, el informe no guarda ninguna; al borrar un informe descartado (30 días), se borran todas.
 - **It. 46e (R-PRIV-05):** cada foto pasa por la misma revisión que la del veedor: los rostros se difuminan en el celular antes de enviarla.
+- **It. 58 (2026-10-14):** el ciudadano informa sobre cualquier obra del territorio, no solo sobre las que un veedor ya visitó.
+  - La Lista del mapa suma "Obras sin ubicación todavía": los contratos que se pueden reportar (los mismos del veedor) y que aún no están en el mapa, con la búsqueda por nombre y el filtro de municipio, de a 20.
+  - Si el contrato no tenía ficha, el informe la crea sin ubicación, como el primer reporte de un veedor.
+  - En una obra sin ubicación, el ciudadano puede marcar en un mapa dónde queda. Es el lugar de la obra, no el suyo: no sale de la foto ni del GPS del teléfono (R-PRIV-01). No pone la obra en el mapa: la confirma el Administrador (US-035).
+  - Se descartó usar la ubicación de la foto del ciudadano: diría dónde estaba la persona, y cualquiera podría mover el pin, porque el ciudadano no tiene cuenta.
 
 ## Criterios de aceptación
 `specs/criterios/US-059-LEG.yaml` · `features/US-059-LEG.feature`

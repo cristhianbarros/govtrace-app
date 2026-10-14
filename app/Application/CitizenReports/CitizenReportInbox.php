@@ -3,11 +3,16 @@
 namespace App\Application\CitizenReports;
 
 use App\Application\Pagination\Page;
+use App\Application\Publication\PublicCache;
+use App\Application\Worksites\CorrectWorksiteLocation;
 use App\Domain\Audit\AuditLog;
 use App\Domain\CitizenReports\CitizenReport;
 use App\Domain\CitizenReports\Notifications\CitizenReportAnswered;
 use App\Domain\Organization\User;
+use App\Domain\Worksites\Worksite;
 use DomainException;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 
 /**
@@ -28,7 +33,24 @@ class CitizenReportInbox
     {
         $query = CitizenReport::query()->with('worksite')->when($status !== null, fn ($query) => $query->where('status', $status))->latest('id');
 
-        return Page::of($query, $page, fn ($reports) => $reports->map(fn (CitizenReport $report) => [
+        return Page::of($query, $page, fn ($reports) => $this->presented($reports));
+    }
+
+    /**
+     * @param  Collection<int, CitizenReport>  $reports
+     * @return Collection<int, array<string, mixed>>
+     */
+    private function presented(Collection $reports): Collection
+    {
+        // It. 58: las propuestas que siguen abiertas para las obras de esta página, para mostrarlas juntas.
+        $open = CitizenReport::query()
+            ->whereIn('worksite_id', $reports->filter(fn (CitizenReport $report) => $report->proposedLocation() !== null)->pluck('worksite_id'))
+            ->whereNotNull('proposed_latitude')
+            ->where('status', '!=', 'discarded')
+            ->get(['id', 'worksite_id', 'proposed_latitude', 'proposed_longitude'])
+            ->groupBy('worksite_id');
+
+        return $reports->map(fn (CitizenReport $report) => [
             // It. 46c (US-064-SEC): identificadores públicos.
             'id' => $report->public_id,
             'reference' => $report->reference(), // la que recibió el ciudadano
@@ -41,7 +63,69 @@ class CitizenReportInbox
             'status' => $report->status,
             'status_label' => CitizenReport::STATUS_LABELS[$report->status],
             'answer' => $report->answer,
-        ]));
+            'proposed_location' => $this->proposal($report, $open->get($report->worksite_id, collect())),
+        ]);
+    }
+
+    /**
+     * It. 58: where the citizen says the work is — unlocated: the work still has no location
+     * and it can be confirmed (with the others still open for the same work); confirmed: it
+     * was fixed here; elsewhere: the work got its location some other way.
+     *
+     * @param  Collection<int, CitizenReport>  $open
+     * @return array{latitude: float, longitude: float, status: string, others: list<array{latitude: float, longitude: float}>}|null
+     */
+    private function proposal(CitizenReport $report, Collection $open): ?array
+    {
+        $point = $report->proposedLocation();
+        if ($point === null) {
+            return null;
+        }
+
+        $status = match (true) {
+            $report->location_confirmed_at !== null => 'confirmed',
+            $report->worksite?->location() !== null => 'elsewhere',
+            default => 'unlocated',
+        };
+
+        return [
+            'latitude' => $point->latitude,
+            'longitude' => $point->longitude,
+            'status' => $status,
+            'others' => $status !== 'unlocated' ? [] : $open
+                ->reject(fn (CitizenReport $other) => $other->id === $report->id)
+                ->map(fn (CitizenReport $other) => ['latitude' => $other->proposedLocation()->latitude, 'longitude' => $other->proposedLocation()->longitude])
+                ->values()
+                ->all(),
+        ];
+    }
+
+    /**
+     * It. 58 (US-035): the Administrador makes the place a citizen proposed the official
+     * location of the work — a correction like any other, in the audit log. Only while the
+     * work has none: a later one is corrected from "Obras".
+     */
+    public function confirmLocation(User $administrator, int $id): void
+    {
+        DB::transaction(function () use ($administrator, $id) {
+            $report = CitizenReport::query()->lockForUpdate()->findOrFail($id);
+            $point = $report->status === 'discarded' ? null : $report->proposedLocation();
+            if ($point === null) {
+                throw new DomainException('Este informe no trae una ubicación para confirmar.');
+            }
+
+            // Bloqueada como al crear un reporte: un veedor que la fija a la vez espera, y después la encuentra fijada.
+            $worksite = Worksite::query()->lockForUpdate()->findOrFail($report->worksite_id);
+            if ($worksite->location() !== null) {
+                throw new DomainException('La obra ya tiene ubicación. Si está mal, corríjala en Obras.');
+            }
+
+            (new CorrectWorksiteLocation)->handle($administrator, $worksite, $point);
+            $report->update(['location_confirmed_at' => now()]);
+        });
+
+        // Ya confirmada: ninguna visita del mapa guarda lo de antes.
+        PublicCache::forget();
     }
 
     public function answer(User $administrator, int $id, string $answer): void

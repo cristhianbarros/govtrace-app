@@ -1,11 +1,11 @@
 // Iteración 26 — US-027 (UI): el mapa público de la organización, sin
 // sesión, con sus pines por color (R-MAP-02) y el aviso de organización
 // suspendida (R-AUD-01). El mapa de Leaflet se prueba en PinsMap.test.js.
-import { flushPromises, mount } from '@vue/test-utils';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { defineComponent, h } from 'vue';
 import Map from './Map.vue';
-import { fetchMapFilters, fetchPins, fetchWorksiteList } from '@/services/api.js';
+import { fetchMapFilters, fetchPins, fetchUnlocatedWorksites, fetchWorksiteList } from '@/services/api.js';
 import { page, router } from '@/testing/inertia.js';
 
 vi.mock('@inertiajs/vue3', async () => await import('@/testing/inertia.js'));
@@ -36,9 +36,13 @@ async function openMap(answer = pins) {
     return wrapper;
 }
 
+// It. 58: cada mapa se desmonta al terminar su prueba, y con él la búsqueda que esperaba.
+enableAutoUnmount(afterEach);
+
 beforeEach(() => {
     vi.resetAllMocks();
     fetchMapFilters.mockResolvedValue({ municipalities: [{ code: '47189', name: 'Ciénaga' }, { code: '47001', name: 'Santa Marta' }] });
+    fetchUnlocatedWorksites.mockResolvedValue({ data: [], has_more: false });
     page.props = { organization: 'Veeduría Ciudadana Santa Marta', organizationLogo: null, organizationNotice: null };
 });
 
@@ -238,6 +242,86 @@ describe('El mapa, también como lista (it. 40c)', () => {
         await wrapper.get('input[type="search"]').setValue('parque');
         expect(wrapper.find('[data-test="listed"]').exists()).toBe(false);
         expect(wrapper.text()).toContain('Ninguna obra se llama así. Pruebe con otra palabra.');
+    });
+});
+
+// It. 58 (US-059-LEG): las obras que aún no están en el mapa, para informar de cualquiera.
+describe('Las obras sin ubicación todavía (it. 58)', () => {
+    const MINCA = { contract_id: 'CO1.PCCNTR.7654321', worksite_id: null, name: 'Construcción de la vía a Minca', municipality: 'Santa Marta', entity_name: 'Gobernación del Magdalena' };
+    const BONDA = { contract_id: 'CO1.PCCNTR.7654322', worksite_id: '01j9xq3m7v8k2d4f6g8h0jkmnp', name: 'Andén de Bonda', municipality: 'Santa Marta', entity_name: null };
+
+    async function openList(answer = { data: [MINCA, BONDA], has_more: false }) {
+        const wrapper = await openMap();
+        fetchWorksiteList.mockResolvedValue([]);
+        fetchUnlocatedWorksites.mockResolvedValue(answer);
+        await wrapper.findAll('button').find((button) => button.text() === 'Lista').trigger('click');
+        await flushPromises();
+        return wrapper;
+    }
+
+    it('El ciudadano encuentra una obra sin ubicación y le informa a la veeduría: the list also shows the works not on the map, each to where to inform about it', async () => {
+        const wrapper = await openMap();
+        expect(fetchUnlocatedWorksites).not.toHaveBeenCalled();
+
+        fetchWorksiteList.mockResolvedValue([]);
+        fetchUnlocatedWorksites.mockResolvedValue({ data: [MINCA, BONDA], has_more: false });
+        await wrapper.findAll('button').find((button) => button.text() === 'Lista').trigger('click');
+        await flushPromises();
+
+        expect(fetchUnlocatedWorksites).toHaveBeenCalledWith({});
+        expect(wrapper.get('[data-test="unlocated-section"] h2').text()).toBe('Obras sin ubicación todavía');
+        const items = wrapper.findAll('[data-test="unlocated"]');
+        expect(items.map((item) => item.text())).toEqual(['Construcción de la vía a Minca Santa Marta · Gobernación del Magdalena', 'Andén de Bonda Santa Marta']);
+        // Sin ficha, la página del contrato; con su ficha sin ubicación, la de la obra.
+        expect(items.map((item) => item.get('a').attributes('href'))).toEqual(['/contract/CO1.PCCNTR.7654321', '/worksite/01j9xq3m7v8k2d4f6g8h0jkmnp']);
+    });
+
+    it('asks the server for them by name once the person stops writing, by municipality, and 20 more at a time', async () => {
+        vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+        try {
+            const wrapper = await openList({ data: [MINCA], has_more: true });
+
+            fetchUnlocatedWorksites.mockResolvedValue({ data: [BONDA], has_more: false });
+            await wrapper.get('[data-test="unlocated-section"] [data-test="more"]').trigger('click');
+            await flushPromises();
+            expect(fetchUnlocatedWorksites).toHaveBeenLastCalledWith({ page: 2 });
+            expect(wrapper.findAll('[data-test="unlocated"]')).toHaveLength(2);
+            expect(wrapper.find('[data-test="unlocated-section"] [data-test="more"]').exists()).toBe(false);
+
+            // Dos letras no bastan para buscar.
+            fetchUnlocatedWorksites.mockResolvedValue({ data: [], has_more: false });
+            await wrapper.get('input[type="search"]').setValue('mi');
+            vi.advanceTimersByTime(400);
+            await flushPromises();
+            expect(fetchUnlocatedWorksites).toHaveBeenCalledTimes(2);
+
+            await wrapper.get('input[type="search"]').setValue('minca');
+            vi.advanceTimersByTime(399);
+            await flushPromises();
+            expect(fetchUnlocatedWorksites).toHaveBeenCalledTimes(2);
+            vi.advanceTimersByTime(1);
+            await flushPromises();
+            expect(fetchUnlocatedWorksites).toHaveBeenLastCalledWith({ q: 'minca' });
+            expect(wrapper.get('[data-test="unlocated-empty"]').text()).toBe('Ninguna obra sin ubicación se llama así.');
+
+            await wrapper.get('#filter-municipality').setValue('47001');
+            await wrapper.findAll('button').find((button) => button.text() === 'Aplicar').trigger('click');
+            await flushPromises();
+            expect(fetchUnlocatedWorksites).toHaveBeenLastCalledWith({ q: 'minca', municipality: '47001' });
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    it('says when every work of the territory is already on the map, and when they could not be loaded', async () => {
+        const wrapper = await openList({ data: [], has_more: false });
+        expect(wrapper.get('[data-test="unlocated-empty"]').text()).toBe('Todas las obras del territorio ya están en el mapa.');
+
+        fetchUnlocatedWorksites.mockRejectedValue(new Error('Network Error'));
+        await wrapper.findAll('button').find((button) => button.text() === 'Mapa').trigger('click');
+        await wrapper.findAll('button').find((button) => button.text() === 'Lista').trigger('click');
+        await flushPromises();
+        expect(wrapper.get('[data-test="unlocated-section"] [role="alert"]').text()).toBe('No se pudieron cargar las obras sin ubicación. Revise su conexión e intente de nuevo.');
     });
 });
 
