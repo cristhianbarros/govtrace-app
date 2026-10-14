@@ -7,17 +7,17 @@ Esta guía recorre el proyecto entero. Sirve para quien llega por primera vez, s
 - qué guarda cada base de datos;
 - cómo se prueba y cómo se despliega.
 
-Los detalles de cada regla están en `specs/`; aquí está el mapa para encontrarlos.
+Los detalles de cada regla están en `specs/`; aquí está el mapa para encontrarlos. El porqué de las decisiones, dónde vive cada función del producto, lo frágil y lo que espera una decisión están en [`docs/contexto-de-implementacion.md`](contexto-de-implementacion.md).
 
-**En cifras (2026-10-10):**
+**En cifras (2026-10-14):**
 
 | | |
 |---|---|
 | Historias de usuario | 67, cada una con su `.feature` |
-| Escenarios Gherkin | 432, cada uno con una prueba que lleva su nombre (`make trace-check`) |
-| Código | ~17 400 líneas de PHP en `app/` y ~8 300 de Vue y JavaScript |
-| Pruebas | ~19 500 líneas de PHP y ~8 500 de JavaScript |
-| Iteraciones | 41 en `specs/PLAN.md`, varias con partes a, b, c… |
+| Escenarios Gherkin | 466, cada uno con una prueba que lleva su nombre (`make trace-check`) |
+| Código | ~18 200 líneas de PHP en `app/` y ~8 800 de Vue y JavaScript |
+| Pruebas | ~20 500 líneas de PHP y ~9 800 de JavaScript |
+| Iteraciones | De la 1 a la 58 en `specs/PLAN.md`, varias con partes a, b, c… |
 
 ## 1. Qué hace, y para quién
 
