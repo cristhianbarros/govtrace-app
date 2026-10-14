@@ -76,6 +76,13 @@
     "smallTargets": 6,
     "targets": 17
   },
+  "escritorio/publico-contrato": {
+    "axe": {},
+    "textUnder16": 4,
+    "textUnder14": 0,
+    "smallTargets": 0,
+    "targets": 14
+  },
   "escritorio/publico-entrar-central": {
     "axe": {},
     "textUnder16": 0,
@@ -306,6 +313,13 @@
     "textUnder14": 0,
     "smallTargets": 9,
     "targets": 11
+  },
+  "movil/publico-contrato": {
+    "axe": {},
+    "textUnder16": 4,
+    "textUnder14": 0,
+    "smallTargets": 0,
+    "targets": 14
   },
   "movil/publico-entrar-central": {
     "axe": {},

@@ -115,3 +115,44 @@ Característica: Informar a la veeduría de lo que vi en una obra
     Entonces veo solo los informes nuevos
     Cuando filtro el estado por "Todos"
     Entonces veo todos los informes
+
+  # It. 58: también de una obra que ningún veedor ha visitado, y sin ubicación todavía.
+  @complexity:medium
+  Escenario: El ciudadano encuentra una obra sin ubicación y le informa a la veeduría
+    Dado que el contrato "Construcción de la vía a Minca" del territorio no tiene ficha de obra
+    Cuando abro la lista de obras
+    Entonces lo veo en "Obras sin ubicación todavía"
+    Cuando le informo a la veeduría de esa obra
+    Entonces la veeduría recibe mi informe
+    Y la obra queda con su ficha, sin ubicación y sin pin en el mapa
+
+  @complexity:medium
+  Escenario: El ciudadano propone dónde queda una obra sin ubicación
+    Dado que la obra "Construcción de la vía a Minca" no tiene ubicación
+    Cuando le informo a la veeduría y marco en el mapa dónde queda la obra
+    Entonces la veeduría recibe mi informe con la ubicación propuesta
+    Y la obra sigue sin pin en el mapa hasta que la veeduría la confirme
+
+  @complexity:low @negative
+  Escenario: Una ubicación propuesta lejos del municipio se rechaza
+    Cuando propongo una ubicación a más de 30 km de la cabecera del municipio del contrato
+    Entonces veo "Ese punto queda a más de 30 km de Santa Marta. Revise dónde marcó la obra, o envíe el informe sin la ubicación."
+    Y el informe no se recibe, y mi código sigue sirviendo
+
+  @complexity:low
+  Escenario: Una obra que ya tiene ubicación no la pide
+    Dado que la obra "Pavimentación Calle 30" ya tiene ubicación
+    Cuando le informo a la veeduría
+    Entonces no se me pregunta dónde queda la obra
+    Y si el informe trae una ubicación, se recibe sin ella
+
+  @complexity:high
+  Escenario: La ficha de una obra se crea una sola vez
+    Dado que el contrato "Construcción de la vía a Minca" no tiene ficha de obra
+    Cuando un ciudadano le informa a la veeduría mientras un veedor envía el primer reporte de ese contrato
+    Entonces la obra tiene una sola ficha, con el informe y el reporte
+
+  @complexity:low @negative
+  Escenario: No se informa de un contrato que la veeduría no vigila
+    Cuando informo de un contrato fuera del territorio de la veeduría, o que ya no se puede reportar
+    Entonces veo "Esa obra no está entre las que vigila esta veeduría."

@@ -46,3 +46,19 @@ Característica: Corregir la ubicación oficial de una obra
     Dado que "Veeduría Ciénaga" también vigila "Acueducto Gaira" con su propia ubicación 11.2000, -74.2300
     Cuando corrijo la ubicación de "Acueducto Gaira" a 11.2408, -74.1990 y guardo
     Entonces la ubicación de "Acueducto Gaira" en "Veeduría Ciénaga" sigue siendo 11.2000, -74.2300
+
+  # It. 58: la ubicación que propuso un ciudadano en su informe (US-059-LEG).
+  @complexity:medium
+  Escenario: Confirmar la ubicación que propuso un ciudadano
+    Dado que un ciudadano propuso en su informe que la obra "Construcción de la vía a Minca" queda en 11.1427, -74.1173
+    Cuando toco "Confirmar esta ubicación" en ese informe de "Informes ciudadanos"
+    Entonces la ubicación oficial de la obra queda en 11.1427, -74.1173, y la obra aparece en el mapa
+    Y el log registra mi ID, la fecha y hora, sin coordenadas anteriores, y las nuevas 11.1427, -74.1173
+
+  @complexity:medium @negative
+  Escenario: Con varias ubicaciones propuestas, confirmar una cierra las demás
+    Dado que dos ciudadanos propusieron ubicaciones distintas para la obra "Construcción de la vía a Minca"
+    Cuando abro "Informes ciudadanos"
+    Entonces el mapa de cada informe muestra también la otra propuesta
+    Cuando confirmo una
+    Entonces el otro informe dice "La obra ya tiene ubicación", y confirmarlo responde "La obra ya tiene ubicación. Si está mal, corríjala en Obras."

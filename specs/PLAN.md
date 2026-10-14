@@ -3434,6 +3434,24 @@ Queda para la V2, opcional, con el modelo de financiación (`docs/viabilidad-leg
 
 **Modelo:** Opus xhigh. Toca el informe ciudadano, la creación de fichas con su concurrencia y la Bandeja.
 
+✅ **Cumplida (2026-10-14), aprobada por el usuario** ("do it").
+- **Cómo quedó:**
+  - **La Lista del mapa** suma "Obras sin ubicación todavía" (`UnlocatedWorksites`, `GET /public/unlocated-worksites`): los contratos que se pueden reportar (los mismos del veedor, `ReportedWork::reportableContracts`) que no están en el mapa, con o sin ficha. La búsqueda va al servidor cuando la persona deja de escribir, con el filtro de municipio, de a 20.
+  - **Un contrato sin ficha** tiene su página (`/contract/{número de SECOP}`, `Public/Contract.vue`): sus datos de SECOP y "Informar a esta veeduría". Si ya tiene ficha, lleva a la de la obra.
+  - **El informe** acepta el contrato (`contract_id`) y crea la ficha sin ubicación. La creación de la ficha es la misma del veedor, ahora compartida (`WorksiteOfContract`, que usa también `CreateReport`): el vínculo del contrato es único, y el segundo usa la ficha del primero.
+  - **"¿Dónde queda la obra?"**, opcional, en una obra sin ubicación: un mapa que empieza en la cabecera del municipio del contrato, donde se toca o se arrastra el punto (`LocationMap`, con `tapToMove`). Un punto a más de 30 km de la cabecera (`anchor_municipality_radius_km`) se rechaza antes de gastar el código. Si la obra obtuvo ubicación mientras tanto, el informe llega sin la propuesta.
+  - **"Informes ciudadanos"** muestra la propuesta en un mapa, con las demás abiertas para la misma obra en gris. "Confirmar esta ubicación" (`POST /citizen-reports/{id}/confirm-location`) bloquea la ficha, exige que siga sin ubicación y la fija con la corrección de US-035, que queda en el log. Una propuesta de un informe descartado no se confirma.
+  - **La política de datos** dice que, de quien informa, se guarda también la ubicación de la obra que marque (versión 2026-10-14.1).
+- **Historias:** US-059-LEG (6 escenarios nuevos) y US-035 (2), con sus criterios. R-GEO-01 enmendada. El YAML de US-035 tenía `manejo_errores: []` seguido de una lista, que no es YAML válido: el criterio de la it. 55 pasó a los de éxito.
+- **Pruebas:**
+  - Pest (`UnlocatedWorksitesTest`, 16): la lista, el informe sobre un contrato sin ficha, la propuesta, el rechazo lejos del municipio (y el código sigue sirviendo), la obra con ubicación que no la recibe, los contratos que la veeduría no vigila, la confirmación con su log, varias propuestas, la de un informe descartado y que solo el Administrador confirma. La carrera es real: otra conexión crea la ficha del contrato, ya confirmada, justo antes de que el informe inserte la suya.
+  - Vitest: el formulario con el mapa, la lista con la búsqueda en el servidor y "Ver 20 más", la página del contrato, la obra sin ubicación, la propuesta en "Informes ciudadanos" y el mapa con otros puntos y el toque.
+  - e2e: el ciudadano encuentra la obra en la lista, informa y marca dónde queda; la Administradora lo confirma y la obra aparece en el mapa. El fixture suma una obra para eso (`E2E-002`). `make ux-check` recorre la página del contrato (`publico-contrato`, sin fallas de axe).
+  - Pest, visto en rojo antes de implementar. Las de Vitest se escribieron después de las pantallas: se comprobó que fallan con las pantallas de antes (6 archivos) y pasan con las nuevas.
+  - Corridas: Pest 1219, Vitest 703, `make e2e` 58 y 1 `fixme`, trace-check 466 de 466.
+- **Visto en un navegador real:** la lista con "Obras sin ubicación todavía", el mapa del formulario (el punto se mueve con un toque) y la propuesta en "Informes ciudadanos", con su botón para confirmarla.
+- **Se vio en los datos:** SECOP II clasifica como "Obra" contratos que no lo son (en el Magdalena, varios de prestación de servicios del ICBF). Salen en la lista del ciudadano igual que en la del veedor.
+
 ### Iteración 59 — GovTrace sugiere la veeduría: el Inicio empieza por la obra
 
 ⬜ **Propuesta por Claude el 2026-10-14, a partir de una idea del usuario** (que el sistema le sugiera la veeduría a quien quiere ayudar y no sabe a cuál informar); **el usuario pidió agregarla al plan.** Se implementa cuando la apruebe.
@@ -3524,7 +3542,7 @@ Queda para la V2, opcional, con el modelo de financiación (`docs/viabilidad-leg
 | 4 | ✅ **It. 56** — La caché de lo público | Rendimiento: se mide con el mismo guion de carga que la 52 |
 | 5 | ✅ **It. 53** — El mapa público dice que el punto es aproximado | Confunde a quien mira el mapa |
 | 6 | ✅ **It. 51** — El subdominio sale del nombre | Comodidad para el Super Administrador |
-| 7 | **It. 58** — El ciudadano informa sobre cualquier obra del territorio (propuesta del 2026-10-14) | Cierra el vacío del ciudadano: hoy solo puede informar sobre obras que un veedor ya visitó. Antes del piloto, para que la veeduría pruebe también el lado del ciudadano |
+| 7 | ✅ **It. 58** — El ciudadano informa sobre cualquier obra del territorio (cumplida el 2026-10-14) | Cierra el vacío del ciudadano: hoy solo puede informar sobre obras que un veedor ya visitó. Antes del piloto, para que la veeduría pruebe también el lado del ciudadano |
 | 8 | **It. 60** — La tarjeta de la obra en el mapa (propuesta del 2026-10-14) | Corta y no depende de otra. Es la que más se ve en una presentación: si la de Todos por Medellín se adelanta, va primero |
 | 9 | **It. 59** — GovTrace sugiere la veeduría (propuesta del 2026-10-14) | Necesita la 58 |
 | 10 | **El piloto** con una veeduría real | Con lo que muestre se decide V20 (elegir la obra sin señal) y V17 (correo al veedor) |

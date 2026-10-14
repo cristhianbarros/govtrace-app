@@ -52,6 +52,23 @@ final class CitizenReportRefused extends DomainException
         return new self('Ya informó hoy de esta obra. Puede volver a hacerlo mañana.', 429);
     }
 
+    /** It. 58: a contract outside its territory, or one that can no longer be reported (R-SEC-07). */
+    public static function notWatched(): self
+    {
+        return new self('Esa obra no está entre las que vigila esta veeduría.', 422, 'contract_id');
+    }
+
+    /** It. 58: a place proposed for the work, farther from its municipality than a first report may anchor it (R-GEO-01). */
+    public static function farFromMunicipality(string $municipality, int $kilometers): self
+    {
+        return new self("Ese punto queda a más de {$kilometers} km de {$municipality}. Revise dónde marcó la obra, o envíe el informe sin la ubicación.", 422, 'location');
+    }
+
+    public static function invalidLocation(): self
+    {
+        return new self('La ubicación no es válida. Marque en el mapa dónde queda la obra.', 422, 'location');
+    }
+
     public static function suspended(): self
     {
         return new self('Esta veeduría está suspendida y no recibe informes por ahora.', 409);

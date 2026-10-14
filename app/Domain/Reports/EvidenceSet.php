@@ -34,7 +34,7 @@ final class EvidenceSet
                 throw ReportValidationException::evidenceTooLarge();
             }
 
-            // R-PRIV-06: lo que se sella se publica tal cual; si trae el GPS del teléfono, no entra.
+            // R-PRIV-01 y R-PRIV-06: lo que se sella se publica tal cual; si trae el GPS del teléfono, no entra.
             if ($upload->kind() === EvidenceKind::Photo && JpegMetadata::carriesMetadata($upload->path)) {
                 throw ReportValidationException::photoWithMetadata();
             }

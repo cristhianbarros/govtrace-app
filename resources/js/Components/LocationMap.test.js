@@ -85,3 +85,43 @@ describe('LocationMap', () => {
         wrapper.unmount();
     });
 });
+
+// It. 58: las ubicaciones que propusieron los ciudadanos.
+describe('LocationMap, con lo que proponen los ciudadanos (it. 58)', () => {
+    it('draws the other proposals in grey, with the main point in red, all in view', async () => {
+        const wrapper = mount(LocationMap, {
+            props: { modelValue: { latitude: 11.1427, longitude: -74.1173 }, others: [{ latitude: 11.15, longitude: -74.12 }], label: 'Donde el ciudadano dice que queda la obra', readonly: true },
+            attachTo: document.body,
+        });
+        await flushPromises();
+        await vi.waitFor(() => expect(wrapper.vm.marker).toBeTruthy());
+
+        expect(wrapper.vm.marker.options.title).toBe('Donde el ciudadano dice que queda la obra');
+        expect(wrapper.vm.marker.options.icon.options.html).toContain('bg-red-600');
+        expect(wrapper.vm.otherMarkers).toHaveLength(1);
+        expect(wrapper.vm.otherMarkers[0].getLatLng()).toMatchObject({ lat: 11.15, lng: -74.12 });
+        expect(wrapper.vm.otherMarkers[0].options.icon.options.html).toContain('bg-slate-500');
+        wrapper.unmount();
+    });
+
+    it('moves the pin where the map is tapped, when asked to', async () => {
+        const wrapper = mount(LocationMap, { props: { modelValue: { latitude: 11.2, longitude: -74.23 }, tapToMove: true }, attachTo: document.body });
+        await flushPromises();
+        await vi.waitFor(() => expect(wrapper.vm.marker).toBeTruthy());
+
+        wrapper.vm.map.fire('click', { latlng: { lat: 11.142712345, lng: -74.117312345 } });
+
+        expect(wrapper.emitted('update:modelValue')).toEqual([[{ latitude: 11.1427123, longitude: -74.1173123 }]]);
+        expect(wrapper.vm.marker.getLatLng()).toMatchObject({ lat: 11.142712345, lng: -74.117312345 });
+        wrapper.unmount();
+    });
+
+    it('does not move the pin with a tap unless asked to: the Administrador drags it', async () => {
+        const wrapper = await mountMap({ latitude: 11.2, longitude: -74.23 });
+
+        wrapper.vm.map.fire('click', { latlng: { lat: 11.1427, lng: -74.1173 } });
+
+        expect(wrapper.emitted('update:modelValue')).toBeUndefined();
+        wrapper.unmount();
+    });
+});

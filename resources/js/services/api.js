@@ -27,6 +27,8 @@ export const sendCitizenReport = (form) => dataOf(http.post('/citizen-reports', 
 export const fetchCitizenReports = (params) => dataOf(http.get('/citizen-reports', { params }));
 export const answerCitizenReport = (id, answer) => dataOf(http.post(`/citizen-reports/${id}/answer`, { answer }));
 export const discardCitizenReport = (id) => dataOf(http.post(`/citizen-reports/${id}/discard`));
+// It. 58 (US-035): la ubicación que propuso el ciudadano, como la oficial de la obra.
+export const confirmCitizenLocation = (id) => dataOf(http.post(`/citizen-reports/${id}/confirm-location`));
 
 /** US-008: el reporte con sus archivos y sus SHA-256, como multipart. */
 export const sendReport = (form) => dataOf(http.post('/reports', form));
@@ -163,6 +165,9 @@ export const syncSecopNow = () => dataOf(http.post('/admin/secop-health/sync'));
 export const fetchMapFilters = async () => (await dataOf(http.get('/public/worksites/filters'))).data;
 // It. 40c: el mapa como lista, con los mismos filtros; se pide al abrir la lista.
 export const fetchWorksiteList = async (filters = {}) => (await dataOf(http.get('/public/worksites/list', { params: filters }))).data;
+// It. 58 (US-059-LEG): las obras del territorio que aún no están en el mapa ({ data, has_more }), y un contrato sin ficha.
+export const fetchUnlocatedWorksites = (params = {}) => dataOf(http.get('/public/unlocated-worksites', { params }));
+export const fetchPublicContract = async (id) => (await dataOf(http.get(`/public/contracts/${encodeURIComponent(id)}`))).data;
 
 /** US-051-RPT: las estadísticas públicas del territorio. */
 export const fetchPublicStats = () => dataOf(http.get('/public/stats'));

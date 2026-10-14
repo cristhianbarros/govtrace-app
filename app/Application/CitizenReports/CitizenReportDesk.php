@@ -7,7 +7,11 @@ use App\Domain\CitizenReports\CitizenReport;
 use App\Domain\CitizenReports\CitizenReportCode;
 use App\Domain\CitizenReports\Notifications\CitizenReportCode as CodeMail;
 use App\Domain\CitizenReports\Notifications\CitizenReportReceived;
+use App\Domain\Configuration\Parameters;
 use App\Domain\Contracts\Contract;
+use App\Domain\Geography\GeoPoint;
+use App\Domain\Geography\Municipality;
+use App\Domain\Geography\PlaceName;
 use App\Domain\Organization\OrganizationStatus;
 use App\Domain\Reports\JpegMetadata;
 use App\Domain\Worksites\Worksite;
@@ -61,8 +65,11 @@ class CitizenReportDesk
         Notification::route('mail', self::normalized($email))->notify(new CodeMail($code, tenant()->displayName(), CitizenReportCode::VALID_MINUTES));
     }
 
-    /** @param  list<UploadedFile>  $photos  from 1 to 3, or none (it. 46h) */
-    public function receive(string $email, string $code, Worksite $worksite, string $message, array $photos = []): CitizenReport
+    /**
+     * @param  list<UploadedFile>  $photos  from 1 to 3, or none (it. 46h)
+     * @param  GeoPoint|null  $proposed  it. 58: where the citizen says a work without location is
+     */
+    public function receive(string $email, string $code, ReportedWork $work, string $message, array $photos = [], ?GeoPoint $proposed = null): CitizenReport
     {
         $this->assertReceiving();
         $hash = self::fingerprint($email);
@@ -72,7 +79,7 @@ class CitizenReportDesk
         if ((clone $today)->count() >= self::REPORTS_PER_DAY) {
             throw CitizenReportRefused::dailyLimit(self::REPORTS_PER_DAY);
         }
-        if ((clone $today)->where('worksite_id', $worksite->id)->exists()) {
+        if ($work->worksite !== null && (clone $today)->where('worksite_id', $work->worksite->id)->exists()) {
             throw CitizenReportRefused::alreadyToday();
         }
         if (count($photos) > CitizenReport::MAX_PHOTOS) {
@@ -80,22 +87,29 @@ class CitizenReportDesk
         }
         // Todas se revisan antes de guardar una: un informe con una foto mala no deja ninguna.
         array_map($this->assertCleanPhoto(...), $photos);
+        // It. 58: solo una obra sin ubicación la recibe. Si la obtuvo mientras tanto, el informe llega sin ella.
+        $proposed = $work->isLocated() ? null : $proposed;
+        if ($proposed !== null) {
+            $this->assertNearItsMunicipality($work, $proposed);
+        }
 
-        $report = DB::transaction(function () use ($pending, $hash, $email, $worksite, $message, $photos) {
+        $report = DB::transaction(function () use ($pending, $hash, $email, $work, $message, $photos, $proposed) {
             $pending->update(['used_at' => now()]);
 
             return CitizenReport::query()->create([
-                'worksite_id' => $worksite->id,
+                'worksite_id' => $work->sheetForReport()->id,
                 'email' => self::normalized($email),
                 'email_hash' => $hash,
                 'message' => trim($message),
                 'photo_paths' => array_map($this->store(...), $photos),
                 'data_authorized_at' => $pending->data_authorized_at,
                 'data_policy_version' => DataPolicy::VERSION,
+                'proposed_latitude' => $proposed?->latitude,
+                'proposed_longitude' => $proposed?->longitude,
             ]);
         });
 
-        Notification::route('mail', self::normalized($email))->notify(new CitizenReportReceived($report->reference(), tenant()->displayName(), self::nameOf($worksite)));
+        Notification::route('mail', self::normalized($email))->notify(new CitizenReportReceived($report->reference(), tenant()->displayName(), self::nameOf($report->worksite)));
 
         return $report;
     }
@@ -119,7 +133,7 @@ class CitizenReportDesk
         return Str::lower(trim($email));
     }
 
-    private function assertReceiving(): void
+    public function assertReceiving(): void
     {
         if (tenant()->status === OrganizationStatus::Suspended->value) {
             throw CitizenReportRefused::suspended();
@@ -151,9 +165,20 @@ class CitizenReportDesk
         if ($photo->getSize() > self::MAX_PHOTO_BYTES || $photo->getMimeType() !== 'image/jpeg') {
             throw CitizenReportRefused::invalidPhoto();
         }
-        // R-PRIV-06: como la de un veedor, sin la ubicación del teléfono.
+        // R-PRIV-01 y R-PRIV-06: como la de un veedor, sin la ubicación del teléfono.
         if (JpegMetadata::carriesMetadata($photo->getRealPath())) {
             throw CitizenReportRefused::photoWithMetadata();
+        }
+    }
+
+    /** It. 58: as far from the seat of the contract's municipality as a first report may anchor the work (R-GEO-01), no more. */
+    private function assertNearItsMunicipality(ReportedWork $work, GeoPoint $proposed): void
+    {
+        $seat = $work->contract !== null ? Municipality::seatFor($work->contract->municipality_code, $work->contract->department_code, $proposed) : null;
+        $kilometers = (int) Parameters::current('anchor_municipality_radius_km');
+
+        if ($seat !== null && $seat->seat()->distanceInMetersTo($proposed) > $kilometers * 1000) {
+            throw CitizenReportRefused::farFromMunicipality(PlaceName::forDisplay($seat->name), $kilometers);
         }
     }
 

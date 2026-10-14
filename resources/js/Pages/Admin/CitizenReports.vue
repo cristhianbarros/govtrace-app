@@ -3,14 +3,17 @@
 // su deber es recibirlo (Ley 850 de 2003, art. 18) —, sin el correo de quien
 // lo envió. Se responde desde aquí (al ciudadano le llega por correo) o se
 // descarta. No es evidencia sellada: si hace falta, la veeduría manda un veedor.
+// It. 58: la ubicación que propuso el ciudadano para una obra sin ubicación —
+// con las demás propuestas para la misma obra — se confirma desde aquí.
 import { onMounted, ref } from 'vue';
 import LoadState from '@/Components/LoadState.vue';
+import LocationMap from '@/Components/LocationMap.vue';
 import MoreButton from '@/Components/MoreButton.vue';
 import RowAction from '@/Components/RowAction.vue';
 import { usePagedList } from '@/composables/usePagedList.js';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { formatDateTime } from '@/lib/format.js';
-import { answerCitizenReport, discardCitizenReport, fetchCitizenReports } from '@/services/api.js';
+import { answerCitizenReport, confirmCitizenLocation, discardCitizenReport, fetchCitizenReports } from '@/services/api.js';
 import { errorMessage } from '@/services/errors.js';
 
 const { data: reports, meta, loading, loadingMore, error, load, more } = usePagedList(fetchCitizenReports);
@@ -58,6 +61,9 @@ async function sendAnswer() {
     }
 }
 
+const pointOf = ({ latitude, longitude }) => ({ latitude, longitude });
+const othersLabel = (count) => (count === 1 ? 'Gris: otra ubicación que propuso un ciudadano para esta obra.' : `Gris: otras ${count} ubicaciones que propusieron ciudadanos para esta obra.`);
+
 async function done(message) {
     notice.value = message;
     await load();
@@ -94,6 +100,18 @@ onMounted(load);
                         </a>
                     </div>
                     <p v-if="report.answer" class="rounded-lg bg-slate-50 p-2"><strong>Respuesta:</strong> {{ report.answer }}</p>
+                    <!-- It. 58: dónde dice el ciudadano que queda la obra. -->
+                    <div v-if="report.proposed_location" data-test="proposed-location" class="flex flex-col gap-2 rounded-lg bg-amber-50 p-3 ring-1 ring-amber-200">
+                        <p class="font-semibold text-amber-900">📍 El ciudadano dice que la obra queda aquí.</p>
+                        <LocationMap :model-value="pointOf(report.proposed_location)" :others="report.proposed_location.others" label="Donde el ciudadano dice que queda la obra" readonly />
+                        <p v-if="report.proposed_location.others.length" data-test="other-proposals" class="text-base text-slate-700">{{ othersLabel(report.proposed_location.others.length) }}</p>
+                        <p v-if="report.proposed_location.status === 'confirmed'" class="font-semibold text-emerald-800">Ubicación confirmada aquí.</p>
+                        <p v-else-if="report.proposed_location.status === 'elsewhere'" class="font-semibold text-slate-800">La obra ya tiene ubicación oficial, en otro lugar.</p>
+                        <template v-else-if="report.status !== 'discarded'">
+                            <p class="text-base text-slate-800">La obra aún no tiene ubicación oficial. Si no está seguro de este punto, pídale a un veedor que la visite: su primer reporte la fija.</p>
+                            <RowAction label="Confirmar esta ubicación" confirm-label="Sí, confirmar" warning="La obra aparecerá en el mapa en este punto, y la geocerca de los veedores se medirá desde aquí." :run="() => confirmCitizenLocation(report.id)" @done="done" />
+                        </template>
+                    </div>
 
                     <template v-if="report.status === 'new'">
                         <div v-if="answering === report.id" class="flex flex-col gap-2">

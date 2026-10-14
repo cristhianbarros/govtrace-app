@@ -110,6 +110,8 @@ for (const [viewport, options] of Object.entries(VIEWPORTS)) {
                 ['publico-inicio', `${CENTRAL}/`],
                 ['publico-mapa', `${ORG}/`],
                 ['publico-obra', worksite],
+                // It. 58: un contrato sin ficha, el del fixture que el veedor no reporta.
+                ['publico-contrato', `${ORG}/contract/CO1.PCCNTR.9990001-SIN-UBICACION`],
                 ['publico-estadisticas', `${ORG}/stats`],
                 ['publico-validador', `${ORG}/verify`],
                 ['publico-entrar-veeduria', `${ORG}/login`],

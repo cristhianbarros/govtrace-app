@@ -135,6 +135,58 @@ test('Informa a la veeduría con su correo verificado, y la veeduría le respond
     expect(latestMailTo(citizen)).toContain('Respuesta a su informe');
 });
 
+// It. 58 (US-059-LEG, US-035): una obra que ningún veedor ha visitado.
+test('Informa de una obra sin ubicación y dice dónde queda; la veeduría lo confirma y la obra aparece en el mapa (it. 58)', async ({ page }) => {
+    const citizen = `e2e.vecino.${Date.now()}@correo.co`;
+    const unlocatedWork = 'Polideportivo de pruebas del ciudadano';
+    await page.goto(ORG);
+    await page.getByRole('button', { name: 'Lista' }).click();
+
+    // No está en el mapa: está en "Obras sin ubicación todavía", y la busca el servidor.
+    await expect(page.locator('[data-test="listed"]').filter({ hasText: unlocatedWork })).toHaveCount(0);
+    await page.getByLabel('Buscar una obra por su nombre').fill('polideportivo de pruebas');
+    const unlocated = page.locator('[data-test="unlocated"]').filter({ hasText: unlocatedWork });
+    await expect(unlocated).toHaveCount(1);
+    await unlocated.getByRole('link').click();
+    await page.waitForURL('**/contract/*');
+    await expect(page.getByRole('heading', { name: unlocatedWork, level: 1 })).toBeVisible();
+    await expect(page.locator('[data-test="unlocated"]')).toContainText('ningún veedor la ha visitado');
+
+    await page.getByLabel('Su correo').fill(citizen);
+    await page.getByLabel('Autorizo el tratamiento de mis datos personales según la política.').check();
+    await page.getByRole('button', { name: 'Enviarme el código' }).click();
+    await expect(page.getByRole('status')).toContainText('Le enviamos un código de 6 dígitos');
+    await page.getByLabel('El código que le llegó al correo').fill(latestCodeTo(citizen));
+    await page.getByLabel('¿Qué vio en la obra?').fill('El polideportivo tiene la cubierta a medio poner y nadie trabaja.');
+
+    // Marca dónde queda, tocando el mapa: empieza en la cabecera de Santa Marta.
+    await page.getByRole('button', { name: 'Marcar dónde queda la obra' }).click();
+    const map = page.locator('[data-test="propose-place"] .leaflet-container');
+    await expect(map.locator('.leaflet-marker-icon')).toHaveCount(1);
+    await map.click({ position: { x: 250, y: 200 } });
+    await page.getByRole('button', { name: 'Enviar a la veeduría' }).click();
+    await expect(page.getByRole('status')).toContainText('Su informe llegó a la veeduría.');
+
+    // La Administradora ve dónde dice el ciudadano que queda, y lo confirma.
+    await logIn(page, ORG, PEOPLE.admin);
+    await page.waitForURL('**/admin/inbox');
+    await page.goto(`${ORG}/admin/citizen-reports`);
+    const report = page.locator('[data-test="citizen-report"]').filter({ hasText: 'la cubierta a medio poner' });
+    await expect(report.locator('[data-test="proposed-location"]')).toContainText('El ciudadano dice que la obra queda aquí.');
+    await expect(report.locator('[data-test="proposed-location"] .leaflet-marker-icon')).toHaveCount(1);
+    await report.getByRole('button', { name: 'Confirmar esta ubicación' }).click();
+    await report.getByRole('button', { name: 'Sí, confirmar' }).click();
+    await expect(page.getByRole('status')).toContainText('La ubicación de la obra quedó confirmada');
+    await expect(report.locator('[data-test="proposed-location"]')).toContainText('Ubicación confirmada aquí.');
+
+    // Ya está en el mapa.
+    await page.goto(ORG);
+    await page.getByRole('button', { name: 'Lista' }).click();
+    await page.getByLabel('Buscar una obra por su nombre').fill('polideportivo de pruebas');
+    await expect(page.locator('[data-test="listed"]').filter({ hasText: unlocatedWork })).toHaveCount(1);
+    await expect(page.locator('[data-test="unlocated"]').filter({ hasText: unlocatedWork })).toHaveCount(0);
+});
+
 test('Lee la política de tratamiento de datos desde el mapa (it. 44e)', async ({ page }) => {
     await page.goto(ORG);
     await page.getByRole('link', { name: 'Política de tratamiento de datos' }).click();

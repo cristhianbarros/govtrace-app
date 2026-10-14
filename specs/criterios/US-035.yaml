@@ -9,12 +9,16 @@ criterios_aceptacion:
   validaciones_reglas:
     - "Cada corrección queda en un log de auditoría inmutable con: ID del Administrador, fecha/hora, coordenadas anteriores y coordenadas nuevas"
     - "La ficha de obra es de la organización: la corrección solo afecta la ubicación y la geocerca de los veedores de esa organización"
-  manejo_errores: []
     - "(It. 55, 2026-10-10; pedido por el usuario) Tras corregir la ubicación, la tarjeta de la Bandeja del primer reporte de la obra muestra dos puntos en su mapa: donde se tomó el reporte (gris) y la ubicación oficial de hoy (rojo), con una leyenda, y dice a cuántos metros quedó la corrección de ese punto. Antes la tarjeta seguía mostrando solo el punto del reporte, y parecía que la corrección no había tenido efecto"
+    - "(It. 58, 2026-10-14) En 'Informes ciudadanos', un informe con una ubicación propuesta muestra su punto en un mapa. 'Confirmar esta ubicación' la fija: es una corrección más, con su registro en el log (coordenadas anteriores vacías), y la obra aparece en el mapa público"
+  manejo_errores:
+    - "(It. 58) Confirmar la propuesta de una obra que ya tiene ubicación: 'La obra ya tiene ubicación. Si está mal, corríjala en Obras.'"
   requisitos_ux:
     - "Mapa interactivo con pin arrastrable y campos de latitud/longitud"
   casos_edge:
     - {caso: "(It. 46f) El primer reporte de una obra no fijó su ubicación (lejos de su municipio o con mala señal) y la ubicación quedó por confirmar", resultado: "Desde la Bandeja, 'Confirmar esta ubicación' la fija en el punto de ese reporte: es una corrección más, con su registro en el log de auditoría (coordenadas anteriores vacías)"}
+    - {caso: "(It. 58) Varios ciudadanos propusieron ubicaciones para la misma obra", resultado: "El mapa de cada informe muestra también las otras propuestas. Al confirmar una, las demás dicen 'La obra ya tiene ubicación' y ya no se pueden confirmar"}
+    - {caso: "(It. 58) Un informe descartado", resultado: "Su ubicación propuesta ya no se ofrece para confirmar"}
 validacion_smart:
   specific: true
   measurable: true

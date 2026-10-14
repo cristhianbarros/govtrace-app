@@ -61,6 +61,8 @@ onMounted(load);
                         </template>
                     </div>
                 </section>
+                <!-- It. 58: sin ubicación, no está en el mapa; el ciudadano puede decir dónde queda. -->
+                <p v-if="worksite.located === false" data-test="unlocated" class="mb-4 rounded-2xl bg-white p-4 text-base shadow-soft ring-1 ring-slate-900/5">Esta obra aún no está en el mapa: su ubicación está por confirmar. Si sabe dónde queda, dígaselo a la veeduría.</p>
                 <section aria-label="Contratos" class="flex flex-col gap-3">
                     <ContractCard v-for="contract in worksite.contracts" :key="contract.secop_contract_id" :contract="contract" />
                 </section>
@@ -77,7 +79,7 @@ onMounted(load);
                 </ol>
 
                 <!-- It. 44f (US-059-LEG): primero, a la veeduría que la vigila; después, a la Contraloría. -->
-                <CitizenReportForm :worksite-id="worksite.id" />
+                <CitizenReportForm :worksite-id="worksite.id" :propose-from="worksite.located === false ? worksite.seat : null" />
                 <OversightChannels />
             </template>
         </LoadState>

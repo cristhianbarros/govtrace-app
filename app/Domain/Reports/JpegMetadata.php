@@ -3,7 +3,7 @@
 namespace App\Domain\Reports;
 
 /**
- * R-PRIV-06 / US-026: whether a JPEG still carries EXIF or XMP — where a
+ * R-PRIV-01, R-PRIV-06 / US-026: whether a JPEG still carries EXIF or XMP — where a
  * phone writes its GPS position, its model and the capture time. The PWA
  * strips them before hashing (it. 16); the server can't strip them without
  * changing the sealed bytes, so it refuses such a photo instead: nothing

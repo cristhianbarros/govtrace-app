@@ -5,6 +5,7 @@
 import { flushPromises, mount } from '@vue/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import Worksite from './Worksite.vue';
+import CitizenReportForm from '@/Components/Public/CitizenReportForm.vue';
 import { formatDateTime } from '@/lib/format.js';
 import { validate } from '@/lib/validator.js';
 import { fetchReceipt, fetchWorksite, findProof } from '@/services/api.js';
@@ -374,6 +375,27 @@ describe('Las pantallas vacías, ilustradas (it. 40f)', () => {
 
         expect(wrapper.get('[data-test="empty"]').text()).toContain('Aún no hay evidencias publicadas de esta obra.');
         expect(wrapper.get('[data-test="empty"] svg').attributes('data-illustration')).toBe('evidence');
+        wrapper.unmount();
+    });
+});
+
+// It. 58 (US-059-LEG): una obra cuya ubicación está por confirmar.
+describe('Vista de obra sin ubicación (it. 58)', () => {
+    const SEAT = { latitude: 11.204679, longitude: -74.199829 };
+
+    it('El ciudadano propone dónde queda una obra sin ubicación: the page says it is not on the map, and the form asks where it is from the seat of its municipality', async () => {
+        const wrapper = await openWorksite(calle30({ located: false, seat: SEAT, timeline: [] }));
+
+        expect(wrapper.get('[data-test="unlocated"]').text()).toBe('Esta obra aún no está en el mapa: su ubicación está por confirmar. Si sabe dónde queda, dígaselo a la veeduría.');
+        expect(wrapper.findComponent(CitizenReportForm).props()).toMatchObject({ worksiteId: '01j9xq3m7v8k2d4f6g8h0jkmnp', proposeFrom: SEAT });
+        wrapper.unmount();
+    });
+
+    it('Una obra que ya tiene ubicación no la pide: no note, and no starting point for the form', async () => {
+        const wrapper = await openWorksite(calle30({ located: true, seat: null }));
+
+        expect(wrapper.find('[data-test="unlocated"]').exists()).toBe(false);
+        expect(wrapper.findComponent(CitizenReportForm).props('proposeFrom')).toBeNull();
         wrapper.unmount();
     });
 });

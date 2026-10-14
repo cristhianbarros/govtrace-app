@@ -3,15 +3,16 @@
 // solo los pines (R-MAP-02); tocar uno abre la vista de su obra, que pide
 // sus datos en ese momento.
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { computed, onMounted, reactive, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import Illustration from '@/Components/Brand/Illustration.vue';
 import WorksIllustration from '@/Components/Brand/WorksIllustration.vue';
 import LoadState from '@/Components/LoadState.vue';
+import MoreButton from '@/Components/MoreButton.vue';
 import OrganizationNotice from '@/Components/Public/OrganizationNotice.vue';
 import PinsMap from '@/Components/Public/PinsMap.vue';
 import { useLoader } from '@/composables/useLoader.js';
 import AppLayout from '@/Layouts/AppLayout.vue';
-import { fetchMapFilters, fetchPins, fetchWorksiteList } from '@/services/api.js';
+import { fetchMapFilters, fetchPins, fetchUnlocatedWorksites, fetchWorksiteList } from '@/services/api.js';
 
 const page = usePage();
 const { data: pins, loading, error, load } = useLoader(fetchPins);
@@ -45,10 +46,56 @@ async function loadList() {
     }
 }
 
+// It. 58 (US-059-LEG): las obras del territorio que aún no están en el mapa — ningún
+// veedor las ha visitado, o su ubicación está por confirmar —, para que el ciudadano
+// informe de cualquiera. Las busca el servidor (en una ciudad son cientos), de a 20.
+const unlocated = ref(null);
+const unlocatedMore = ref(false);
+const unlocatedPage = ref(1);
+const unlocatedError = ref(null);
+const loadingMoreUnlocated = ref(false);
+const MIN_WORDS = 3;
+const searched = computed(() => (words.value.trim().length >= MIN_WORDS ? words.value.trim() : ''));
+const unlocatedParams = () => ({ ...(searched.value ? { q: searched.value } : {}), ...(active.value.municipality ? { municipality: active.value.municipality } : {}) });
+let lastAsked = null;
+
+async function loadUnlocated(page = 1) {
+    const params = unlocatedParams();
+    lastAsked = JSON.stringify(params);
+    unlocatedError.value = null;
+    try {
+        const answer = await fetchUnlocatedWorksites(page > 1 ? { ...params, page } : params);
+        unlocated.value = page === 1 ? answer.data : [...unlocated.value, ...answer.data];
+        unlocatedMore.value = answer.has_more;
+        unlocatedPage.value = page;
+    } catch {
+        unlocatedError.value = 'No se pudieron cargar las obras sin ubicación. Revise su conexión e intente de nuevo.';
+    }
+}
+
+async function moreUnlocated() {
+    loadingMoreUnlocated.value = true;
+    await loadUnlocated(unlocatedPage.value + 1);
+    loadingMoreUnlocated.value = false;
+}
+
+// Mientras escribe, se busca cuando deja de escribir un momento, y solo si cambió lo que se busca.
+let typing = null;
+watch(searched, () => {
+    clearTimeout(typing);
+    typing = setTimeout(() => {
+        if (view.value === 'list' && JSON.stringify(unlocatedParams()) !== lastAsked) {
+            loadUnlocated();
+        }
+    }, 400);
+});
+onBeforeUnmount(() => clearTimeout(typing));
+
 function show(next) {
     view.value = next;
     if (next === 'list') {
         loadList();
+        loadUnlocated();
     }
 }
 
@@ -70,6 +117,7 @@ function apply() {
     load(active.value);
     if (view.value === 'list') {
         loadList();
+        loadUnlocated();
     }
 }
 
@@ -88,6 +136,9 @@ function clear() {
     Object.assign(filters, EMPTY_FILTERS);
     active.value = {};
     load({});
+    if (view.value === 'list') {
+        loadUnlocated();
+    }
 }
 
 onMounted(async () => {
@@ -191,6 +242,21 @@ onMounted(async () => {
                     <Link :href="`/worksite/${worksite.id}`" class="flex min-h-16 items-center gap-3 rounded-2xl bg-white shadow-soft ring-1 ring-slate-900/5 p-3 hover:bg-slate-50"><span aria-hidden="true" class="grid size-9 shrink-0 place-items-center rounded-full text-lg font-bold" :class="LOOK[worksite.color_pin].css">{{ LOOK[worksite.color_pin].icon }}</span> <span class="flex flex-col"><span class="text-sm font-semibold">{{ LOOK[worksite.color_pin].label }}</span> <span class="text-base font-semibold">{{ worksite.name }}</span> <span class="text-sm text-slate-700">{{ worksite.municipality }}</span></span></Link>
                 </li>
             </ul>
+
+            <!-- It. 58: las que aún no están en el mapa, para informar de cualquiera. -->
+            <section data-test="unlocated-section" aria-labelledby="unlocated-title" class="mt-4 flex flex-col gap-2">
+                <h2 id="unlocated-title" class="text-lg font-semibold">Obras sin ubicación todavía</h2>
+                <p class="text-base text-slate-700">No están en el mapa: ningún veedor las ha visitado, o su ubicación está por confirmar. Puede informarle a la veeduría de cualquiera, y decirle dónde queda.</p>
+                <p v-if="unlocatedError" role="alert" class="rounded-lg bg-red-50 p-3 text-base text-red-800">{{ unlocatedError }}</p>
+                <p v-else-if="unlocated === null" class="text-base text-slate-700">Cargando las obras sin ubicación…</p>
+                <p v-else-if="unlocated.length === 0" data-test="unlocated-empty" class="text-base text-slate-700">{{ searched ? 'Ninguna obra sin ubicación se llama así.' : 'Todas las obras del territorio ya están en el mapa.' }}</p>
+                <ul v-else class="flex flex-col gap-2">
+                    <li v-for="work in unlocated" :key="work.contract_id" data-test="unlocated">
+                        <Link :href="work.worksite_id ? `/worksite/${work.worksite_id}` : `/contract/${encodeURIComponent(work.contract_id)}`" class="flex min-h-16 flex-col justify-center rounded-2xl bg-white p-3 shadow-soft ring-1 ring-slate-900/5 hover:bg-slate-50"><span class="text-base font-semibold">{{ work.name }}</span> <span class="text-sm text-slate-700">{{ [work.municipality, work.entity_name].filter(Boolean).join(' · ') }}</span></Link>
+                    </li>
+                </ul>
+                <MoreButton v-if="unlocatedMore" :loading="loadingMoreUnlocated" @more="moreUnlocated" />
+            </section>
         </section>
 
         <LoadState
