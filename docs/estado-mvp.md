@@ -4,7 +4,17 @@ Al 2026-10-04. Empezó sobre `77e6030` (iteración 39) y se actualizó en las it
 
 ✅ hecho y probado · ⚠️ a medias · ⬜ falta · 🔒 espera algo externo · ❓ decisión tuya
 
-## Dónde quedó (2026-10-15)
+## Dónde quedó (2026-10-15, más tarde)
+
+| Qué | PR |
+|---|---|
+| 61: staging duerme de 21:00 a 8:00, con presupuesto sin créditos, alerta de gastos fuera de lo normal, buckets solo por HTTPS y la máquina protegida (FinOps y seguridad) | este |
+
+- **Para aplicarlo:** `aws login --profile govtrace-staging`, y después `STAGING_ALERT_EMAIL=tu@correo make staging-provision`.
+- **Después, en el panel del Super Administrador de staging:** *Parámetros → Hora de sincronización SECOP* a las 08:30, porque a las 02:00 la máquina está apagada.
+- **Ahorro aproximado:** de unos 18 a unos 13 USD al mes; el disco y la IP fija se pagan igual.
+
+## Antes (2026-10-15)
 
 | Qué | PR |
 |---|---|

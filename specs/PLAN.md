@@ -3565,6 +3565,31 @@ Queda para la V2, opcional, con el modelo de financiación (`docs/viabilidad-leg
   - Todo visto en rojo antes de implementar: Pest y Vitest primero, y el e2e destapó lo de Enter en el pin.
   - Corridas: Pest 1227, Vitest 712, `make e2e` 59 y 1 `fixme`, trace-check 475 de 475.
 
+### Iteración 61 — Staging duerme de noche y cuida su presupuesto (FinOps), con lo que faltaba de seguridad
+
+✅ **Pedida por el usuario el 2026-10-15** ("la instancia EC2 está encendida las 24 horas… que se apague… y se vuelva a encender a las 8:00 AM… alguna otra regla de FinOps y los pilares de seguridad en el contexto del free tier"; después, "a partir de las 9 de la noche").
+
+**Por qué:** staging corre las 24 horas, y de noche nadie lo usa. Los créditos de AWS se gastan igual.
+
+**Entregable (`deploy/aws/staging.yml`):**
+- **El horario:** EventBridge Scheduler apaga la máquina a las 21:00 y la enciende a las 8:00, hora de Colombia, todos los días. Sin Lambda; su rol solo puede encender y apagar esta máquina. Se cambia o se apaga con `STAGING_STOP_AT`, `STAGING_START_AT` y `STAGING_SLEEP` en `make staging-provision`.
+- **El presupuesto del mes** (20 USD por defecto, `STAGING_BUDGET_USD`), **sin contar los créditos**: con ellos, el costo parece cero y la alerta no avisaría nada. Avisa al 50, 80 y 100 % de lo gastado y al 100 % del pronóstico, al correo de `STAGING_ALERT_EMAIL`. Sin acciones: gratis.
+- **La alerta de gastos fuera de lo normal** (Cost Anomaly Detection, por servicio, diaria, desde 5 USD), al mismo correo. Gratis; sirve también de alarma de seguridad.
+- **Las subidas a medias** de los buckets se borran a los 7 días.
+- **Seguridad, gratis:** los dos buckets solo aceptan HTTPS, y la máquina no se puede terminar por error (`DisableApiTermination`): su disco guarda la base de datos.
+- **`make staging-aws-check`** comprueba además esas cuatro cosas: la protección, solo HTTPS, el horario que solo enciende y apaga, y el presupuesto sin créditos.
+- **`docs/staging.md`:** el horario, lo que pasa de noche, lo que cuesta, la seguridad y lo que le toca al usuario. **`docs/go-live.md`:** producción no duerme.
+
+**Lo que cuesta, aproximado** (precios de lista de us-east-2): unos 18 USD al mes encendida siempre, y unos 13 con el horario. El disco (~2,4 USD) y la IP fija (~3,6 USD) se pagan aunque la máquina esté apagada.
+
+**Lo que cambia de noche:** el sitio no responde, y las tareas nocturnas no corren. En staging, la sincronización con SECOP se pasa a las 08:30 desde *Parámetros*. El certificado se renueva al encender si le tocaba (`Persistent=true`).
+
+**Lo que no se activó, porque cuesta:** GuardDuty, AWS Config y un registro de CloudTrail en S3. **Lo que le toca al usuario, gratis:** MFA en la consola y el cifrado por defecto de los discos nuevos.
+
+**Done-when:** `cfn-lint` sin errores; las reglas nuevas de `make staging-aws-check` pasan con la plantilla y fallan si se rompe cada una (comprobado: sin la protección, un bucket que acepta HTTP, el horario con permiso de terminar y el presupuesto con créditos); `shellcheck` limpio. **Aplicarlo en AWS** es del usuario: `STAGING_ALERT_EMAIL=… make staging-provision`.
+
+**Modelo:** Opus xhigh (infraestructura y permisos).
+
 ### Orden de lo que está en espera (2026-10-14)
 
 | Orden | Qué | Por qué en ese lugar |

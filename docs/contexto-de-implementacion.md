@@ -175,6 +175,7 @@ Del 2026-09-27 al 2026-10-14, en este orden. Cada fase está en `specs/PLAN.md`,
 | **Staging y campo** | 42b, 42c, 47, 48 | 10-09 a 10-10 | Staging en AWS, desplegar sin cortes, encontrar la obra en el municipio del veedor y revisar los rostros más rápido. |
 | **Calidad y rendimiento** | 49 a 56 | 10-10 a 10-11 | El pipeline en cada PR, la prueba de carga, el subdominio desde el nombre, todo paginado, el punto aproximado explicado, pantallas separadas, la Bandeja con la ubicación corregida y la caché de lo público. |
 | **El ciudadano** | 58 a 60 | 10-14 a 10-15 | Informar de cualquier obra del territorio y proponer dónde queda. El Inicio empieza por la obra y sugiere la veeduría. La tarjeta de la obra al tocar un pin, con miniaturas. |
+| **Staging más barato y más seguro** | 61 | 10-15 | Duerme de 21:00 a 8:00, con un presupuesto sin créditos y una alerta de gastos fuera de lo normal; buckets solo por HTTPS y la máquina protegida contra la terminación. |
 
 **Propuesta, en espera de aprobación:** la 57 (el cupo de sellado por veeduría).
 
@@ -191,6 +192,7 @@ Del 2026-09-27 al 2026-10-14, en este orden. Cada fase está en `specs/PLAN.md`,
 | **Los rostros en celulares de gama media** | La revisión de cada foto tarda en un celular lento, y un rostro muy pequeño (menos de unos 48 px) se escapa. Por eso existe el difuminado a mano. | `make faces-bench` lo mide con la CPU frenada. |
 | **El resumen central de quién sigue qué obra** | Las sugerencias del Inicio salen de un resumen en la base central. Si una actualización falla después de que la veeduría guardó, la sugerencia queda desfasada hasta la noche. | `contracts:followers` lo recalcula cada noche y en cada despliegue; se puede correr a mano. |
 | **Staging se despliega a mano** | Fusionar en `main` no actualiza staging. | `make staging-deploy REF=main` después de fusionar. |
+| **Staging duerme de 21:00 a 8:00** (it. 61) | De noche el sitio no responde y las tareas nocturnas no corren, la sincronización con SECOP incluida. | En staging, la sincronización va a las 08:30 (*Parámetros*). Para encenderlo fuera de horario: `docs/staging.md`. Producción no duerme. |
 | **El `README.md` es el de Laravel** | Es lo primero que ve quien llega a un proyecto de código abierto. | Escribir uno propio, que lleve a `CONTRIBUTING.md` y a estos documentos. |
 
 ## 7. Lo que espera una decisión

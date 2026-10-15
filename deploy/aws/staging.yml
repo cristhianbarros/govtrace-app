@@ -28,6 +28,36 @@ Parameters:
     Default: /govtrace/staging
     AllowedPattern: "/[A-Za-z0-9/_-]+"
     Description: La ruta de los secretos en SSM Parameter Store (SecureString).
+  # It. 61 (FinOps): staging duerme de noche. Lo que se ahorra es el cómputo de esas
+  # horas; el disco y la IP fija se pagan igual (docs/staging.md, "Lo que cuesta").
+  SleepAtNight:
+    Type: String
+    Default: "yes"
+    AllowedValues: ["yes", "no"]
+    Description: Apagar la máquina de noche y encenderla en la mañana, en hora de Colombia.
+  StopAt:
+    Type: String
+    Default: cron(0 21 * * ? *)
+    Description: Cuándo se apaga (EventBridge Scheduler, America/Bogota). Por defecto, a las 21:00.
+  StartAt:
+    Type: String
+    Default: cron(0 8 * * ? *)
+    Description: Cuándo se enciende (EventBridge Scheduler, America/Bogota). Por defecto, a las 8:00.
+  AlertEmail:
+    Type: String
+    Default: ""
+    Description: >-
+      A quién le llegan las alertas del presupuesto y de los gastos fuera de lo
+      normal. Vacío, no se crean (provision-staging.sh la toma de STAGING_ALERT_EMAIL).
+  MonthlyBudgetUsd:
+    Type: Number
+    Default: 20
+    MinValue: 1
+    Description: El presupuesto del mes, en dólares, antes de los créditos.
+
+Conditions:
+  Sleeps: !Equals [!Ref SleepAtNight, "yes"]
+  Alerts: !Not [!Equals [!Ref AlertEmail, ""]]
 
 Resources:
   # Las evidencias: privadas, cifradas, sin ACL. Nunca se borran con la pila.
@@ -49,6 +79,13 @@ Resources:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
               SSEAlgorithm: AES256
+      # It. 61 (FinOps): una subida que quedó a medias no se paga para siempre.
+      LifecycleConfiguration:
+        Rules:
+          - Id: subidas-a-medias-7-dias
+            Status: Enabled
+            AbortIncompleteMultipartUpload:
+              DaysAfterInitiation: 7
 
   # Los respaldos fuera de la máquina (R-BCK, BACKUP_OFFSITE_S3_URL): los
   # volcados de la base y un espejo de las evidencias. Con versionado, y las
@@ -80,6 +117,45 @@ Resources:
             Status: Enabled
             NoncurrentVersionExpiration:
               NoncurrentDays: 30
+          - Id: subidas-a-medias-7-dias
+            Status: Enabled
+            AbortIncompleteMultipartUpload:
+              DaysAfterInitiation: 7
+
+  # It. 61 (seguridad): a los dos buckets solo se llega por HTTPS.
+  EvidenceBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref EvidenceBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: SoloHttps
+            Effect: Deny
+            Principal: "*"
+            Action: "s3:*"
+            Resource:
+              - !GetAtt EvidenceBucket.Arn
+              - !Sub "${EvidenceBucket.Arn}/*"
+            Condition:
+              Bool: { "aws:SecureTransport": "false" }
+
+  BackupBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref BackupBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: SoloHttps
+            Effect: Deny
+            Principal: "*"
+            Action: "s3:*"
+            Resource:
+              - !GetAtt BackupBucket.Arn
+              - !Sub "${BackupBucket.Arn}/*"
+            Condition:
+              Bool: { "aws:SecureTransport": "false" }
 
   # El rol de la máquina: sin llaves en el servidor. Lee solo sus secretos,
   # escribe solo en sus dos buckets, y deja entrar a SSM (sin SSH).
@@ -143,6 +219,9 @@ Resources:
       InstanceType: !Ref InstanceType
       IamInstanceProfile: !Ref InstanceProfile
       SecurityGroupIds: [!GetAtt WebSecurityGroup.GroupId]
+      # It. 61 (seguridad): la base de datos vive en este disco. Nadie la termina por error;
+      # para reemplazarla hay que quitar esta protección a propósito (docs/staging.md).
+      DisableApiTermination: true
       # IMDSv2, con 2 saltos: los contenedores (detrás del puente de Docker) usan el rol.
       MetadataOptions:
         HttpEndpoint: enabled
@@ -189,6 +268,107 @@ Resources:
       Tags:
         - { Key: Name, Value: !Ref Name }
 
+  # It. 61 (FinOps): staging duerme de noche. EventBridge Scheduler apaga y enciende la
+  # máquina, sin Lambda; su rol solo puede eso, y solo sobre esta máquina.
+  SchedulerRole:
+    Type: AWS::IAM::Role
+    Condition: Sleeps
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: { Service: scheduler.amazonaws.com }
+            Action: sts:AssumeRole
+            Condition:
+              StringEquals: { "aws:SourceAccount": !Ref AWS::AccountId }
+      Policies:
+        - PolicyName: apagar-y-encender
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: SoloEstaMaquina
+                Effect: Allow
+                Action: [ec2:StartInstances, ec2:StopInstances]
+                Resource: !Sub "arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:instance/${Instance}"
+
+  StopSchedule:
+    Type: AWS::Scheduler::Schedule
+    Condition: Sleeps
+    Properties:
+      Name: !Sub "${Name}-apagar"
+      Description: Apaga staging de noche (it. 61).
+      ScheduleExpression: !Ref StopAt
+      ScheduleExpressionTimezone: America/Bogota
+      FlexibleTimeWindow: { Mode: "OFF" }
+      State: ENABLED
+      Target:
+        Arn: arn:aws:scheduler:::aws-sdk:ec2:stopInstances
+        RoleArn: !GetAtt SchedulerRole.Arn
+        Input: !Sub '{"InstanceIds": ["${Instance}"]}'
+
+  StartSchedule:
+    Type: AWS::Scheduler::Schedule
+    Condition: Sleeps
+    Properties:
+      Name: !Sub "${Name}-encender"
+      Description: Enciende staging en la mañana (it. 61).
+      ScheduleExpression: !Ref StartAt
+      ScheduleExpressionTimezone: America/Bogota
+      FlexibleTimeWindow: { Mode: "OFF" }
+      State: ENABLED
+      Target:
+        Arn: arn:aws:scheduler:::aws-sdk:ec2:startInstances
+        RoleArn: !GetAtt SchedulerRole.Arn
+        Input: !Sub '{"InstanceIds": ["${Instance}"]}'
+
+  # It. 61 (FinOps): el presupuesto del mes, sin contar los créditos (con ellos, el costo
+  # parece cero y la alerta no avisaría nada). Avisa al 50, 80 y 100 % de lo gastado, y
+  # cuando el pronóstico pasa del 100 %. Sin acciones: no cuesta.
+  MonthlyBudget:
+    Type: AWS::Budgets::Budget
+    Condition: Alerts
+    Properties:
+      Budget:
+        BudgetName: !Sub "${Name}-mensual"
+        BudgetType: COST
+        TimeUnit: MONTHLY
+        BudgetLimit:
+          Amount: !Ref MonthlyBudgetUsd
+          Unit: USD
+        CostTypes:
+          IncludeCredit: false
+          IncludeRefund: false
+      NotificationsWithSubscribers:
+        - Notification: { NotificationType: ACTUAL, ComparisonOperator: GREATER_THAN, Threshold: 50, ThresholdType: PERCENTAGE }
+          Subscribers: [{ SubscriptionType: EMAIL, Address: !Ref AlertEmail }]
+        - Notification: { NotificationType: ACTUAL, ComparisonOperator: GREATER_THAN, Threshold: 80, ThresholdType: PERCENTAGE }
+          Subscribers: [{ SubscriptionType: EMAIL, Address: !Ref AlertEmail }]
+        - Notification: { NotificationType: ACTUAL, ComparisonOperator: GREATER_THAN, Threshold: 100, ThresholdType: PERCENTAGE }
+          Subscribers: [{ SubscriptionType: EMAIL, Address: !Ref AlertEmail }]
+        - Notification: { NotificationType: FORECASTED, ComparisonOperator: GREATER_THAN, Threshold: 100, ThresholdType: PERCENTAGE }
+          Subscribers: [{ SubscriptionType: EMAIL, Address: !Ref AlertEmail }]
+
+  # It. 61 (FinOps y seguridad): un gasto fuera de lo normal por servicio (por ejemplo, una
+  # máquina que alguien levantó con llaves robadas) llega por correo, una vez al día. Gratis.
+  CostAnomalyMonitor:
+    Type: AWS::CE::AnomalyMonitor
+    Condition: Alerts
+    Properties:
+      MonitorName: !Sub "${Name}-servicios"
+      MonitorType: DIMENSIONAL
+      MonitorDimension: SERVICE
+
+  CostAnomalyAlert:
+    Type: AWS::CE::AnomalySubscription
+    Condition: Alerts
+    Properties:
+      SubscriptionName: !Sub "${Name}-gastos-fuera-de-lo-normal"
+      Frequency: DAILY
+      MonitorArnList: [!Ref CostAnomalyMonitor]
+      Subscribers: [{ Type: EMAIL, Address: !Ref AlertEmail }]
+      ThresholdExpression: '{"Dimensions": {"Key": "ANOMALY_TOTAL_IMPACT_ABSOLUTE", "MatchOptions": ["GREATER_THAN_OR_EQUAL"], "Values": ["5"]}}'
+
 Outputs:
   InstanceId:
     Value: !Ref Instance
@@ -198,3 +378,5 @@ Outputs:
     Value: !Ref EvidenceBucket
   BackupBucket:
     Value: !Ref BackupBucket
+  Schedule:
+    Value: !If [Sleeps, !Sub "Se apaga ${StopAt} y se enciende ${StartAt} (America/Bogota)", "Encendida siempre"]

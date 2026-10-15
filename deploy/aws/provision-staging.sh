@@ -22,6 +22,14 @@ fi
 
 overrides=("ImageId=$ami")
 [ -n "${STAGING_INSTANCE_TYPE:-}" ] && overrides+=("InstanceType=$STAGING_INSTANCE_TYPE")
+# It. 61 (FinOps): el horario (por defecto se apaga a las 21:00 y se enciende a las 8:00,
+# hora de Colombia), el presupuesto del mes y a quién le llegan sus alertas. Sin estas
+# variables, la pila conserva lo que ya tenía.
+[ -n "${STAGING_SLEEP:-}" ] && overrides+=("SleepAtNight=$STAGING_SLEEP")
+[ -n "${STAGING_STOP_AT:-}" ] && overrides+=("StopAt=$STAGING_STOP_AT")
+[ -n "${STAGING_START_AT:-}" ] && overrides+=("StartAt=$STAGING_START_AT")
+[ -n "${STAGING_ALERT_EMAIL:-}" ] && overrides+=("AlertEmail=$STAGING_ALERT_EMAIL")
+[ -n "${STAGING_BUDGET_USD:-}" ] && overrides+=("MonthlyBudgetUsd=$STAGING_BUDGET_USD")
 
 aws cloudformation deploy --stack-name "$STACK" --template-file deploy/aws/staging.yml \
     --capabilities CAPABILITY_IAM --no-fail-on-empty-changeset \
