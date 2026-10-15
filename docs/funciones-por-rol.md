@@ -54,6 +54,7 @@ Los permisos se aplican en el servidor, no solo en la pantalla:
 | Función | Qué hace | Historia |
 |---|---|---|
 | **Qué es y cómo funciona** | Una bienvenida en verde, con ilustración, y "¿Cómo funciona?" en tres pasos con su dibujo: la foto, el sello y el mapa. | 40d, 40e, 40f |
+| **"¿Qué obra quiere reportar?"** | Lo primero, después de la bienvenida. Busca la obra por su nombre o por su municipio ("Usar mi ubicación" propone el municipio sin enviar la ubicación). Al elegirla, GovTrace dice qué veedurías pueden atender el informe, con reglas públicas: primero la que ya sigue la obra, después la que vigila solo ese municipio, después la que publicó en los últimos 90 días; en un empate, iguales. "Informar a esta veeduría" lleva al formulario en su sitio. Si ninguna la cubre, la Personería, la Contraloría o pedir el alta. | US-066 (it. 59) |
 | **Directorio de veedurías** | Cada veeduría con su territorio y el botón "Ver su mapa de obras". Una suspendida lo dice. | 40d (V5) |
 | **Pedir el alta de una veeduría** | Ver la sección 3. | US-062-ALT |
 | **Política de tratamiento de datos** | `/privacidad`: quién responde por los datos, qué datos se tratan y para qué, qué queda en la red pública, los derechos y cómo ejercerlos, y los plazos de retención. Sigue como borrador hasta que estén los datos del operador. | US-058-LEG |

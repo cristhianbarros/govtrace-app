@@ -166,6 +166,44 @@ test('Informa a la veeduría con su correo verificado, y la veeduría le respond
     expect(latestMailTo(citizen)).toContain('Respuesta a su informe');
 });
 
+// It. 59 (US-066): el Inicio empieza por la obra, y GovTrace sugiere la veeduría.
+test('Busca la obra en el Inicio, GovTrace le sugiere la veeduría y le informa (it. 59)', async ({ page }) => {
+    const citizen = `e2e.inicio.${Date.now()}@correo.co`;
+    const asked = [];
+    page.on('request', (request) => asked.push(request.url()));
+    await page.goto(CENTRAL);
+    await expect(page.getByRole('heading', { name: '¿Qué obra quiere reportar?' })).toBeVisible();
+
+    await page.getByLabel('Nombre de la obra').fill('parque de pruebas sin');
+    const work = page.locator('[data-test="work"]').filter({ hasText: WORKSITE });
+    await expect(work).toHaveCount(1);
+    await work.getByRole('button').click();
+
+    // La que ya sigue la obra va primero, con su porqué; la dirección del Inicio no cambia.
+    const suggested = page.locator('[data-test="suggested"]');
+    await expect(suggested).toContainText('Veeduría de Pruebas E2E');
+    await expect(suggested).toContainText(/Ya sigue esta obra: \d+ evidencias? publicadas?/);
+    expect(new URL(page.url()).pathname + new URL(page.url()).search).toBe('/');
+
+    // Un toque lleva al formulario de esa veeduría, en esa obra.
+    await suggested.getByRole('link', { name: 'Informar a esta veeduría' }).click();
+    await page.waitForURL(/\/worksite\/[^#]+#informar$/);
+    await expect(page.getByRole('heading', { name: WORKSITE, level: 1 })).toBeVisible();
+    await expect(page.locator('#informar')).toBeInViewport();
+
+    await page.getByLabel('Su correo').fill(citizen);
+    await page.getByLabel('Autorizo el tratamiento de mis datos personales según la política.').check();
+    await page.getByRole('button', { name: 'Enviarme el código' }).click();
+    await expect(page.getByRole('status')).toContainText('Le enviamos un código de 6 dígitos');
+    await page.getByLabel('El código que le llegó al correo').fill(latestCodeTo(citizen));
+    await page.getByLabel('¿Qué vio en la obra?').fill('Llegué desde el Inicio de GovTrace: la obra sigue detenida.');
+    await page.getByRole('button', { name: 'Enviar a la veeduría' }).click();
+    await expect(page.getByRole('status')).toContainText('Su informe llegó a la veeduría.');
+
+    // Ninguna petición llevó una ubicación.
+    expect(asked.filter((url) => /latitude|longitude/.test(url))).toEqual([]);
+});
+
 // It. 58 (US-059-LEG, US-035): una obra que ningún veedor ha visitado.
 test('Informa de una obra sin ubicación y dice dónde queda; la veeduría lo confirma y la obra aparece en el mapa (it. 58)', async ({ page }) => {
     const citizen = `e2e.vecino.${Date.now()}@correo.co`;

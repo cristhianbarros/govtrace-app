@@ -120,6 +120,12 @@ for (const [viewport, options] of Object.entries(VIEWPORTS)) {
             ]) {
                 await visit(page, viewport, name, url);
             }
+            // It. 59: en el Inicio, la obra elegida y la veeduría que GovTrace sugiere.
+            await page.goto(`${CENTRAL}/`);
+            await page.getByLabel('Nombre de la obra').fill('parque de pruebas sin');
+            await page.locator('[data-test="work"] button').first().click();
+            await page.locator('[data-test="who"] h3').waitFor();
+            await visit(page, viewport, 'publico-inicio-sugerencia');
             // It. 60: la tarjeta de una obra, al tocar su pin.
             await page.goto(`${ORG}/`);
             await page.locator('.leaflet-marker-icon').first().click();

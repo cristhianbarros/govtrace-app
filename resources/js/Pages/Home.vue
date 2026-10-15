@@ -3,11 +3,14 @@
 // (R-MAP-01): cada una publica el suyo. It. 40d (V5): es la puerta de entrada
 // para cualquiera — qué es, cómo funciona y el directorio de veedurías, cada
 // una con el enlace a su mapa. El acceso del Super Administrador, al pie.
+// It. 59 (US-066): empieza por la obra — "¿Qué obra quiere reportar?" — y
+// GovTrace sugiere la veeduría.
 import { BuildingOffice2Icon } from '@heroicons/vue/24/outline';
 import { Head, Link } from '@inertiajs/vue3';
 import { reactive, ref } from 'vue';
 import Illustration from '@/Components/Brand/Illustration.vue';
 import WorksIllustration from '@/Components/Brand/WorksIllustration.vue';
+import WorkFinder from '@/Components/Public/WorkFinder.vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { requestOrganization } from '@/services/api.js';
 import { errorMessage } from '@/services/errors.js';
@@ -83,11 +86,16 @@ const STEPS = [
                         <p class="text-base font-semibold text-accent-300">Control social, con evidencia que nadie puede cambiar</p>
                         <h1 class="mt-2 text-3xl leading-tight text-white md:text-5xl">Veeduría ciudadana de obras públicas</h1>
                         <p class="mt-3 max-w-prose text-lg text-brand-50">Aquí las veedurías ciudadanas muestran, con fotos, cómo avanzan las obras públicas de su territorio.</p>
-                        <a href="#veedurias" class="mt-5 inline-flex min-h-12 items-center rounded-xl bg-accent-400 px-5 text-base font-semibold text-slate-900 shadow-sm hover:bg-accent-300">Ver las veedurías</a>
+                        <div class="mt-5 flex flex-wrap gap-3">
+                            <a href="#buscar-obra" class="inline-flex min-h-12 items-center rounded-xl bg-accent-400 px-5 text-base font-semibold text-slate-900 shadow-sm hover:bg-accent-300">Buscar una obra</a>
+                            <a href="#veedurias" class="inline-flex min-h-12 items-center rounded-xl border-2 border-white/80 px-5 text-base font-semibold text-white hover:bg-white/10">Ver las veedurías</a>
+                        </div>
                     </div>
                     <div class="mx-auto w-48 md:w-full"><WorksIllustration /></div>
                 </div>
             </section>
+
+            <WorkFinder />
 
             <section aria-labelledby="how-title">
                 <h2 id="how-title" class="text-2xl">¿Cómo funciona?</h2>

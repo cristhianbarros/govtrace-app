@@ -92,6 +92,13 @@ app(Schedule::class)->job(new SendReviewDigests)
     ->name('review-digest')
     ->onOneServer();
 
+// It. 59 (US-066): el resumen central de qué veedurías siguen qué contratos, recalculado
+// desde la base de cada una; cada día a las 03:30, después de la sincronización con SECOP.
+app(Schedule::class)->command('contracts:followers')
+    ->dailyAt('03:30')
+    ->name('contract-followers')
+    ->onOneServer();
+
 // US-062-ALT (it. 43k): las solicitudes de alta decididas, 30 días después; cada
 // día a la 01:20.
 app(Schedule::class)->job(new PurgeOrganizationRequests)

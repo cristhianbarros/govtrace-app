@@ -111,6 +111,13 @@
     "smallTargets": 0,
     "targets": 12
   },
+  "escritorio/publico-inicio-sugerencia": {
+    "axe": {},
+    "textUnder16": 0,
+    "textUnder14": 0,
+    "smallTargets": 0,
+    "targets": 15
+  },
   "escritorio/publico-mapa": {
     "axe": {},
     "textUnder16": 9,
@@ -355,6 +362,13 @@
     "textUnder14": 0,
     "smallTargets": 0,
     "targets": 12
+  },
+  "movil/publico-inicio-sugerencia": {
+    "axe": {},
+    "textUnder16": 0,
+    "textUnder14": 0,
+    "smallTargets": 0,
+    "targets": 15
   },
   "movil/publico-mapa": {
     "axe": {},

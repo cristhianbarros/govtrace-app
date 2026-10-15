@@ -170,7 +170,7 @@ Suma los impedimentos del veedor (it. 44c) y los datos de inscripción de una ve
 
 ### Mapa y publicación
 
-- **R-MAP-01** — No existe un mapa global que mezcle evidencias de varias organizaciones: cada tenant tiene su propio mapa público aislado en su subdominio y asume la responsabilidad curatorial y legal de sus pines — US-027, US-029, US-036, US-037, US-049-RPT, US-051-RPT
+- **R-MAP-01** — No existe un mapa global que mezcle evidencias de varias organizaciones: cada tenant tiene su propio mapa público aislado en su subdominio y asume la responsabilidad curatorial y legal de sus pines. (It. 59) El Inicio busca entre los contratos de SECOP y dice qué veedurías cubren cada uno, con un conteo de sus evidencias publicadas; nunca muestra evidencias ni pines de varias veedurías juntas — US-027, US-029, US-036, US-037, US-049-RPT, US-051-RPT, US-066
 - **R-MAP-02** — La carga inicial del mapa solo devuelve [{id, lat, lng, color_pin}]; datos del contrato y línea de tiempo se piden bajo demanda al hacer clic en un pin — US-017, US-027, US-028, US-029
 
 ### Seguridad

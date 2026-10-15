@@ -8,7 +8,7 @@ Este documento es para quien decide el producto y necesita entender lo que está
 4. qué está frágil o conviene vigilar;
 5. qué espera una decisión de producto, y cómo pedir un cambio.
 
-Complementa a [`docs/arquitectura.md`](arquitectura.md), que es el mapa técnico: carpetas, capas, el recorrido de un reporte, el contrato y las pruebas. Aquí está el porqué y el estado. Al 2026-10-14, sobre la iteración 60.
+Complementa a [`docs/arquitectura.md`](arquitectura.md), que es el mapa técnico: carpetas, capas, el recorrido de un reporte, el contrato y las pruebas. Aquí está el porqué y el estado. Al 2026-10-15, sobre la iteración 60.
 
 ## 1. Qué se construyó
 
@@ -23,7 +23,7 @@ GovTrace recibe la evidencia que los veedores toman en las obras públicas, la s
 | Código | ~18 200 líneas de PHP en `app/` y ~8 800 de Vue y JavaScript |
 | Pruebas | ~20 500 líneas de PHP y ~9 800 de JavaScript: Pest 1219, Vitest 703, e2e 58 |
 | Base de datos | 35 migraciones de la base central y 28 de la base de cada veeduría |
-| Iteraciones | De la 1 a la 60 en `specs/PLAN.md`, muchas con partes a, b, c… Todas cumplidas salvo la 37b (espera producción), la tercera parte de la 52 (paginar lo que falta), y la 57 y la 59, que son propuestas |
+| Iteraciones | De la 1 a la 60 en `specs/PLAN.md`, muchas con partes a, b, c… Todas cumplidas salvo la 37b (espera producción), la tercera parte de la 52 (paginar lo que falta) y la 57, que es una propuesta |
 | Entornos | Local con Docker, staging en AWS sobre testnet (`govtrace.duckdns.org`). La red principal espera la it. 37b |
 
 **Lo que puede hacer cada rol hoy** (detalle en [`docs/funciones-por-rol.md`](funciones-por-rol.md)):
@@ -68,7 +68,7 @@ Cada una tiene consecuencias que se ven en las pantallas. Conviene tenerlas pres
 **Lo que implica:**
 - **No hay un mapa global** (R-MAP-01): cada veeduría responde por los pines de su mapa. El Inicio solo es un directorio que lleva a cada uno.
 - **La misma obra puede estar en dos veedurías**, cada una con su ficha y su propia ubicación. Corregirla en una no toca la otra.
-- **Dos veedurías pueden vigilar el mismo territorio:** nada lo impide, y en Medellín pasará. Por eso la it. 59 propone que GovTrace sugiera la veeduría con reglas públicas, sin elegir por el ciudadano.
+- **Dos veedurías pueden vigilar el mismo territorio:** nada lo impide, y en Medellín pasará. Por eso, desde la it. 59, el Inicio sugiere la veeduría con reglas públicas, sin elegir por el ciudadano. Como las fichas viven en cada base, un resumen en la base central (`contract_followers`) dice quién sigue qué contrato.
 - **Una cuenta vale en una sola veeduría:** el mismo correo puede ser veedor en dos, con dos cuentas (R-USR-01), y la sesión vale solo en el subdominio donde se abrió.
 
 ### 3.2 La blockchain es invisible
@@ -153,7 +153,7 @@ Para conversar un cambio con quien programa, sirve saber qué pieza lo resuelve.
 | **EPIC-005 Verificación** | El recibo de cada sello, la descarga con su prueba, el validador, el verificador independiente y los datos abiertos. | `SealReceipt`, `InclusionProof`, `OpenData`; `lib/validator.js`, `lib/merkle.js`; `tools/verify/`; pantalla `Public/Validator` |
 | **EPIC-006 Cuentas** | Invitaciones, contraseña, inicio de sesión con bloqueo, impedimentos del veedor, política de datos, verificación en dos pasos del Super Administrador. | `app/Application/Auth`, `app/Application/Organization` (invitar, aceptar, desactivar), `DataPolicy`; pantallas `Auth/*`, `Veedor/Declaration`, `Public/Privacy` |
 | **EPIC-007 Moderación** | Publicar, rechazar y retirar, con motivo y auditoría. | `EditorialDecisions`; pantalla `Admin/Inbox` |
-| **EPIC-008 Denuncia** | El estado como alerta, los canales de la Contraloría, el expediente de una obra y los informes de los ciudadanos. | `WorksiteDossier` y sus plantillas en `resources/views/dossier/`; `CitizenReportDesk`, `CitizenReportInbox`, `UnlocatedWorksites`; pantallas `Admin/CitizenReports`, `Public/Contract` |
+| **EPIC-008 Denuncia** | El estado como alerta, los canales de la Contraloría, el expediente de una obra y los informes de los ciudadanos. | `WorksiteDossier` y sus plantillas en `resources/views/dossier/`; `CitizenReportDesk`, `CitizenReportInbox`, `UnlocatedWorksites`, `WorkFinder`, `ContractFollowers`; pantallas `Admin/CitizenReports`, `Public/Contract`, el buscador del Inicio (`WorkFinder.vue`) |
 | **EPIC-009 Organizaciones** | Alta (también por solicitud pública), suspensión, baja, territorio, parámetros, auditoría, uso y costos. | `app/Application/Organization` (unos 30 casos), `Parameters`, `AuditLog`, `SealingCosts`; pantallas `SuperAdmin/*`, `Admin/Territory`, `Admin/Organization`, `Admin/Audit` |
 
 Las rutas, comentadas por historia, están en `routes/tenant.php` (cada veeduría) y `routes/web.php` (el dominio central). Las tareas programadas, con su hora en Colombia, en `routes/console.php`.
@@ -174,9 +174,9 @@ Del 2026-09-27 al 2026-10-14, en este orden. Cada fase está en `specs/PLAN.md`,
 | **Seguridad y privacidad** | 46a a 46j | 10-02 a 10-06 | Varios Super Administradores, la validación en el RUES, los identificadores públicos, la auditoría con filtros, los rostros difuminados, la primera ubicación con guardas, la verificación en dos pasos y el expediente para la Contraloría. |
 | **Staging y campo** | 42b, 42c, 47, 48 | 10-09 a 10-10 | Staging en AWS, desplegar sin cortes, encontrar la obra en el municipio del veedor y revisar los rostros más rápido. |
 | **Calidad y rendimiento** | 49 a 56 | 10-10 a 10-11 | El pipeline en cada PR, la prueba de carga, el subdominio desde el nombre, todo paginado, el punto aproximado explicado, pantallas separadas, la Bandeja con la ubicación corregida y la caché de lo público. |
-| **El ciudadano** | 58, 60 | 10-14 | Informar de cualquier obra del territorio y proponer dónde queda. La tarjeta de la obra al tocar un pin, con miniaturas. |
+| **El ciudadano** | 58 a 60 | 10-14 a 10-15 | Informar de cualquier obra del territorio y proponer dónde queda. El Inicio empieza por la obra y sugiere la veeduría. La tarjeta de la obra al tocar un pin, con miniaturas. |
 
-**Propuestas, en espera de aprobación:** la 59 (GovTrace sugiere la veeduría) y la 57 (el cupo de sellado por veeduría), en ese orden.
+**Propuesta, en espera de aprobación:** la 57 (el cupo de sellado por veeduría).
 
 ## 6. Lo que está frágil o conviene vigilar
 
@@ -189,6 +189,7 @@ Del 2026-09-27 al 2026-10-14, en este orden. Cada fase está en `specs/PLAN.md`,
 | **La calidad de los datos de SECOP II** | Contratos mal clasificados como "Obra"; el supervisor está en ~70 % de los contratos; EPM no está en el conjunto de datos. Si datos.gov.co cambia el conjunto, la sincronización se rompe. | El panel de salud de SECOP lo muestra. Decidir si se filtra lo mal clasificado. |
 | **El costo de cada petición pública** | En staging, la máquina atiende unas 19 peticiones por segundo. Lo caro es identificar la veeduría y conectar a su base (~70 ms medidos en local), no armar el mapa. | La caché de lo público (it. 56) está; falta medir su efecto en staging. El siguiente paso es cachear la identificación de la veeduría. |
 | **Los rostros en celulares de gama media** | La revisión de cada foto tarda en un celular lento, y un rostro muy pequeño (menos de unos 48 px) se escapa. Por eso existe el difuminado a mano. | `make faces-bench` lo mide con la CPU frenada. |
+| **El resumen central de quién sigue qué obra** | Las sugerencias del Inicio salen de un resumen en la base central. Si una actualización falla después de que la veeduría guardó, la sugerencia queda desfasada hasta la noche. | `contracts:followers` lo recalcula cada noche y en cada despliegue; se puede correr a mano. |
 | **Staging se despliega a mano** | Fusionar en `main` no actualiza staging. | `make staging-deploy REF=main` después de fusionar. |
 | **El `README.md` es el de Laravel** | Es lo primero que ve quien llega a un proyecto de código abierto. | Escribir uno propio, que lleve a `CONTRIBUTING.md` y a estos documentos. |
 
@@ -203,7 +204,7 @@ Del 2026-09-27 al 2026-10-14, en este orden. Cada fase está en `specs/PLAN.md`,
 
 **Del producto:**
 - **La tercera parte de la 52:** paginar la línea de tiempo de una obra, el expediente, el panel global, la búsqueda de territorios y los datos abiertos.
-- **Aprobar las iteraciones 59 y 57,** con sus decisiones: el cupo por defecto y si se mide en sellos o en XLM (57), y el orden de las reglas para sugerir la veeduría (59).
+- **Aprobar la iteración 57,** con sus decisiones: el cupo por defecto y si se mide en sellos o en XLM.
 - **Después del piloto:** elegir la obra sin señal (V20) y el correo al veedor cuando su reporte se publica o se rechaza (V17).
 - **Pospuestos:** la denuncia sin nombre (Ley 962 de 2005, art. 81) y el derecho de petición a la Contraloría.
 - **Un abogado confirma** la regla de a qué contraloría acudir, que el expediente da como orientación.

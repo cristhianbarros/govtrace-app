@@ -3497,6 +3497,23 @@ Queda para la V2, opcional, con el modelo de financiación (`docs/viabilidad-leg
 
 **Modelo:** Opus xhigh. El resumen cruza la frontera entre la base central y las bases de las veedurías.
 
+✅ **Cumplida (2026-10-15), aprobada por el usuario** ("continúas con la iteración 59"), con las decisiones por defecto.
+- **Cómo quedó:**
+  - **El Inicio empieza por la obra** (`WorkFinder.vue`, justo después de la bienvenida, con el botón "Buscar una obra"): búsqueda por nombre desde 3 letras y por municipio, de a 20, entre los contratos que se pueden reportar del territorio de alguna veeduría activa (`WorkFinder`, `GET /public/obras`).
+  - **"Usar mi ubicación"** pide una lectura aproximada al navegador y la compara allí con las cabeceras de los municipios cubiertos (`GET /public/obras/municipios`, `nearestMunicipality.js`). Propone "¿Está en Santa Marta (Magdalena)?", y la persona confirma o elige otro. La ubicación no viaja.
+  - **Quién puede atenderla** (`GET /public/obras/quien?contrato=`): las veedurías activas cuyo territorio cubre la obra (un contrato de la gobernación, solo las de todo el departamento), ordenadas por las reglas públicas, cada una con sus razones en palabras. "Le sugerimos" va solo si la primera gana por una regla; si empata con la segunda, todas van como iguales. Si ninguna la cubre: la Personería del municipio, la Contraloría y pedir el alta.
+  - **"Informar a esta veeduría"** lleva a `/contract/{número}#informar` en el sitio de esa veeduría: la página del contrato (it. 58) o, si ya tiene ficha, la de la obra, en el formulario.
+  - **El resumen central** (`contract_followers`, `ContractFollowers`): se actualiza al crear una ficha (después de confirmar la transacción), al publicar, rechazar o retirar, y al agrupar contratos. `contracts:followers` lo recalcula entero cada noche a las 03:30 y en cada despliegue.
+  - **Privacidad:** las tres consultas no abren sesión ni ponen cookies. La obra elegida va en la consulta, nunca en la ruta (los registros de acceso guardan solo la ruta), y la dirección del Inicio no cambia, así que tampoco queda en el Referer.
+  - **R-MAP-01**, enmendada con la aclaración.
+- **Historia:** US-066, nueva, con 11 escenarios.
+- **Pruebas:**
+  - Pest (`WorkFinderTest`, 12): la búsqueda, cada regla con veedurías que se solapan (la que ya sigue, municipio contra departamento, la activa en 90 días y la de hace 100, el empate, la suspendida, la gobernación), ninguna, el enlace, los municipios para el navegador, el resumen al crear la ficha, publicar, retirar y agrupar (y recalcularlo da lo mismo), y que no se ponen cookies.
+  - Vitest: el buscador (la búsqueda, la sugerencia, el empate, ninguna, el enlace, la ubicación sin enviarla, la dirección que no cambia) y el municipio más cercano.
+  - e2e: buscar la obra en el Inicio, ver la sugerida, entrar e informar; ninguna petición llevó una ubicación. `make ux-check` recorre la sugerencia (`publico-inicio-sugerencia`, sin fallas de axe).
+  - Todo visto en rojo antes de implementar.
+  - Corridas: Pest 1239, Vitest 724, `make e2e` 60 y 1 `fixme`, trace-check 486 de 486.
+
 ### Iteración 60 — La tarjeta de la obra en el mapa
 
 ⬜ **Propuesta del usuario el 2026-10-14** (al tocar un pin, la información de la obra "estilo Google Maps", con fotos en miniatura); **el usuario pidió agregarla al plan.** Se implementa cuando la apruebe.
@@ -3561,7 +3578,7 @@ Queda para la V2, opcional, con el modelo de financiación (`docs/viabilidad-leg
 | 6 | ✅ **It. 51** — El subdominio sale del nombre | Comodidad para el Super Administrador |
 | 7 | ✅ **It. 58** — El ciudadano informa sobre cualquier obra del territorio (cumplida el 2026-10-14) | Cierra el vacío del ciudadano: hoy solo puede informar sobre obras que un veedor ya visitó. Antes del piloto, para que la veeduría pruebe también el lado del ciudadano |
 | 8 | ✅ **It. 60** — La tarjeta de la obra en el mapa (cumplida el 2026-10-14) | Corta y no depende de otra. Es la que más se ve en una presentación: si la de Todos por Medellín se adelanta, va primero |
-| 9 | **It. 59** — GovTrace sugiere la veeduría (propuesta del 2026-10-14) | Necesita la 58 |
+| 9 | ✅ **It. 59** — GovTrace sugiere la veeduría (cumplida el 2026-10-15) | Necesita la 58 |
 | 10 | **El piloto** con una veeduría real | Con lo que muestre se decide V20 (elegir la obra sin señal) y V17 (correo al veedor) |
 | 11 | **Imagen en un registro** (GitHub Container Registry) y **la red principal** (37b) | Cuando estén el dominio, el operador y los fondos |
 | 12 | **It. 57** — El cupo de sellado por organización (propuesta del 2026-10-13) | Antes de que haya varias veedurías sellando en la red principal: hoy una sola puede agotar el saldo de todas |

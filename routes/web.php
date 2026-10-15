@@ -22,10 +22,16 @@ use App\Http\Controllers\Central\SetPasswordController;
 use App\Http\Controllers\Central\SuperAdministratorController;
 use App\Http\Controllers\Central\TwoFactorController;
 use App\Http\Controllers\Central\UsageController;
+use App\Http\Controllers\Central\WorkFinderController;
 use App\Http\Middleware\EnsureSuperAdministratorIsActive;
 use App\Http\Middleware\EnsureTwoFactorPassed;
+use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
+use Illuminate\Cookie\Middleware\EncryptCookies;
+use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Http\Request;
+use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Route;
+use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Inertia\Inertia;
 
 // Central routes: restricted to the central domains so they don't collide with tenant routes.
@@ -33,6 +39,19 @@ foreach (config('tenancy.central_domains') as $domain) {
     Route::domain($domain)->group(function () {
         // It. 40d (V5): el Inicio lleva al mapa de cada veeduría (R-MAP-01: no hay un mapa global).
         Route::get('/', fn () => Inertia::render('Home', ['organizations' => (new PublicDirectory)->handle()]))->name('home');
+        // It. 59 (US-066): buscar la obra y quién puede atender el informe; sin sesión ni cookies, como lo
+        // público de cada veeduría (it. 56). La obra elegida va en la consulta, nunca en la ruta.
+        Route::middleware('throttle:public')->withoutMiddleware([
+            EncryptCookies::class,
+            AddQueuedCookiesToResponse::class,
+            StartSession::class,
+            ShareErrorsFromSession::class,
+            PreventRequestForgery::class,
+        ])->group(function () {
+            Route::get('/public/obras', [WorkFinderController::class, 'index'])->name('works.search');
+            Route::get('/public/obras/municipios', [WorkFinderController::class, 'municipalities'])->name('works.municipalities');
+            Route::get('/public/obras/quien', [WorkFinderController::class, 'show'])->name('works.who');
+        });
         // It. 43k (V10, US-062-ALT): una veeduría pide su alta, sin cuenta; la decide el Super Administrador.
         Route::post('/organization-requests', [OrganizationRequestController::class, 'store'])->middleware('throttle:organization-requests')->name('organization-requests.store');
 
