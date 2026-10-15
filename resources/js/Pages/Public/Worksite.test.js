@@ -399,3 +399,36 @@ describe('Vista de obra sin ubicación (it. 58)', () => {
         wrapper.unmount();
     });
 });
+
+// It. 60 (US-029): la miniatura de cada foto, y la evidencia a la que lleva la tarjeta del mapa.
+describe('Las miniaturas en la vista de la obra (it. 60)', () => {
+    it('Sin miniatura, la tarjeta muestra la foto completa: the timeline shows the thumbnail, or the photo when there is none', async () => {
+        const withThumbnail = { ...abandonment, files: [{ ...abandonment.files[0], thumbnail_url: '/public/evidences/40/thumbnail' }, { id: 41, kind: 'photo', sha256: 'ab'.repeat(32), photo_url: '/public/evidences/41/photo', download_url: '/public/evidences/41/download', proof_url: '/public/evidences/41/proof' }] };
+        const wrapper = await openWorksite(calle30({ timeline: [withThumbnail] }));
+
+        expect(wrapper.findAll('[data-test="thumbnail"] img').map((image) => image.attributes('src'))).toEqual(['/public/evidences/40/thumbnail', '/public/evidences/41/photo']);
+        // El visor abre la foto completa, no la miniatura.
+        await wrapper.get('[data-test="thumbnail"]').trigger('click');
+        expect(wrapper.get('[role="dialog"] img').attributes('src')).toBe('/public/evidences/40/photo');
+        wrapper.unmount();
+    });
+
+    it('Una miniatura lleva a esa evidencia en la página de la obra: the page goes to it once loaded', async () => {
+        const scrolled = vi.fn();
+        const original = Element.prototype.scrollIntoView;
+        Element.prototype.scrollIntoView = function () {
+            scrolled(this.id);
+        };
+        window.history.replaceState(null, '', `#evidencia-${progress.report_id}`);
+        try {
+            const wrapper = await openWorksite();
+
+            expect(wrapper.get(`#evidencia-${progress.report_id}`).element.tagName).toBe('LI');
+            expect(scrolled).toHaveBeenCalledWith(`evidencia-${progress.report_id}`);
+            wrapper.unmount();
+        } finally {
+            Element.prototype.scrollIntoView = original;
+            window.history.replaceState(null, '', window.location.pathname);
+        }
+    });
+});

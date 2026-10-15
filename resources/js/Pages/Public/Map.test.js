@@ -5,18 +5,22 @@ import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { defineComponent, h } from 'vue';
 import Map from './Map.vue';
-import { fetchMapFilters, fetchPins, fetchUnlocatedWorksites, fetchWorksiteList } from '@/services/api.js';
+import { fetchMapFilters, fetchPins, fetchUnlocatedWorksites, fetchWorksiteCard, fetchWorksiteList } from '@/services/api.js';
 import { page, router } from '@/testing/inertia.js';
 
 vi.mock('@inertiajs/vue3', async () => await import('@/testing/inertia.js'));
 vi.mock('@/services/api.js');
 // Cada pin, un botón con su color que "se toca" en el mapa.
+// It. 60: al cerrar la tarjeta, el foco vuelve al pin (focusPin).
+const focusPin = vi.fn();
 vi.mock('@/Components/Public/PinsMap.vue', () => ({
     default: defineComponent({
         props: { pins: { type: Array, required: true } },
         emits: ['select'],
-        setup: (props, { emit }) => () =>
-            h('div', props.pins.map((pin) => h('button', { type: 'button', 'data-test': 'pin', 'data-color': pin.color_pin, onClick: () => emit('select', pin.id) }, pin.color_pin))),
+        setup: (props, { emit, expose }) => {
+            expose({ focusPin });
+            return () => h('div', props.pins.map((pin) => h('button', { type: 'button', 'data-test': 'pin', 'data-color': pin.color_pin, onClick: () => emit('select', pin.id) }, pin.color_pin)));
+        },
     }),
 }));
 
@@ -82,12 +86,24 @@ describe('Mapa público', () => {
         expect(wrapper.text()).toContain('Veeduría Ciudadana Santa Marta');
     });
 
-    it('opens the view of the worksite when its pin is touched', async () => {
+    // It. 60: tocar un pin ya no saca del mapa: abre la tarjeta de la obra.
+    it('La tarjeta de una obra se pide al tocar su pin: not with the map, only that one, and closing it gives the focus back to the pin', async () => {
+        fetchWorksiteCard.mockResolvedValue({ id: 7, name: 'Pavimentación Calle 30', municipality: 'Santa Marta', value: null, condition: { color: 'yellow', label: 'Alerta', reason: 'Retraso.' }, last_evidence_at: null, photos: [] });
         const wrapper = await openMap();
+        expect(fetchWorksiteCard).not.toHaveBeenCalled();
 
         await wrapper.findAll('[data-test="pin"]')[1].trigger('click');
+        await flushPromises();
 
-        expect(router.visit).toHaveBeenCalledWith('/worksite/7');
+        expect(fetchWorksiteCard).toHaveBeenCalledWith(7);
+        expect(router.visit).not.toHaveBeenCalled();
+        expect(wrapper.get('[role="dialog"] h2').text()).toBe('Pavimentación Calle 30');
+        expect(wrapper.find('[data-test="pin"]').exists()).toBe(true);
+
+        await wrapper.get('[role="dialog"]').trigger('keydown', { key: 'Escape' });
+        await flushPromises();
+        expect(wrapper.find('[role="dialog"]').exists()).toBe(false);
+        expect(focusPin).toHaveBeenCalledWith(7);
     });
 
     it('leads to the statistics of the territory and to the public validator, by its tabs (US-051-RPT, US-024, it. 40e)', async () => {

@@ -8,7 +8,7 @@ Este documento es para quien decide el producto y necesita entender lo que está
 4. qué está frágil o conviene vigilar;
 5. qué espera una decisión de producto, y cómo pedir un cambio.
 
-Complementa a [`docs/arquitectura.md`](arquitectura.md), que es el mapa técnico: carpetas, capas, el recorrido de un reporte, el contrato y las pruebas. Aquí está el porqué y el estado. Al 2026-10-14, sobre la iteración 58.
+Complementa a [`docs/arquitectura.md`](arquitectura.md), que es el mapa técnico: carpetas, capas, el recorrido de un reporte, el contrato y las pruebas. Aquí está el porqué y el estado. Al 2026-10-14, sobre la iteración 60.
 
 ## 1. Qué se construyó
 
@@ -23,7 +23,7 @@ GovTrace recibe la evidencia que los veedores toman en las obras públicas, la s
 | Código | ~18 200 líneas de PHP en `app/` y ~8 800 de Vue y JavaScript |
 | Pruebas | ~20 500 líneas de PHP y ~9 800 de JavaScript: Pest 1219, Vitest 703, e2e 58 |
 | Base de datos | 35 migraciones de la base central y 28 de la base de cada veeduría |
-| Iteraciones | De la 1 a la 58 en `specs/PLAN.md`, muchas con partes a, b, c… Todas cumplidas salvo la 37b (espera producción), la tercera parte de la 52 (paginar lo que falta) y la 57, que es una propuesta. La 59 y la 60 también están propuestas |
+| Iteraciones | De la 1 a la 60 en `specs/PLAN.md`, muchas con partes a, b, c… Todas cumplidas salvo la 37b (espera producción), la tercera parte de la 52 (paginar lo que falta), y la 57 y la 59, que son propuestas |
 | Entornos | Local con Docker, staging en AWS sobre testnet (`govtrace.duckdns.org`). La red principal espera la it. 37b |
 
 **Lo que puede hacer cada rol hoy** (detalle en [`docs/funciones-por-rol.md`](funciones-por-rol.md)):
@@ -31,7 +31,7 @@ GovTrace recibe la evidencia que los veedores toman en las obras públicas, la s
 - **Super Administrador:** da de alta las veedurías, con la validación asistida en el RUES; ajusta los parámetros; vigila el sellado, sus costos y la salud de SECOP; consulta la auditoría.
 - **Administrador de la veeduría:** invita veedores y otros administradores, define el territorio, revisa la Bandeja (publica, rechaza o retira cada evidencia), corrige ubicaciones, agrupa contratos en una obra, descarga el expediente para la Contraloría y atiende los informes de los ciudadanos.
 - **Veedor:** desde el celular, elige la obra de su municipio, toma la foto en el lugar y la envía. Sin señal, la guarda y la envía al volver la señal.
-- **Ciudadano, sin cuenta:** ve el mapa y la lista de obras, comprueba una evidencia, informa a la veeduría (también de una obra que nadie ha visitado, desde la it. 58) y descarga los datos abiertos.
+- **Ciudadano, sin cuenta:** ve el mapa (al tocar un pin, la tarjeta de la obra con sus miniaturas, desde la it. 60) y la lista de obras, comprueba una evidencia, informa a la veeduría (también de una obra que nadie ha visitado, desde la it. 58) y descarga los datos abiertos.
 
 ## 2. Cómo se trabajó
 
@@ -149,7 +149,7 @@ Para conversar un cambio con quien programa, sirve saber qué pieza lo resuelve.
 | **EPIC-001 SECOP II** | Trae cada noche los contratos de obra del territorio vigilado. Muestra la salud de la sincronización. Archiva los viejos sin evidencia. | `SyncSecopContracts` (trabajo), `ProcessSecopContractRow`, `SecopClient`, `SecopHealth`; pantalla `SuperAdmin/SecopHealth` |
 | **EPIC-002 Evidencia** | El veedor elige la obra, lee el GPS, toma la foto (con rostros difuminados) y envía. Sin señal, la bandeja de salida. | `CreateReport` (el corazón), `BrowseReportableContracts`, `NearbyWorksites`; pantallas `Veedor/NewReport`, `WorksiteBrowser`, `EvidencePicker`, `PhotoReview`; `lib/evidence/`, `lib/outbox.js`, `public/sw.js` |
 | **EPIC-003 Sellado** | Encola, sella por turnos, reintenta, confirma, avisa del saldo y del vencimiento del contrato. | `PrepareReportSeal`, `SealReport`, `ConfirmSeal`, `StellarSealingNetwork`, `SealerTurn`, `SealingPause`; contrato en `contracts/sealing/src/lib.rs`; pantalla `SuperAdmin/Sealing` |
-| **EPIC-004 Mapa** | El mapa y la lista de obras por veeduría, el color de cada pin, la página de una obra, la Bandeja, el resumen y las estadísticas. | `PublicMap`, `PublicWorksiteView`, `PublicTimeline`, `WorksiteCondition`, `CalculateWorksitesAtRisk`, `EditorialDecisions`, `PublicCache`; pantallas `Public/Map`, `Public/Worksite`, `Admin/Inbox`, `Admin/Worksites` |
+| **EPIC-004 Mapa** | El mapa y la lista de obras por veeduría, el color de cada pin, la tarjeta de una obra con sus miniaturas, la página de una obra, la Bandeja, el resumen y las estadísticas. | `PublicMap`, `PublicWorksiteCard`, `EvidenceThumbnails`, `PublicWorksiteView`, `PublicTimeline`, `WorksiteCondition`, `CalculateWorksitesAtRisk`, `EditorialDecisions`, `PublicCache`; pantallas `Public/Map`, `WorksiteCard`, `Public/Worksite`, `Admin/Inbox`, `Admin/Worksites` |
 | **EPIC-005 Verificación** | El recibo de cada sello, la descarga con su prueba, el validador, el verificador independiente y los datos abiertos. | `SealReceipt`, `InclusionProof`, `OpenData`; `lib/validator.js`, `lib/merkle.js`; `tools/verify/`; pantalla `Public/Validator` |
 | **EPIC-006 Cuentas** | Invitaciones, contraseña, inicio de sesión con bloqueo, impedimentos del veedor, política de datos, verificación en dos pasos del Super Administrador. | `app/Application/Auth`, `app/Application/Organization` (invitar, aceptar, desactivar), `DataPolicy`; pantallas `Auth/*`, `Veedor/Declaration`, `Public/Privacy` |
 | **EPIC-007 Moderación** | Publicar, rechazar y retirar, con motivo y auditoría. | `EditorialDecisions`; pantalla `Admin/Inbox` |
@@ -174,9 +174,9 @@ Del 2026-09-27 al 2026-10-14, en este orden. Cada fase está en `specs/PLAN.md`,
 | **Seguridad y privacidad** | 46a a 46j | 10-02 a 10-06 | Varios Super Administradores, la validación en el RUES, los identificadores públicos, la auditoría con filtros, los rostros difuminados, la primera ubicación con guardas, la verificación en dos pasos y el expediente para la Contraloría. |
 | **Staging y campo** | 42b, 42c, 47, 48 | 10-09 a 10-10 | Staging en AWS, desplegar sin cortes, encontrar la obra en el municipio del veedor y revisar los rostros más rápido. |
 | **Calidad y rendimiento** | 49 a 56 | 10-10 a 10-11 | El pipeline en cada PR, la prueba de carga, el subdominio desde el nombre, todo paginado, el punto aproximado explicado, pantallas separadas, la Bandeja con la ubicación corregida y la caché de lo público. |
-| **El ciudadano** | 58 | 10-14 | Informar de cualquier obra del territorio y proponer dónde queda. |
+| **El ciudadano** | 58, 60 | 10-14 | Informar de cualquier obra del territorio y proponer dónde queda. La tarjeta de la obra al tocar un pin, con miniaturas. |
 
-**Propuestas, en espera de aprobación:** la 60 (la tarjeta de la obra en el mapa, con miniaturas), la 59 (GovTrace sugiere la veeduría) y la 57 (el cupo de sellado por veeduría), en ese orden.
+**Propuestas, en espera de aprobación:** la 59 (GovTrace sugiere la veeduría) y la 57 (el cupo de sellado por veeduría), en ese orden.
 
 ## 6. Lo que está frágil o conviene vigilar
 
@@ -203,7 +203,7 @@ Del 2026-09-27 al 2026-10-14, en este orden. Cada fase está en `specs/PLAN.md`,
 
 **Del producto:**
 - **La tercera parte de la 52:** paginar la línea de tiempo de una obra, el expediente, el panel global, la búsqueda de territorios y los datos abiertos.
-- **Aprobar las iteraciones 60, 59 y 57,** con sus decisiones: el cupo por defecto y si se mide en sellos o en XLM (57), y el orden de las reglas para sugerir la veeduría (59).
+- **Aprobar las iteraciones 59 y 57,** con sus decisiones: el cupo por defecto y si se mide en sellos o en XLM (57), y el orden de las reglas para sugerir la veeduría (59).
 - **Después del piloto:** elegir la obra sin señal (V20) y el correo al veedor cuando su reporte se publica o se rechaza (V17).
 - **Pospuestos:** la denuncia sin nombre (Ley 962 de 2005, art. 81) y el derecho de petición a la Contraloría.
 - **Un abogado confirma** la regla de a qué contraloría acudir, que el expediente da como orientación.

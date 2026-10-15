@@ -132,6 +132,13 @@
     "smallTargets": 0,
     "targets": 6
   },
+  "escritorio/publico-tarjeta": {
+    "axe": {},
+    "textUnder16": 7,
+    "textUnder14": 0,
+    "smallTargets": 17,
+    "targets": 29
+  },
   "escritorio/publico-validador": {
     "axe": {},
     "textUnder16": 5,
@@ -369,6 +376,13 @@
     "textUnder14": 0,
     "smallTargets": 0,
     "targets": 6
+  },
+  "movil/publico-tarjeta": {
+    "axe": {},
+    "textUnder16": 7,
+    "textUnder14": 0,
+    "smallTargets": 17,
+    "targets": 29
   },
   "movil/publico-validador": {
     "axe": {},

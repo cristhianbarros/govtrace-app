@@ -17,7 +17,7 @@ class Evidence extends Model
 
     protected $table = 'evidences';
 
-    protected $fillable = ['report_id', 'kind', 'mime_type', 'size_bytes', 'sha256', 'storage_path', 'leaf_index', 'merkle_proof', 'blurred_faces', 'dismissed_faces', 'blurred_by_hand'];
+    protected $fillable = ['report_id', 'kind', 'mime_type', 'size_bytes', 'sha256', 'storage_path', 'leaf_index', 'merkle_proof', 'blurred_faces', 'dismissed_faces', 'blurred_by_hand', 'thumbnail_path'];
 
     protected $casts = [
         'size_bytes' => 'integer',

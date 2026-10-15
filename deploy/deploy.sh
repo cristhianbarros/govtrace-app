@@ -52,6 +52,9 @@ fi
 $ARTISAN migrate --force
 $ARTISAN tenants:migrate --force
 $ARTISAN db:seed --class=DivipolaSeeder --force
+# It. 60: las miniaturas que les falten a las fotos ya publicadas (las nuevas se hacen al publicar).
+# Solo lo que falta: después de la primera vez, no hace nada.
+$ARTISAN evidence:thumbnails
 
 step "3/4 Todo arriba, con las imágenes nuevas"
 $COMPOSE up -d --wait --remove-orphans

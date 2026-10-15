@@ -69,6 +69,7 @@ El sitio tiene tres pestañas: **Obras**, **Estadísticas** y **Validar**. Al pi
   - **En riesgo** (rojo): la evidencia más reciente dice "Abandono", o un contrato en ejecución ya pasó su fecha de fin (US-034).
   - Gana el peor, entre las evidencias y los contratos de la obra.
 - **Los tres estados como fichas grandes,** con cuántas obras hay de cada uno. Tocar una muestra solo esas.
+- **Tocar un pin abre la tarjeta de la obra** (it. 60), sin salir del mapa: su estado y por qué, su nombre, su municipio, su valor, la fecha de la última evidencia publicada, hasta 3 miniaturas de sus fotos y los botones "Ver la obra" e "Informar a la veeduría". Una miniatura lleva a esa evidencia en la página de la obra. Con el teclado: Enter sobre el pin la abre y Esc la cierra.
 - **"Más filtros":** el estado, las fechas de las evidencias, el presupuesto mínimo y el municipio. Si nada coincide, el mapa lo dice con una ilustración.
 - **El mapa también como lista,** con un buscador por nombre que ignora tildes y mayúsculas.
 - **"Obras sin ubicación todavía"** (it. 58), debajo de la lista: los contratos del territorio que aún no están en el mapa, porque ningún veedor los ha visitado o su ubicación está por confirmar. El mismo buscador y el filtro de municipio, de a 20. Cada una lleva a su página, para informar a la veeduría.
@@ -80,7 +81,7 @@ El sitio tiene tres pestañas: **Obras**, **Estadísticas** y **Validar**. Al pi
 - **Sus contratos de SECOP II:** entidad, contratista, valor, plazo y enlace a SECOP. Un contrato anulado en SECOP que ya tenía evidencias lo dice.
 - **Su línea de tiempo de evidencias publicadas:**
   - fecha, clasificación (Avance, Retraso o Abandono) y comentario;
-  - las fotos, que se abren en un visor;
+  - las fotos, en miniatura (it. 60), que se abren completas en un visor;
   - la ubicación **aproximada**, a unos 100 m: nunca la exacta del veedor;
   - una evidencia **retirada** queda como lápida, sin fotos, con la fecha y el motivo.
 - **"Comprobar que es original"** en cada evidencia: el recibo público, con el sello en Stellar, el ledger y el enlace al explorador (US-025).

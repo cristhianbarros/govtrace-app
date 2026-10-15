@@ -29,6 +29,7 @@ const map = shallowRef(null);
 const tiles = shallowRef(null);
 const markers = shallowRef([]);
 const circles = shallowRef([]);
+const markerOf = {}; // it. 60: cada pin por el id de su obra, para devolverle el foco
 
 onMounted(async () => {
     const [{ default: L }] = await Promise.all([import('leaflet'), import('leaflet/dist/leaflet.css')]);
@@ -57,6 +58,14 @@ onMounted(async () => {
         });
         const marker = L.marker([pin.lat, pin.lng], { icon, keyboard: true, title: look.title, alt: look.title }).addTo(map.value);
         marker.on('click', () => emit('select', pin.id));
+        // It. 60: Leaflet le pone al pin el rol de botón, pero no la tecla: Enter o Espacio lo tocan, como a un botón.
+        marker.on('keydown', ({ originalEvent }) => {
+            if (originalEvent.key === 'Enter' || originalEvent.key === ' ') {
+                originalEvent.preventDefault();
+                emit('select', pin.id);
+            }
+        });
+        markerOf[pin.id] = marker;
         return marker;
     });
 
@@ -65,7 +74,12 @@ onMounted(async () => {
 
 onBeforeUnmount(() => map.value?.remove());
 
-defineExpose({ tiles, markers, circles });
+/** It. 60: al cerrar la tarjeta de una obra, el foco vuelve a su pin. */
+function focusPin(id) {
+    markerOf[id]?.getElement()?.focus();
+}
+
+defineExpose({ tiles, markers, circles, focusPin });
 </script>
 
 <template>

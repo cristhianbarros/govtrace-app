@@ -112,3 +112,11 @@ Característica: Pines del mapa por color de estado
     Cuando abro el mapa, las estadísticas o el validador de la veeduría
     Entonces veo las pestañas "Obras", "Estadísticas" y "Validar", con la de la pantalla actual marcada
     Y desde una obra, la pestaña marcada es "Obras"
+
+  # It. 60 (R-MAP-02): la tarjeta de la obra, liviana y bajo demanda.
+  @complexity:low
+  Escenario: La tarjeta de una obra se pide al tocar su pin
+    Cuando cargo el mapa
+    Entonces no se pide ninguna tarjeta
+    Cuando toco un pin
+    Entonces se pide solo la tarjeta de esa obra, sin su línea de tiempo ni sus fotos completas

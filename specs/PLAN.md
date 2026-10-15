@@ -3531,6 +3531,23 @@ Queda para la V2, opcional, con el modelo de financiación (`docs/viabilidad-leg
 
 **Modelo:** Sonnet medium. Lo delicado es que la miniatura siga la vida de la foto, y eso lo cubren las pruebas.
 
+✅ **Cumplida (2026-10-14), aprobada por el usuario** ("sigue con la iteración 60"; en Opus 5.5, a pedido del usuario).
+- **Cómo quedó:**
+  - **La tarjeta** (`WorksiteCard.vue`) se abre al tocar un pin, sobre el mapa: sube desde abajo en el celular y va a la derecha en el escritorio. Pide sus datos a `GET /public/worksites/{id}/card` (`PublicWorksiteCard`), con la caché de lo público.
+  - **El teclado:** el foco pasa a la tarjeta; Esc o "Cerrar" la cierran y el foco vuelve al pin (`PinsMap.focusPin`). Leaflet le pone al pin el rol de botón, pero no hace que Enter lo active: ahora Enter o Espacio lo tocan.
+  - **Una miniatura** lleva a `/worksite/{id}#evidencia-{reporte}`, y la página de la obra va a esa evidencia cuando termina de cargar. "Informar a la veeduría" lleva a `#informar`.
+  - **Las miniaturas** (`EvidenceThumbnails`) se hacen al publicar: lado mayor de 320 px, JPEG sin metadatos, al lado del original (`….thumb.jpg`), que no se toca. Se sirven sin caché y solo de lo publicado (`/public/evidences/{id}/thumbnail`). Se borran al retirar la evidencia y con la purga tras la baja. Si una no se puede hacer, se publica igual y se muestra la foto completa.
+  - **La página de la obra** usa las miniaturas en su línea de tiempo; el visor abre la foto completa.
+  - **Las ya publicadas:** `php artisan evidence:thumbnails` les hace la suya, y `deploy/deploy.sh` lo corre en cada despliegue (solo hace lo que falta).
+  - **La imagen de PHP suma la extensión GD** (con JPEG), sin dependencias de Composer: antes no tenía cómo achicar una imagen.
+- **Historias:** US-029 (8 escenarios nuevos) y US-027 (1), con sus criterios.
+- **Pruebas:**
+  - Pest (`WorksiteCardTest`, 8): la tarjeta, la obra sin evidencias, que trae solo lo que muestra, la miniatura de 320 px sin tocar el original, ninguna de lo oculto ni lo rechazado, que se borra al retirar y con la purga, el comando y la foto que no se puede achicar.
+  - Vitest: la tarjeta, el pin con Enter y Espacio y el foco de vuelta, el mapa que pide la tarjeta solo al tocar, la miniatura en la línea de tiempo y la evidencia a la que lleva.
+  - e2e: tocar el pin, ver la tarjeta con miniaturas de 320 px o menos, cerrarla con Esc, abrirla con Enter y llegar a la evidencia. `make ux-check` recorre la tarjeta (`publico-tarjeta`, sin fallas de axe; no suma objetivos pequeños a los del mapa).
+  - Todo visto en rojo antes de implementar: Pest y Vitest primero, y el e2e destapó lo de Enter en el pin.
+  - Corridas: Pest 1227, Vitest 712, `make e2e` 59 y 1 `fixme`, trace-check 475 de 475.
+
 ### Orden de lo que está en espera (2026-10-14)
 
 | Orden | Qué | Por qué en ese lugar |
@@ -3543,7 +3560,7 @@ Queda para la V2, opcional, con el modelo de financiación (`docs/viabilidad-leg
 | 5 | ✅ **It. 53** — El mapa público dice que el punto es aproximado | Confunde a quien mira el mapa |
 | 6 | ✅ **It. 51** — El subdominio sale del nombre | Comodidad para el Super Administrador |
 | 7 | ✅ **It. 58** — El ciudadano informa sobre cualquier obra del territorio (cumplida el 2026-10-14) | Cierra el vacío del ciudadano: hoy solo puede informar sobre obras que un veedor ya visitó. Antes del piloto, para que la veeduría pruebe también el lado del ciudadano |
-| 8 | **It. 60** — La tarjeta de la obra en el mapa (propuesta del 2026-10-14) | Corta y no depende de otra. Es la que más se ve en una presentación: si la de Todos por Medellín se adelanta, va primero |
+| 8 | ✅ **It. 60** — La tarjeta de la obra en el mapa (cumplida el 2026-10-14) | Corta y no depende de otra. Es la que más se ve en una presentación: si la de Todos por Medellín se adelanta, va primero |
 | 9 | **It. 59** — GovTrace sugiere la veeduría (propuesta del 2026-10-14) | Necesita la 58 |
 | 10 | **El piloto** con una veeduría real | Con lo que muestre se decide V20 (elegir la obra sin señal) y V17 (correo al veedor) |
 | 11 | **Imagen en un registro** (GitHub Container Registry) y **la red principal** (37b) | Cuando estén el dominio, el operador y los fondos |

@@ -31,7 +31,7 @@ RUN set -eux; \
     apt-get update; \
     apt-get install -y --no-install-recommends \
         curl \
-        libpq-dev libicu-dev libzip-dev libgmp-dev; \
+        libpq-dev libicu-dev libzip-dev libgmp-dev libjpeg62-turbo-dev libpng-dev; \
     rm -rf /var/lib/apt/lists/*
 
 # PHP extensions. Each one has a reason; nothing is installed "just in case":
@@ -43,10 +43,12 @@ RUN set -eux; \
 #   pcntl     -> graceful SIGTERM in queue:work / schedule:work
 #   redis     -> phpredis client (REDIS_CLIENT=phpredis)
 #   gmp       -> stellar-php-sdk: sealing on Stellar (it. 13)
+#   gd        -> the thumbnails of the published photos, with JPEG (it. 60)
 # It. 49: pecl.php.net sometimes does not answer (in CI, several machines build
 # at once), so the download gets three attempts before the build fails.
 RUN set -eux; \
-    docker-php-ext-install -j"$(nproc)" pdo_pgsql intl bcmath zip opcache pcntl gmp; \
+    docker-php-ext-configure gd --with-jpeg; \
+    docker-php-ext-install -j"$(nproc)" pdo_pgsql intl bcmath zip opcache pcntl gmp gd; \
     for attempt in 1 2 3; do pecl install redis-6.2.0 && break; [ "$attempt" -lt 3 ]; sleep 10; done; \
     docker-php-ext-enable redis
 

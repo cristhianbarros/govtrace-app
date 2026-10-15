@@ -20,7 +20,8 @@ class EditorialDecisions
 {
     public function publish(User $administrator, int $reportId): Report
     {
-        return $this->decide($administrator, $reportId, 'evidence.published', fn (Report $report) => $report->publish());
+        // It. 60: sus miniaturas, para la tarjeta de la obra en el mapa.
+        return $this->decide($administrator, $reportId, 'evidence.published', fn (Report $report) => $report->publish(), fn (Report $report) => (new EvidenceThumbnails)->forReport($report));
     }
 
     public function reject(User $administrator, int $reportId, ?string $reason): Report
@@ -30,11 +31,15 @@ class EditorialDecisions
 
     public function withdraw(User $administrator, int $reportId, ?string $reason): Report
     {
-        return $this->decide($administrator, $reportId, 'evidence.withdrawn', fn (Report $report) => $report->withdraw($reason));
+        // It. 60: la miniatura se va con la foto.
+        return $this->decide($administrator, $reportId, 'evidence.withdrawn', fn (Report $report) => $report->withdraw($reason), fn (Report $report) => (new EvidenceThumbnails)->forget($report));
     }
 
-    /** @param  Closure(Report): void  $decision */
-    private function decide(User $administrator, int $reportId, string $action, Closure $decision): Report
+    /**
+     * @param  Closure(Report): void  $decision
+     * @param  (Closure(Report): void)|null  $afterwards  once the decision is committed, before the public cache is cleared (it. 60)
+     */
+    private function decide(User $administrator, int $reportId, string $action, Closure $decision, ?Closure $afterwards = null): Report
     {
         $report = DB::transaction(function () use ($administrator, $reportId, $action, $decision) {
             $report = Report::query()->lockForUpdate()->findOrFail($reportId);
@@ -58,6 +63,10 @@ class EditorialDecisions
 
             return $report;
         });
+
+        if ($afterwards !== null) {
+            $afterwards($report);
+        }
 
         // It. 56: lo público (el mapa, la vista de la obra, las estadísticas) cambió: se calcula de nuevo
         // en la siguiente visita. Después de confirmar, para que ninguna visita guarde lo de antes.

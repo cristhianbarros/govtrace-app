@@ -52,6 +52,18 @@ class PublicEvidenceController extends Controller
         ]);
     }
 
+    /** It. 60: its thumbnail, for the card of the worksite and its timeline — a copy to look at, not what was sealed. */
+    public function thumbnail(string $evidence): StreamedResponse
+    {
+        $file = $this->published($evidence);
+        abort_if($file->thumbnail_path === null, 404);
+
+        return Storage::disk('evidencias')->response($file->thumbnail_path, 'miniatura-'.$file->downloadName(), [
+            'Content-Type' => 'image/jpeg',
+            ...self::NO_CACHE,
+        ]);
+    }
+
     public function proof(string $evidence): JsonResponse
     {
         $file = $this->published($evidence);

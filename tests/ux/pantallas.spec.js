@@ -120,6 +120,11 @@ for (const [viewport, options] of Object.entries(VIEWPORTS)) {
             ]) {
                 await visit(page, viewport, name, url);
             }
+            // It. 60: la tarjeta de una obra, al tocar su pin.
+            await page.goto(`${ORG}/`);
+            await page.locator('.leaflet-marker-icon').first().click();
+            await page.locator('[data-test="worksite-card"] h2').waitFor();
+            await visit(page, viewport, 'publico-tarjeta');
         });
 
         test(`veedor, ${viewport}`, async ({ page }) => {

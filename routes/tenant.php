@@ -120,6 +120,9 @@ Route::middleware([
         Route::get('/public/contracts/{contract}', [PublicContractController::class, 'show'])->where('contract', PublicContractController::PATTERN)->name('public.contracts.show');
         Route::get('/public/worksites/{worksite}', [PublicWorksiteController::class, 'show'])->where('worksite', PublicId::PATTERN)->name('public.worksites.show');
         Route::get('/public/evidences/{evidence}/photo', [PublicEvidenceController::class, 'photo'])->where('evidence', PublicId::PATTERN)->name('public.evidences.photo');
+        // It. 60 (US-029): la miniatura de una foto publicada, y la tarjeta de una obra al tocar su pin.
+        Route::get('/public/evidences/{evidence}/thumbnail', [PublicEvidenceController::class, 'thumbnail'])->where('evidence', PublicId::PATTERN)->name('public.evidences.thumbnail');
+        Route::get('/public/worksites/{worksite}/card', [PublicWorksiteController::class, 'card'])->where('worksite', PublicId::PATTERN)->name('public.worksites.card');
         // It. 56: iguales para todos los visitantes: se guardan unos segundos (PublicCache).
         Route::get('/public/stats', fn (PublicStats $stats) => response()->json(PublicCache::remember('stats', [], fn () => $stats->handle())))->name('public.stats.data');
     });

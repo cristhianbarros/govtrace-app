@@ -1,15 +1,16 @@
 <script setup>
 // US-027: el mapa público de la organización (R-MAP-01), sin sesión. Carga
-// solo los pines (R-MAP-02); tocar uno abre la vista de su obra, que pide
-// sus datos en ese momento.
-import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
+// solo los pines (R-MAP-02); tocar uno abre la tarjeta de su obra sobre el
+// mapa (it. 60), que pide sus datos en ese momento.
+import { Head, Link, usePage } from '@inertiajs/vue3';
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import Illustration from '@/Components/Brand/Illustration.vue';
 import WorksIllustration from '@/Components/Brand/WorksIllustration.vue';
 import LoadState from '@/Components/LoadState.vue';
 import MoreButton from '@/Components/MoreButton.vue';
 import OrganizationNotice from '@/Components/Public/OrganizationNotice.vue';
 import PinsMap from '@/Components/Public/PinsMap.vue';
+import WorksiteCard from '@/Components/Public/WorksiteCard.vue';
 import { useLoader } from '@/composables/useLoader.js';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { fetchMapFilters, fetchPins, fetchUnlocatedWorksites, fetchWorksiteList } from '@/services/api.js';
@@ -27,6 +28,16 @@ const STATES = [
 ];
 const counts = ref({ green: 0, yellow: 0, red: 0 });
 const LOOK = Object.fromEntries(STATES.map((state) => [state.value, state]));
+
+// It. 60 (US-029): la tarjeta de la obra cuyo pin se tocó; al cerrarla, el foco vuelve a ese pin.
+const selected = ref(null);
+const pinsMap = ref(null);
+
+function closeCard() {
+    const id = selected.value;
+    selected.value = null;
+    nextTick(() => pinsMap.value?.focusPin(id));
+}
 
 // It. 40c (V12): el mapa también como lista, para quien no maneja mapas y para
 // los lectores de pantalla, con una búsqueda por nombre. Se pide al abrirla.
@@ -269,7 +280,8 @@ onMounted(async () => {
             illustration="search"
             @retry="load(active)"
         >
-            <PinsMap :pins="pins ?? []" @select="(id) => router.visit(`/worksite/${id}`)" />
+            <PinsMap ref="pinsMap" :pins="pins ?? []" @select="(id) => (selected = id)" />
+            <WorksiteCard v-if="selected !== null" :key="selected" :worksite-id="selected" @close="closeCard" />
             <!-- It. 53 (R-PRIV-02): el punto es aproximado, y se dice con palabras, no solo con el círculo. -->
             <p data-test="approximate-note" class="mt-2 text-base text-slate-700">Cada punto es aproximado: la obra está a unos 100 m de él. Es para proteger a quien tomó la foto.</p>
         </LoadState>

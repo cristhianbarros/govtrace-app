@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Tenant;
 
 use App\Application\Publication\PublicCache;
 use App\Application\Publication\PublicMap;
+use App\Application\Publication\PublicWorksiteCard;
 use App\Application\Publication\PublicWorksiteView;
 use App\Application\Publication\UnlocatedWorksites;
 use App\Domain\Worksites\Worksite;
@@ -64,6 +65,14 @@ class PublicWorksiteController extends Controller
     public function filters(): JsonResponse
     {
         return response()->json(['data' => PublicCache::remember('filters', [], fn () => ['municipalities' => (new PublicMap)->municipalities()])]);
+    }
+
+    /** It. 60 (US-029): the card of a worksite, when its pin is touched. */
+    public function card(string $worksite): JsonResponse
+    {
+        $found = Worksite::byPublicId($worksite);
+
+        return response()->json(['data' => PublicCache::remember('card', ['id' => $found->public_id], fn () => (new PublicWorksiteCard)->handle($found))]);
     }
 
     public function show(string $worksite): JsonResponse

@@ -57,6 +57,8 @@ class PublicTimeline
                     'kind' => $evidence->kind,
                     'sha256' => $evidence->sha256,
                     ...($evidence->kind === EvidenceKind::Photo->value ? ['photo_url' => "/public/evidences/{$evidence->public_id}/photo"] : []),
+                    // It. 60: la miniatura, si la tiene; sin ella, la pantalla muestra la foto.
+                    ...($evidence->thumbnail_path !== null ? ['thumbnail_url' => "/public/evidences/{$evidence->public_id}/thumbnail"] : []),
                     'download_url' => "/public/evidences/{$evidence->public_id}/download",
                     'proof_url' => "/public/evidences/{$evidence->public_id}/proof",
                 ])->all(),
