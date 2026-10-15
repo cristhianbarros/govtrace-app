@@ -174,6 +174,10 @@ export const fetchPublicStats = () => dataOf(http.get('/public/stats'));
 
 /** US-029 / US-017: la obra, sus contratos y su línea de tiempo, al tocar su pin. */
 export const fetchWorksite = async (id) => (await dataOf(http.get(`/public/worksites/${id}`))).data;
+// It. 59 (US-066): en el Inicio, buscar la obra ({ data, has_more }), los municipios con su cabecera, y quién puede atenderla.
+export const searchWorks = (params = {}) => dataOf(http.get('/public/obras', { params }));
+export const fetchWorkMunicipalities = async () => (await dataOf(http.get('/public/obras/municipios'))).data;
+export const fetchWhoCanHelp = async (contractId) => (await dataOf(http.get('/public/obras/quien', { params: { contrato: contractId } }))).data;
 // It. 60 (US-029): la tarjeta de una obra, al tocar su pin.
 export const fetchWorksiteCard = async (id) => (await dataOf(http.get(`/public/worksites/${id}/card`))).data;
 

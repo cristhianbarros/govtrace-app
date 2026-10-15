@@ -55,6 +55,8 @@ $ARTISAN db:seed --class=DivipolaSeeder --force
 # It. 60: las miniaturas que les falten a las fotos ya publicadas (las nuevas se hacen al publicar).
 # Solo lo que falta: después de la primera vez, no hace nada.
 $ARTISAN evidence:thumbnails
+# It. 59: el resumen central de qué veedurías siguen qué contratos, desde la base de cada una.
+$ARTISAN contracts:followers
 
 step "3/4 Todo arriba, con las imágenes nuevas"
 $COMPOSE up -d --wait --remove-orphans

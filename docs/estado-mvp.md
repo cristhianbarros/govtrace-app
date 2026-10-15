@@ -4,7 +4,17 @@ Al 2026-10-04. Empezó sobre `77e6030` (iteración 39) y se actualizó en las it
 
 ✅ hecho y probado · ⚠️ a medias · ⬜ falta · 🔒 espera algo externo · ❓ decisión tuya
 
-## Dónde quedó (2026-10-14, más tarde)
+## Dónde quedó (2026-10-15)
+
+| Qué | PR |
+|---|---|
+| 59: el Inicio empieza por la obra, y GovTrace sugiere la veeduría con reglas públicas (US-066) | este |
+
+- **Tests:** Pest 1239, Vitest 724, `make e2e` 60 pasan y 1 `fixme` (V20), trace-check 486 de 486, `make ux-check` sin retroceso (con la sugerencia en la línea base).
+- **59, en una frase:** el ciudadano busca la obra en el Inicio (por nombre, municipio o su ubicación, que no se envía) y GovTrace le dice qué veedurías pueden atender su informe, primero la que ya sigue la obra, con sus razones; un toque lo lleva al formulario en el sitio de esa veeduría.
+- **Un resumen nuevo en la base central** (`contract_followers`) dice quién sigue qué contrato. Se recalcula cada noche y en cada despliegue (`php artisan contracts:followers`).
+
+## Antes (2026-10-14, más tarde)
 
 | Qué | PR |
 |---|---|

@@ -160,5 +160,14 @@ describe('Una veeduría pide su alta (it. 43k, V10)', () => {
         expect(trap.attributes('tabindex')).toBe('-1');
         expect(trap.element.closest('[aria-hidden="true"]')).not.toBeNull();
     });
+
+    // It. 59 (US-066): el Inicio empieza por la obra.
+    it('El ciudadano busca una obra en el Inicio: the search comes first, right after the welcome', () => {
+        const wrapper = mount(Home, { props: { organizations: ORGANIZATIONS } });
+        const headings = wrapper.findAll('h2').map((heading) => heading.text());
+
+        expect(headings[0]).toBe('¿Qué obra quiere reportar?');
+        expect(wrapper.get('a[href="#buscar-obra"]').text()).toBe('Buscar una obra');
+    });
 });
 

@@ -29,6 +29,8 @@ final class WorksiteOfContract
             return DB::transaction(function () use ($secopContractId) {
                 $worksite = Worksite::create();
                 $worksite->contracts()->create(['secop_contract_id' => $secopContractId]);
+                // It. 59: en el resumen central, la veeduría ya sigue el contrato; solo si la ficha queda.
+                DB::afterCommit(fn () => ContractFollowers::refresh($worksite));
 
                 return $worksite->id;
             });

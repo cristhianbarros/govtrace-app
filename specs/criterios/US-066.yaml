@@ -1,0 +1,32 @@
+story_id: "US-066"
+titulo_historia: "Como ciudadano que quiere ayudar y no sabe a qué veeduría escribirle quiero buscar la obra en el Inicio de GovTrace y que me sugiera qué veeduría puede atenderla, con sus razones, para informar sin tener que adivinar"
+bloque: "Iteración 59 — GovTrace sugiere la veeduría"
+criterios_aceptacion:
+  escenarios_exito:
+    - "En el Inicio, '¿Qué obra quiere reportar?': búsqueda por nombre (sin tildes, desde 3 letras) y por municipio, entre los contratos que se pueden reportar del territorio de alguna veeduría activa, de a 20"
+    - "Al elegir una obra, 'Quién puede atenderla': la primera va como 'Le sugerimos', con su porqué, y debajo 'También cubren esta obra'. Si las primeras empatan, se muestran como iguales, en orden alfabético"
+    - "Cada veeduría dice por qué está: 'Ya sigue esta obra: N evidencias publicadas', 'Vigila <municipio>' o 'Vigila todo <departamento>', y 'Publicó evidencias en los últimos 90 días'"
+    - "'Informar a esta veeduría' lleva a esa obra en el sitio de la veeduría, al formulario del informe (US-059-LEG); si la veeduría no tiene ficha de la obra, la página del contrato (it. 58)"
+    - "'Usar mi ubicación' propone el municipio cuya cabecera está más cerca, y el ciudadano lo confirma o elige otro"
+  validaciones_reglas:
+    - "Reglas, en este orden: requisito, su territorio cubre la obra y está activa (no suspendida ni dada de baja); primero, la que ya sigue la obra; después, la de territorio más específico; después, la que publicó evidencias en los últimos 90 días; en un empate, el orden alfabético"
+    - "El resumen central (qué veedurías siguen qué contratos, cuántas evidencias publicaron y cuándo) se actualiza al crear una ficha, al publicar, rechazar o retirar y al agrupar contratos; una tarea nocturna y cada despliegue lo recalculan entero"
+    - "R-MAP-01 se mantiene: el Inicio muestra contratos de SECOP, quién los cubre y un conteo de evidencias; nunca evidencias ni pines de varias veedurías juntas"
+    - "La búsqueda no abre sesión ni pone cookies"
+    - "La ubicación del ciudadano no viaja al servidor: se compara en su navegador con las cabeceras de los municipios"
+    - "La obra elegida no queda en la dirección de la página: los registros de acceso guardan solo la ruta, y la dirección del Inicio no lleva la obra"
+  manejo_errores:
+    - "Si ninguna veeduría activa cubre la obra: 'Ninguna veeduría de GovTrace cubre esta obra todavía.', con tres caminos: la Personería del municipio, donde se inscriben las veedurías (Ley 850 de 2003, art. 3); la Contraloría General (línea 199 y SIPAR); y pedir el alta de una veeduría (US-062-ALT)"
+    - "Si el navegador no da la ubicación: 'No pudimos saber dónde está. Elija su municipio en la lista.'"
+  requisitos_ux:
+    - "Las reglas se dicen en la pantalla, en una frase, junto a la sugerencia"
+    - "Botones de 44 px o más y letra de 16 px"
+  casos_edge:
+    - {caso: "Una veeduría suspendida cubre la obra", resultado: "No aparece: no recibe informes"}
+    - {caso: "Un contrato de la gobernación (sin municipio)", resultado: "Lo cubren solo las veedurías que vigilan el departamento entero"}
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true

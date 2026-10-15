@@ -2,6 +2,7 @@
 
 namespace App\Application\Publication;
 
+use App\Application\Worksites\ContractFollowers;
 use App\Domain\Audit\AuditLog;
 use App\Domain\Organization\User;
 use App\Domain\Reports\Report;
@@ -67,6 +68,8 @@ class EditorialDecisions
         if ($afterwards !== null) {
             $afterwards($report);
         }
+        // It. 59: el resumen central de quién sigue qué contrato, con lo que su ficha tiene publicado.
+        ContractFollowers::refresh($report->worksite);
 
         // It. 56: lo público (el mapa, la vista de la obra, las estadísticas) cambió: se calcula de nuevo
         // en la siguiente visita. Después de confirmar, para que ninguna visita guarde lo de antes.

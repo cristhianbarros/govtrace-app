@@ -58,6 +58,8 @@ class GroupWorksiteContracts
             $worksite = DB::transaction(fn () => $this->group($administrator, $name, $secopContractIds));
             // It. 56: las obras del mapa público cambiaron (una ficha agrupa varias): se calculan de nuevo.
             PublicCache::forget();
+            // It. 59: los contratos agrupados, en el resumen central, con lo que la ficha tiene publicado.
+            ContractFollowers::refresh($worksite);
 
             return $worksite;
         } catch (UniqueConstraintViolationException) {
