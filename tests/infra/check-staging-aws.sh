@@ -198,6 +198,17 @@ for name in (\"EvidenceBucket\", \"BackupBucket\"):
         problems.append(f\"{name} no bloquea el acceso público\")
     if bucket.get(\"DeletionPolicy\") != \"Retain\":
         problems.append(f\"{name} se borraría con la pila\")
+if t[\"Instance\"][\"Properties\"].get(\"DisableApiTermination\") is not True:
+    problems.append(\"la máquina se puede terminar por error, y con ella su base de datos\")
+for name in (\"EvidenceBucketPolicy\", \"BackupBucketPolicy\"):
+    statements = t.get(name, {}).get(\"Properties\", {}).get(\"PolicyDocument\", {}).get(\"Statement\", [])
+    if not any(s.get(\"Effect\") == \"Deny\" and s.get(\"Condition\", {}).get(\"Bool\", {}).get(\"aws:SecureTransport\") == \"false\" for s in statements):
+        problems.append(f\"{name}: el bucket acepta conexiones sin HTTPS\")
+for statement in t[\"SchedulerRole\"][\"Properties\"][\"Policies\"][0][\"PolicyDocument\"][\"Statement\"]:
+    if sorted(statement[\"Action\"]) != [\"ec2:StartInstances\", \"ec2:StopInstances\"] or \"*\" in str(statement[\"Resource\"]):
+        problems.append(\"el horario puede más que encender y apagar esta máquina\")
+if t[\"MonthlyBudget\"][\"Properties\"][\"Budget\"][\"CostTypes\"].get(\"IncludeCredit\") is not False:
+    problems.append(\"el presupuesto cuenta los créditos: el costo parecería cero y no avisaría\")
 for policy in t[\"InstanceRole\"][\"Properties\"][\"Policies\"]:
     for statement in policy[\"PolicyDocument\"][\"Statement\"]:
         actions = statement[\"Action\"] if isinstance(statement[\"Action\"], list) else [statement[\"Action\"]]
@@ -206,7 +217,7 @@ for policy in t[\"InstanceRole\"][\"Properties\"][\"Policies\"]:
             problems.append(f\"un permiso con comodín: {statement.get(chr(83) + \"id\")}\")
 print(\"; \".join(problems) or \"ok\")
 "' 2>&1)
-[ "$invariants" = ok ] && pass "la plantilla: solo 80 y 443, IMDSv2, buckets privados que sobreviven a la pila, permisos sin comodín" \
+[ "$invariants" = ok ] && pass "la plantilla: solo 80 y 443, IMDSv2, buckets privados y solo por HTTPS que sobreviven a la pila, permisos sin comodín, la máquina protegida, el horario que solo enciende y apaga, y el presupuesto sin créditos" \
     || flunk "la plantilla: $invariants"
 
 # En el servidor nadie define DOCKER_SUBNET (make staging-check sí, y lo

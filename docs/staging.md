@@ -116,6 +116,84 @@ aws cloudformation delete-stack --profile govtrace-staging --region us-east-2 --
 
 Borra la máquina (con su base de datos), la IP, el rol y el grupo de seguridad. **Los dos buckets quedan**, porque guardan evidencias y respaldos: si de verdad sobran, se vacían y se borran a mano. Los secretos de SSM también quedan.
 
+## El horario, lo que cuesta y la seguridad (it. 61)
+
+### Staging duerme de noche
+
+**Se apaga a las 21:00 y se enciende a las 8:00, hora de Colombia, todos los días.** Lo hace EventBridge Scheduler, sin Lambda, con un rol que solo puede encender y apagar esta máquina. Para cambiarlo:
+
+```
+STAGING_STOP_AT="cron(0 23 * * ? *)" make staging-provision          # apagarla a las 23:00
+STAGING_START_AT="cron(0 8 ? * MON-FRI *)" make staging-provision    # encenderla solo de lunes a viernes
+STAGING_SLEEP=no make staging-provision                              # encendida siempre
+```
+
+Para encenderla fuera de horario (el `InstanceId` sale al final de `make staging-provision`):
+
+```
+aws ec2 start-instances --profile govtrace-staging --region us-east-2 --instance-ids <InstanceId>
+```
+
+**Lo que pasa mientras duerme:**
+- **El sitio no responde:** no hay página de mantenimiento, porque la máquina está apagada. Un veedor no puede elegir la obra, porque la lista viene del servidor (V20). Un reporte que ya tenía armado queda en la bandeja de salida de su celular y se envía cuando la máquina vuelve.
+- **Las tareas de la noche no corren**, porque el calendario no recupera las que se perdió:
+  - la sincronización con SECOP es a las 02:00. **En staging, ponla a las 08:30** desde el panel del Super Administrador, en *Parámetros → Hora de sincronización SECOP*;
+  - las purgas de retención (01:00 a 01:30) y el resumen de quién sigue qué obra (03:30) quedan para la noche siguiente en que esté encendida. El resumen también se recalcula en cada despliegue;
+  - no hay copias de respaldo por hora de noche, pero tampoco hay cambios que respaldar.
+- **El certificado no se pierde:** su temporizador semanal corre al encender si le tocaba de noche (`Persistent=true`).
+- **Un efecto bueno:** reiniciar cada día aplica las actualizaciones de seguridad de Ubuntu que necesitan un reinicio.
+- **Al apagarse,** Docker detiene los contenedores y PostgreSQL recibe la orden de cerrar. Si no alcanzara, se recupera solo al arrancar con su registro de transacciones.
+
+### Lo que cuesta
+
+Aproximado, con los precios de lista de us-east-2 que se conocían al escribir esto; las cifras reales están en *Billing → Cost Explorer*:
+
+| Qué | Encendida siempre | Con el horario |
+|---|---|---|
+| La máquina (t4g.small, ~0,0168 USD por hora) | ~12,3 USD al mes | ~6,6 USD al mes (13 horas al día) |
+| El disco (30 GB gp3) | ~2,4 USD | ~2,4 USD: se paga apagada |
+| La IP fija (IPv4 pública, ~0,005 USD por hora) | ~3,6 USD | ~3,6 USD: se paga apagada |
+| S3 (evidencias y respaldos) | centavos | centavos |
+| **Total** | **~18 USD al mes** | **~13 USD al mes** |
+
+Mientras haya créditos, los créditos pagan esto.
+
+**El presupuesto y los gastos fuera de lo normal.** Con tu correo, la pila crea:
+- un presupuesto de 20 USD al mes **sin contar los créditos** (con ellos, el costo parece cero y la alerta no avisaría nada), que avisa al 50, al 80 y al 100 % de lo gastado, y cuando el pronóstico del mes pasa del 100 %;
+- una alerta de gastos fuera de lo normal por servicio, una vez al día, desde 5 USD. Sirve también de alarma de seguridad: una máquina que alguien levantó con unas llaves robadas se nota primero en la cuenta.
+
+```
+STAGING_ALERT_EMAIL=tu@correo.co make staging-provision
+STAGING_ALERT_EMAIL=tu@correo.co STAGING_BUDGET_USD=30 make staging-provision   # otro presupuesto
+```
+
+Ninguna de las dos cuesta: un presupuesto sin acciones y la detección de anomalías son gratuitos.
+
+**Las etiquetas:** todo lleva `Project=govtrace` y `Environment=staging`. Para ver los costos por etiqueta, actívalas una vez en *Billing → Cost allocation tags*.
+
+### La seguridad
+
+**Lo que la pila ya cumple**, y `make staging-aws-check` comprueba en cada PR:
+- solo los puertos 80 y 443 abiertos; sin SSH, se entra por SSM;
+- IMDSv2 obligatorio;
+- el disco y los buckets cifrados; los buckets privados, que sobreviven a la pila y **solo aceptan HTTPS**;
+- el rol de la máquina, sin comodines: solo sus secretos y sus dos buckets;
+- **la máquina no se puede terminar por error** (`DisableApiTermination`), porque su disco guarda la base de datos;
+- el horario solo puede encender y apagar esta máquina;
+- el presupuesto no cuenta los créditos.
+
+**Para reemplazar la máquina a propósito** (otra AMI, por ejemplo), primero se quita la protección:
+
+```
+aws ec2 modify-instance-attribute --profile govtrace-staging --region us-east-2 --instance-id <InstanceId> --no-disable-api-termination
+```
+
+**Lo que te toca a ti, una vez y gratis:**
+- **MFA** en el usuario con el que entras a la consola de AWS;
+- **el cifrado por defecto de los discos nuevos** de la cuenta: `aws ec2 enable-ebs-encryption-by-default --profile govtrace-staging --region us-east-2`.
+
+**Lo que no se activó, porque cuesta:** GuardDuty (30 días gratis y después unos dólares al mes), AWS Config y un registro de CloudTrail en S3. Para staging alcanza el historial de eventos de CloudTrail, que guarda 90 días sin costo. En producción se deciden con la 37b.
+
 ## Lo que hay que saber
 
 - **El GPS del celular en 2000 m:** Chrome tiene, en Android, solo la ubicación aproximada, y la app pide 50 m o menos. En *Ajustes → Aplicaciones → Chrome → Permisos → Ubicación*, activa **"Usar ubicación precisa"** y cierra Chrome del todo antes de volver a intentarlo. En un iPhone: *Ajustes → Privacidad y seguridad → Localización → Safari (o Chrome) → Ubicación exacta*.
