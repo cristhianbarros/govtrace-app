@@ -31,6 +31,16 @@ describe('PinsMap', () => {
         wrapper.unmount();
     });
 
+    // 2026-10-17, reportado por el usuario: en el computador, al bajar, el mapa se pintaba
+    // encima de las pestañas (Validar, Mapa, Lista). Las capas de Leaflet llevan z-index de
+    // 400 a 1000; aislado, el mapa las guarda adentro, como LocationMap (it. 55).
+    it('keeps its layers inside the map, below the sticky tabs of the screen', async () => {
+        const wrapper = await mountMap();
+
+        expect(wrapper.classes()).toContain('isolate');
+        wrapper.unmount();
+    });
+
     it('shows the OpenStreetMap tiles, with their attribution', async () => {
         const wrapper = await mountMap();
 

@@ -2,6 +2,9 @@
 // US-027: los pines del mapa público sobre las teselas de OpenStreetMap (D8,
 // R-INT-02), uno por obra, con el color de su estado. Leaflet se descarga
 // solo cuando el mapa aparece.
+// Aislado (isolate): las capas de Leaflet llevan z-index de 400 a 1000, y en
+// el computador, al bajar, se pintaban encima de las pestañas fijas (Validar,
+// Mapa, Lista). Como LocationMap (it. 55).
 import { onBeforeUnmount, onMounted, ref, shallowRef } from 'vue';
 
 const props = defineProps({
@@ -83,5 +86,5 @@ defineExpose({ tiles, markers, circles, focusPin });
 </script>
 
 <template>
-    <div ref="container" class="h-[60dvh] w-full rounded-lg border border-slate-200 md:h-[70vh]"></div>
+    <div ref="container" class="isolate h-[60dvh] w-full rounded-lg border border-slate-200 md:h-[70vh]"></div>
 </template>

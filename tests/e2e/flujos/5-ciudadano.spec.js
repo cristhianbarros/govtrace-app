@@ -76,6 +76,26 @@ test('Abre una obra: el contrato de SECOP y sus evidencias publicadas', async ({
 });
 
 // It. 60 (US-029): al tocar un pin, la tarjeta de la obra, sin salir del mapa.
+// 2026-10-17, reportado por el usuario: en el computador, al bajar, los botones de zoom del mapa
+// (z-index 1000 de Leaflet) se pintaban encima de las pestañas fijas.
+test('En el computador, al bajar, el mapa no tapa las pestañas de la veeduría', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto(ORG);
+    const zoom = page.locator('.leaflet-control-zoom');
+    await expect(zoom).toBeVisible();
+
+    // Baja hasta que los botones de zoom quedan debajo del encabezado fijo, a la altura de las pestañas.
+    const header = await page.locator('header').boundingBox();
+    await page.evaluate((middle) => {
+        const buttons = document.querySelector('.leaflet-control-zoom').getBoundingClientRect();
+        window.scrollBy(0, buttons.top + buttons.height / 2 - middle);
+    }, header.height * 0.75);
+    const box = await zoom.boundingBox();
+    expect(box.y + box.height / 2).toBeLessThan(header.height);
+    const onTop = await page.evaluate(([x, y]) => Boolean(document.elementFromPoint(x, y)?.closest('header')), [box.x + box.width / 2, box.y + box.height / 2]);
+    expect(onTop).toBe(true);
+});
+
 test('Toca un pin y ve la tarjeta de la obra, con sus miniaturas; también con el teclado (it. 60)', async ({ page }) => {
     await page.goto(ORG);
     const pin = page.locator('.leaflet-marker-icon').first();
