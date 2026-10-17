@@ -31,6 +31,9 @@ beforeEach(() => {
     vi.resetAllMocks();
 });
 
+/** The rows of the team, not the trail at the top (it. 62). */
+const teamRows = (wrapper) => wrapper.get('main').findAll('li').filter((row) => !row.element.closest('nav'));
+
 describe('Veedores', () => {
     it('shows that it is loading the team', () => {
         fetchObservers.mockReturnValue(new Promise(() => {}));
@@ -62,7 +65,7 @@ describe('Veedores', () => {
             { email: 'laura@correo.co', status: 'Invitación pendiente' },
         ]);
 
-        const rows = wrapper.get('main').findAll('li').map((row) => row.text());
+        const rows = teamRows(wrapper).map((row) => row.text());
         expect(rows).toHaveLength(2);
         expect(rows[0]).toContain('carlos@correo.co');
         expect(rows[0]).toContain('Activo');
@@ -120,7 +123,7 @@ describe('Desactivar y reactivar veedores', () => {
 
         expect(deactivateObserver).toHaveBeenCalledWith(7);
         expect(wrapper.get('[role="status"]').text()).toBe('Veedor desactivado. Su sesión quedó cerrada y ya no puede enviar reportes.');
-        expect(wrapper.get('main').get('li').text()).toContain('Inactivo');
+        expect(teamRows(wrapper)[0].text()).toContain('Inactivo');
         expect(button(wrapper, 'Reactivar')).toBeDefined();
     });
 
@@ -193,7 +196,7 @@ describe('Reenviar o revocar una invitación', () => {
     it('offers neither to a veedor who already has an account, nor deactivating a pending invitation', async () => {
         const wrapper = await openObservers([carlos('Activo'), { id: 8, email: 'lucia@correo.co', status: 'Invitación pendiente' }]);
 
-        const [active, pending] = wrapper.get('main').findAll('li');
+        const [active, pending] = teamRows(wrapper);
         expect(active.findAll('button').map((candidate) => candidate.text())).toEqual(['Desactivar']);
         expect(pending.findAll('button').map((candidate) => candidate.text())).toEqual(['Reenviar invitación', 'Revocar invitación']);
     });
@@ -207,7 +210,7 @@ describe('La declaración de impedimentos de cada veedor (it. 44c)', () => {
             { id: 2, email: 'luisa@correo.co', status: 'Activo', impediments_declared_at: null },
             { id: 3, email: 'pedro@correo.co', status: 'Invitación pendiente', impediments_declared_at: null },
         ]);
-        const rows = wrapper.get('main').findAll('li').map((row) => row.text());
+        const rows = teamRows(wrapper).map((row) => row.text());
 
         expect(rows[0]).toContain('Declaró no tener impedimentos el 30/09/2026');
         expect(rows[1]).toContain('Aún no declara sus impedimentos');

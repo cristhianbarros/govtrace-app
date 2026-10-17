@@ -52,6 +52,9 @@ class HandleInertiaRequests extends Middleware
             // La organización, en su subdominio: su nombre de fantasía (o el legal)
             // y su logo (US-007); null en el panel global.
             'organization' => fn () => tenancy()->initialized ? $fresh()['name'] : null,
+            // It. 62 (US-067): el Inicio de GovTrace, en su propio dominio, para la ruta de
+            // arriba: desde el subdominio de una veeduría, "/" sería su mapa.
+            'govtraceUrl' => fn () => rtrim((string) config('app.url'), '/').'/',
             'organizationLogo' => fn () => tenancy()->initialized ? $fresh()['logo'] : null,
             // It. 43h (V13): su contacto público, en el pie de su sitio.
             'organizationContact' => fn () => tenancy()->initialized ? $fresh()['contact'] : null,

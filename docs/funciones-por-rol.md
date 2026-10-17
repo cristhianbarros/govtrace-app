@@ -245,6 +245,7 @@ Su panel está en el dominio central: Organizaciones, Solicitudes de alta, Sella
 | **El registro de auditoría, con filtros** | Se filtra por fecha, por quién lo hizo, por tipo de acción y por organización; "Quitar filtros" lo muestra todo. Cada entrada es una frase, con el antes y el después desplegables. El Administrador de una organización ve y filtra solo lo suyo. | US-043-MON (it. 46d) |
 | **Corregir los datos legales** | El NIT, la inscripción y la **razón social**, a solicitud formal, con las reglas del alta; el log guarda los anteriores y los nuevos. | US-011, it. 43f (V8) |
 | **Los administradores de cada organización** | Ve quiénes son y en qué va su invitación. **Asigna** el primero o **agrega otro**. **Reenvía o revoca** una invitación. **Desactiva** al que se fue y lo **reactiva**; nunca al único activo. | US-002, it. 43a, US-061-USR (it. 43j) |
+| **Ver el sitio de una organización** | "Ver su sitio" abre su sitio, en su subdominio (salvo si está dada de baja). Desde allí, "GovTrace" en la ruta vuelve al Inicio, y en el menú de su cuenta, **"Ir al panel global"**. | US-067 (it. 62) |
 | **Suspender y reactivar** | Suspendida, nadie de la organización entra ni reporta, y su mapa sigue a la vista con un aviso. Reactivarla sincroniza SECOP. | US-003a |
 | **Dar de baja** | Con doble confirmación: escribir el subdominio, en 10 minutos. Es definitivo. El mapa sale de línea y lo sellado sigue verificable. Los archivos se guardan 5 años. | US-003b |
 | **La verificación en dos pasos** | **Inactiva por ahora:** la activa el operador en el servidor (`SUPER_ADMIN_TWO_FACTOR=true`). Activa, entra con su contraseña y el código de 6 dígitos de su app autenticadora. La primera vez la configura: escanea un código QR y guarda 8 códigos de recuperación, que sirven una vez cada uno. Sin teléfono ni códigos: `make admin-2fa-reset EMAIL=…` en el servidor. | US-065-SEC (it. 46g) |
@@ -308,6 +309,7 @@ No es un rol de la aplicación, pero es parte de operarla. Todo está en `make h
   - las fotos se publican **sin metadatos** y con los **rostros difuminados** en el celular (it. 46e);
   - en la red pública solo va la huella de cada evidencia: ningún dato personal.
 - **Cada veeduría es independiente:** una base de datos por organización. El Super Administrador no reporta en una sin su autorización.
+- **La ruta, arriba de cada pantalla** (it. 62, US-067): `GovTrace › <veeduría> › <panel> › <pantalla>`, cada nivel con su enlace, y en el celular un solo "← <nivel anterior>". "GovTrace" lleva al Inicio de GovTrace también desde el subdominio de una veeduría. No aparece en el Inicio de GovTrace ni en Nuevo reporte. La sesión sigue siendo de cada dirección: en el sitio de una veeduría, el Super Administrador no tiene la suya, y el acceso de la veeduría le dice dónde está el suyo.
 - **Todo cambio importante va al log de auditoría,** que no se puede editar.
 - **Ley 1581 de 2012:**
   - la política de datos, enlazada donde se entra;

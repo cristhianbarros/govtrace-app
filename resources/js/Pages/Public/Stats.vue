@@ -25,7 +25,7 @@ onMounted(load);
 
 <template>
     <Head title="Estadísticas del territorio" />
-    <AppLayout :title="page.props.organization ?? 'GovTrace'" :logo="page.props.organizationLogo" sections>
+    <AppLayout :title="page.props.organization ?? 'GovTrace'" :logo="page.props.organizationLogo" sections here="Estadísticas">
         <div class="flex flex-col gap-4">
             <OrganizationNotice />
             <PageHero title="Estadísticas del territorio" illustration="stats">Cómo van las obras del territorio, según los contratos de SECOP II y las evidencias que publica la veeduría.</PageHero>

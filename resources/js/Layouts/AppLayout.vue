@@ -2,6 +2,7 @@
 import { Link, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import AccountMenu from '@/Components/AccountMenu.vue';
+import Breadcrumbs from '@/Components/Breadcrumbs.vue';
 import Logo from '@/Components/Brand/Logo.vue';
 import Skyline from '@/Components/Brand/Skyline.vue';
 import SectionTabs from '@/Components/Public/SectionTabs.vue';
@@ -11,7 +12,7 @@ const page = usePage();
 const contact = computed(() => page.props.organizationContact ?? null);
 const telephone = (phone) => `tel:${phone.replace(/[^\d+]/g, '')}`;
 
-defineProps({
+const props = defineProps({
     title: {
         type: String,
         default: 'GovTrace',
@@ -26,6 +27,31 @@ defineProps({
         type: Boolean,
         default: false,
     },
+    // It. 62 (US-067): la ruta de arriba. `panel`, el panel al que pertenece la pantalla
+    // ({ label, href }); `here`, el nombre de la pantalla. Sin ninguno de los dos, ni el
+    // sitio de una veeduría, no hay ruta: el Inicio de GovTrace y Nuevo reporte.
+    panel: {
+        type: Object,
+        default: null,
+    },
+    here: {
+        type: String,
+        default: null,
+    },
+});
+
+// "GovTrace" lleva a su Inicio: desde el subdominio de una veeduría, "/" sería su mapa.
+const crumbs = computed(() => {
+    if (!props.panel && !props.here && !props.sections) {
+        return [];
+    }
+    const organization = page.props.organization;
+    return [
+        { label: 'GovTrace', href: organization ? (page.props.govtraceUrl ?? '/') : '/' },
+        ...(organization ? [{ label: organization, href: '/' }] : []),
+        ...(props.panel ? [props.panel] : []),
+        ...(props.here ? [{ label: props.here }] : []),
+    ];
 });
 </script>
 
@@ -60,10 +86,12 @@ defineProps({
                 </div>
             </aside>
             <main class="w-full min-w-0 flex-1 p-4">
+                <Breadcrumbs v-if="crumbs.length > 1" :crumbs="crumbs" />
                 <slot />
             </main>
         </div>
         <main v-else class="mx-auto w-full flex-1 p-4 md:max-w-3xl lg:max-w-5xl">
+            <Breadcrumbs v-if="crumbs.length > 1" :crumbs="crumbs" />
             <slot />
         </main>
 

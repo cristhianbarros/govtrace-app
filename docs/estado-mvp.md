@@ -4,7 +4,17 @@ Al 2026-10-04. Empezó sobre `77e6030` (iteración 39) y se actualizó en las it
 
 ✅ hecho y probado · ⚠️ a medias · ⬜ falta · 🔒 espera algo externo · ❓ decisión tuya
 
-## Dónde quedó (2026-10-15, más tarde)
+## Dónde quedó (2026-10-17)
+
+| Qué | PR |
+|---|---|
+| 62: la ruta arriba de cada pantalla (`GovTrace › veeduría › panel › pantalla`), "Ver su sitio" en Organizaciones, "Ir al panel global" y el aviso en el acceso de una veeduría (US-067) | este |
+
+- **Por qué:** el Super Administrador llegaba al sitio de una veeduría y no tenía cómo volver a GovTrace ni a su panel.
+- **Tests:** Pest 1241, Vitest 737, `make e2e` 61 y 1 `fixme` (V20), trace-check 496 de 496, `make ux-check` sin retroceso.
+- **Sigue (propuesta):** la 63, "Sincronizar ahora" desde la veeduría.
+
+## Antes (2026-10-15, más tarde)
 
 | Qué | PR |
 |---|---|

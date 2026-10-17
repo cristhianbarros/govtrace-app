@@ -36,7 +36,8 @@ test('La CSP no bloquea nada en las pantallas públicas ni en las del veedor', a
     // El mapa público pide sus imágenes a OpenStreetMap (que respondan depende de internet; que se pidan, de la CSP).
     await expect(page.locator('img.leaflet-tile').first()).toBeAttached({ timeout: 30_000 });
     await page.goto(await worksiteUrl(page.request));
-    await expect(page.getByText('Parque de pruebas sin conexión').first()).toBeVisible();
+    // It. 62: el nombre también va en la ruta, que en el celular se resume en "← …".
+    await expect(page.getByRole('heading', { level: 1, name: 'Parque de pruebas sin conexión' })).toBeVisible();
     await page.goto('/stats');
     await page.goto('/verify');
     await expect(page.getByRole('heading', { name: 'Validador de evidencias' })).toBeVisible();

@@ -18,6 +18,7 @@ use App\Domain\Organization\OrganizationStatus;
 use App\Domain\Organization\SuperAdminAuthorization;
 use App\Http\Controllers\Controller;
 use App\Infrastructure\Tenancy\Tenant;
+use App\Infrastructure\Tenancy\TenantUrl;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -36,24 +37,30 @@ class OrganizationController extends Controller
 
         return response()->json([
             'data' => Tenant::query()->orderBy('name')->get()
-                ->map(fn (Tenant $tenant) => [
-                    'id' => $tenant->id,
-                    'nit' => $tenant->nit,
-                    // It. 44d (R-LEG-06): su NIT, su inscripción o los dos, en una línea.
-                    'identification' => $tenant->identification(),
-                    'name' => $tenant->name,
-                    'subdomain' => $tenant->domains()->first()?->domain,
-                    'status' => $tenant->statusLabel(),
-                    // It. 46b: el PDF de la solicitud de alta aprobada.
-                    'has_registration_document' => $tenant->registration_document_path !== null,
-                    // It. 43a (V16): quién la administra y en qué va su invitación. Una
-                    // dada de baja ya no tiene su base de datos de usuarios.
-                    'administrators' => $tenant->status === OrganizationStatus::Decommissioned->value ? [] : $administrators->of($tenant),
-                    // It. 43g (V7): hasta cuándo autorizó al Super Administrador a reportar en su nombre (US-042-SEC).
-                    'authorized_until' => $tenant->status === OrganizationStatus::Active->value
-                        ? $tenant->run(fn () => SuperAdminAuthorization::inForce()?->expires_at->toIso8601String())
-                        : null,
-                ]),
+                ->map(function (Tenant $tenant) use ($administrators) {
+                    $domain = $tenant->domains()->first()?->domain;
+
+                    return [
+                        'id' => $tenant->id,
+                        'nit' => $tenant->nit,
+                        // It. 44d (R-LEG-06): su NIT, su inscripción o los dos, en una línea.
+                        'identification' => $tenant->identification(),
+                        'name' => $tenant->name,
+                        'subdomain' => $domain,
+                        // It. 62 (US-067): "Ver su sitio". Una dada de baja tiene su sitio fuera de línea.
+                        'site_url' => $domain === null || $tenant->status === OrganizationStatus::Decommissioned->value ? null : TenantUrl::to($domain, '/'),
+                        'status' => $tenant->statusLabel(),
+                        // It. 46b: el PDF de la solicitud de alta aprobada.
+                        'has_registration_document' => $tenant->registration_document_path !== null,
+                        // It. 43a (V16): quién la administra y en qué va su invitación. Una
+                        // dada de baja ya no tiene su base de datos de usuarios.
+                        'administrators' => $tenant->status === OrganizationStatus::Decommissioned->value ? [] : $administrators->of($tenant),
+                        // It. 43g (V7): hasta cuándo autorizó al Super Administrador a reportar en su nombre (US-042-SEC).
+                        'authorized_until' => $tenant->status === OrganizationStatus::Active->value
+                            ? $tenant->run(fn () => SuperAdminAuthorization::inForce()?->expires_at->toIso8601String())
+                            : null,
+                    ];
+                }),
         ]);
     }
 

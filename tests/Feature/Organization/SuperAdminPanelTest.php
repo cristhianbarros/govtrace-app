@@ -66,8 +66,8 @@ it('lists the organizations with their NIT, subdomain and status', function () {
 
     expect(asSuperAdmin('GET', '/admin/organizations/data')->assertOk()->json('data'))->toBe([
         // it. 44d: su identificación en una línea — su NIT, su inscripción o los dos.
-        ['id' => $smr->id, 'nit' => '900123456-8', 'identification' => 'NIT 900123456-8', 'name' => 'Veeduría Ciudadana Santa Marta', 'subdomain' => 'veeduria-smr.govtrace.localhost', 'status' => 'Activa', 'has_registration_document' => false, 'administrators' => [], 'authorized_until' => null],
-        ['id' => $cienaga->id, 'nit' => '890000062-6', 'identification' => 'NIT 890000062-6', 'name' => 'Veeduría Ciénaga', 'subdomain' => 'veeduria-cienaga.govtrace.localhost', 'status' => 'Activa', 'has_registration_document' => false, 'administrators' => [], 'authorized_until' => null], // it. 43a: quién la administra; 43g: si autorizó al Super Administrador; 46b: el PDF de su solicitud de alta
+        ['id' => $smr->id, 'nit' => '900123456-8', 'identification' => 'NIT 900123456-8', 'name' => 'Veeduría Ciudadana Santa Marta', 'subdomain' => 'veeduria-smr.govtrace.localhost', 'site_url' => 'http://veeduria-smr.govtrace.localhost/', 'status' => 'Activa', 'has_registration_document' => false, 'administrators' => [], 'authorized_until' => null],
+        ['id' => $cienaga->id, 'nit' => '890000062-6', 'identification' => 'NIT 890000062-6', 'name' => 'Veeduría Ciénaga', 'subdomain' => 'veeduria-cienaga.govtrace.localhost', 'site_url' => 'http://veeduria-cienaga.govtrace.localhost/', 'status' => 'Activa', 'has_registration_document' => false, 'administrators' => [], 'authorized_until' => null], // it. 43a: quién la administra; 43g: si autorizó al Super Administrador; 46b: el PDF de su solicitud de alta; 62: su sitio
     ]);
 });
 

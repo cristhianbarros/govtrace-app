@@ -20,6 +20,8 @@ const inOrganization = computed(() => Boolean(page.props.organization));
 // (menos en las de acceso, que ya son para eso).
 const ACCESS = ['/login', '/set-password', '/forgot-password', '/reset-password'];
 const offersLogin = computed(() => !account.value && inOrganization.value && !ACCESS.some((path) => (page.url ?? '').startsWith(path)));
+// It. 62 (US-067): en las pantallas públicas de GovTrace, el camino de vuelta al panel global.
+const offersPanel = computed(() => account.value?.role === 'Super Administrador' && !inOrganization.value && !(page.url ?? '').startsWith('/admin'));
 
 const open = ref(false);
 const confirming = ref(false);
@@ -82,6 +84,7 @@ async function leave() {
                 <span class="block truncate text-sm text-slate-600">{{ account.email }}</span>
             </p>
             <Link v-if="inOrganization" href="/" role="menuitem" class="flex min-h-11 items-center rounded-lg px-3 text-base hover:bg-slate-100">Ver el sitio público</Link>
+            <Link v-if="offersPanel" href="/admin/organizations" role="menuitem" class="flex min-h-11 items-center rounded-lg px-3 text-base hover:bg-slate-100">Ir al panel global</Link>
             <Link href="/account/password" role="menuitem" class="flex min-h-11 items-center rounded-lg px-3 text-base hover:bg-slate-100">Cambiar contraseña</Link>
             <button v-if="installation.available" type="button" role="menuitem" class="flex min-h-11 w-full items-center rounded-lg px-3 text-left text-base hover:bg-slate-100" @click="open = false; install()">Instalar la app en este celular</button>
             <button type="button" role="menuitem" class="flex min-h-11 w-full items-center rounded-lg px-3 text-left text-base font-semibold text-red-700 hover:bg-red-50" @click="askToLeave">Salir</button>

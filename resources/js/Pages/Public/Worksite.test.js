@@ -285,7 +285,19 @@ describe('Vista de obra — estados', () => {
         const wrapper = await openWorksite();
 
         expect(wrapper.get('[role="status"]').text()).toContain('suspendida temporalmente');
-        expect(wrapper.get('main a[href="/"]').text()).toBe('← Volver al mapa');
+        // It. 62 (US-067): la ruta lleva de vuelta al mapa; ya no hay un "← Volver al mapa" aparte.
+        expect(wrapper.get('nav[aria-label="Ruta"] [data-test="back"]').attributes('href')).toBe('/');
+        expect(wrapper.findAll('a').some((link) => link.text().includes('Volver al mapa'))).toBe(false);
+        wrapper.unmount();
+    });
+
+    it('En una pantalla del sitio, la ruta suma la pantalla: the page of a worksite ends the trail with its name', async () => {
+        page.url = '/worksite/01j9xq3m7v8k2d4f6g8h0jkmnp';
+        const wrapper = await openWorksite();
+
+        const crumbs = wrapper.get('nav[aria-label="Ruta"] ol').findAll('[data-crumb]');
+        expect(crumbs.map((crumb) => crumb.text())).toEqual(['GovTrace', 'Veeduría Ciudadana Santa Marta', 'Pavimentación Calle 30']);
+        expect(crumbs[2].attributes('aria-current')).toBe('page');
         wrapper.unmount();
     });
 });
