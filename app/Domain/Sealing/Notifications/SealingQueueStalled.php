@@ -2,15 +2,15 @@
 
 namespace App\Domain\Sealing\Notifications;
 
+use App\Infrastructure\Notifications\QueuedNotification;
 use Illuminate\Notifications\Messages\MailMessage;
-use Illuminate\Notifications\Notification;
 
 /**
  * US-021: evidencias con más de 2 horas sin sellar. Al Super Administrador,
  * con las organizaciones afectadas; a cada Administrador, por la suya. It.
  * 45e (enmienda): de usted y sin jerga técnica.
  */
-class SealingQueueStalled extends Notification
+class SealingQueueStalled extends QueuedNotification
 {
     /** @param  list<string>  $organizations */
     public function __construct(public readonly array $organizations) {}

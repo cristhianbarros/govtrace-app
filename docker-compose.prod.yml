@@ -143,9 +143,28 @@ services:
       retries: 3
 
   # ------------------------------------------------------------- worker ----
+  # It. 64: el sellado, el SECOP y los chequeos; cuando no tiene nada, ayuda
+  # con los correos.
   worker:
     <<: *app
-    command: php artisan queue:work --tries=3 --max-time=3600
+    command: php artisan queue:work --queue=default,mail --tries=3 --max-time=3600
+    user: workspace
+    stop_grace_period: 60s
+    healthcheck:
+      test: ["CMD-SHELL", "grep -q queue:work /proc/1/cmdline"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # -------------------------------------------------------- mail-worker ----
+  # It. 64: los correos (el código del ciudadano, las invitaciones, las
+  # alertas), en su propio worker: no esperan detrás de una sincronización
+  # con el SECOP que tarda minutos, ni de una ráfaga de sellos. Mira la cola
+  # cada segundo cuando está vacía, para que el código llegue pronto.
+  mail-worker:
+    <<: *app
+    command: php artisan queue:work --queue=mail --sleep=1 --max-time=3600
     user: workspace
     stop_grace_period: 60s
     healthcheck:

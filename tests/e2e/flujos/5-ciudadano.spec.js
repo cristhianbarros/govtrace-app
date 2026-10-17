@@ -2,7 +2,7 @@
 // cuenta, el mapa de la veeduría del fixture, una obra y sus evidencias.
 import { fileURLToPath } from 'node:url';
 import { expect, test } from '@playwright/test';
-import { CENTRAL, ORG, PEOPLE, WORKSITE, latestCodeTo, latestMailTo, logIn, onThisPort } from './support.js';
+import { CENTRAL, ORG, PEOPLE, WORKSITE, latestCodeTo, latestMailAbout, logIn, onThisPort } from './support.js';
 
 // It. 46h: un rostro que no es de una persona real (La Gioconda, de dominio público), y un paisaje sin rostros.
 const FACE = fileURLToPath(new URL('../../fixtures/evidence/rostro-pintura.jpg', import.meta.url));
@@ -128,7 +128,7 @@ test('Informa a la veeduría con su correo verificado, y la veeduría le respond
     await page.getByRole('button', { name: 'Enviarme el código' }).click();
     await expect(page.getByRole('status')).toContainText('Le enviamos un código de 6 dígitos');
 
-    await page.getByLabel('El código que le llegó al correo').fill(latestCodeTo(citizen));
+    await page.getByLabel('El código que le llegó al correo').fill(await latestCodeTo(citizen));
     await page.getByLabel('¿Qué vio en la obra?').fill('Desde el lunes no hay nadie trabajando y la valla está en el piso.');
 
     // It. 46h: las mismas opciones del veedor — la cámara y la galería — y de 1 a 3 fotos, cada una revisada.
@@ -145,7 +145,7 @@ test('Informa a la veeduría con su correo verificado, y la veeduría le respond
 
     await page.getByRole('button', { name: 'Enviar a la veeduría' }).click();
     await expect(page.getByRole('status')).toContainText('Su informe llegó a la veeduría.');
-    expect(latestMailTo(citizen)).toContain('Recibimos su informe');
+    expect(await latestMailAbout(citizen, 'Recibimos su informe')).toContain('Recibimos su informe');
 
     // La Administradora lo recibe sin el correo, y le responde desde GovTrace.
     await logIn(page, ORG, PEOPLE.admin);
@@ -163,7 +163,7 @@ test('Informa a la veeduría con su correo verificado, y la veeduría le respond
     await report.getByLabel('Respuesta para el ciudadano').fill('Gracias. Esta semana va un veedor a documentarlo.');
     await report.getByRole('button', { name: 'Enviar respuesta' }).click();
     await expect(page.getByRole('status')).toHaveText('Respuesta enviada al ciudadano.');
-    expect(latestMailTo(citizen)).toContain('Respuesta a su informe');
+    expect(await latestMailAbout(citizen, 'Respuesta a su informe')).toContain('Respuesta a su informe');
 });
 
 // It. 59 (US-066): el Inicio empieza por la obra, y GovTrace sugiere la veeduría.
@@ -195,7 +195,7 @@ test('Busca la obra en el Inicio, GovTrace le sugiere la veeduría y le informa 
     await page.getByLabel('Autorizo el tratamiento de mis datos personales según la política.').check();
     await page.getByRole('button', { name: 'Enviarme el código' }).click();
     await expect(page.getByRole('status')).toContainText('Le enviamos un código de 6 dígitos');
-    await page.getByLabel('El código que le llegó al correo').fill(latestCodeTo(citizen));
+    await page.getByLabel('El código que le llegó al correo').fill(await latestCodeTo(citizen));
     await page.getByLabel('¿Qué vio en la obra?').fill('Llegué desde el Inicio de GovTrace: la obra sigue detenida.');
     await page.getByRole('button', { name: 'Enviar a la veeduría' }).click();
     await expect(page.getByRole('status')).toContainText('Su informe llegó a la veeduría.');
@@ -225,7 +225,7 @@ test('Informa de una obra sin ubicación y dice dónde queda; la veeduría lo co
     await page.getByLabel('Autorizo el tratamiento de mis datos personales según la política.').check();
     await page.getByRole('button', { name: 'Enviarme el código' }).click();
     await expect(page.getByRole('status')).toContainText('Le enviamos un código de 6 dígitos');
-    await page.getByLabel('El código que le llegó al correo').fill(latestCodeTo(citizen));
+    await page.getByLabel('El código que le llegó al correo').fill(await latestCodeTo(citizen));
     await page.getByLabel('¿Qué vio en la obra?').fill('El polideportivo tiene la cubierta a medio poner y nadie trabaja.');
 
     // Marca dónde queda, tocando el mapa: empieza en la cabecera de Santa Marta.

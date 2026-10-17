@@ -167,7 +167,7 @@ test('Autoriza al Super Administrador por 30 días y revoca la autorización', a
 test('V9: le llega un resumen diario con las evidencias por revisar (it. 43i)', async () => {
     // El fixture de make e2e lo envía al preparar la organización, como lo haría el de las 07:00.
     // El asunto va codificado en el correo (MIME); el cuerpo, legible.
-    const digest = latestMailAbout(PEOPLE.admin, 'esperan su revisión');
+    const digest = await latestMailAbout(PEOPLE.admin, 'esperan su revisión');
 
     expect(digest).toContain('evidencias de sus veedores esperan su revisión');
     expect(digest).toContain('/admin/inbox');

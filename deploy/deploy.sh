@@ -46,8 +46,8 @@ fi
 step "2/4 La base de datos y las migraciones"
 $COMPOSE up -d --wait pgsql
 if [ "${MAINTENANCE:-0}" = 1 ]; then
-    echo "Modo mantenimiento: la app, el worker y el calendario se apagan mientras se migra."
-    $COMPOSE stop app worker scheduler
+    echo "Modo mantenimiento: la app, los workers y el calendario se apagan mientras se migra."
+    $COMPOSE stop app worker mail-worker scheduler
 fi
 $ARTISAN migrate --force
 $ARTISAN tenants:migrate --force

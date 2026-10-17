@@ -56,7 +56,7 @@ test('V10: una veeduría pide su alta desde el Inicio de GovTrace, y el Super Ad
     await request.getByLabel('Motivo del rechazo (le llega por correo)').fill('Es una prueba de extremo a extremo.');
     await request.getByRole('button', { name: 'Confirmar rechazo' }).click();
     await expect(page.getByRole('status')).toHaveText(`Solicitud rechazada. Le escribimos a ${contact} con el motivo.`);
-    expect(latestMailAbout(contact, 'Motivo: Es una prueba de extremo a extremo.')).toContain('no fue aprobada');
+    expect(await latestMailAbout(contact, 'Motivo: Es una prueba de extremo a extremo.')).toContain('no fue aprobada');
     await logOut(page);
 });
 
@@ -86,18 +86,19 @@ test('El Super Administrador ve la invitación pendiente del Administrador y se 
 
     await expect(administrators).toContainText(ALTA.admin);
     await expect(administrators).toContainText('Invitación pendiente');
-    const firstLink = latestLinkTo(ALTA.admin);
+    const firstLink = await latestLinkTo(ALTA.admin);
     await administrators.getByRole('button', { name: 'Reenviar invitación' }).click();
     await expect(page.getByText(`Invitación reenviada a ${ALTA.admin}.`, { exact: false })).toBeVisible();
 
     // El enlace anterior deja de servir: solo vale el del último correo.
-    expect(latestLinkTo(ALTA.admin)).not.toBe(firstLink);
+    // It. 64: el nuevo correo sale por la cola, un momento después.
+    await expect.poll(() => latestLinkTo(ALTA.admin), { timeout: 20_000 }).not.toBe(firstLink);
     await page.goto(firstLink);
     await expect(page.getByRole('button', { name: 'Activar mi cuenta' })).toHaveCount(0);
 });
 
 test('El Administrador activa su cuenta con el enlace del correo', async ({ page }) => {
-    await page.goto(latestLinkTo(ALTA.admin));
+    await page.goto(await latestLinkTo(ALTA.admin));
     // It. 45c: su nombre, para su veeduría.
     await page.getByLabel('Su nombre').fill('Marta Ospina');
     await page.getByLabel('Contraseña', { exact: true }).fill(ALTA.password);
@@ -134,7 +135,7 @@ test('El Administrador invita a un veedor', async ({ page }) => {
 });
 
 test('El veedor activa su cuenta y encuentra la obra para reportar', async ({ page }) => {
-    await page.goto(latestLinkTo(ALTA.veedor));
+    await page.goto(await latestLinkTo(ALTA.veedor));
     await page.getByLabel('Su nombre').fill('Carlos Rojas');
     await page.getByLabel('Contraseña', { exact: true }).fill(ALTA.password);
     await page.getByLabel('Confirmar contraseña').fill(ALTA.password);

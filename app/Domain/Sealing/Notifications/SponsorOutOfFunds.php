@@ -2,14 +2,14 @@
 
 namespace App\Domain\Sealing\Notifications;
 
+use App\Infrastructure\Notifications\QueuedNotification;
 use Illuminate\Notifications\Messages\MailMessage;
-use Illuminate\Notifications\Notification;
 
 /**
  * US-020b: la alerta crítica al Super Administrador cuando la cuenta
  * patrocinadora se queda sin XLM y el sellado entra en pausa.
  */
-class SponsorOutOfFunds extends Notification
+class SponsorOutOfFunds extends QueuedNotification
 {
     public function __construct(public readonly string $sponsorAddress) {}
 

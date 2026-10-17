@@ -90,9 +90,9 @@ flowchart LR
 
 Los servicios de Docker (`docker-compose.yml`) son:
 
-- **De base:** `app` (Apache + PHP 8.4), `proxy` (nginx, la única entrada), `worker` (la cola), `scheduler` (el calendario), `pgsql`, `storage` (un S3 de desarrollo) y `backup`.
+- **De base:** `app` (Apache + PHP 8.4), `proxy` (nginx, la única entrada), `worker` (la cola; atiende primero la de correos, `mail`), `scheduler` (el calendario), `pgsql`, `storage` (un S3 de desarrollo) y `backup`.
 - **Perfiles opcionales:** `stellar` y `soroban` (la red local y las herramientas del contrato), `frontend` (Node), `tools` (Adminer) y `async` (Redis).
-- **En producción** (`docker-compose.prod.yml`): la imagen inmutable, TLS con un certificado comodín, `certbot` y un S3 real.
+- **En producción** (`docker-compose.prod.yml`): la imagen inmutable, TLS con un certificado comodín, `certbot`, un S3 real y un worker propio para los correos, `mail-worker` (it. 64).
 
 ## 4. Una veeduría, una base de datos (multi-tenant)
 
@@ -149,6 +149,7 @@ Cada clase hace una cosa que pide una pantalla o un trabajo:
 | `Secop/SecopClient` | SECOP II en datos.gov.co (`jbjy-vk9h`). |
 | `Rues/RuesClient` | El RUES (`c82u-588k`), para la validación asistida de una veeduría. |
 | `Tenancy/*`, `Mail/*`, `Notifications/WebhookChannel`, `Scheduling/NightlySchedule` | Tenancy, la copia de cada correo a Mailpit, los avisos por webhook y el calendario nocturno. |
+| `Notifications/QueuedNotification` | It. 64: la base de todos los correos. Salen por la cola `mail`, cifrados y después de guardar, con 5 intentos: la pantalla no espera al servidor de correo. |
 
 ### Http (`app/Http`)
 

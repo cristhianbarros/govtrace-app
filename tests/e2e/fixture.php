@@ -61,6 +61,7 @@ const E2E_REPORTS = [
 
 // Nada va a la cola del worker: ni la sincronización con SECOP que dispara el
 // territorio, ni el sellado. El sello se hace aquí, en la red en memoria.
+$queue = config('queue.default');
 config(['queue.connections.e2e' => ['driver' => 'null'], 'queue.default' => 'e2e']);
 app()->instance(SealingNetwork::class, new FakeSealingNetwork);
 
@@ -185,7 +186,9 @@ foreach (E2E_REPORTS as $number => [$classification, $daysAgo, $metersNorth, $co
 }
 
 // It. 43i (US-060-MON): el resumen diario de lo que espera revisión, de esta organización;
-// make e2e lo lee del correo de desarrollo.
+// make e2e lo lee del correo de desarrollo. It. 64: es un correo, y los correos salen por la
+// cola: este sí va al worker.
+config(['queue.default' => $queue]);
 app()->call([new SendReviewDigests($tenant->id), 'handle']);
 
 /**

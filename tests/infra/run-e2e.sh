@@ -13,10 +13,13 @@ COMPOSE="docker compose --env-file .env.docker"
 HTTP_PORT=${HTTP_PORT:-$(sed -n 's/^HTTP_PORT=\([0-9]*\).*/\1/p' .env.docker | head -1)}
 IMAGE="mcr.microsoft.com/playwright:v$(sed -n 's/.*"@playwright\/test": "\([0-9.]*\)".*/\1/p' package.json)-noble"
 
+# It. 64: los correos salen por la cola; las pruebas leen los de esta corrida, desde aquí.
+export E2E_MAIL_MARK=$(stat -c %s storage/logs/mail.log 2>/dev/null || echo 0)
+
 $COMPOSE exec -T -u workspace app php tests/e2e/fixture.php || { echo "✘ No se pudo preparar la organización de pruebas (¿make up?)."; exit 1; }
 
 # make faces-bench (it. 48) usa la misma organización y el mismo navegador, con su configuración.
 docker run --rm --network host --ipc=host --user "$(id -u):$(id -g)" -e HOME=/tmp \
-  -e E2E_BASE_URL="http://veeduria-e2e.govtrace.localhost:${HTTP_PORT:-8080}" -e CPU_RATE -e RUNS \
+  -e E2E_BASE_URL="http://veeduria-e2e.govtrace.localhost:${HTTP_PORT:-8080}" -e CPU_RATE -e RUNS -e E2E_MAIL_MARK \
   -v "$PWD:/work" -w /work "$IMAGE" \
   npx playwright test -c "${E2E_CONFIG:-tests/e2e/playwright.config.js}" "$@"

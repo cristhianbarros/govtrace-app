@@ -34,5 +34,7 @@
   - En una obra sin ubicación, el ciudadano puede marcar en un mapa dónde queda. Es el lugar de la obra, no el suyo: no sale de la foto ni del GPS del teléfono (R-PRIV-01). No pone la obra en el mapa: la confirma el Administrador (US-035).
   - Se descartó usar la ubicación de la foto del ciudadano: diría dónde estaba la persona, y cualquiera podría mover el pin, porque el ciudadano no tiene cuenta.
 
+**It. 64 (2026-10-17, pedido por el usuario):** el código y el informe se sentían lentos: cada correo salía dentro de la petición, por el SMTP de Gmail (1 a 3 s), y si Gmail fallaba, el ciudadano veía un error aunque el código o el informe ya estaban guardados. Ahora todos los correos de GovTrace salen por la cola `mail`, cifrados y después de guardar, con 5 intentos; en producción los envía su propio worker, para no esperar detrás de la sincronización con el SECOP ni del sellado.
+
 ## Criterios de aceptación
 `specs/criterios/US-059-LEG.yaml` · `features/US-059-LEG.feature`

@@ -2,11 +2,11 @@
 
 namespace App\Domain\CitizenReports\Notifications;
 
+use App\Infrastructure\Notifications\QueuedNotification;
 use Illuminate\Notifications\Messages\MailMessage;
-use Illuminate\Notifications\Notification;
 
 /** US-059-LEG: the code a citizen types to send their report — the proof that the email is theirs. */
-class CitizenReportCode extends Notification
+class CitizenReportCode extends QueuedNotification
 {
     public function __construct(
         public readonly string $code,

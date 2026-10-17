@@ -171,9 +171,11 @@ services:
   # ------------------------------------------------------------- worker ----
   # Laravel ships with QUEUE_CONNECTION=database (D1, specs/PLAN.md it.1):
   # no Redis needed for the MVP queue, so the worker only depends on pgsql.
+  # It. 64: los correos van por la cola "mail", y este worker la atiende
+  # primero. En producción tienen su propio worker (docker-compose.prod.yml).
   worker:
     <<: *app-base
-    command: php artisan queue:work --tries=3 --max-time=3600
+    command: php artisan queue:work --queue=mail,default --tries=3 --max-time=3600
     user: "${PUID:-1000}:${PGID:-1000}"
     environment:
       <<: *app-env

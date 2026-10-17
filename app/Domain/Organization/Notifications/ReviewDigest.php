@@ -2,14 +2,14 @@
 
 namespace App\Domain\Organization\Notifications;
 
+use App\Infrastructure\Notifications\QueuedNotification;
 use Illuminate\Notifications\Messages\MailMessage;
-use Illuminate\Notifications\Notification;
 
 /**
  * US-060-MON (it. 43i): once a day, how many evidences wait for the
  * Administrador's review, with a button to the inbox. Only when there are.
  */
-class ReviewDigest extends Notification
+class ReviewDigest extends QueuedNotification
 {
     public function __construct(
         public readonly int $pending,

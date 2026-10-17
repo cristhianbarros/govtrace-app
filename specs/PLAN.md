@@ -3665,6 +3665,37 @@ Queda para la V2, opcional, con el modelo de financiación (`docs/viabilidad-leg
 - **Historia:** US-009, con un escenario nuevo ("Una foto de 50 megapíxeles se prepara sin agotar la memoria del celular") y la nota en su YAML. Sin historia nueva.
 - **Pruebas:** Vitest: el octavo justo para 3, 4, 12, 50 y 108 MP; el tamaño leído del encabezado; la decodificación reducida y derecha, con el decodificador y el cuadro cerrados; la decodificación entera cuando no se puede, llega pequeña o acostada; el JPEG del mismo canvas; los canvas soltados. Todo visto en rojo antes de implementar.
 
+### Iteración 64 — Los correos salen por la cola
+
+⬜ **Pedida por el usuario el 2026-10-17:** "el envío tanto del código como el informe del ciudadano se nota lento. Haz el análisis y aplica la mejor para que los procesos se muevan por colas". Va antes de la 63.
+
+**Por qué:** los 11 correos de GovTrace salían dentro de la petición, por SMTP. Con Gmail (staging), solo conectarse y cifrar la conexión toma ~0,55 s, medido desde Colombia; con la autenticación y el envío, de 1 a 3 s por correo. El ciudadano esperaba eso al pedir el código y al enviar su informe. Y si Gmail fallaba, veía un error aunque el código o el informe ya estaban guardados: al reintentar, gastaba códigos o la app le decía que ya había informado hoy. La cola existía (`database`, un solo `worker`), pero solo para el sellado, el SECOP y los chequeos.
+
+**Entregable:**
+- **`QueuedNotification`** (`app/Infrastructure/Notifications`), la base de todos los correos:
+  - salen por la cola `mail`;
+  - después de guardar (`ShouldQueueAfterCommit`): no sale un correo de algo que se deshizo, ni lo procesa el worker antes de que exista lo que nombra;
+  - cifrados en la cola (`ShouldBeEncrypted`): llevan códigos, enlaces con su token y correos de personas;
+  - 5 intentos, a los 10 s, 30 s, 1 min y 2 min, dentro de los 10 minutos que vale el código.
+- **En producción, `mail-worker`:** atiende solo la cola `mail` y la mira cada segundo cuando está vacía. Así los correos no esperan detrás de una sincronización con el SECOP (minutos) ni de una ráfaga de sellos. El `worker` atiende primero lo suyo, y los correos cuando está libre. En desarrollo, un solo worker atiende primero `mail`.
+- **El despliegue** apaga también el `mail-worker` en modo mantenimiento, y `make staging-check` lo revisa sano y escribiendo sus logs.
+- **El e2e** espera cada correo (hasta 20 s) y lee solo los de su corrida (`E2E_MAIL_MARK`): antes se quedaba con uno de una corrida anterior a la misma dirección. El fixture envía su resumen diario por la cola de verdad.
+
+**Done-when:**
+- los escenarios nuevos de US-059-LEG, con sus pruebas;
+- una prueba revisa que todos los correos de GovTrace salen por la cola `mail`, cifrados, después de guardar y con 5 intentos;
+- `make e2e` en verde, con los correos llegando por el worker.
+
+**Modelo:** Opus 5.5 (manejo de fallos en un proceso distribuido: reintentos, después de guardar, y datos personales cifrados en la cola).
+
+✅ **Cumplida (2026-10-17).**
+- **Historia:** US-059-LEG, con 2 escenarios nuevos ("El código y el acuse salen por la cola de correos, sin hacer esperar al ciudadano" y "Si el servidor de correo falla, el código se pide igual y el correo se reintenta") y la nota en su YAML. Sin historia nueva.
+- **Pruebas:**
+  - Pest: el código y el acuse, en la cola `mail`, cifrados y después de guardar, sin ningún correo enviado en la petición. Con una cola de verdad y un servidor de correo que no responde: la petición responde igual, el worker reintenta a los 10 s, sin trabajos fallidos, y ni el código ni el correo quedan legibles en la cola. Todos los correos de GovTrace (12), con la misma base. Las dos del ciudadano se vieron en rojo antes de implementar.
+  - `make e2e`: 61 y 1 `fixme`. Encontró que el fixture mandaba su cola a un driver `null`, y el resumen diario, ya encolado, no salía.
+  - La suite completa encontró 8 pruebas que leían el correo recién enviado (`InvitationLinksLogTest` y `MailpitCopyTest`): prueban el envío, no la cola, así que envían en el acto (`notifyNow`).
+  - Corridas: Pest 1244, Vitest 744 (más 1 del arreglo del mapa, en su propio commit), `make e2e` 61 y 1 `fixme`, trace-check 499 de 499.
+
 ### Iteración 63 — Sincronizar el SECOP desde la veeduría
 
 ⬜ **Propuesta por Claude el 2026-10-17,** a partir de una pregunta del usuario ("si el contrato se crea después de la sincronización, ¿tienen forma de sincronizarlo o deben esperar?"). Se implementa cuando la apruebe.

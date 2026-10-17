@@ -181,16 +181,16 @@ code=$("${CURL[@]}" -o /dev/null -w '%{http_code}' "https://$TENANT_HOST:$HTTPS_
 
 # 8. El worker, el calendario y los respaldos, sanos; la configuración, en caché.
 unhealthy=$($COMPOSE ps --format '{{.Service}} {{.Health}}' | awk '$2 != "healthy" {print $1}' | xargs)
-[ -z "$unhealthy" ] && pass "todos los servicios sanos: app, proxy, pgsql, worker, scheduler, backup" || flunk "servicios sin salud: $unhealthy"
+[ -z "$unhealthy" ] && pass "todos los servicios sanos: app, proxy, pgsql, worker, mail-worker, scheduler, backup" || flunk "servicios sin salud: $unhealthy"
 $COMPOSE exec -T app test -f bootstrap/cache/config.php && pass "la configuración está en caché" || flunk "la configuración no está en caché"
 refusal=$($COMPOSE exec -T -u workspace app php artisan demo:prepare 2>&1)
 grep -q 'no corre en producción' <<< "$refusal" && pass "make demo se niega a correr en producción" || flunk "la demostración corrió en producción"
 
-# Los logs: los tres contenedores de la aplicación escriben en su volumen, como su usuario.
-unwritable=$(for service in app worker scheduler; do
+# Los logs: los contenedores de la aplicación escriben en su volumen, como su usuario.
+unwritable=$(for service in app worker mail-worker scheduler; do
     $COMPOSE exec -T -u workspace "$service" php -r 'exit(file_put_contents("storage/logs/staging-check.log", getenv("HOSTNAME")."\n", FILE_APPEND) ? 0 : 1);' >/dev/null 2>&1 || echo "$service"
 done | xargs)
-[ -z "$unwritable" ] && pass "app, worker y scheduler escriben en el volumen de logs" || flunk "no pueden escribir sus logs: $unwritable"
+[ -z "$unwritable" ] && pass "app, worker, mail-worker y scheduler escriben en el volumen de logs" || flunk "no pueden escribir sus logs: $unwritable"
 
 # 8b. It. 42c: mientras un despliegue reemplaza la app, nginx no tiene a quién
 #     pasarle la visita. En vez de un 502, un 503 en español que dice que

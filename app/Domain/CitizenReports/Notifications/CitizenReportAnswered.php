@@ -2,11 +2,11 @@
 
 namespace App\Domain\CitizenReports\Notifications;
 
+use App\Infrastructure\Notifications\QueuedNotification;
 use Illuminate\Notifications\Messages\MailMessage;
-use Illuminate\Notifications\Notification;
 
 /** US-059-LEG: the veeduría answers the citizen, without ever seeing their email. */
-class CitizenReportAnswered extends Notification
+class CitizenReportAnswered extends QueuedNotification
 {
     public function __construct(
         public readonly string $number, // it. 46c: CitizenReport::reference()

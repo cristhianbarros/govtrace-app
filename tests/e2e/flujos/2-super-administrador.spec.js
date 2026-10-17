@@ -122,7 +122,7 @@ test('Invita a otro Super Administrador, que activa su cuenta; lo desactiva y lo
     // El invitado, en su propio navegador, activa su cuenta y llega al panel global.
     const elsewhere = await browser.newContext();
     const invitee = await elsewhere.newPage();
-    await invitee.goto(latestLinkTo(email));
+    await invitee.goto(await latestLinkTo(email));
     await invitee.getByLabel('Su nombre').fill('Luis Gómez');
     await invitee.getByLabel('Contraseña', { exact: true }).fill('Luis#2026clave');
     await invitee.getByLabel('Confirmar contraseña').fill('Luis#2026clave');
