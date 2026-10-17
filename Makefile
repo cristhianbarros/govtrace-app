@@ -29,7 +29,7 @@ HTTP_PORT ?= $(shell sed -n 's/^HTTP_PORT=\([0-9]*\).*/\1/p' .env.docker 2>/dev/
         shell composer artisan migrate psql test test-front test-all lint fmt \
         npm-install npm-build npm-watch xdebug-on xdebug-off hosts image-qa teardown \
         stellar-up contract-test contract-deploy contract-smoke doctor test-stellar \
-        contract-extend testnet-setup testnet-extend smoke-testnet soroban-image secrets-check monitoring-check verify-check e2e faces-bench load-test load-seed \
+        contract-extend testnet-setup testnet-extend smoke-testnet soroban-image secrets-check monitoring-check verify-check e2e faces-bench photo-memory load-test load-seed \
         backup-now backup-list restore-drill backup-check storage-check storage-restore trace-check network-deploy network-extend network-deploy-check \
         admin admin-2fa-reset invites demo audit staging-check staging-aws-check \
         staging-provision staging-secret staging-deploy
@@ -109,6 +109,8 @@ e2e: .env.docker ## End-to-end in a real Chromium against make up: each role's j
 	@bash tests/infra/run-e2e.sh
 faces-bench: .env.docker ## How long the face review of a photo takes (it. 48), in a real Chromium with the CPU slowed like a mid-range phone (needs make up and make npm-build). Options: CPU_RATE=4 RUNS=3
 	@E2E_CONFIG=tests/e2e/bench/playwright.config.js CPU_RATE=$(or $(CPU_RATE),4) RUNS=$(or $(RUNS),3) bash tests/infra/run-e2e.sh
+photo-memory: .env.docker ## How much memory reviewing and attaching a phone photo takes (it. 62b), 12 and 50 megapixels, in a real Chromium: peak and what stays taken (needs make up and make npm-build)
+	@E2E_CONFIG=tests/e2e/bench/playwright.config.js bash tests/infra/run-e2e.sh photo-memory
 load-test: .env.docker ## Load test with k6 (it. 50): public visitors and veedores sending reports. Options: BASE_URL=… PUBLIC_RATE=5 VEEDORES=3 DURATION=2m (see docs/prueba-de-carga.md)
 	@bash tests/infra/run-load.sh
 load-seed: .env.docker ## Seed N pending evidences (default 5000) in the e2e organization, to measure the Administrator's inbox with many (it. 52). Then: KEEP_DATA=1 ADMINS=20 make load-test

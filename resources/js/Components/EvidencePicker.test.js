@@ -201,6 +201,27 @@ describe('Los rostros, difuminados antes de adjuntar (it. 46e)', () => {
         expect(wrapper.props('modelValue')).toHaveLength(1);
         expect(wrapper.findComponent(PhotoReview).props()).toMatchObject({ position: 2, total: 2 });
     });
+
+    // It. 62b: cada foto revisada ocupa unos 11 MB en su canvas. Se suelta apenas se usa
+    // o se descarta: en el iPhone, Safari no libera un canvas hasta que se encoge.
+    it('lets the canvas of each reviewed photo go, once used or discarded', async () => {
+        const canvases = [];
+        draftPhoto.mockImplementation(async (file) => {
+            canvases.push({ width: 1920, height: 1440 });
+            return { name: file.name, canvas: canvases.at(-1), faces: [], detector: 'ok' };
+        });
+        const wrapper = mountPicker();
+        await choose(wrapper, [photo(1), photo(2)]);
+
+        wrapper.findComponent(PhotoReview).vm.$emit('use', { dismissed: [], manual: [] });
+        await flushPromises();
+        expect(canvases[0]).toEqual({ width: 0, height: 0 });
+        expect(canvases[1]).toEqual({ width: 1920, height: 1440 });
+
+        wrapper.findComponent(PhotoReview).vm.$emit('discard');
+        await flushPromises();
+        expect(canvases[1]).toEqual({ width: 0, height: 0 });
+    });
 });
 
 // It. 46h (US-059-LEG): el mismo selector para el ciudadano — de 1 a 3 fotos, sin PDF.

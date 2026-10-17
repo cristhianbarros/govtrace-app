@@ -57,12 +57,87 @@ function concat(parts) {
 
 const UNREADABLE_PHOTO = 'No se pudo leer la foto. Tómela de nuevo con la cámara del teléfono.';
 
+// It. 62b: una foto de muchos megapíxeles se decodificaba entera antes de
+// reducirla — una de 50 MP ocupa 200 MB —, y en un celular de gama media el
+// sistema cerraba la app. Un JPEG se puede decodificar ya reducido, en octavos
+// de su tamaño, sin pasar por el tamaño completo: lo hace ImageDecoder.
+
+/** El SOF (C0 a CF, menos C4, C8 y CC), donde un JPEG dice su ancho y su alto, suele estar en los primeros KB. */
+const JPEG_HEADER_BYTES = 256 * 1024;
+const isFrameStart = (marker) => marker >= 0xc0 && marker <= 0xcf && ![0xc4, 0xc8, 0xcc].includes(marker);
+
+/** El ancho y el alto de un JPEG, leídos de su encabezado, sin decodificarlo; null si no los encuentra. */
+export function jpegSize(bytes) {
+    if (bytes[0] !== 0xff || bytes[1] !== 0xd8) {
+        return null;
+    }
+    for (let offset = 2; offset + 9 <= bytes.length && bytes[offset] === 0xff; ) {
+        const marker = bytes[offset + 1];
+        if (isFrameStart(marker)) {
+            return { width: (bytes[offset + 7] << 8) | bytes[offset + 8], height: (bytes[offset + 5] << 8) | bytes[offset + 6] };
+        }
+        if (marker === 0xda) {
+            return null;
+        }
+        offset += 2 + ((bytes[offset + 2] << 8) | bytes[offset + 3]);
+    }
+    return null;
+}
+
+/** El menor octavo de la foto cuyo lado mayor todavía llega a maxSide (un JPEG se decodifica de 1/8 a 8/8). */
+export function jpegDecodeSize(width, height, maxSide = MAX_PHOTO_SIDE) {
+    const eighths = Math.min(8, Math.ceil((maxSide * 8) / Math.max(width, height)));
+    return { width: Math.ceil((width * eighths) / 8), height: Math.ceil((height * eighths) / 8) };
+}
+
+/** ImageDecoder, solo donde lo que decodifica trae el giro del EXIF (VideoFrame.rotation) y el canvas lo aplica. */
+const reducedDecoder = () => (typeof ImageDecoder !== 'undefined' && typeof VideoFrame !== 'undefined' && 'rotation' in VideoFrame.prototype ? ImageDecoder : null);
+
+/**
+ * It. 62b: el JPEG decodificado ya reducido, derecho; null si no se puede (otro
+ * formato, un navegador sin ImageDecoder) o si no hace falta. El cuadro que da
+ * ImageDecoder se copia a un ImageBitmap y se cierra: dibujado directo en el
+ * canvas, Chromium dejaba tomada su memoria, foto tras foto.
+ */
+export async function decodeReduced(file, { Decoder = reducedDecoder(), toBitmap = (frame) => createImageBitmap(frame) } = {}) {
+    if (!Decoder) {
+        return null;
+    }
+    const size = jpegSize(new Uint8Array(await file.slice(0, JPEG_HEADER_BYTES).arrayBuffer()));
+    const wanted = size && jpegDecodeSize(size.width, size.height);
+    if (!wanted || wanted.width >= size.width) {
+        return null;
+    }
+    let decoder = null;
+    let frame = null;
+    try {
+        decoder = new Decoder({ data: file.stream(), type: 'image/jpeg', desiredWidth: wanted.width, desiredHeight: wanted.height });
+        frame = (await decoder.decode()).image;
+        const image = await toBitmap(frame);
+        // El tamaño pedido es una sugerencia: si llega más pequeña de lo necesario, o acostada, se decodifica entera.
+        if (Math.max(image.width, image.height) < MAX_PHOTO_SIDE || image.width !== frame.displayWidth || image.height !== frame.displayHeight) {
+            image.close();
+            return null;
+        }
+        return { image, width: image.width, height: image.height };
+    } catch {
+        return null;
+    } finally {
+        frame?.close();
+        decoder?.close();
+    }
+}
+
 /**
  * El navegador decodifica la foto, HEIC incluida donde la soporta (Safari,
  * que es donde el iPhone la produce). "from-image" respeta la orientación
  * del EXIF, así la foto queda derecha aunque el EXIF se vaya.
  */
 async function decodeImage(file) {
+    const reduced = await decodeReduced(file);
+    if (reduced) {
+        return reduced;
+    }
     try {
         const image = await createImageBitmap(file, { imageOrientation: 'from-image' });
         return { image, width: image.width, height: image.height };
@@ -81,15 +156,28 @@ async function decodeImage(file) {
     }
 }
 
-function encodeJpeg(image, width, height, quality) {
+/** It. 62b: un canvas ocupa su memoria hasta que se encoge (Safari, en el iPhone, no la suelta antes). */
+export function releaseCanvas(canvas) {
+    canvas.width = 0;
+    canvas.height = 0;
+}
+
+function toJpeg(canvas, quality) {
+    return new Promise((resolve, reject) => {
+        canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error(UNREADABLE_PHOTO))), 'image/jpeg', quality);
+    });
+}
+
+async function encodeJpeg(image, width, height, quality) {
     const canvas = document.createElement('canvas');
     canvas.width = width;
     canvas.height = height;
     canvas.getContext('2d').drawImage(image, 0, 0, width, height);
-
-    return new Promise((resolve, reject) => {
-        canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error(UNREADABLE_PHOTO))), 'image/jpeg', quality);
-    });
+    try {
+        return await toJpeg(canvas, quality);
+    } finally {
+        releaseCanvas(canvas);
+    }
 }
 
 export const photoName = (file) => `${file.name.replace(/\.[^.]*$/, '') || 'foto'}.jpg`;
@@ -116,8 +204,8 @@ export async function photoCanvas(file, { decode = decodeImage, createCanvas = (
     return canvas;
 }
 
-/** It. 46e: el canvas, ya difuminado, en JPEG y sin metadatos. */
-export async function photoFile(canvas, name, { encode = encodeJpeg } = {}) {
-    const jpeg = await encode(canvas, canvas.width, canvas.height, JPEG_QUALITY);
+/** It. 46e: el canvas, ya difuminado, en JPEG y sin metadatos. It. 62b: el mismo canvas, sin dibujarlo en otro. */
+export async function photoFile(canvas, name, { encode = toJpeg } = {}) {
+    const jpeg = await encode(canvas, JPEG_QUALITY);
     return new File([stripJpegMetadata(new Uint8Array(await jpeg.arrayBuffer()))], name, { type: 'image/jpeg' });
 }

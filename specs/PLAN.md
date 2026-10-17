@@ -3631,6 +3631,40 @@ Queda para la V2, opcional, con el modelo de financiación (`docs/viabilidad-leg
   - Todo visto en rojo antes de implementar, salvo los dos casos sin ruta (el Inicio y Nuevo reporte), que ya pasaban porque no había ruta en ninguna parte.
   - Corridas: Pest 1241, Vitest 737, `make e2e` 61 y 1 `fixme`, trace-check 496 de 496.
 
+### Iteración 62b — La foto del celular, sin agotar su memoria
+
+⬜ **Pedida por el usuario el 2026-10-17:** al subir la foto del ciudadano desde el celular apareció el mensaje de "low memory" y la app se reinició. Pidió validar si un bucle consumía la memoria y optimizar lo necesario. Va antes de la 63.
+
+**Por qué:** medido en Chromium (`make photo-memory`, nuevo), no hay bucle ni fuga: foto tras foto la memoria vuelve a su nivel. Lo que hay es un pico por foto, porque se decodifica entera antes de reducirla a 1920 px: +72 a +93 MB con una de 12 megapíxeles, y +202 MB con una de 50 (8160 x 6120 x 4 bytes), que hoy toman muchos celulares de gama media. Con la cámara del sistema todavía abierta, ese pico basta para que el sistema cierre la app.
+
+**Entregable:**
+- **Un JPEG se decodifica ya reducido** (`decodeReduced`, en `photos.js`), en octavos de su tamaño: el menor que deja su lado mayor en 1920 px o más (una de 50 MP, a un cuarto). Lo hace `ImageDecoder` (WebCodecs), solo donde el cuadro trae el giro del EXIF (`VideoFrame.rotation`). El tamaño se lee del encabezado del JPEG, sin decodificarlo.
+- **Donde no se puede, como antes:** sin `ImageDecoder` (Safari, Firefox), con otro formato, o si el cuadro llega más pequeño de lo necesario o acostado, la foto se decodifica entera.
+- **El JPEG sale del mismo canvas revisado,** sin dibujarlo en un segundo canvas.
+- **Los canvas de cada foto se sueltan** apenas se usa o se descarta (el borrador y la vista previa, unos 11 MB cada uno): Safari, en el iPhone, no libera un canvas hasta que se encoge.
+- Sirve igual al veedor y al ciudadano: comparten el selector (`EvidencePicker`).
+
+**Done-when:**
+- el escenario nuevo de US-009, con su prueba;
+- `make photo-memory`: la foto de 50 MP con un pico menor que antes y sin memoria que quede tomada foto tras foto, y la de 50 MP horizontal con sus 3 rostros encontrados (llegó entera y derecha al detector).
+
+**Modelo:** Opus 5.5 (la foto antes de su huella: R-HASH-01, R-PRIV-05 y R-PRIV-06).
+
+✅ **Cumplida (2026-10-17).**
+- **Cómo quedó:**
+  - **`decodeReduced`:** lee el ancho y el alto del SOF del JPEG (los primeros 256 KB), pide a `ImageDecoder` el octavo justo, copia el cuadro a un `ImageBitmap` y cierra el cuadro y el decodificador. Medido: dibujar el `VideoFrame` directo en el canvas dejaba tomados unos 12 MB por foto; la copia, nada.
+  - **`photoFile`** codifica el canvas revisado con `toBlob`. **`releaseCanvas`** encoge el borrador (`EvidencePicker`, al pasar a la siguiente foto), la vista previa (`PhotoReview`, al cerrarse) y el canvas temporal de `optimizePhoto`.
+- **Medido con `make photo-memory`** (Chromium, MB de todos sus procesos):
+
+  | Foto | Pico antes | Pico después |
+  |---|---|---|
+  | 12 MP, vertical | +72 a +93 | +61 a +81 |
+  | 50 MP, vertical | +202 | +59 a +66 |
+
+  Después de cada foto la memoria vuelve a su nivel, antes y después del cambio. La primera foto suma unos 23 MB una sola vez: el detector de rostros.
+- **Historia:** US-009, con un escenario nuevo ("Una foto de 50 megapíxeles se prepara sin agotar la memoria del celular") y la nota en su YAML. Sin historia nueva.
+- **Pruebas:** Vitest: el octavo justo para 3, 4, 12, 50 y 108 MP; el tamaño leído del encabezado; la decodificación reducida y derecha, con el decodificador y el cuadro cerrados; la decodificación entera cuando no se puede, llega pequeña o acostada; el JPEG del mismo canvas; los canvas soltados. Todo visto en rojo antes de implementar.
+
 ### Iteración 63 — Sincronizar el SECOP desde la veeduría
 
 ⬜ **Propuesta por Claude el 2026-10-17,** a partir de una pregunta del usuario ("si el contrato se crea después de la sincronización, ¿tienen forma de sincronizarlo o deben esperar?"). Se implementa cuando la apruebe.

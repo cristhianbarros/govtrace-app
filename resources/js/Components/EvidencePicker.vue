@@ -8,6 +8,7 @@ import { computed, ref, shallowRef } from 'vue';
 import PhotoReview from '@/Components/PhotoReview.vue';
 import { acceptedTypes, cannotAdd } from '@/lib/evidence/attachments.js';
 import { draftPhoto, finishPhoto, kindOf, prepareEvidence } from '@/lib/evidence/prepare.js';
+import { releaseCanvas } from '@/lib/evidence/photos.js';
 
 const evidences = defineModel({ type: Array, default: () => [] });
 const processing = defineModel('processing', { type: Boolean, default: false });
@@ -66,7 +67,9 @@ async function onChoose(event) {
     event.target.value = '';
 }
 
+// It. 62b: la foto revisada ya es un archivo (o no se usó): su canvas se suelta ya.
 function nextPhoto() {
+    releaseCanvas(toReview.value[0].canvas);
     toReview.value = toReview.value.slice(1);
     reviewed.value = toReview.value.length === 0 ? 0 : reviewed.value + 1;
     processing.value = toReview.value.length > 0;
