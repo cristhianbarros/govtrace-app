@@ -4,8 +4,9 @@
 // lo que no vio (un rostro lejano, una placa) tocando la foto, y puede quitar
 // un recuadro que no es un rostro: la veeduría lo verá en la Bandeja.
 import { HandRaisedIcon } from '@heroicons/vue/24/solid';
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { containsPoint, pointOnImage, renderPreview, zoneAround } from '@/lib/evidence/blur.js';
+import { releaseCanvas } from '@/lib/evidence/photos.js';
 
 const props = defineProps({
     draft: { type: Object, required: true }, // { name, canvas, faces, detector }
@@ -62,6 +63,8 @@ function toggle(index) {
 const render = () => preview.value && renderPreview(preview.value, props.draft.canvas, zones.value);
 onMounted(render);
 watch(zones, render);
+// It. 62b: la vista previa es del tamaño de la foto (unos 11 MB): se suelta al cerrar la revisión.
+onBeforeUnmount(() => preview.value && releaseCanvas(preview.value));
 </script>
 
 <template>

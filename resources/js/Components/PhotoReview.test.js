@@ -97,6 +97,17 @@ describe('PhotoReview', () => {
         expect(button(wrapper, 'Usar esta foto').attributes('disabled')).toBeUndefined();
     });
 
+    it('lets its preview canvas go when the review closes (it. 62b)', () => {
+        const wrapper = review();
+        const preview = wrapper.get('canvas').element;
+        preview.width = 1920;
+        preview.height = 1440;
+
+        wrapper.unmount();
+
+        expect([preview.width, preview.height]).toEqual([0, 0]);
+    });
+
     it('lets the photo go without attaching it', async () => {
         const wrapper = review();
 

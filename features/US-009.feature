@@ -16,6 +16,13 @@ Característica: Adjuntar fotos o PDF con privacidad y hash en el teléfono
     Y se calcula el SHA-256 de cada foto ya optimizada antes de enviarla
 
   @complexity:medium
+  Escenario: Una foto de 50 megapíxeles se prepara sin agotar la memoria del celular
+    Cuando adjunto una foto de 8160x6120 px tomada con el celular en vertical
+    Entonces la app la decodifica ya reducida, a 1530x2040 px, sin pasar por su tamaño completo
+    Y la foto queda derecha, con lado mayor de 1920 px
+    Y si el navegador no puede decodificarla reducida, la decodifica entera, como antes
+
+  @complexity:medium
   Escenario: El servidor verifica que el hash coincide antes de encolar el sellado
     Dado que adjunté 1 foto y la app calculó su SHA-256
     Cuando el servidor recibe el reporte y el hash que recalcula coincide
