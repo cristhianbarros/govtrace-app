@@ -3696,6 +3696,46 @@ Queda para la V2, opcional, con el modelo de financiación (`docs/viabilidad-leg
   - La suite completa encontró 8 pruebas que leían el correo recién enviado (`InvitationLinksLogTest` y `MailpitCopyTest`): prueban el envío, no la cola, así que envían en el acto (`notifyNow`).
   - Corridas: Pest 1244, Vitest 744 (más 1 del arreglo del mapa, en su propio commit), `make e2e` 61 y 1 `fixme`, trace-check 499 de 499.
 
+### Iteración 65 — Del informe ciudadano a una evidencia (US-068)
+
+⬜ **Pedida por el usuario el 2026-10-17:** "si no ingreso no sé que hay uno sin validar" y "el informe no tendría un uso más allá de lo informativo". Decisiones del usuario en `specs/historias/US-068.md`; discovery corto en `sessions/cristhian-barros/`. **Aprobada** ("arranca la 65. Que el administrador asigne al veedor"). Se parte en dos.
+
+#### 65a — La pantalla de los informes avisa, con pestañas y filtros
+
+**Entregable:**
+- El número rojo en "Informes ciudadanos" con los informes "Nuevo", como la Bandeja (`citizenReportsPending`, compartido como `inboxPending`).
+- El resumen diario de las 07:00 suma "N informe(s) ciudadano(s) espera(n) respuesta." y llega también sin evidencias por revisar (enmienda de US-060-MON).
+- Pestañas por estado en vez del select: Nuevos (la que abre), Visita asignada, Documentados, Respondidos, Descartados y Todos. Cada una trae sus informes al tocarla, de 20 en 20, y la dirección la guarda.
+- Filtros como los de la Bandeja: obra y veedor de la visita.
+
+**Done-when:** los escenarios de US-068 de los avisos, las pestañas y los filtros, y el de US-059-LEG con pestañas, con sus pruebas.
+
+**Modelo:** Sonnet medium (interfaz y una consulta). En Opus, en la misma sesión que la 65b.
+
+#### 65b — El Administrador manda a un veedor, y el ciudadano se entera
+
+**Entregable:**
+- "Pedir a un veedor que lo documente", con el último veedor que reportó la obra ya elegido; solo veedores activos con sus impedimentos declarados. Cambiar el veedor.
+- "Visitas pendientes" arriba de "Nuevo reporte": la obra, el mensaje y las fotos del ciudadano (nunca su correo); al tocarla, el reporte abre con esa obra y lo que informó el ciudadano. "No puedo ir" devuelve la visita al Administrador.
+- El próximo reporte del veedor asignado sobre esa obra queda ligado al informe; la Bandeja dice a qué informe responde. Publicada la evidencia, el informe queda "Documentado"; rechazada, la visita vuelve a sus pendientes.
+- Dos correos al ciudadano, por la cola (it. 64): al asignar y al publicar, con el enlace. Sin el nombre del veedor.
+- Todo en el log de auditoría.
+
+**Done-when:** los escenarios de US-068 de la visita, con sus pruebas, y un e2e: el Administrador asigna, el veedor reporta desde la visita, la Bandeja publica y al ciudadano le llegan los dos correos.
+
+**Modelo:** Opus 5.5 (qué cuenta como evidencia, permisos entre roles y datos personales).
+
+### Iteración 66 — Darle visibilidad pública a lo que informan los ciudadanos (propuesta)
+
+⬜ **Propuesta por Claude el 2026-10-17,** a partir de una pregunta del usuario: el informe ciudadano debería ser "un medio de presión", no "un informe y ya". Necesita los estados de la 65 para medir la respuesta de la veeduría. **Por decidir con el usuario:** el "Yo también lo vi", los días sin respuesta antes de sugerir la Contraloría (15, propuesto) y si el tiempo de respuesta de cada veeduría es público.
+
+**Entregable propuesto:**
+- En la obra y en su tarjeta del mapa, cuántos ciudadanos informaron y desde cuándo, solo el número: los mensajes y las fotos no se publican (no tienen ubicación ni hora verificadas).
+- "Yo también lo vi": otro ciudadano se suma a un informe de la misma obra con su correo verificado, uno por persona y obra.
+- Si la veeduría responde: "Sin respuesta de la veeduría desde hace N días" en la obra, y en las estadísticas públicas, los informes atendidos y el tiempo de respuesta.
+- Sin respuesta en N días, al ciudadano le llega "Lleve su caso a la Contraloría", con el contrato, la entidad y su mensaje listos (los canales de la it. 44a).
+- La evidencia publicada se comparte con una vista previa (Open Graph): la foto sellada, el estado, el valor del contrato y la entidad.
+
 ### Iteración 63 — Sincronizar el SECOP desde la veeduría
 
 ⬜ **Propuesta por Claude el 2026-10-17,** a partir de una pregunta del usuario ("si el contrato se crea después de la sincronización, ¿tienen forma de sincronizarlo o deben esperar?"). Se implementa cuando la apruebe.

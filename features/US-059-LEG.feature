@@ -125,11 +125,12 @@ Característica: Informar a la veeduría de lo que vi en una obra
     Entonces veo 40 informes
 
   @complexity:low
+  # It. 65 (US-068): el estado se elige con pestañas, no con una lista.
   Escenario: Filtro los informes por estado
-    Dado que hay informes nuevos, atendidos y descartados
-    Cuando filtro el estado por "Por responder"
+    Dado que hay informes nuevos, respondidos y descartados
+    Cuando toco la pestaña "Nuevos"
     Entonces veo solo los informes nuevos
-    Cuando filtro el estado por "Todos"
+    Cuando toco la pestaña "Todos"
     Entonces veo todos los informes
 
   # It. 58: también de una obra que ningún veedor ha visitado, y sin ubicación todavía.
