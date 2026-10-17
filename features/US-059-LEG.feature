@@ -17,6 +17,22 @@ Característica: Informar a la veeduría de lo que vi en una obra
     Entonces veo "Su informe llegó a la veeduría. Si lo atiende, le responde a su correo."
     Y me llega un correo con la referencia de mi informe
 
+  @complexity:medium
+  Escenario: El código y el acuse salen por la cola de correos, sin hacer esperar al ciudadano
+    Cuando pido un código para "vecina@correo.co" y autorizo el tratamiento de mis datos
+    Entonces la pantalla me responde sin esperar al servidor de correo
+    Y el correo con el código queda en la cola de correos, cifrado
+    Cuando envío el código y mi mensaje
+    Entonces el correo con la referencia de mi informe también sale por la cola de correos
+
+  @complexity:high @negative
+  Escenario: Si el servidor de correo falla, el código se pide igual y el correo se reintenta
+    Dado que el servidor de correo no responde
+    Cuando pido un código para "vecina@correo.co" y autorizo el tratamiento de mis datos
+    Entonces veo "Le enviamos un código de 6 dígitos a vecina@correo.co. Vence en 10 minutos."
+    Y el correo se intenta de nuevo más tarde, hasta 5 veces
+    Y ni el código ni mi correo quedan legibles en la cola
+
   @complexity:medium @negative
   Escenario: Sin un código válido no se recibe el informe
     Dado que pedí un código

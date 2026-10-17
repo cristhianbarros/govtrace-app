@@ -14,6 +14,9 @@ use Illuminate\Support\Facades\Notification;
  * muestra los enlaces de los correos más recientes: quién los recibe, qué
  * dicen y a dónde llevan. El archivo es propio (storage/logs/mail.log), no el
  * log de la aplicación, que puede pesar cientos de MB.
+ *
+ * It. 64: los correos salen por la cola; aquí se prueba el envío, así que
+ * se envían en el acto (notifyNow).
  */
 
 beforeEach(function () {
@@ -32,7 +35,7 @@ afterEach(function () {
 
 function mailTo(string $email, string $name, string $url): void
 {
-    (new User(['name' => $name, 'email' => $email]))->notify(new WelcomeNotification($url, 48));
+    (new User(['name' => $name, 'email' => $email]))->notifyNow(new WelcomeNotification($url, 48));
 }
 
 it('sends the mail of the log mailer to its own file, not to the application log', function () {
@@ -62,7 +65,7 @@ it('reads the links of the mails sent, the newest first, with who got them', fun
 it('keeps a long link whole, reads a password recovery link, and decodes the subject', function () {
     $long = 'http://organizacion-con-un-subdominio-muy-largo.govtrace.localhost:8080/set-password/123456?token='.str_repeat('abcdef0123456789', 4);
     mailTo('ana@veeduria.org', 'Ana', $long);
-    (new User(['name' => 'Carlos', 'email' => 'carlos@correo.co']))->notify(new ResetPasswordLink('http://veeduria-smr.govtrace.localhost:8080/reset-password/tok?email=carlos%40correo.co', 'tok'));
+    (new User(['name' => 'Carlos', 'email' => 'carlos@correo.co']))->notifyNow(new ResetPasswordLink('http://veeduria-smr.govtrace.localhost:8080/reset-password/tok?email=carlos%40correo.co', 'tok'));
 
     $links = SentLinks::fromFile($this->mailLog);
 
@@ -108,7 +111,7 @@ it('make invites: lists them, or says there are none', function () {
 });
 
 it('make invites: shows the code a citizen got to inform a veeduría, for a live demonstration (it. 44f)', function () {
-    Notification::route('mail', 'vecina@correo.co')->notify(new CitizenReportCode('042917', 'Veeduría Ciudadana Comuna 13 (demo)', 10));
+    Notification::route('mail', 'vecina@correo.co')->notifyNow(new CitizenReportCode('042917', 'Veeduría Ciudadana Comuna 13 (demo)', 10));
 
     [$code] = SentLinks::fromFile($this->mailLog);
 

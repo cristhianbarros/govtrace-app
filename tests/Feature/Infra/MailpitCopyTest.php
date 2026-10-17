@@ -11,6 +11,9 @@ use Illuminate\Support\Facades\Mail;
  * local (http://mailpit.govtrace.localhost:8080) donde se lee como lo vería
  * quien lo recibe. El correo sigue saliendo a su mailer: en local, el archivo
  * que leen make invites y make e2e. En producción nunca se copia.
+ *
+ * It. 64: los correos salen por la cola; aquí se prueba el envío, así que
+ * se envían en el acto (notifyNow).
  */
 
 beforeEach(function () {
@@ -25,7 +28,7 @@ beforeEach(function () {
 function sendWelcome(): void
 {
     (new User(['name' => 'Carlos Veedor', 'email' => 'carlos@correo.co']))
-        ->notify(new WelcomeNotification('http://veeduria-smr.govtrace.localhost:8080/set-password/2?token=bbb222', 48));
+        ->notifyNow(new WelcomeNotification('http://veeduria-smr.govtrace.localhost:8080/set-password/2?token=bbb222', 48));
 }
 
 function mailpitCopies(): Collection

@@ -48,59 +48,67 @@ export async function logIn(page, base, email, password = PASSWORD) {
 const MAIL_LOG = fileURLToPath(new URL('../../../storage/logs/mail.log', import.meta.url));
 const TAIL_BYTES = 4 * 1024 * 1024;
 const LINK = /https?:\/\/[^\s"'<>\])]+\/(?:set-password|reset-password)\/[^\s"'<>\])]+/;
+// It. 64: los correos salen por la cola, un momento después de la acción. Se leen
+// los de esta corrida (E2E_MAIL_MARK: dónde terminaba el log al empezar, run-e2e.sh),
+// así un correo de una corrida anterior a la misma dirección no pasa por el nuevo.
+const RUN_MARK = Number(process.env.E2E_MAIL_MARK ?? 0);
+const MAIL_WAIT_MS = 20_000;
 
-/** The link of the newest mail to $email, on this run's port (the mail log can be large: only its end is read). */
-export function latestLinkTo(email) {
-    const file = openSync(MAIL_LOG, 'r');
+/** The mails of this run, newest first (the mail log can be large: only its end is read). */
+function mailsOfThisRun() {
+    let file;
+    try {
+        file = openSync(MAIL_LOG, 'r');
+    } catch {
+        return [];
+    }
     const size = fstatSync(file).size;
-    const buffer = Buffer.alloc(Math.min(size, TAIL_BYTES));
-    readSync(file, buffer, 0, buffer.length, size - buffer.length);
+    const from = Math.max(size >= RUN_MARK ? RUN_MARK : 0, size - TAIL_BYTES);
+    const buffer = Buffer.alloc(size - from);
+    readSync(file, buffer, 0, buffer.length, from);
     closeSync(file);
+    return buffer.toString('utf8').split(/^(?=\[\d{4}-\d\d-\d\d \d\d:\d\d:\d\d\] )/m).reverse();
+}
 
-    const entries = buffer.toString('utf8').split(/^(?=\[\d{4}-\d\d-\d\d \d\d:\d\d:\d\d\] )/m).reverse();
-    for (const entry of entries) {
-        const link = entry.includes(email) ? entry.match(LINK) : null;
-        if (link) {
-            const url = new URL(link[0]);
-            url.port = organization.port;
-            return url.toString();
+/** What `find` picks from this run's mails, newest first, once the queue sends it. */
+async function waitForMail(find, missing) {
+    const deadline = Date.now() + MAIL_WAIT_MS;
+    for (;;) {
+        const found = find(mailsOfThisRun());
+        if (found) {
+            return found;
         }
+        if (Date.now() > deadline) {
+            throw new Error(`${missing} en storage/logs/mail.log (esperado ${MAIL_WAIT_MS / 1000} s)`);
+        }
+        await new Promise((resolve) => setTimeout(resolve, 250));
     }
-    throw new Error(`No hay un correo con enlace para ${email} en storage/logs/mail.log`);
 }
 
-/** It. 44f: the newest mail to $email, read the same way — its body, to find what the citizen got. */
-export function latestMailTo(email) {
-    const file = openSync(MAIL_LOG, 'r');
-    const size = fstatSync(file).size;
-    const buffer = Buffer.alloc(Math.min(size, TAIL_BYTES));
-    readSync(file, buffer, 0, buffer.length, size - buffer.length);
-    closeSync(file);
-
-    const entry = buffer.toString('utf8').split(/^(?=\[\d{4}-\d\d-\d\d \d\d:\d\d:\d\d\] )/m).reverse().find((candidate) => candidate.includes(email));
-    if (!entry) {
-        throw new Error(`No hay un correo para ${email} en storage/logs/mail.log`);
-    }
-    return entry;
+/** The link of the newest mail to $email, on this run's port. */
+export function latestLinkTo(email) {
+    return waitForMail((entries) => {
+        for (const entry of entries) {
+            const link = entry.includes(email) ? entry.match(LINK) : null;
+            if (link) {
+                const url = new URL(link[0]);
+                url.port = organization.port;
+                return url.toString();
+            }
+        }
+        return null;
+    }, `No llegó un correo con enlace para ${email}`);
 }
+
+/** It. 44f: the newest mail to $email — its body, to find what the citizen got. */
+export const latestMailTo = (email) => waitForMail((entries) => entries.find((entry) => entry.includes(email)), `No llegó un correo para ${email}`);
 
 /** It. 43i: the newest mail to $email that says $text — when that address gets other mails too. */
-export function latestMailAbout(email, text) {
-    const file = openSync(MAIL_LOG, 'r');
-    const size = fstatSync(file).size;
-    const buffer = Buffer.alloc(Math.min(size, TAIL_BYTES));
-    readSync(file, buffer, 0, buffer.length, size - buffer.length);
-    closeSync(file);
-
-    const entry = buffer.toString('utf8').split(/^(?=\[\d{4}-\d\d-\d\d \d\d:\d\d:\d\d\] )/m).reverse().find((candidate) => candidate.includes(email) && candidate.includes(text));
-    if (!entry) {
-        throw new Error(`No hay un correo para ${email} que diga "${text}" en storage/logs/mail.log`);
-    }
-    return entry;
-}
+export const latestMailAbout = (email, text) =>
+    waitForMail((entries) => entries.find((entry) => entry.includes(email) && entry.includes(text)), `No llegó un correo para ${email} que diga "${text}"`);
 
 /** It. 44f: the 6-digit code a citizen got to inform a veeduría. */
-export const latestCodeTo = (email) => latestMailTo(email).match(/es: (\d{6})/)[1];
+export const latestCodeTo = async (email) => (await waitForMail((entries) => entries.find((entry) => entry.includes(email) && /es: \d{6}/.test(entry)), `No llegó el código para ${email}`)).match(/es: (\d{6})/)[1];
 
 /** A link of this environment, on this run's port (the one of APP_URL can differ in CI). */
 export function onThisPort(link) {

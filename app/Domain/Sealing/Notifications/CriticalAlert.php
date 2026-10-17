@@ -2,16 +2,16 @@
 
 namespace App\Domain\Sealing\Notifications;
 
+use App\Infrastructure\Notifications\QueuedNotification;
 use App\Infrastructure\Notifications\WebhookChannel;
 use Illuminate\Notifications\AnonymousNotifiable;
 use Illuminate\Notifications\Messages\MailMessage;
-use Illuminate\Notifications\Notification;
 
 /**
  * US-022: una alerta para el Super Administrador, por Email a cada uno y
  * una sola vez al webhook del equipo (SuperAdminAlerts::send).
  */
-abstract class CriticalAlert extends Notification
+abstract class CriticalAlert extends QueuedNotification
 {
     abstract public function subject(): string;
 

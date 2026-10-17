@@ -33,6 +33,7 @@ criterios_aceptacion:
     - "Dos pasos en la misma obra: el correo, y después el código y el mensaje; botones de 44 px y letra de 16 px"
   casos_edge:
     - "Pedir un código nuevo anula el anterior"
+    - "(It. 64, 2026-10-17, pedido por el usuario: el código y el informe se sentían lentos) El código, el acuse y la respuesta salen por la cola de correos, después de guardar: la pantalla no espera al servidor de correo (con Gmail, 1 a 3 s por correo). Si el servidor falla, el correo se reintenta hasta 5 veces (a los 10 s, 30 s, 1 min y 2 min), sin error para el ciudadano. En la cola van cifrados: ni el código ni el correo quedan legibles. Igual todos los correos de GovTrace"
     - "(It. 58) Un ciudadano y un veedor informan a la vez del mismo contrato sin ficha: la obra queda con una sola ficha, con el informe y el reporte"
 validacion_smart:
   specific: true

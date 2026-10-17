@@ -2,11 +2,11 @@
 
 namespace App\Domain\Organization\Notifications;
 
+use App\Infrastructure\Notifications\QueuedNotification;
 use Illuminate\Notifications\Messages\MailMessage;
-use Illuminate\Notifications\Notification;
 
 /** US-062-ALT (it. 43k): why the alta a veeduría asked for was not approved. */
-class OrganizationRequestRejected extends Notification
+class OrganizationRequestRejected extends QueuedNotification
 {
     public function __construct(public readonly string $organization, public readonly string $reason) {}
 

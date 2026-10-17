@@ -2,14 +2,14 @@
 
 namespace App\Domain\Auth\Notifications;
 
+use App\Infrastructure\Notifications\QueuedNotification;
 use Illuminate\Notifications\Messages\MailMessage;
-use Illuminate\Notifications\Notification;
 
 /**
  * US-039-USR: the link to choose a new password. It lasts 60 minutes and
  * works once; the token only travels here, the database keeps its hash.
  */
-class ResetPasswordLink extends Notification
+class ResetPasswordLink extends QueuedNotification
 {
     public function __construct(
         public readonly string $url,

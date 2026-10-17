@@ -17,8 +17,12 @@ use App\Infrastructure\Tenancy\Tenant;
 use Database\Seeders\DivipolaSeeder;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Notifications\AnonymousNotifiable;
+use Illuminate\Notifications\ChannelManager;
+use Illuminate\Notifications\SendQueuedNotifications;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Testing\TestResponse;
@@ -89,7 +93,7 @@ function sendCitizenReport(array $data = []): TestResponse
 {
     return test()->post(CITIZEN_HOST.'/citizen-reports', [
         'email' => CITIZEN,
-        'code' => mailedCode(),
+        'code' => array_key_exists('code', $data) ? $data['code'] : mailedCode(),
         'worksite_id' => test()->worksite->public_id,
         'message' => 'La obra lleva dos semanas sin trabajadores y el cerramiento se cayó.',
         ...$data,
@@ -131,6 +135,73 @@ it('El ciudadano informa a la veeduría con su correo verificado: a code by mail
         ->and($report->photo_paths)->toHaveCount(1)
         ->and($report->data_policy_version)->toBe(DataPolicy::VERSION);
     Notification::assertSentOnDemand(CitizenReportReceived::class, fn (CitizenReportReceived $notification, array $channels, AnonymousNotifiable $notifiable) => $notifiable->routes['mail'] === CITIZEN && $notification->number === $report->reference());
+});
+
+/** It. 64: the mails of the citizen reports, queued on the mail queue (with Queue::fake). */
+function queuedMail(string $notification): SendQueuedNotifications
+{
+    $found = null;
+    Queue::assertPushedOn('mail', SendQueuedNotifications::class, function (SendQueuedNotifications $job) use ($notification, &$found) {
+        $found = $job->notification instanceof $notification ? $job : $found;
+
+        return $job->notification instanceof $notification;
+    });
+
+    return $found;
+}
+
+it('El código y el acuse salen por la cola de correos, sin hacer esperar al ciudadano: both are queued on the mail queue, encrypted and after saving, and none leaves in the request', function () {
+    // Las notificaciones de verdad, no su doble: lo que se mira es la cola.
+    Notification::swap(new ChannelManager(app()));
+    Queue::fake();
+
+    requestCode()->assertOk();
+    $code = queuedMail(CitizenReportCode::class);
+    expect($code->notifiables->sole()->routes['mail'])->toBe(CITIZEN)
+        ->and($code->shouldBeEncrypted)->toBeTrue()
+        ->and($code->afterCommit)->toBeTrue();
+
+    sendCitizenReport(['code' => $code->notification->code])->assertCreated();
+    $received = queuedMail(CitizenReportReceived::class);
+    expect($received->notifiables->sole()->routes['mail'])->toBe(CITIZEN)
+        ->and($received->shouldBeEncrypted)->toBeTrue()
+        ->and($received->afterCommit)->toBeTrue()
+        ->and(app('mail.manager')->mailer('array')->getSymfonyTransport()->messages())->toHaveCount(0);
+});
+
+it('Si el servidor de correo falla, el código se pide igual y el correo se reintenta: the request succeeds, the worker tries again later up to 5 times, and the queue keeps it encrypted', function () {
+    Notification::swap(new ChannelManager(app()));
+    // Una cola de verdad (tests/Pest.php la simula en todos los tests), y un servidor de correo que no responde.
+    Queue::swap(Queue::getFacadeRoot()->queue);
+    config(['queue.default' => 'database', 'mail.default' => 'smtp', 'mail.mailers.smtp.host' => '127.0.0.1', 'mail.mailers.smtp.port' => 9]);
+    // La cola vive en la base central, también mientras atiende a una organización.
+    $central = fn (string $table) => DB::connection(config('queue.connections.database.connection'))->table($table);
+    $central('jobs')->delete();
+    $central('failed_jobs')->delete();
+
+    try {
+        requestCode()->assertOk()->assertJson(['message' => 'Le enviamos un código de 6 dígitos a '.CITIZEN.'. Vence en 10 minutos.']);
+
+        $queued = $central('jobs')->sole();
+        $payload = json_decode($queued->payload, true);
+        expect($queued->queue)->toBe('mail')
+            ->and($payload['maxTries'])->toBe(5)
+            ->and($payload['backoff'])->toBe('10,30,60,120')
+            // Ni el código ni el correo, legibles en la cola: van cifrados.
+            ->and($queued->payload)->not->toContain(CITIZEN)
+            ->and($payload['data']['command'])->not->toStartWith('O:')
+            ->and(decrypt($payload['data']['command'], false))->toContain(CITIZEN);
+
+        Artisan::call('queue:work', ['connection' => 'database', '--queue' => 'mail', '--once' => true]);
+
+        $retry = $central('jobs')->sole();
+        expect($retry->attempts)->toBe(1)
+            ->and($retry->available_at)->toBeGreaterThanOrEqual(now()->addSeconds(9)->getTimestamp())
+            ->and($central('failed_jobs')->count())->toBe(0);
+    } finally {
+        $central('jobs')->delete();
+        $central('failed_jobs')->delete();
+    }
 });
 
 it('Sin un código válido no se recibe el informe: a wrong or expired code, and 5 wrong attempts void it', function () {

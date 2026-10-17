@@ -81,7 +81,7 @@ Durante 10 a 30 segundos, mientras se reemplaza el contenedor de la app, nginx r
 make staging-deploy REF=main MAINTENANCE=1
 ```
 
-Apaga la app, el worker y el calendario **antes** de migrar, y durante la migración se ve la misma página. `php artisan down` no sirve para esto: la marca vive dentro del contenedor de la app, y el despliegue lo reemplaza.
+Apaga la app, los workers y el calendario **antes** de migrar, y durante la migración se ve la misma página. `php artisan down` no sirve para esto: la marca vive dentro del contenedor de la app, y el despliegue lo reemplaza.
 
 ## El certificado
 

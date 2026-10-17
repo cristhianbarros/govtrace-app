@@ -2,8 +2,8 @@
 
 namespace App\Domain\Organization\Notifications;
 
+use App\Infrastructure\Notifications\QueuedNotification;
 use Illuminate\Notifications\Messages\MailMessage;
-use Illuminate\Notifications\Notification;
 
 /**
  * Sent once, when the Super Administrator assigns an organization's
@@ -11,7 +11,7 @@ use Illuminate\Notifications\Notification;
  * flow (US-005/US-030, it. 5) — same "set your password" link, same
  * 48-hour token.
  */
-class WelcomeNotification extends Notification
+class WelcomeNotification extends QueuedNotification
 {
     public function __construct(
         public readonly string $url,

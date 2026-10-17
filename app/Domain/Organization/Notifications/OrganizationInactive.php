@@ -2,12 +2,12 @@
 
 namespace App\Domain\Organization\Notifications;
 
+use App\Infrastructure\Notifications\QueuedNotification;
 use Carbon\CarbonImmutable;
 use Illuminate\Notifications\Messages\MailMessage;
-use Illuminate\Notifications\Notification;
 
 /** US-054-RPT: una organización lleva 30 días sin recibir ni publicar evidencias. Por Email. */
-class OrganizationInactive extends Notification
+class OrganizationInactive extends QueuedNotification
 {
     public function __construct(
         public readonly string $organization,
