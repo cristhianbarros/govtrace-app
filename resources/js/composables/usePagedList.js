@@ -27,7 +27,9 @@ export function usePagedList(fetch, { delayMs = 300 } = {}) {
             const body = await fetch({ ...params, page });
             if (current === latest) {
                 data.value = more ? [...(data.value ?? []), ...body.data] : body.data;
-                meta.value = { total: body.total, has_more: body.has_more };
+                // It. 65a: lo que traiga además la respuesta (el número de cada pestaña, las opciones de los filtros).
+                const { data: _rows, ...rest } = body;
+                meta.value = rest;
             }
         } catch (failure) {
             if (current === latest) {

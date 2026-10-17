@@ -17,7 +17,9 @@ class CitizenReport extends Model
 {
     use HasPublicId;
 
-    public const STATUS_LABELS = ['new' => 'Nuevo', 'answered' => 'Atendido', 'discarded' => 'Descartado'];
+    // It. 65 (US-068): "Visita asignada" y "Documentado", cuando un veedor lo documenta; "Respondido", cuando se le
+    // respondió por escrito (antes "Atendido").
+    public const STATUS_LABELS = ['new' => 'Nuevo', 'assigned' => 'Visita asignada', 'documented' => 'Documentado', 'answered' => 'Respondido', 'discarded' => 'Descartado'];
 
     protected $fillable = ['worksite_id', 'email', 'email_hash', 'message', 'photo_paths', 'status', 'answer', 'handled_at', 'handled_by', 'data_authorized_at', 'data_policy_version', 'proposed_latitude', 'proposed_longitude', 'location_confirmed_at'];
 

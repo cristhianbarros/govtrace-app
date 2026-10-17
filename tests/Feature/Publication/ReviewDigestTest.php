@@ -40,7 +40,7 @@ beforeEach(function () {
     $this->administrator = reportingMember($this->tenant, 'ana.perez@veeduria-smr.org', Roles::Administrator);
     $this->veedor = reportingMember($this->tenant, 'carlos@correo.co');
     reportableContract('CO1.PCCNTR.1234567');
-    worksiteWithContracts($this->tenant, ['CO1.PCCNTR.1234567'], santaMartaWorksiteLocation());
+    $this->worksite = worksiteWithContracts($this->tenant, ['CO1.PCCNTR.1234567'], santaMartaWorksiteLocation());
 });
 
 afterEach(function () {
@@ -70,13 +70,49 @@ it('El resumen diario llega con las evidencias por revisar: how many, and a butt
         ->and($mail->introLines)->toContain('3 evidencias de sus veedores esperan su revisión. Mientras no las revise, no aparecen en el mapa público.')
         ->and($mail->actionText)->toBe('Revisar la Bandeja')
         ->and($mail->actionUrl)->toContain('veeduria-smr.govtrace.localhost')->toEndWith('/admin/inbox')
-        ->and($mail->outroLines)->toContain('Le llega este resumen una vez al día, solo cuando hay evidencias por revisar.');
+        ->and($mail->outroLines)->toContain('Le llega este resumen una vez al día, solo cuando hay algo por revisar.');
 });
 
-it('Sin evidencias por revisar no hay resumen', function () {
+it('Sin evidencias por revisar ni informes ciudadanos que esperan, no hay resumen', function () {
+    // Uno ya respondido y otro descartado no esperan nada.
+    citizenReportOn($this->tenant, $this->worksite, 'answered');
+    citizenReportOn($this->tenant, $this->worksite, 'discarded');
+
     (new SendReviewDigests)->handle();
 
     Notification::assertNotSentTo($this->administrator, ReviewDigest::class);
+});
+
+// It. 65 (US-068): los informes ciudadanos que esperan respuesta, también.
+it('El resumen diario cuenta los informes ciudadanos que esperan: one line for them, after the evidences', function () {
+    sealedReport($this->tenant, $this->veedor);
+    sealedReport($this->tenant, $this->veedor);
+    citizenReportOn($this->tenant, $this->worksite);
+    citizenReportOn($this->tenant, $this->worksite, 'answered');
+
+    (new SendReviewDigests)->handle();
+
+    $mail = digestMailOf($this->administrator);
+    expect($mail->subject)->toBe('GovTrace: 2 evidencias por revisar en Veeduría Ciudadana Santa Marta')
+        ->and($mail->introLines)->toBe([
+            '2 evidencias de sus veedores esperan su revisión. Mientras no las revise, no aparecen en el mapa público.',
+            '1 informe ciudadano espera respuesta.',
+        ])
+        ->and($mail->actionText)->toBe('Revisar la Bandeja');
+});
+
+it('Con informes ciudadanos y sin evidencias por revisar, el resumen llega igual: it says how many, with a button to them', function () {
+    citizenReportOn($this->tenant, $this->worksite);
+    citizenReportOn($this->tenant, $this->worksite);
+
+    (new SendReviewDigests)->handle();
+
+    $mail = digestMailOf($this->administrator);
+    expect($mail->subject)->toBe('GovTrace: 2 informes ciudadanos esperan respuesta en Veeduría Ciudadana Santa Marta')
+        ->and($mail->introLines)->toBe(['2 informes ciudadanos esperan respuesta.'])
+        ->and($mail->actionText)->toBe('Ver los informes ciudadanos')
+        ->and($mail->actionUrl)->toContain('veeduria-smr.govtrace.localhost')->toEndWith('/admin/citizen-reports')
+        ->and($mail->outroLines)->toContain('Le llega este resumen una vez al día, solo cuando hay algo por revisar.');
 });
 
 it('Solo cuentan las evidencias que ya se pueden publicar: not one still being sealed, nor one published', function () {

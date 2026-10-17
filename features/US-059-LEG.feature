@@ -98,7 +98,7 @@ Característica: Informar a la veeduría de lo que vi en una obra
   Escenario: La veeduría responde al ciudadano
     Cuando el Administrador responde un informe
     Entonces al ciudadano le llega la respuesta a su correo
-    Y el informe queda "Atendido" y en el log de auditoría
+    Y el informe queda "Respondido" y en el log de auditoría
 
   @complexity:low
   Escenario: La veeduría descarta un informe

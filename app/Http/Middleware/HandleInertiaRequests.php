@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Application\CitizenReports\CitizenReportInbox;
 use App\Application\Organization\OrganizationRequests;
 use App\Application\Platform\SuperAdministrators;
 use App\Domain\Organization\Roles;
@@ -71,6 +72,8 @@ class HandleInertiaRequests extends Middleware
             // It. 40c: cuántas evidencias esperan en la Bandeja, para su pestaña.
             // Solo al Administrador: al veedor no le toca revisar.
             'inboxPending' => fn () => $this->inboxPending($request),
+            // It. 65a (US-068): cuántos informes ciudadanos esperan, para su pestaña. Solo al Administrador.
+            'citizenReportsPending' => fn () => $this->administrator($request) ? CitizenReportInbox::waiting() : null,
             // It. 43k (V10): cuántas solicitudes de alta esperan al Super Administrador, para su menú.
             'organizationRequestsPending' => fn () => ! tenancy()->initialized && $request->user('web') ? OrganizationRequests::pendingCount() : null,
             // It. 46a (US-063-USR): con uno solo activo, el panel global lo avisa en todas sus pantallas.
@@ -80,13 +83,14 @@ class HandleInertiaRequests extends Middleware
 
     private function inboxPending(Request $request): ?int
     {
+        return $this->administrator($request) ? PendingReview::count() : null;
+    }
+
+    private function administrator(Request $request): bool
+    {
         $user = tenancy()->initialized ? $request->user('tenant') : null;
 
-        if (! $user || ! $user->hasRole(Roles::Administrator->value)) {
-            return null;
-        }
-
-        return PendingReview::count();
+        return $user !== null && $user->hasRole(Roles::Administrator->value);
     }
 
     /** @return array{name: string, email: string, role: string}|null */

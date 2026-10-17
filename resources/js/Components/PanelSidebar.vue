@@ -11,6 +11,7 @@ const props = defineProps({
     badges: { type: Object, default: () => ({}) },
     // Qué dice cada número, para un lector de pantalla: "3 por revisar".
     badgeLabel: { type: String, default: 'pendientes' },
+    badgeLabels: { type: Object, default: () => ({}) }, // it. 65a: { href: lo que cuenta }, si no es badgeLabel
 });
 
 const page = usePage();
@@ -32,7 +33,7 @@ const groups = computed(() => {
                     <Link
                         :href="screen.href"
                         :aria-current="isCurrentScreen(page.url, screen.href) ? 'page' : undefined"
-                        :aria-label="badges[screen.href] ? `${screen.label}, ${badges[screen.href]} ${badgeLabel}` : undefined"
+                        :aria-label="badges[screen.href] ? `${screen.label}, ${badges[screen.href]} ${badgeLabels[screen.href] ?? badgeLabel}` : undefined"
                         class="flex min-h-11 items-center gap-3 rounded-lg px-3 text-base"
                         :class="isCurrentScreen(page.url, screen.href) ? 'bg-brand-700 font-semibold text-white' : 'text-slate-800 hover:bg-slate-200'"
                     >

@@ -21,6 +21,8 @@ const primary = computed(() => props.screens.filter((screen) => screen.primary))
 const others = computed(() => props.screens.filter((screen) => !screen.primary));
 const current = (screen) => isCurrentScreen(page.url, screen.href);
 const inOthers = computed(() => others.value.some(current));
+// It. 65a: lo que espera en las pantallas de "Más" se cuenta en "Más", y en su menú, al lado de cada una.
+const othersPending = computed(() => others.value.reduce((total, screen) => total + (props.badges[screen.href] ?? 0), 0));
 
 function closeOnOutsideClick(event) {
     if (open.value && root.value && !root.value.contains(event.target)) {
@@ -49,8 +51,19 @@ const tabClass = (active) =>
             </span>
             {{ screen.label }}
         </Link>
-        <button type="button" aria-haspopup="menu" :aria-expanded="open" :data-current="inOthers ? 'true' : 'false'" :class="tabClass(inOthers)" @click="open = !open">
-            <EllipsisHorizontalIcon aria-hidden="true" class="size-6" />
+        <button
+            type="button"
+            aria-haspopup="menu"
+            :aria-expanded="open"
+            :aria-label="othersPending ? `Más, ${othersPending} pendientes` : undefined"
+            :data-current="inOthers ? 'true' : 'false'"
+            :class="tabClass(inOthers)"
+            @click="open = !open"
+        >
+            <span class="relative">
+                <EllipsisHorizontalIcon aria-hidden="true" class="size-6" />
+                <span v-if="othersPending" aria-hidden="true" class="absolute -right-3 -top-1 min-w-5 rounded-full bg-red-700 px-1 text-center text-xs font-bold leading-5 text-white">{{ othersPending }}</span>
+            </span>
             Más
         </button>
 
@@ -65,7 +78,8 @@ const tabClass = (active) =>
                 :class="current(screen) ? 'bg-brand-700 font-semibold text-white' : 'text-slate-900 hover:bg-slate-100'"
             >
                 <component :is="screen.icon" aria-hidden="true" class="size-6 shrink-0" />
-                {{ screen.label }}
+                <span class="flex-1">{{ screen.label }}</span>
+                <span v-if="badges[screen.href]" class="min-w-6 rounded-full bg-red-700 px-1.5 text-center text-sm font-bold text-white">{{ badges[screen.href] }}</span>
             </Link>
         </div>
     </div>

@@ -5,7 +5,8 @@
 // descarta. No es evidencia sellada: si hace falta, la veeduría manda un veedor.
 // It. 58: la ubicación que propuso el ciudadano para una obra sin ubicación —
 // con las demás propuestas para la misma obra — se confirma desde aquí.
-import { onMounted, ref } from 'vue';
+import { router } from '@inertiajs/vue3';
+import { computed, onMounted, ref } from 'vue';
 import LoadState from '@/Components/LoadState.vue';
 import LocationMap from '@/Components/LocationMap.vue';
 import MoreButton from '@/Components/MoreButton.vue';
@@ -17,18 +18,31 @@ import { answerCitizenReport, confirmCitizenLocation, discardCitizenReport, fetc
 import { errorMessage } from '@/services/errors.js';
 
 const { data: reports, meta, loading, loadingMore, error, load, more } = usePagedList(fetchCitizenReports);
-// It. 52: de 20 en 20, y por estado (los nuevos son los que esperan respuesta).
-const STATUSES = [
-    { value: '', label: 'Todos' },
-    { value: 'new', label: 'Por responder' },
-    { value: 'answered', label: 'Atendidos' },
-    { value: 'discarded', label: 'Descartados' },
+// It. 52: de 20 en 20. It. 65a (US-068): como la Bandeja, una pestaña por estado, con su número, y el
+// filtro por obra; cada pestaña trae los suyos al tocarla. Abre en "Nuevos": los que esperan.
+const TABS = [
+    { status: 'new', label: 'Nuevos', empty: 'No hay informes nuevos: nada espera respuesta.' },
+    { status: 'assigned', label: 'Visita asignada', empty: 'Ningún informe tiene una visita asignada.' },
+    { status: 'documented', label: 'Documentados', empty: 'Ningún informe documentado todavía.' },
+    { status: 'answered', label: 'Respondidos', empty: 'Ningún informe respondido.' },
+    { status: 'discarded', label: 'Descartados', empty: 'Ningún informe descartado.' },
+    { status: null, label: 'Todos', empty: 'Aún no hay informes de ciudadanos.' },
 ];
-const status = ref('');
-const byStatus = (value) => {
-    status.value = value;
-    return load(value === '' ? {} : { status: value });
+const tab = ref(TABS[0]);
+const worksite = ref('');
+const params = () => ({ ...(tab.value.status ? { status: tab.value.status } : {}), ...(worksite.value ? { worksite: worksite.value } : {}) });
+const open = (chosen) => {
+    tab.value = chosen;
+    worksite.value = '';
+    notice.value = null;
+    return load(params());
 };
+const byWorksite = (value) => {
+    worksite.value = value;
+    return load(params());
+};
+const countOf = (candidate) => meta.value?.counts?.[candidate.status ?? 'all'];
+const emptyText = computed(() => (worksite.value ? 'Ningún informe con ese filtro.' : tab.value.empty));
 const notice = ref(null);
 const answering = ref(null); // el id del informe que se responde
 const answer = ref('');
@@ -37,9 +51,14 @@ const sending = ref(false);
 
 const STATE = {
     new: 'bg-amber-100 text-amber-900',
+    assigned: 'bg-sky-100 text-sky-900',
+    documented: 'bg-emerald-100 text-emerald-800',
     answered: 'bg-emerald-100 text-emerald-800',
     discarded: 'bg-slate-200 text-slate-700',
 };
+
+// It. 65a: el número rojo de "Informes ciudadanos" (it. 40c), al día con cada decisión.
+const refreshPending = () => router.reload({ only: ['citizenReportsPending'] });
 
 function startAnswer(report) {
     answering.value = report.id;
@@ -53,6 +72,7 @@ async function sendAnswer() {
     try {
         notice.value = (await answerCitizenReport(answering.value, answer.value.trim())).message;
         answering.value = null;
+        refreshPending();
         await load();
     } catch (failure) {
         refused.value = errorMessage(failure);
@@ -66,10 +86,11 @@ const othersLabel = (count) => (count === 1 ? 'Gris: otra ubicación que propuso
 
 async function done(message) {
     notice.value = message;
+    refreshPending();
     await load();
 }
 
-onMounted(load);
+onMounted(() => open(TABS[0]));
 </script>
 
 <template>
@@ -77,14 +98,28 @@ onMounted(load);
         <p class="text-base text-slate-700">Lo que los ciudadanos le informan a la veeduría desde el mapa. La ley la obliga a recibirlo (Ley 850 de 2003, art. 18). No se publica ni se sella; su correo no se muestra: la respuesta le llega desde GovTrace.</p>
         <p v-if="notice" role="status" class="rounded-lg bg-emerald-50 p-3 text-sm font-semibold text-emerald-800">{{ notice }}</p>
 
-        <label for="status" class="flex flex-col gap-1 text-sm font-semibold text-slate-700">Estado
-            <select id="status" :value="status" class="min-h-11 rounded-lg border border-slate-300 bg-white px-2 text-base font-normal md:max-w-xs" @change="byStatus($event.target.value)">
-                <option v-for="option in STATUSES" :key="option.value" :value="option.value">{{ option.label }}</option>
+        <!-- It. 65a: como la Bandeja, una pestaña por estado, con su número. -->
+        <div class="grid grid-cols-2 gap-1 rounded-lg bg-slate-200 p-1 md:grid-cols-3 lg:flex" role="tablist" aria-label="Estado de los informes">
+            <button
+                v-for="candidate in TABS"
+                :key="candidate.label"
+                type="button"
+                role="tab"
+                :aria-selected="tab.label === candidate.label"
+                class="min-h-11 flex-1 rounded-md px-2 py-2 text-sm font-semibold"
+                :class="tab.label === candidate.label ? 'bg-white shadow-sm' : 'text-slate-700'"
+                @click="open(candidate)"
+            >{{ candidate.label }} <span v-if="countOf(candidate) !== undefined" class="rounded-full bg-slate-100 px-2 text-xs text-slate-700">{{ countOf(candidate) }}</span></button>
+        </div>
+        <label v-if="meta?.filters?.worksites?.length" for="filter-worksite" class="flex flex-col gap-1 text-sm font-semibold text-slate-700">Obra
+            <select id="filter-worksite" :value="worksite" class="min-h-11 rounded-lg border border-slate-300 bg-white px-2 text-base font-normal md:max-w-md" @change="byWorksite($event.target.value)">
+                <option value="">Todas</option>
+                <option v-for="candidate in meta.filters.worksites" :key="candidate.id" :value="candidate.id">{{ candidate.name }}</option>
             </select>
         </label>
         <p v-if="meta && meta.total > 0" data-test="total" class="text-base text-slate-700">{{ meta.total }} {{ meta.total === 1 ? 'informe' : 'informes' }}</p>
 
-        <LoadState :loading="loading" :error="error" :empty="reports?.length === 0" loading-text="Cargando informes…" :empty-text="status === '' ? 'Aún no hay informes de ciudadanos.' : 'Ningún informe con ese estado.'" illustration="messages" @retry="load">
+        <LoadState :loading="loading" :error="error" :empty="reports?.length === 0" loading-text="Cargando informes…" :empty-text="emptyText" illustration="messages" @retry="load">
             <div class="flex flex-col gap-3">
                 <article v-for="report in reports" :key="report.id" data-test="citizen-report" class="flex flex-col gap-2 rounded-2xl bg-white p-3 text-base shadow-soft ring-1 ring-slate-900/5">
                     <header class="flex flex-wrap items-center justify-between gap-2">

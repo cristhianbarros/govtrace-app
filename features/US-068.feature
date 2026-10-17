@@ -25,7 +25,6 @@ Característica: Del informe ciudadano a una evidencia: la veeduría manda a un 
     Y está en "Nuevos", con el número de los que esperan
     Cuando toca "Visita asignada"
     Entonces la pantalla trae solo esos informes, sin recargar la página
-    Y la dirección guarda la pestaña, para volver a ella
 
   @complexity:medium
   Escenario: Filtro los informes por obra y por veedor, como en la Bandeja
@@ -34,7 +33,6 @@ Característica: Del informe ciudadano a una evidencia: la veeduría manda a un 
     Entonces veo solo los informes de esa obra, en la pestaña en la que estoy
     Cuando elijo además al veedor "Carlos Rojas"
     Entonces veo solo los informes de esa obra con visita de Carlos
-    Y la dirección guarda los filtros, para volver a ellos
 
   @complexity:low
   Escenario: El resumen diario cuenta los informes ciudadanos que esperan

@@ -11,6 +11,7 @@ use App\Domain\CitizenReports\Notifications\CitizenReportAnswered;
 use App\Domain\Organization\User;
 use App\Domain\Worksites\Worksite;
 use DomainException;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
@@ -25,15 +26,49 @@ use Illuminate\Support\Facades\Notification;
 class CitizenReportInbox
 {
     /**
-     * It. 52: a page, the newest first; by status if asked (new, answered, discarded).
+     * It. 52: a page, the newest first; by status if asked. It. 65a (US-068), like the Bandeja:
+     * how many there are in each tab (whatever the filters), and the worksites of the tab to filter by.
      *
-     * @return array{data: list<array<string, mixed>>, total: int, has_more: bool}
+     * @return array{data: list<array<string, mixed>>, total: int, has_more: bool, counts: array<string, int>, filters: array{worksites: list<array{id: string, name: string}>}}
      */
-    public function list(int $page = 1, ?string $status = null): array
+    public function list(int $page = 1, ?string $status = null, ?string $worksite = null): array
     {
-        $query = CitizenReport::query()->with('worksite')->when($status !== null, fn ($query) => $query->where('status', $status))->latest('id');
+        $inTab = fn () => CitizenReport::query()->when($status !== null, fn ($query) => $query->where('status', $status));
+        $query = $inTab()->with('worksite')
+            ->when($worksite !== null, fn ($query) => $query->whereHas('worksite', fn ($sheet) => $sheet->where('public_id', $worksite)))
+            ->latest('id');
 
-        return Page::of($query, $page, fn ($reports) => $this->presented($reports));
+        return [
+            ...Page::of($query, $page, fn ($reports) => $this->presented($reports)),
+            'counts' => $this->counts(),
+            'filters' => ['worksites' => $this->worksitesIn($inTab())],
+        ];
+    }
+
+    /** It. 65a: the "Nuevo" ones, for the red number of "Informes ciudadanos" and the daily digest. */
+    public static function waiting(): int
+    {
+        return CitizenReport::query()->where('status', 'new')->count();
+    }
+
+    /** @return array<string, int> how many in each state, and all of them */
+    private function counts(): array
+    {
+        $byStatus = CitizenReport::query()->selectRaw('status, count(*) as total')->groupBy('status')->pluck('total', 'status');
+        $counts = array_map(fn (string $status) => (int) ($byStatus[$status] ?? 0), array_combine(array_keys(CitizenReport::STATUS_LABELS), array_keys(CitizenReport::STATUS_LABELS)));
+
+        return [...$counts, 'all' => array_sum($counts)];
+    }
+
+    /**
+     * @param  Builder<CitizenReport>  $inTab
+     * @return list<array{id: string, name: string}>
+     */
+    private function worksitesIn(Builder $inTab): array
+    {
+        return Worksite::query()->whereIn('id', $inTab->select('worksite_id'))->get()
+            ->map(fn (Worksite $worksite) => ['id' => $worksite->public_id, 'name' => CitizenReportDesk::nameOf($worksite)])
+            ->sortBy('name', SORT_NATURAL | SORT_FLAG_CASE)->values()->all();
     }
 
     /**

@@ -3706,15 +3706,18 @@ Queda para la V2, opcional, con el modelo de financiación (`docs/viabilidad-leg
 - El número rojo en "Informes ciudadanos" con los informes "Nuevo", como la Bandeja (`citizenReportsPending`, compartido como `inboxPending`).
 - El resumen diario de las 07:00 suma "N informe(s) ciudadano(s) espera(n) respuesta." y llega también sin evidencias por revisar (enmienda de US-060-MON).
 - Pestañas por estado en vez del select: Nuevos (la que abre), Visita asignada, Documentados, Respondidos, Descartados y Todos. Cada una trae sus informes al tocarla, de 20 en 20, y la dirección la guarda.
-- Filtros como los de la Bandeja: obra y veedor de la visita.
+- El filtro por obra, como los de la Bandeja (el de veedor llega con las visitas, en la 65b). El número de cada pestaña no cambia con los filtros, como en la Bandeja.
+- "Atendido" pasa a llamarse "Respondido", para no confundirlo con "Documentado".
+- En el celular, "Informes ciudadanos" está en "Más": el número se ve en "Más" y en su menú.
 
-**Done-when:** los escenarios de US-068 de los avisos, las pestañas y los filtros, y el de US-059-LEG con pestañas, con sus pruebas.
+**Done-when:** los escenarios de US-068 de los avisos y las pestañas, el de US-059-LEG con pestañas y el de US-060-MON enmendado, con sus pruebas. El de los filtros (obra y veedor), en la 65b.
 
 **Modelo:** Sonnet medium (interfaz y una consulta). En Opus, en la misma sesión que la 65b.
 
 #### 65b — El Administrador manda a un veedor, y el ciudadano se entera
 
 **Entregable:**
+- El filtro por veedor de la visita, junto al de obra (el escenario de los filtros).
 - "Pedir a un veedor que lo documente", con el último veedor que reportó la obra ya elegido; solo veedores activos con sus impedimentos declarados. Cambiar el veedor.
 - "Visitas pendientes" arriba de "Nuevo reporte": la obra, el mensaje y las fotos del ciudadano (nunca su correo); al tocarla, el reporte abre con esa obra y lo que informó el ciudadano. "No puedo ir" devuelve la visita al Administrador.
 - El próximo reporte del veedor asignado sobre esa obra queda ligado al informe; la Bandeja dice a qué informe responde. Publicada la evidencia, el informe queda "Documentado"; rechazada, la visita vuelve a sus pendientes.
