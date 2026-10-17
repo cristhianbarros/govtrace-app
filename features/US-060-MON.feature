@@ -16,8 +16,10 @@ Característica: El resumen diario de las evidencias por revisar
     Y el correo tiene un botón a su Bandeja
 
   @complexity:low @negative
-  Escenario: Sin evidencias por revisar no hay resumen
+  # It. 65 (US-068): también cuentan los informes ciudadanos que esperan respuesta.
+  Escenario: Sin evidencias por revisar ni informes ciudadanos que esperan, no hay resumen
     Dado que no hay evidencias selladas que sigan ocultas
+    Y que ningún informe ciudadano está "Nuevo"
     Cuando son las 07:00 en Colombia
     Entonces "Ana Pérez" no recibe ningún correo
 

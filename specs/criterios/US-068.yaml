@@ -1,0 +1,44 @@
+story_id: "US-068"
+titulo_historia: "Como Administrador quiero enterarme de los informes ciudadanos que esperan y pedirle a un veedor que documente uno, para que lo que vio el ciudadano se vuelva una evidencia sellada"
+bloque: "Iteración 65 — Del informe ciudadano a una evidencia"
+criterios_aceptacion:
+  escenarios_exito:
+    - "'Informes ciudadanos', en el panel, muestra en rojo cuántos informes están 'Nuevo' (sin responder, asignar ni descartar), como la Bandeja con sus evidencias"
+    - "El resumen diario de las 07:00 suma una línea: 'N informe(s) ciudadano(s) espera(n) respuesta.' Llega si hay evidencias por revisar o informes que esperan"
+    - "'Pedir a un veedor que lo documente', en un informe 'Nuevo': el Administrador elige al veedor; aparece elegido el último que reportó esa obra"
+    - "Al asignar, el informe queda 'Visita asignada a <veedor>', y al ciudadano le llega un correo: un veedor de la veeduría va a visitar la obra para documentar lo que informó"
+    - "El veedor ve sus visitas arriba de 'Nuevo reporte' ('Visitas pendientes'): la obra, el mensaje del ciudadano y sus fotos. Al tocar una, el reporte se abre con esa obra elegida y lo que informó el ciudadano"
+    - "El próximo reporte del veedor asignado sobre esa obra, desde la visita o desde la lista de obras, queda ligado al informe y se sella como cualquier reporte"
+    - "En la Bandeja, la evidencia ligada dice 'Responde al informe ciudadano', con su referencia y el mensaje"
+    - "Al publicar esa evidencia, el informe queda 'Documentado', y al ciudadano le llega un correo con el enlace a la evidencia publicada"
+  validaciones_reglas:
+    - "R-LEG-11 (nueva): un informe ciudadano se documenta con el reporte de un veedor de la veeduría, que lleva su GPS, su hora y su sello. El informe sigue sin sellarse ni publicarse (R-LEG-09), y sus fotos no se publican"
+    - "Solo el Administrador asigna, cambia el veedor o devuelve una visita"
+    - "Solo se puede elegir a un veedor activo que ya declaró sus impedimentos (US-057-LEG)"
+    - "Un informe tiene a lo más una visita asignada, a un solo veedor"
+    - "Solo el reporte del veedor asignado se liga al informe; el de otro veedor sobre la misma obra, no"
+    - "El veedor ve el mensaje y las fotos del ciudadano, nunca su correo. Un veedor solo ve sus propias visitas"
+    - "Asignar, cambiar el veedor, 'No puedo ir' y el informe documentado quedan en el log de auditoría"
+  manejo_errores:
+    - "Sin veedor elegido no se puede confirmar la asignación: 'Elija al veedor que va a visitar la obra.'"
+    - "Si la Bandeja rechaza la evidencia ligada, el informe sigue asignado al mismo veedor y la visita vuelve a sus pendientes; al ciudadano no le llega ningún correo"
+    - "Un veedor desactivado con visitas pendientes: sus visitas vuelven a 'Nuevo', con la nota 'El veedor ya no está activo'"
+  requisitos_ux:
+    - "Sin correo inmediato al Administrador cuando llega un informe (decisión del usuario): el número rojo y el resumen diario"
+    - "(Pedido del usuario, 2026-10-17) Pestañas por estado en vez del select: Nuevos (la que abre, con su número), Visita asignada, Documentados, Respondidos, Descartados y Todos. Cada pestaña trae sus informes al tocarla, de 20 en 20, sin recargar la página, y la dirección la guarda (?estado=). "
+    - "(Pedido del usuario, 2026-10-17) Filtros como los de la Bandeja (US-036): 'Obra' (las que tienen informes) y 'Veedor' (el de la visita), con los mismos selectores, combinados con la pestaña y guardados en la dirección"
+    - "El veedor no acepta ni cierra la visita: reportar la obra la documenta. Su única acción extra es 'No puedo ir', con confirmación"
+    - "El correo al ciudadano no lleva el nombre del veedor"
+    - "Botones de 44 px y letra de 16 px; el número rojo, también para el lector de pantalla ('1 por atender')"
+  casos_edge:
+    - {caso: "El veedor toca 'No puedo ir'", resultado: "El informe vuelve a 'Nuevo', con la nota '<veedor> no pudo ir', y cuenta de nuevo en el número rojo"}
+    - {caso: "El Administrador le pasa la visita a otro veedor", resultado: "Sale de las del primero y aparece en las del segundo; al ciudadano no le llega otro correo"}
+    - {caso: "Una obra sin ubicación, con un punto propuesto por el ciudadano", resultado: "La visita muestra ese punto como pista; el primer reporte del veedor fija la ubicación con las reglas de siempre (R-GEO-01)"}
+    - {caso: "Nadie ha reportado la obra", resultado: "Ningún veedor aparece elegido: el Administrador lo elige"}
+    - {caso: "Sin señal", resultado: "La visita se ve si 'Nuevo reporte' se abrió con señal antes (el Service Worker guarda la pantalla); las fotos del ciudadano pueden no cargar"}
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true

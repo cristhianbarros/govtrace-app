@@ -11,6 +11,7 @@ criterios_aceptacion:
   manejo_errores: []
   requisitos_ux:
     - "De usted y sin jerga técnica (R-UX-06); dice que llega una vez al día y solo si hay algo que revisar"
+    - "(It. 65, US-068) El resumen cuenta también los informes ciudadanos 'Nuevo': 'N informe(s) ciudadano(s) espera(n) respuesta.' Llega si hay evidencias por revisar o informes que esperan; sin ninguno de los dos, no llega"
   casos_edge:
     - "Una evidencia que todavía se está sellando no cuenta: aún no se puede publicar"
 validacion_smart:
