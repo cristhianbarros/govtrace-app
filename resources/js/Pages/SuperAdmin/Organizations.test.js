@@ -38,6 +38,19 @@ beforeEach(() => {
 });
 
 describe('Organizaciones', () => {
+    it('Desde Organizaciones, el Super Administrador abre el sitio de cada veeduría', async () => {
+        const wrapper = await openOrganizations([
+            { ...smr, site_url: 'http://veeduria-smr.govtrace.localhost/' },
+            { ...smr, id: 'tenant-old', name: 'Veeduría Antigua', subdomain: 'veeduria-antigua.govtrace.localhost', status: 'Dada de baja', site_url: null },
+        ]);
+        const [active, decommissioned] = wrapper.findAll('[data-test="organization-row"]');
+        const siteOf = (row) => row.findAll('a').find((link) => link.text() === 'Ver su sitio');
+
+        expect(siteOf(active).attributes('href')).toBe('http://veeduria-smr.govtrace.localhost/');
+        // Dada de baja, su sitio está fuera de línea.
+        expect(siteOf(decommissioned)).toBeUndefined();
+    });
+
     it('shows that it is loading the organizations', () => {
         fetchOrganizations.mockReturnValue(new Promise(() => {}));
 
@@ -75,7 +88,8 @@ describe('Organizaciones', () => {
     it('links to the alta screen', async () => {
         const wrapper = await openOrganizations([]);
 
-        expect(wrapper.get('main').get('a').attributes('href')).toBe('/admin/organizations/new');
+        // It. 62: la ruta va antes, arriba de la pantalla.
+        expect(wrapper.get('main a[href="/admin/organizations/new"]').exists()).toBe(true);
     });
 
     it('Actualización exitosa del NIT: edits the NIT of an organization, with audit', async () => {

@@ -58,4 +58,16 @@ describe('Un contrato sin ficha (it. 58)', () => {
 
         expect(wrapper.get('h1').text()).toBe('Construcción de la vía a Minca');
     });
+
+    it('En una pantalla del sitio, la ruta suma la pantalla: the page of a contract ends the trail with its name, and the trail takes back to the map', async () => {
+        page.url = '/contract/CO1.PCCNTR.7654321';
+        fetchPublicContract.mockResolvedValue(MINCA);
+        const wrapper = mount(Contract, { props: { contractId: 'CO1.PCCNTR.7654321' } });
+        await flushPromises();
+
+        const crumbs = wrapper.get('nav[aria-label="Ruta"] ol').findAll('[data-crumb]');
+        expect(crumbs.at(-1).text()).toBe('Construcción de la vía a Minca');
+        expect(wrapper.get('nav[aria-label="Ruta"] [data-test="back"]').attributes('href')).toBe('/');
+        expect(wrapper.findAll('a').some((link) => link.text().includes('Volver al mapa'))).toBe(false);
+    });
 });

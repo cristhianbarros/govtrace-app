@@ -2,7 +2,7 @@
 // It. 58 (US-059-LEG): un contrato del territorio que ningún veedor ha
 // reportado — sin ficha ni ubicación todavía. El ciudadano le informa a la
 // veeduría y, si sabe, le dice dónde queda la obra.
-import { Head, Link, usePage } from '@inertiajs/vue3';
+import { Head, usePage } from '@inertiajs/vue3';
 import { onMounted } from 'vue';
 import LoadState from '@/Components/LoadState.vue';
 import CitizenReportForm from '@/Components/Public/CitizenReportForm.vue';
@@ -25,8 +25,7 @@ onMounted(load);
 
 <template>
     <Head :title="work?.name ?? 'Obra'" />
-    <AppLayout :title="page.props.organization ?? 'GovTrace'" :logo="page.props.organizationLogo" sections>
-        <Link href="/" class="mb-3 inline-flex min-h-11 items-center text-base font-semibold text-slate-700">← Volver al mapa</Link>
+    <AppLayout :title="page.props.organization ?? 'GovTrace'" :logo="page.props.organizationLogo" sections :here="work?.name ?? 'Obra'">
         <OrganizationNotice />
         <LoadState :loading="loading" :error="error" loading-text="Cargando la obra…" empty-text="" @retry="load">
             <template v-if="work">

@@ -1,7 +1,7 @@
 <script setup>
 // US-029 / US-017: la vista pública de una obra — sus contratos y la línea
 // de tiempo de sus evidencias publicadas, pedidas al abrirla (R-MAP-02).
-import { Head, Link, usePage } from '@inertiajs/vue3';
+import { Head, usePage } from '@inertiajs/vue3';
 import { nextTick, onMounted } from 'vue';
 import Illustration from '@/Components/Brand/Illustration.vue';
 import LoadState from '@/Components/LoadState.vue';
@@ -40,8 +40,7 @@ onMounted(async () => {
 
 <template>
     <Head :title="worksite?.name ?? 'Obra'" />
-    <AppLayout :title="page.props.organization ?? 'GovTrace'" :logo="page.props.organizationLogo" sections>
-        <Link href="/" class="mb-3 inline-flex min-h-11 items-center text-base font-semibold text-slate-700">← Volver al mapa</Link>
+    <AppLayout :title="page.props.organization ?? 'GovTrace'" :logo="page.props.organizationLogo" sections :here="worksite?.name ?? 'Obra'">
         <OrganizationNotice />
         <LoadState :loading="loading" :error="error" loading-text="Cargando la obra…" empty-text="" @retry="load">
             <template v-if="worksite">

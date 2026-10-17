@@ -42,7 +42,7 @@ const onlyOne = computed(() => page.props.superAdministratorsActive === 1);
 
 <template>
     <Head :title="title" />
-    <AppLayout title="Panel global">
+    <AppLayout title="Panel global" :panel="{ label: 'Panel global', href: '/admin/organizations' }" :here="title">
         <div class="flex flex-col gap-4">
             <h1 class="text-xl font-semibold">{{ title }}</h1>
             <div v-if="onlyOne" data-test="one-super-admin" role="status" class="flex flex-col gap-2 rounded-lg bg-amber-50 p-3 text-base text-amber-900 ring-1 ring-amber-200">

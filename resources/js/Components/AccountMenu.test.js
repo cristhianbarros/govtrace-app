@@ -43,6 +43,25 @@ beforeEach(() => {
 });
 
 describe('Menú de cuenta', () => {
+    it('En el Inicio de GovTrace, el menú de la cuenta lleva al panel global', async () => {
+        const toThePanel = async (account, url, organization = null) => {
+            page.url = url;
+            const { wrapper } = await menuOf(account, { organization });
+            await openTheMenu(wrapper);
+            const item = wrapper.findAll('[role="menuitem"]').find((candidate) => candidate.text() === 'Ir al panel global');
+            wrapper.unmount();
+            return item?.attributes('href') ?? null;
+        };
+
+        expect(await toThePanel(SUPER_ADMINISTRATOR, '/')).toBe('/admin/organizations');
+        expect(await toThePanel(SUPER_ADMINISTRATOR, '/privacidad')).toBe('/admin/organizations');
+        // Ya en el panel, no hace falta.
+        expect(await toThePanel(SUPER_ADMINISTRATOR, '/admin/sealing')).toBeNull();
+        // Los de una veeduría no tienen panel global.
+        expect(await toThePanel(ADMINISTRATOR, '/', 'Veeduría Ciudadana Santa Marta')).toBeNull();
+        page.url = '/admin/inbox';
+    });
+
     it('Cerrar sesión desde cualquier panel: names who is logged in, and asks before logging out', async () => {
         const { wrapper } = await menuOf(ADMINISTRATOR);
 

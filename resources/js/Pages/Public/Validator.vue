@@ -49,7 +49,7 @@ function chooseFile(chosen) {
 
 <template>
     <Head title="Validador" />
-    <AppLayout :title="page.props.organization ?? 'GovTrace'" :logo="page.props.organizationLogo" sections>
+    <AppLayout :title="page.props.organization ?? 'GovTrace'" :logo="page.props.organizationLogo" sections here="Validar">
         <OrganizationNotice />
         <PageHero title="Validador de evidencias" illustration="validator">
             Compruebe si una foto o un documento es el original: el mismo que la veeduría guardó con sello digital, sin un solo cambio. El archivo no sale de su equipo: se compara aquí mismo.

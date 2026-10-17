@@ -124,6 +124,8 @@ onMounted(load);
                             <div>
                                 <p class="font-semibold">{{ organization.name }}</p>
                                 <p class="text-slate-600">{{ organization.identification }} · {{ organization.subdomain }}</p>
+                                <!-- It. 62 (US-067): su sitio, en su subdominio. Desde allí, la ruta vuelve a GovTrace. -->
+                                <a v-if="organization.site_url" :href="organization.site_url" class="inline-flex min-h-11 items-center font-semibold text-brand-800 underline">Ver su sitio</a>
                                 <!-- It. 46b: la resolución o el certificado que adjuntó al pedir el alta. -->
                                 <a v-if="organization.has_registration_document" :href="`/admin/organizations/${organization.id}/registration-document`" class="inline-flex min-h-11 items-center font-semibold text-brand-800 underline">Documento de inscripción (PDF)</a>
                             </div>

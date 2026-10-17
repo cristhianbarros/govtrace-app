@@ -65,6 +65,20 @@ async function pendingCapturedDaysAgo(...days) {
 
 const signal = (online) => Object.defineProperty(window.navigator, 'onLine', { value: online, configurable: true });
 
+describe('La ruta en Mis Reportes (US-067)', () => {
+    it('Mientras el veedor llena un reporte, la ruta no aparece: in "Mis reportes" it is back, and leads to the site of the veeduría and to GovTrace', async () => {
+        page.url = '/my-reports';
+        page.props.govtraceUrl = 'https://govtrace.duckdns.org/';
+        const wrapper = await openMyReports([]);
+
+        expect(wrapper.get('nav[aria-label="Ruta"] ol').findAll('[data-crumb]').map((crumb) => [crumb.text(), crumb.attributes('href') ?? null])).toEqual([
+            ['GovTrace', 'https://govtrace.duckdns.org/'],
+            ['Veeduría Ciudadana Santa Marta', '/'],
+            ['Mis Reportes', null],
+        ]);
+    });
+});
+
 describe('La bandeja de salida en Mis Reportes (US-018)', () => {
     afterEach(() => {
         delete window.navigator.onLine;

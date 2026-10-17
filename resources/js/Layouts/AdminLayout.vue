@@ -61,7 +61,7 @@ const failuresBanner = computed(() => {
 
 <template>
     <Head :title="title" />
-    <AppLayout :title="page.props.organization" :logo="page.props.organizationLogo">
+    <AppLayout :title="page.props.organization" :logo="page.props.organizationLogo" :panel="{ label: 'Panel', href: '/admin/inbox' }" :here="title">
         <div class="flex flex-col gap-4">
             <p v-if="failuresBanner" role="alert" class="rounded-lg bg-red-600 p-3 text-sm font-semibold text-white">{{ failuresBanner }}</p>
             <h1 class="text-xl font-semibold">{{ title }}</h1>

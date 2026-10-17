@@ -3590,6 +3590,57 @@ Queda para la V2, opcional, con el modelo de financiación (`docs/viabilidad-leg
 
 **Modelo:** Opus xhigh (infraestructura y permisos).
 
+### Iteración 62 — Saber dónde estoy y volver a GovTrace
+
+⬜ **Pedida por el usuario el 2026-10-17** ("a veces estando desde la veeduría no puedo acceder al panel de super administrador"; propuso breadcrumbs), antes de grabar el video del Entregable 4. **Aprobada** ("continúa con la iteración de las mejoras en la interfaz").
+
+**Por qué:** cada veeduría vive en su subdominio y la sesión es de cada dirección. El Super Administrador llega al sitio de una veeduría sin sesión, y nada lo lleva de vuelta a GovTrace: ni el logo, ni el título, ni el pie. Su lista de Organizaciones tampoco enlaza el sitio de cada una.
+
+**Entregable:**
+- **La ruta**, arriba de cada pantalla (`Breadcrumbs.vue`, en `AppLayout`): `GovTrace › <veeduría> › <panel> › <pantalla>`. Cada nivel es un enlace, menos la pantalla actual (`aria-current`) y uno que apunte a donde ya se está. "GovTrace" lleva al Inicio de GovTrace (`APP_URL`, compartido como `govtraceUrl`), también desde el subdominio de una veeduría.
+- **En el celular,** un solo enlace al nivel anterior más cercano que no es la pantalla actual: "← GovTrace". Reemplaza los "← Volver al mapa" de arriba de la obra, el contrato y el acceso.
+- **Sin ruta** en el Inicio de GovTrace (la raíz) y en Nuevo reporte, para que un toque por error no saque al veedor a mitad de camino.
+- **"Ver su sitio"** en cada organización del panel global, salvo las dadas de baja (`site_url` en la lista).
+- **"Ir al panel global"** en el menú de la cuenta del Super Administrador, en las pantallas públicas de GovTrace.
+- **En el acceso de una veeduría:** "¿Es Super Administrador de GovTrace? Su acceso está en el Inicio de GovTrace.", con el enlace al acceso de GovTrace.
+- **Las sesiones no cambian:** siguen siendo de cada dirección. Compartirlas entre subdominios mezclaría las cuentas de las veedurías.
+- **Historia:** una nueva, US-067, con su YAML y su `.feature`, antes de las pruebas.
+
+**Done-when:**
+- la ruta, con sus niveles y sus enlaces, en el sitio de una veeduría, en una obra, en el panel de la veeduría, en el panel global y en Mis reportes; y nada en el Inicio ni en Nuevo reporte;
+- en el celular, el enlace al nivel anterior;
+- "Ver su sitio", "Ir al panel global" y el aviso del acceso;
+- un e2e: el Super Administrador abre el sitio de una veeduría desde Organizaciones, vuelve por la ruta al Inicio con su sesión y entra a su panel;
+- `make ux-check` no empeora;
+- cada escenario de su `.feature` tiene su prueba.
+
+**Modelo:** Sonnet medium (interfaz; el backend solo comparte una URL y la agrega a la lista). En Opus 5.5, a pedido del usuario.
+
+✅ **Cumplida (2026-10-17).**
+- **Cómo quedó:**
+  - **La ruta** (`Breadcrumbs.vue`) la arma `AppLayout` con lo que le dice cada pantalla: `panel` (los dos paneles lo pasan solos) y `here`, el nombre de la pantalla (la obra y el contrato, por su nombre; Estadísticas, Validar, la política, Iniciar sesión, Mis Reportes). El sitio de una veeduría la tiene siempre. "GovTrace" es un `<a>` al `govtraceUrl` compartido (`APP_URL`) desde una veeduría, y `/` en el dominio central.
+  - **En el celular,** `← <nivel>`: el nivel anterior más cercano que lleva a otra pantalla. En la Bandeja, "Panel" es la misma pantalla, así que lleva a la veeduría.
+  - **Se quitaron** los "← Volver al mapa" de la obra y del contrato, el "← Volver al mapa de obras" del acceso y el "← Volver" de la política.
+  - **"Ver su sitio"** (`site_url` en `/admin/organizations/data`), **"Ir al panel global"** (`AccountMenu`, fuera de `/admin`) y el aviso del acceso de una veeduría, con el enlace a `<GovTrace>/login`.
+- **Historia:** US-067, nueva, con 10 escenarios.
+- **Pruebas:**
+  - Pest (`NavigationTest`, 2): la dirección de GovTrace en el sitio de una veeduría y en el dominio central; el sitio de cada organización, también suspendida, y ninguno dada de baja.
+  - Vitest: la ruta en el sitio, en una obra, en un contrato, en los dos paneles y en Mis Reportes; el enlace del celular; nada en el Inicio ni en Nuevo reporte; "Ver su sitio", "Ir al panel global" y el aviso del acceso.
+  - e2e: el Super Administrador abre el sitio de la veeduría desde Organizaciones, llega sin sesión, vuelve por "GovTrace" al Inicio y entra a su panel con "Ir al panel global". El de la CSP buscaba el nombre de la obra con `getByText(…).first()`, y ahora el primero es el de la ruta, oculto en el celular: busca el título.
+  - `make ux-check` no empeora ninguna pantalla.
+  - Todo visto en rojo antes de implementar, salvo los dos casos sin ruta (el Inicio y Nuevo reporte), que ya pasaban porque no había ruta en ninguna parte.
+  - Corridas: Pest 1241, Vitest 737, `make e2e` 61 y 1 `fixme`, trace-check 496 de 496.
+
+### Iteración 63 — Sincronizar el SECOP desde la veeduría
+
+⬜ **Propuesta por Claude el 2026-10-17,** a partir de una pregunta del usuario ("si el contrato se crea después de la sincronización, ¿tienen forma de sincronizarlo o deben esperar?"). Se implementa cuando la apruebe.
+
+**Por qué:** hoy la veeduría no puede sincronizar por su cuenta. Sus contratos llegan cada noche, al registrarse, al cambiar su territorio, al reactivarse o cuando el Super Administrador pulsa "Sincronizar ahora" (todo el territorio vigilado).
+
+**Entregable:** "Sincronizar ahora" en la pantalla Contratos del Administrador de la veeduría: solo su territorio (`SyncSecopContracts` con su id, como el alta), una vez cada 5 minutos por veeduría, y el resultado en la misma pantalla. Un contrato que todavía no está en los datos abiertos de datos.gov.co tampoco llega así: se dice en la pantalla.
+
+**Modelo:** Sonnet medium.
+
 ### Orden de lo que está en espera (2026-10-14)
 
 | Orden | Qué | Por qué en ese lugar |

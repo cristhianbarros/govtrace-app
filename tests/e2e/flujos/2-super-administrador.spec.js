@@ -36,6 +36,23 @@ test('Entra al panel global, a las organizaciones', async ({ page }) => {
     await expect(rowOf(page, ALTA).locator('[data-test="administrators"]')).toContainText('Activo');
 });
 
+test('El Super Administrador vuelve a su panel desde el sitio de una veeduría (it. 62, US-067)', async ({ page }) => {
+    await enterThePanel(page);
+
+    await rowOf(page, E2E_ORG).getByRole('link', { name: 'Ver su sitio' }).click();
+    await page.waitForURL(`${ORG}/`);
+    // La sesión es de cada dirección: en la veeduría no la tiene.
+    await expect(page.getByRole('link', { name: 'Entrar' })).toBeVisible();
+
+    await page.getByRole('navigation', { name: 'Ruta' }).getByRole('link', { name: 'GovTrace' }).click();
+    await page.waitForURL(`${CENTRAL}/`);
+    await page.locator('[data-test="account-menu"]').click();
+    await page.getByRole('menuitem', { name: 'Ir al panel global' }).click();
+
+    await page.waitForURL('**/admin/organizations');
+    await expect(page.getByRole('heading', { name: 'Organizaciones', exact: true })).toBeVisible();
+});
+
 test('Corrige los datos legales de una organización a solicitud formal: su NIT y su inscripción (it. 44d)', async ({ page }) => {
     await enterThePanel(page);
     const row = rowOf(page, ALTA);

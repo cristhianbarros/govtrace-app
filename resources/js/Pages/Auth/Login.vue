@@ -36,8 +36,7 @@ function submit() {
 
 <template>
     <Head title="Iniciar sesión" />
-    <AppLayout :title="page.props.organization ?? 'GovTrace'" :logo="page.props.organizationLogo ?? null">
-        <Link v-if="page.props.organization" href="/" class="mb-2 inline-flex min-h-11 items-center text-base font-semibold text-slate-700">← Volver al mapa de obras</Link>
+    <AppLayout :title="page.props.organization ?? 'GovTrace'" :logo="page.props.organizationLogo ?? null" here="Iniciar sesión">
         <form class="mx-auto mt-2 flex w-full max-w-sm flex-col gap-5 rounded-3xl bg-white p-5 shadow-soft ring-1 ring-slate-900/5 md:p-7" novalidate @submit.prevent="submit">
             <div class="flex flex-col items-center gap-2 text-center">
                 <Illustration name="welcome" size="w-28" />
@@ -80,6 +79,10 @@ function submit() {
             <Link href="/forgot-password" class="inline-flex min-h-11 items-center justify-center text-center text-base font-semibold text-slate-700 underline">¿Olvidó su contraseña?</Link>
             <!-- US-058-LEG (it. 44e). -->
             <Link href="/privacidad" class="inline-flex min-h-11 items-center justify-center text-center text-sm font-semibold text-slate-700 underline">Política de tratamiento de datos</Link>
+            <!-- It. 62 (US-067): su cuenta no es de esta veeduría, y la sesión es de cada dirección. -->
+            <p v-if="page.props.organization" data-test="super-admin-access" class="text-center text-base text-slate-700">
+                ¿Es Super Administrador de GovTrace? <a :href="`${page.props.govtraceUrl ?? '/'}login`" class="font-semibold underline">Su acceso está en el Inicio de GovTrace.</a>
+            </p>
         </form>
     </AppLayout>
 </template>

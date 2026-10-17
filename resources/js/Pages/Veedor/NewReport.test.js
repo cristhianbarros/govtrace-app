@@ -249,6 +249,14 @@ describe('Nuevo Reporte', () => {
         expect(wrapper.text()).toContain('foto1.jpg');
     });
 
+    it('Mientras el veedor llena un reporte, la ruta no aparece (US-067)', () => {
+        page.props.govtraceUrl = 'https://govtrace.duckdns.org/';
+        const wrapper = mount(NewReport);
+
+        expect(wrapper.find('nav[aria-label="Ruta"]').exists()).toBe(false);
+        delete page.props.govtraceUrl;
+    });
+
     it('shows the name and logo the organization chose, as soon as it changes them (US-007)', async () => {
         page.props.organization = 'Ojo Ciudadano SMR';
         page.props.organizationLogo = '/organization/logo?v=logo-abc';

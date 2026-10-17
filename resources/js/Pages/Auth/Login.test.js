@@ -27,6 +27,20 @@ beforeEach(() => {
 });
 
 describe('Iniciar sesión', () => {
+    it('En el acceso de una veeduría, el Super Administrador sabe dónde está el suyo', () => {
+        page.props.govtraceUrl = 'https://govtrace.duckdns.org/';
+        const hint = mount(Login, { props: { context: 'Veeduría Ciudadana Santa Marta' } }).get('[data-test="super-admin-access"]');
+
+        expect(hint.text()).toBe('¿Es Super Administrador de GovTrace? Su acceso está en el Inicio de GovTrace.');
+        expect(hint.get('a').attributes('href')).toBe('https://govtrace.duckdns.org/login');
+
+        // En GovTrace, ya está en su acceso.
+        page.props.organization = null;
+        expect(mount(Login, { props: { context: 'Panel global' } }).find('[data-test="super-admin-access"]').exists()).toBe(false);
+        page.props.organization = 'Veeduría Ciudadana Santa Marta';
+        delete page.props.govtraceUrl;
+    });
+
     it('shows where the user is logging in, and sends email and password to /login', async () => {
         const { wrapper, submit } = loginAs('carlos@correo.co', 'Veeduria#2026');
 
