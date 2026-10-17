@@ -26,6 +26,7 @@ use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Testing\TestResponse;
+use Inertia\Testing\AssertableInertia as Assert;
 
 /*
  * Iteración 44f — Informar a la veeduría (features/US-059-LEG.feature,
@@ -319,7 +320,7 @@ it('La veeduría responde al ciudadano: the answer goes to their mail, the repor
         ->assertOk()->assertJson(['message' => 'Respuesta enviada al ciudadano.']);
 
     Notification::assertSentOnDemand(CitizenReportAnswered::class, fn (CitizenReportAnswered $notification, array $channels, AnonymousNotifiable $notifiable) => $notifiable->routes['mail'] === CITIZEN && $notification->answer === 'Gracias. El sábado va un veedor a documentarlo.' && $notification->number === $this->tenant->run(fn () => CitizenReport::query()->sole()->reference()));
-    expect(adminCitizenReports()->json('data.0'))->toMatchArray(['status' => 'answered', 'status_label' => 'Atendido', 'answer' => 'Gracias. El sábado va un veedor a documentarlo.'])
+    expect(adminCitizenReports()->json('data.0'))->toMatchArray(['status' => 'answered', 'status_label' => 'Respondido', 'answer' => 'Gracias. El sábado va un veedor a documentarlo.'])
         ->and(AuditLog::query()->where('action', 'citizen_report.answered')->where('actor_type', 'organization_admin')->exists())->toBeTrue();
 });
 
@@ -453,4 +454,55 @@ it('Los informes de los ciudadanos llegan de a una página y se filtran por esta
         ->and(array_column($page(['status' => 'new'])->get('data'), 'message'))->toBe(['tres', 'dos'])
         ->and($page(['status' => 'answered'])->get('total'))->toBe(1);
     test()->actingAs($this->administrator, 'tenant')->getJson(CITIZEN_HOST.'/citizen-reports?status=otro')->assertUnprocessable()->assertJsonValidationErrors('status');
+});
+
+// It. 65a (US-068) — los informes avisan, como la Bandeja, y se ven por pestañas ----
+
+it('La veeduría ve cuántos informes ciudadanos esperan, como en la Bandeja: the panel shares how many are new, only to the Administrador, and the count drops once handled', function () {
+    citizenReportOn($this->tenant, $this->worksite);
+    citizenReportOn($this->tenant, $this->worksite, 'answered');
+    $pending = fn () => test()->withoutVite()->actingAs(test()->administrator, 'tenant')->get(CITIZEN_HOST.'/admin/citizen-reports');
+
+    $pending()->assertInertia(fn (Assert $page) => $page->where('citizenReportsPending', 1));
+
+    tenancy()->end();
+    $this->flushSession();
+    $this->withoutVite()->actingAs($this->veedor, 'tenant')->get(CITIZEN_HOST.'/my-reports')
+        ->assertInertia(fn (Assert $page) => $page->where('citizenReportsPending', null));
+
+    tenancy()->end();
+    $this->flushSession();
+    $id = $this->tenant->run(fn () => CitizenReport::query()->where('status', 'new')->sole()->public_id);
+    $this->actingAs($this->administrator, 'tenant')->postJson(CITIZEN_HOST."/citizen-reports/{$id}/discard")->assertOk();
+    tenancy()->end();
+    $pending()->assertInertia(fn (Assert $page) => $page->where('citizenReportsPending', 0));
+});
+
+it('Los informes se ven por pestañas, una por estado: the list counts each state, and brings only the one asked', function () {
+    foreach (['new', 'new', 'answered', 'discarded'] as $status) {
+        citizenReportOn($this->tenant, $this->worksite, $status);
+    }
+    $list = fn (array $query = []) => test()->actingAs(test()->administrator, 'tenant')->getJson(CITIZEN_HOST.'/citizen-reports?'.http_build_query($query))->assertOk();
+
+    $new = $list(['status' => 'new']);
+    expect($new->json('total'))->toBe(2)
+        ->and($new->json('counts'))->toBe(['new' => 2, 'assigned' => 0, 'documented' => 0, 'answered' => 1, 'discarded' => 1, 'all' => 4])
+        ->and($list(['status' => 'assigned'])->json('total'))->toBe(0)
+        ->and($list(['status' => 'documented'])->json('total'))->toBe(0)
+        ->and($list()->json('total'))->toBe(4);
+});
+
+it('filters the reports by worksite, within the tab, with the worksites that have reports as options', function () {
+    $other = worksiteWithContracts($this->tenant, ['CO1.PCCNTR.7654321'], santaMartaWorksiteLocation());
+    citizenReportOn($this->tenant, $this->worksite, 'new', 'En la primera obra');
+    citizenReportOn($this->tenant, $other, 'new', 'En la segunda obra');
+    citizenReportOn($this->tenant, $other, 'answered', 'Ya respondido');
+    $list = fn (array $query) => test()->actingAs(test()->administrator, 'tenant')->getJson(CITIZEN_HOST.'/citizen-reports?'.http_build_query($query))->assertOk();
+
+    $filtered = $list(['status' => 'new', 'worksite' => $other->public_id]);
+    expect(array_column($filtered->json('data'), 'message'))->toBe(['En la segunda obra'])
+        // Como en la Bandeja: el número de cada pestaña no cambia con los filtros.
+        ->and($filtered->json('counts.new'))->toBe(2)
+        ->and(array_column($filtered->json('filters.worksites'), 'id'))->toEqualCanonicalizing([$this->worksite->public_id, $other->public_id]);
+    test()->actingAs($this->administrator, 'tenant')->getJson(CITIZEN_HOST.'/citizen-reports?worksite=otra')->assertUnprocessable()->assertJsonValidationErrors('worksite');
 });

@@ -1,5 +1,6 @@
 <?php
 
+use App\Domain\CitizenReports\CitizenReport;
 use App\Domain\Contracts\Contract;
 use App\Domain\Organization\Roles;
 use App\Domain\Organization\User as OrganizationUser;
@@ -294,4 +295,21 @@ function publicGet(string $path, string $host = 'veeduria-smr.govtrace.localhost
 function editorialStatusOf(Tenant $tenant, int $reportId): string
 {
     return $tenant->run(fn () => Report::query()->findOrFail($reportId)->editorial_status->label());
+}
+
+/** It. 65 (US-068): a citizen report on $worksite, in $status, as the citizen left it. */
+function citizenReportOn(Tenant $tenant, Worksite $worksite, string $status = 'new', string $message = 'La obra lleva dos semanas sin trabajadores.'): int
+{
+    return $tenant->run(fn () => CitizenReport::query()->create([
+        'worksite_id' => $worksite->id,
+        'email' => 'vecina@correo.co',
+        'email_hash' => hash('sha256', 'vecina@correo.co'),
+        'message' => $message,
+        'photo_paths' => [],
+        'status' => $status,
+        'answer' => $status === 'answered' ? 'Gracias, vamos a documentarlo.' : null,
+        'handled_at' => $status === 'new' ? null : now(),
+        'data_authorized_at' => now(),
+        'data_policy_version' => '2026-09-30.2',
+    ])->id);
 }

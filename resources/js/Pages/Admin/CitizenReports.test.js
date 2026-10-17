@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { defineComponent, h } from 'vue';
 import CitizenReports from './CitizenReports.vue';
 import { answerCitizenReport, confirmCitizenLocation, discardCitizenReport, fetchCitizenReports } from '@/services/api.js';
+import { router } from '@/testing/inertia.js';
 
 vi.mock('@inertiajs/vue3', async () => await import('@/testing/inertia.js'));
 vi.mock('@/services/api.js');
@@ -36,6 +37,8 @@ const report = (changes = {}) => ({
     ...changes,
 });
 const button = (wrapper, text) => wrapper.findAll('button').find((candidate) => candidate.text() === text);
+// It. 65a: las pestañas por estado, como las de la Bandeja (su nombre, sin el número).
+const tab = (wrapper, label) => wrapper.findAll('[role="tab"]').find((candidate) => candidate.text().startsWith(label));
 
 async function openReports(rows = [report()]) {
     fetchCitizenReports.mockResolvedValue(answer(rows));
@@ -78,14 +81,19 @@ describe('Informes ciudadanos', () => {
         expect(card.find('img').exists()).toBe(false);
     });
 
-    it('says when there are no reports yet', async () => {
-        expect((await openReports([])).text()).toContain('Aún no hay informes de ciudadanos.');
+    it('says when there is nothing new, and when there are no reports yet', async () => {
+        const wrapper = await openReports([]);
+        expect(wrapper.text()).toContain('No hay informes nuevos: nada espera respuesta.');
+
+        await tab(wrapper, 'Todos').trigger('click');
+        await flushPromises();
+        expect(wrapper.text()).toContain('Aún no hay informes de ciudadanos.');
     });
 
     it('La veeduría responde al ciudadano: writes the answer, and the list shows it answered', async () => {
         answerCitizenReport.mockResolvedValue({ message: 'Respuesta enviada al ciudadano.' });
         const wrapper = await openReports();
-        fetchCitizenReports.mockResolvedValue(answer([report({ status: 'answered', status_label: 'Atendido', answer: 'Gracias. El sábado va un veedor.' })]));
+        fetchCitizenReports.mockResolvedValue(answer([report({ status: 'answered', status_label: 'Respondido', answer: 'Gracias. El sábado va un veedor.' })]));
 
         await button(wrapper, 'Responder').trigger('click');
         await wrapper.get('textarea').setValue('Gracias. El sábado va un veedor.');
@@ -94,8 +102,10 @@ describe('Informes ciudadanos', () => {
 
         expect(answerCitizenReport).toHaveBeenCalledWith('01j9xq3m7v8k2d4f6g8h07kq3m', 'Gracias. El sábado va un veedor.');
         expect(wrapper.get('[role="status"]').text()).toBe('Respuesta enviada al ciudadano.');
-        expect(wrapper.get('[data-test="citizen-report"]').text()).toContain('Atendido');
+        expect(wrapper.get('[data-test="citizen-report"]').text()).toContain('Respondido');
         expect(wrapper.get('[data-test="citizen-report"]').text()).toContain('Gracias. El sábado va un veedor.');
+        // It. 65a: el número rojo de "Informes ciudadanos" baja.
+        expect(router.reload).toHaveBeenCalledWith({ only: ['citizenReportsPending'] });
     });
 
     it('La veeduría descarta un informe: it asks to confirm first', async () => {
@@ -115,9 +125,8 @@ describe('Informes ciudadanos', () => {
 // It. 52 — de a una página, y por estado.
 describe('Los informes de a una página, por estado (it. 52)', () => {
     it('Veo 20 informes y Ver 20 más trae los siguientes: appends the next page, says how many there are', async () => {
-        const wrapper = await openReports([report()]);
         fetchCitizenReports.mockResolvedValue(answer([report({ id: 'dos', message: 'Segundo' })], { total: 21, has_more: true }));
-        await wrapper.get('select#status').setValue('new');
+        const wrapper = mount(CitizenReports);
         await flushPromises();
         expect(wrapper.get('[data-test="more"]').exists()).toBe(true);
 
@@ -131,14 +140,15 @@ describe('Los informes de a una página, por estado (it. 52)', () => {
         expect(wrapper.get('[data-test="total"]').text()).toBe('21 informes');
     });
 
-    it('Filtro los informes por estado: from the first page, and Todos brings them all back', async () => {
+    it('Filtro los informes por estado: each tab asks for its own from the first page, and Todos for all of them', async () => {
         const wrapper = await openReports([report()]);
+        expect(fetchCitizenReports).toHaveBeenLastCalledWith({ status: 'new', page: 1 });
 
-        await wrapper.get('select#status').setValue('answered');
+        await tab(wrapper, 'Respondidos').trigger('click');
         await flushPromises();
         expect(fetchCitizenReports).toHaveBeenLastCalledWith({ status: 'answered', page: 1 });
 
-        await wrapper.get('select#status').setValue('');
+        await tab(wrapper, 'Todos').trigger('click');
         await flushPromises();
         expect(fetchCitizenReports).toHaveBeenLastCalledWith({ page: 1 });
     });
@@ -147,10 +157,51 @@ describe('Los informes de a una página, por estado (it. 52)', () => {
         const wrapper = await openReports([report()]);
         fetchCitizenReports.mockResolvedValue(answer([]));
 
-        await wrapper.get('select#status').setValue('discarded');
+        await tab(wrapper, 'Descartados').trigger('click');
         await flushPromises();
 
-        expect(wrapper.text()).toContain('Ningún informe con ese estado.');
+        expect(wrapper.text()).toContain('Ningún informe descartado.');
+    });
+});
+
+// It. 65a (US-068) — como la Bandeja: pestañas con su número, y filtro por obra.
+describe('Las pestañas y los filtros, como la Bandeja (it. 65a)', () => {
+    const counts = { new: 2, assigned: 1, documented: 3, answered: 4, discarded: 1, all: 11 };
+    const worksites = [
+        { id: '01j9xq3m7v8k2d4f6g8h0jkmnp', name: 'Pavimentación Calle 30' },
+        { id: '01j9xq3m7v8k2d4f6g8h0jkmnq', name: 'Polideportivo del barrio' },
+    ];
+
+    it('Los informes se ven por pestañas, una por estado: six tabs with how many each one has, and Nuevos first', async () => {
+        fetchCitizenReports.mockResolvedValue(answer([report()], { counts, filters: { worksites } }));
+        const wrapper = mount(CitizenReports);
+        await flushPromises();
+
+        expect(wrapper.findAll('[role="tab"]').map((candidate) => candidate.text())).toEqual(['Nuevos 2', 'Visita asignada 1', 'Documentados 3', 'Respondidos 4', 'Descartados 1', 'Todos 11']);
+        expect(tab(wrapper, 'Nuevos').attributes('aria-selected')).toBe('true');
+        expect(wrapper.find('select#status').exists()).toBe(false);
+
+        await tab(wrapper, 'Visita asignada').trigger('click');
+        await flushPromises();
+        expect(fetchCitizenReports).toHaveBeenLastCalledWith({ status: 'assigned', page: 1 });
+        expect(tab(wrapper, 'Visita asignada').attributes('aria-selected')).toBe('true');
+    });
+
+    it('filters by worksite within the tab, says when nothing matches, and starts over when the tab changes', async () => {
+        fetchCitizenReports.mockResolvedValue(answer([report()], { counts, filters: { worksites } }));
+        const wrapper = mount(CitizenReports);
+        await flushPromises();
+
+        expect(wrapper.findAll('select#filter-worksite option').map((option) => option.text())).toEqual(['Todas', 'Pavimentación Calle 30', 'Polideportivo del barrio']);
+        fetchCitizenReports.mockResolvedValue(answer([], { counts, filters: { worksites } }));
+        await wrapper.get('select#filter-worksite').setValue(worksites[1].id);
+        await flushPromises();
+        expect(fetchCitizenReports).toHaveBeenLastCalledWith({ status: 'new', worksite: worksites[1].id, page: 1 });
+        expect(wrapper.text()).toContain('Ningún informe con ese filtro.');
+
+        await tab(wrapper, 'Todos').trigger('click');
+        await flushPromises();
+        expect(fetchCitizenReports).toHaveBeenLastCalledWith({ page: 1 });
     });
 });
 

@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Application\CitizenReports\CitizenReportInbox;
 use App\Domain\Organization\Notifications\ReviewDigest;
 use App\Domain\Organization\OrganizationStatus;
 use App\Domain\Organization\Roles;
@@ -36,11 +37,14 @@ class SendReviewDigests implements ShouldQueue
         foreach ($organizations as $tenant) {
             $tenant->run(function () use ($tenant) {
                 $pending = PendingReview::count();
-                if ($pending === 0) {
+                // It. 65a (US-068): también los informes ciudadanos que esperan respuesta.
+                $citizenReports = CitizenReportInbox::waiting();
+                if ($pending === 0 && $citizenReports === 0) {
                     return;
                 }
 
-                $digest = new ReviewDigest($pending, $tenant->displayName(), TenantUrl::to($tenant->domains()->value('domain'), 'admin/inbox'));
+                $domain = $tenant->domains()->value('domain');
+                $digest = new ReviewDigest($pending, $tenant->displayName(), TenantUrl::to($domain, 'admin/inbox'), $citizenReports, TenantUrl::to($domain, 'admin/citizen-reports'));
                 OrganizationUser::role(Roles::Administrator->value, 'tenant')
                     ->where('is_active', true)
                     ->whereNull('invitation_token_hash') // quien no activó su cuenta todavía no entra

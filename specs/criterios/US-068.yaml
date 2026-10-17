@@ -3,7 +3,8 @@ titulo_historia: "Como Administrador quiero enterarme de los informes ciudadanos
 bloque: "Iteración 65 — Del informe ciudadano a una evidencia"
 criterios_aceptacion:
   escenarios_exito:
-    - "'Informes ciudadanos', en el panel, muestra en rojo cuántos informes están 'Nuevo' (sin responder, asignar ni descartar), como la Bandeja con sus evidencias"
+    - "'Informes ciudadanos', en el panel, muestra en rojo cuántos informes están 'Nuevo' (sin responder, asignar ni descartar), como la Bandeja con sus evidencias; en el celular, en 'Más' y en su menú"
+    - "El estado 'Atendido' (respondido por escrito) pasa a llamarse 'Respondido', para no confundirlo con 'Documentado'"
     - "El resumen diario de las 07:00 suma una línea: 'N informe(s) ciudadano(s) espera(n) respuesta.' Llega si hay evidencias por revisar o informes que esperan"
     - "'Pedir a un veedor que lo documente', en un informe 'Nuevo': el Administrador elige al veedor; aparece elegido el último que reportó esa obra"
     - "Al asignar, el informe queda 'Visita asignada a <veedor>', y al ciudadano le llega un correo: un veedor de la veeduría va a visitar la obra para documentar lo que informó"
@@ -25,8 +26,8 @@ criterios_aceptacion:
     - "Un veedor desactivado con visitas pendientes: sus visitas vuelven a 'Nuevo', con la nota 'El veedor ya no está activo'"
   requisitos_ux:
     - "Sin correo inmediato al Administrador cuando llega un informe (decisión del usuario): el número rojo y el resumen diario"
-    - "(Pedido del usuario, 2026-10-17) Pestañas por estado en vez del select: Nuevos (la que abre, con su número), Visita asignada, Documentados, Respondidos, Descartados y Todos. Cada pestaña trae sus informes al tocarla, de 20 en 20, sin recargar la página, y la dirección la guarda (?estado=). "
-    - "(Pedido del usuario, 2026-10-17) Filtros como los de la Bandeja (US-036): 'Obra' (las que tienen informes) y 'Veedor' (el de la visita), con los mismos selectores, combinados con la pestaña y guardados en la dirección"
+    - "(Pedido del usuario, 2026-10-17) Pestañas por estado en vez del select: Nuevos (la que abre, con su número), Visita asignada, Documentados, Respondidos, Descartados y Todos. Cada pestaña trae sus informes al tocarla, de 20 en 20, sin recargar la página, con su número al lado (como la Bandeja, US-036). "
+    - "(Pedido del usuario, 2026-10-17) Filtros como los de la Bandeja (US-036): 'Obra' (las que tienen informes) y 'Veedor' (el de la visita), con los mismos selectores, combinados con la pestaña; el número de cada pestaña no cambia con los filtros"
     - "El veedor no acepta ni cierra la visita: reportar la obra la documenta. Su única acción extra es 'No puedo ir', con confirmación"
     - "El correo al ciudadano no lleva el nombre del veedor"
     - "Botones de 44 px y letra de 16 px; el número rojo, también para el lector de pantalla ('1 por atender')"

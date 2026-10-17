@@ -58,6 +58,23 @@ describe('AdminLayout', () => {
         page.props.inboxPending = null;
     });
 
+    // It. 65a (US-068): como la Bandeja, los informes ciudadanos que esperan.
+    it('La veeduría ve cuántos informes ciudadanos esperan, como en la Bandeja: in the sidebar, and on the phone in Más and its menu', async () => {
+        page.url = '/admin/observers';
+        page.props.citizenReportsPending = 2;
+        const wrapper = mount(AdminLayout, { props: { title: 'Veedores' }, attachTo: document.body });
+
+        expect(wrapper.get('[data-test="sidebar"] a[href="/admin/citizen-reports"]').attributes('aria-label')).toBe('Informes ciudadanos, 2 por atender');
+        // En el celular, "Informes ciudadanos" está en "Más": el número se ve en "Más" y en su menú.
+        const more = wrapper.get('[data-test="tabs"] button[aria-haspopup="menu"]');
+        expect(more.text()).toContain('2');
+        expect(more.attributes('aria-label')).toBe('Más, 2 pendientes');
+        await more.trigger('click');
+        expect(wrapper.get('[data-test="more"] a[href="/admin/citizen-reports"]').text()).toContain('2');
+        page.props.citizenReportsPending = null;
+        wrapper.unmount();
+    });
+
     it('shows the logo of the organization in the header (US-007)', () => {
         page.props.organizationLogo = '/organization/logo?v=logo-abc';
         const wrapper = mount(AdminLayout, { props: { title: 'Bandeja de entrada' } });

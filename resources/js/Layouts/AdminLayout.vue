@@ -44,7 +44,12 @@ const screens = [
     { href: '/admin/authorization', label: 'Autorización', icon: ShieldCheckIcon, group: 'Organización' },
 ];
 
-const badges = computed(() => (page.props.inboxPending ? { '/admin/inbox': page.props.inboxPending } : {}));
+// It. 40c: lo que espera en la Bandeja. It. 65a (US-068): y los informes ciudadanos nuevos.
+const badges = computed(() => ({
+    ...(page.props.inboxPending ? { '/admin/inbox': page.props.inboxPending } : {}),
+    ...(page.props.citizenReportsPending ? { '/admin/citizen-reports': page.props.citizenReportsPending } : {}),
+}));
+const badgeLabels = { '/admin/citizen-reports': 'por atender' };
 
 // US-021: evidencias en "Falla de Sellado" (solo el Administrador recibe este número).
 const failuresBanner = computed(() => {
@@ -69,7 +74,7 @@ const failuresBanner = computed(() => {
         </div>
 
         <template #sidebar>
-            <PanelSidebar :screens="screens" :badges="badges" badge-label="por revisar" />
+            <PanelSidebar :screens="screens" :badges="badges" badge-label="por revisar" :badge-labels="badgeLabels" />
         </template>
         <template #nav>
             <PanelTabs :screens="screens" :badges="badges" />

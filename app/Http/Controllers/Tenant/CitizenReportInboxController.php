@@ -17,15 +17,16 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 /** The Administrador's "Informes ciudadanos" (US-059-LEG): read, answer, discard. */
 class CitizenReportInboxController extends Controller
 {
-    /** It. 52: de 20 en 20, y por estado (?page=, ?status=new|answered|discarded). */
+    /** It. 52: de 20 en 20, y por estado (?page=, ?status=). It. 65a: y por obra (?worksite=, su identificador público). */
     public function index(Request $request, CitizenReportInbox $inbox): JsonResponse
     {
         $query = $request->validate([
             'page' => ['nullable', 'integer', 'min:1'],
             'status' => ['nullable', Rule::in(array_keys(CitizenReport::STATUS_LABELS))],
+            'worksite' => ['nullable', 'string', 'exists:tenant.worksites,public_id'],
         ]);
 
-        return response()->json($inbox->list((int) ($query['page'] ?? 1), $query['status'] ?? null));
+        return response()->json($inbox->list((int) ($query['page'] ?? 1), $query['status'] ?? null, $query['worksite'] ?? null));
     }
 
     /** It. 46h: la foto número $position (de 1 a 3) del informe. */
