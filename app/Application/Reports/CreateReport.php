@@ -2,6 +2,7 @@
 
 namespace App\Application\Reports;
 
+use App\Application\CitizenReports\CitizenVisits;
 use App\Application\Sealing\QueueReportForSealing;
 use App\Application\Worksites\WorksiteOfContract;
 use App\Domain\Configuration\Parameters;
@@ -111,6 +112,9 @@ class CreateReport
 
             return $report;
         });
+
+        // It. 65b (US-068): si la veeduría le pidió a este veedor visitar la obra por un informe ciudadano, este reporte lo documenta.
+        CitizenVisits::documentedBy($report);
 
         // Ya confirmado: "En Cola" y el trabajo de sellado despachado.
         (new QueueReportForSealing)->handle($report);

@@ -31,18 +31,32 @@ class CitizenReportInbox
      *
      * @return array{data: list<array<string, mixed>>, total: int, has_more: bool, counts: array<string, int>, filters: array{worksites: list<array{id: string, name: string}>}}
      */
-    public function list(int $page = 1, ?string $status = null, ?string $worksite = null): array
+    public function list(int $page = 1, ?string $status = null, ?string $worksite = null, ?string $observer = null): array
     {
         $inTab = fn () => CitizenReport::query()->when($status !== null, fn ($query) => $query->where('status', $status));
-        $query = $inTab()->with('worksite')
+        $query = $inTab()->with(['worksite', 'assignee'])
             ->when($worksite !== null, fn ($query) => $query->whereHas('worksite', fn ($sheet) => $sheet->where('public_id', $worksite)))
+            // It. 65b: el veedor de la visita.
+            ->when($observer !== null, fn ($query) => $query->whereHas('assignee', fn ($veedor) => $veedor->where('public_id', $observer)))
             ->latest('id');
 
         return [
             ...Page::of($query, $page, fn ($reports) => $this->presented($reports)),
             'counts' => $this->counts(),
-            'filters' => ['worksites' => $this->worksitesIn($inTab())],
+            'filters' => ['worksites' => $this->worksitesIn($inTab()), 'observers' => $this->observersIn($inTab())],
+            // It. 65b: a quién se le puede pedir una visita.
+            'observers' => CitizenVisits::observers()->map(fn (User $veedor) => ['id' => $veedor->public_id, 'name' => $veedor->name])->all(),
         ];
+    }
+
+    /**
+     * @param  Builder<CitizenReport>  $inTab
+     * @return list<array{id: string, name: string}>
+     */
+    private function observersIn(Builder $inTab): array
+    {
+        return User::query()->whereIn('id', $inTab->whereNotNull('assigned_to')->select('assigned_to'))->orderBy('name')->get(['public_id', 'name'])
+            ->map(fn (User $veedor) => ['id' => $veedor->public_id, 'name' => $veedor->name])->all();
     }
 
     /** It. 65a: the "Nuevo" ones, for the red number of "Informes ciudadanos" and the daily digest. */
@@ -85,6 +99,9 @@ class CitizenReportInbox
             ->get(['id', 'worksite_id', 'proposed_latitude', 'proposed_longitude'])
             ->groupBy('worksite_id');
 
+        // It. 65b: el último veedor que reportó cada obra, para sugerirlo.
+        $suggested = CitizenVisits::suggestions($reports->where('status', 'new')->pluck('worksite_id')->unique()->values()->all());
+
         return $reports->map(fn (CitizenReport $report) => [
             // It. 46c (US-064-SEC): identificadores públicos.
             'id' => $report->public_id,
@@ -99,6 +116,13 @@ class CitizenReportInbox
             'status_label' => CitizenReport::STATUS_LABELS[$report->status],
             'answer' => $report->answer,
             'proposed_location' => $this->proposal($report, $open->get($report->worksite_id, collect())),
+            // It. 65b (US-068): la visita de un veedor — a quién se le pidió, a quién se sugiere, por qué volvió.
+            'visit' => [
+                'observer' => $report->assignee ? ['id' => $report->assignee->public_id, 'name' => $report->assignee->name] : null,
+                'suggested' => $report->status === 'new' ? ($suggested[$report->worksite_id] ?? null) : null,
+                'note' => $report->status === 'new' ? $report->visit_note : null,
+                'reported' => $report->documenting_report_id !== null,
+            ],
         ]);
     }
 

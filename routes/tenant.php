@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Application\CitizenReports\CitizenVisits;
 use App\Application\Privacy\DataPolicy;
 use App\Application\Publication\PublicCache;
 use App\Application\Publication\PublicStats;
@@ -41,6 +42,7 @@ use App\Http\Controllers\Tenant\SetPasswordController;
 use App\Http\Controllers\Tenant\SummaryController;
 use App\Http\Controllers\Tenant\SuperAdminAuthorizationController;
 use App\Http\Controllers\Tenant\TerritoryController;
+use App\Http\Controllers\Tenant\VisitController;
 use App\Http\Controllers\Tenant\WebManifestController;
 use App\Http\Controllers\Tenant\WorksiteController;
 use App\Http\Controllers\Tenant\WorksiteDossierController;
@@ -52,6 +54,7 @@ use App\Http\Middleware\EnsureMapIsOnline;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
+use Illuminate\Http\Request;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Route;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
@@ -205,6 +208,8 @@ Route::middleware([
             Route::get('/citizen-reports/{report}/photos/{position}', [CitizenReportInboxController::class, 'photo'])->where('report', PublicId::PATTERN)->whereIn('position', ['1', '2', '3'])->name('citizen-reports.photo');
             Route::post('/citizen-reports/{report}/answer', [CitizenReportInboxController::class, 'answer'])->where('report', PublicId::PATTERN)->name('citizen-reports.answer');
             Route::post('/citizen-reports/{report}/discard', [CitizenReportInboxController::class, 'discard'])->where('report', PublicId::PATTERN)->name('citizen-reports.discard');
+            // It. 65b (US-068): pedirle a un veedor que documente el informe, o pasarle la visita a otro.
+            Route::post('/citizen-reports/{report}/assign', [CitizenReportInboxController::class, 'assign'])->where('report', PublicId::PATTERN)->name('citizen-reports.assign');
             // It. 58 (US-035): la ubicación que propuso el ciudadano, como la oficial de la obra.
             Route::post('/citizen-reports/{report}/confirm-location', [CitizenReportInboxController::class, 'confirmLocation'])->where('report', PublicId::PATTERN)->name('citizen-reports.confirm-location');
 
@@ -258,7 +263,10 @@ Route::middleware([
             // US-057-LEG (it. 44c): un veedor reporta después de declarar que no tiene impedimentos para serlo.
             Route::get('/declaration', [DeclarationController::class, 'show'])->name('declaration.show');
             Route::post('/declaration', [DeclarationController::class, 'store'])->name('declaration.store');
-            Route::get('/reports/new', fn () => Inertia::render('Veedor/NewReport'))->middleware(EnsureImpedimentsDeclared::class)->name('reports.new');
+            // It. 65b (US-068): con sus visitas pendientes por informes ciudadanos.
+            Route::get('/reports/new', fn (Request $request) => Inertia::render('Veedor/NewReport', ['visits' => CitizenVisits::pendingFor($request->user('tenant'))]))->middleware(EnsureImpedimentsDeclared::class)->name('reports.new');
+            Route::get('/visits/{report}/photos/{position}', [VisitController::class, 'photo'])->where('report', PublicId::PATTERN)->whereIn('position', ['1', '2', '3'])->name('visits.photo');
+            Route::post('/visits/{report}/unable', [VisitController::class, 'unable'])->where('report', PublicId::PATTERN)->name('visits.unable');
             // It. 41: cada reporte cuesta XLM y un turno de la selladora: un límite por veedor y por hora.
             Route::post('/reports', [ReportController::class, 'store'])->middleware([EnsureImpedimentsDeclared::class, 'throttle:reports'])->name('reports.store');
 

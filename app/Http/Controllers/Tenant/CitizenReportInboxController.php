@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Tenant;
 
 use App\Application\CitizenReports\CitizenReportInbox;
+use App\Application\CitizenReports\CitizenVisits;
 use App\Domain\CitizenReports\CitizenReport;
 use App\Domain\Configuration\Parameters;
 use App\Http\Controllers\Controller;
@@ -24,9 +25,22 @@ class CitizenReportInboxController extends Controller
             'page' => ['nullable', 'integer', 'min:1'],
             'status' => ['nullable', Rule::in(array_keys(CitizenReport::STATUS_LABELS))],
             'worksite' => ['nullable', 'string', 'exists:tenant.worksites,public_id'],
+            'observer' => ['nullable', 'string', 'exists:tenant.users,public_id'],
         ]);
 
-        return response()->json($inbox->list((int) ($query['page'] ?? 1), $query['status'] ?? null, $query['worksite'] ?? null));
+        return response()->json($inbox->list((int) ($query['page'] ?? 1), $query['status'] ?? null, $query['worksite'] ?? null, $query['observer'] ?? null));
+    }
+
+    /** It. 65b (US-068): "Pedir a un veedor que lo documente", o pasarle la visita a otro. */
+    public function assign(Request $request, string $report, CitizenVisits $visits): JsonResponse
+    {
+        $data = $request->validate(['observer' => ['nullable', 'string']]);
+
+        try {
+            return response()->json(['message' => $visits->assign($request->user('tenant'), CitizenReport::idOf($report), $data['observer'] ?? null)]);
+        } catch (DomainException $e) {
+            return response()->json(['message' => $e->getMessage()], 409);
+        }
     }
 
     /** It. 46h: la foto número $position (de 1 a 3) del informe. */

@@ -146,6 +146,7 @@ El sitio tiene tres pestañas: **Obras**, **Estadísticas** y **Validar**. Al pi
 
 | Paso | Qué hace | Historia |
 |---|---|---|
+| **0. Sus visitas pendientes** (it. 65b) | Arriba, **"Visitas pendientes"**: las que la veeduría le pidió por un informe ciudadano, con la obra, el mensaje y las fotos del ciudadano (nunca su correo) y, si la obra no tiene ubicación, el punto que propuso el ciudadano. **"Reportar esta obra"** abre el reporte con esa obra y lo que informó el ciudadano; su reporte de esa obra responde al informe. **"No puedo ir"**, con confirmación, devuelve la visita a la veeduría. | US-068 |
 | **1. Encontrar la obra** | **"Obras cercanas"**: las que están a menos de 500 m, con su distancia. O **"Buscar Obra"** por nombre, contratista o número de proceso, desde 3 letras. Solo los contratos de obra de su territorio: en ejecución, celebrados, adjudicados, o terminados y liquidados en los últimos meses (parámetro). | US-019, US-016 |
 | **2. El GPS** | Toma la ubicación al elegir la obra. Exige **50 m de precisión o mejor**, y si no la tiene ofrece "Reintentar GPS". | US-008 |
 | **3. Qué vio** | **Avance**, **Retraso** o **Abandono**, cada uno con su explicación en una línea, y un comentario opcional de hasta 500 caracteres. | US-008 |
@@ -211,8 +212,10 @@ Todo queda en el log de auditoría: quién, cuándo, antes y después.
 
 ### 5.4 Los informes de los ciudadanos (US-059-LEG)
 
-- **"Informes ciudadanos":** lo que los ciudadanos le escriben desde cada obra, con la foto si la hay, **sin el correo** de quien lo envió.
-- **Responder:** la respuesta le llega al ciudadano por correo, desde GovTrace.
+- **"Informes ciudadanos":** lo que los ciudadanos le escriben desde cada obra, con la foto si la hay, **sin el correo** de quien lo envió. En el panel, un número rojo con los nuevos, y una línea en el resumen diario de las 07:00 (it. 65a).
+- **Pestañas por estado** (it. 65a): Nuevos, Visita asignada, Documentados, Respondidos, Descartados y Todos, cada una con su número; y filtros por obra y por el veedor de la visita, como en la Bandeja.
+- **Pedir a un veedor que lo documente** (it. 65b, US-068): el último veedor que reportó la obra viene elegido; solo veedores activos con sus impedimentos declarados. Al ciudadano le llega un correo: un veedor va a visitar la obra (sin su nombre). **"Cambiar de veedor"** no le envía otro. El reporte de ese veedor sobre la obra queda ligado: en la Bandeja dice a qué informe responde, y al publicarlo el informe queda **"Documentado"** y al ciudadano le llega el enlace a la evidencia. Si el veedor no puede ir, o se lo desactiva, el informe vuelve a "Nuevo" con la nota.
+- **Responder:** la respuesta le llega al ciudadano por correo, desde GovTrace. El informe queda "Respondido".
 - **Descartar:** queda registrado.
 - **La ubicación que propuso el ciudadano** (it. 58): su punto en un mapa, con las demás propuestas para la misma obra en gris. **"Confirmar esta ubicación"** la vuelve la oficial: la obra aparece en el mapa y la geocerca de los veedores se mide desde ahí. Queda en el log como una corrección (US-035). Si la obra ya tiene ubicación, la propuesta lo dice y no se confirma.
 - **Retención** (it. 45c): 30 días después de atendido, se borra el correo del informe; 30 días después de descartado, se borra entero.

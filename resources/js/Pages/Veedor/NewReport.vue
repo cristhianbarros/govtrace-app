@@ -10,6 +10,8 @@
 import { Head, usePage } from '@inertiajs/vue3';
 import { computed, onMounted, ref } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import LocationMap from '@/Components/LocationMap.vue';
+import RowAction from '@/Components/RowAction.vue';
 import ReportForm from '@/Components/ReportForm.vue';
 import VeedorNav from '@/Components/VeedorNav.vue';
 import WorksiteBrowser from '@/Components/WorksiteBrowser.vue';
@@ -19,7 +21,7 @@ import { registerServiceWorker } from '@/lib/pwa.js';
 import { loadDetector } from '@/lib/evidence/faces.js';
 import { MESSAGES, OutboxFull } from '@/lib/outbox.js';
 import { reportFormData } from '@/lib/report.js';
-import { sendReport } from '@/services/api.js';
+import { sendReport, unableToVisit } from '@/services/api.js';
 import { errorMessages } from '@/services/errors.js';
 
 const page = usePage();
@@ -46,24 +48,49 @@ const location = computed(() => {
     return ['failed', 'slow'].includes(gps.status.value) ? null : undefined;
 });
 
+// It. 65b (US-068): las visitas que la veeduría le pidió, por un informe ciudadano. Reportar la obra la documenta.
+const visits = ref([...(page.props.visits ?? [])]);
+const visiting = ref(null); // la visita desde la que se abrió el reporte
+const visitNotice = ref(null);
+
+function reportVisit(visit) {
+    chooseWorksite(visit.contract);
+    visiting.value = visit;
+}
+
+function leftVisit(visit, message) {
+    visits.value = visits.value.filter((candidate) => candidate.id !== visit.id);
+    visitNotice.value = message;
+}
+
 function chooseWorksite(selected) {
+    visiting.value = null;
+    visitNotice.value = null;
     contract.value = selected;
     sent.value = false;
     savedOffline.value = false;
     locationPending.value = null;
 }
 
+// It. 65b: como en el servidor, un reporte de la obra documenta las visitas que el veedor tenía en ella.
+function documentVisits(secopContractId) {
+    visits.value = visits.value.filter((visit) => visit.contract?.secop_contract_id !== secopContractId);
+}
+
 async function submit(report) {
     sending.value = true;
     serverErrors.value = [];
+    const reported = contract.value?.secop_contract_id;
 
     try {
         // US-018: sin señal, ni se intenta: va a la bandeja de salida.
         if (navigator.onLine === false) {
             await keepOffline(report);
+            documentVisits(reported);
             return;
         }
         const answer = await sendReport(reportFormData(report));
+        documentVisits(reported);
         startOver();
         sent.value = true;
         locationPending.value = answer?.location_pending ?? null;
@@ -110,6 +137,7 @@ onMounted(() => {
 
 function startOver() {
     contract.value = null;
+    visiting.value = null;
     serverErrors.value = [];
 }
 </script>
@@ -132,8 +160,39 @@ function startOver() {
                 <button type="button" class="min-h-11 rounded-xl border border-brand-200 bg-white px-3 text-base font-semibold text-brand-800" @click="gps.start()">Intentar de nuevo</button>
             </div>
 
+            <!-- It. 65b (US-068): las visitas que le pidió la veeduría, encima de las obras. -->
+            <p v-if="visitNotice" role="status" class="rounded-lg bg-emerald-50 p-3 text-sm font-semibold text-emerald-800">{{ visitNotice }}</p>
+            <section v-if="!contract && visits.length" aria-labelledby="visits-title" class="flex flex-col gap-3">
+                <h2 id="visits-title" class="text-lg font-semibold">Visitas pendientes</h2>
+                <p class="text-base text-slate-700">La veeduría le pidió documentar lo que informó un ciudadano. Vaya a la obra y repórtela como siempre: su reporte responde al informe.</p>
+                <article v-for="visit in visits" :key="visit.id" data-test="visit" class="flex flex-col gap-2 rounded-2xl border-l-8 border-sky-500 bg-white p-3 text-base shadow-soft ring-1 ring-slate-900/5">
+                    <p class="font-semibold">{{ visit.worksite }}</p>
+                    <p class="text-sm text-slate-600">Informe ciudadano n.º {{ visit.reference }}</p>
+                    <p class="whitespace-pre-line">«{{ visit.message }}»</p>
+                    <div v-if="visit.photo_urls.length" class="flex flex-wrap gap-2">
+                        <a v-for="(url, index) in visit.photo_urls" :key="url" :href="url" target="_blank" rel="noopener">
+                            <img :src="url" :alt="`Foto ${index + 1} de ${visit.photo_urls.length} que envió el ciudadano`" class="size-24 rounded-lg object-cover" />
+                        </a>
+                    </div>
+                    <template v-if="visit.proposed_location">
+                        <p class="font-semibold text-amber-900">📍 El ciudadano dice que la obra queda aquí. Es una pista: la obra aún no tiene ubicación oficial.</p>
+                        <LocationMap :model-value="visit.proposed_location" readonly label="Donde el ciudadano dice que queda la obra" />
+                    </template>
+                    <div class="flex flex-wrap gap-2">
+                        <button v-if="visit.contract" type="button" data-test="visit-report" class="min-h-12 rounded-xl bg-brand-700 px-4 font-semibold text-white hover:bg-brand-800" @click="reportVisit(visit)">Reportar esta obra</button>
+                        <RowAction label="No puedo ir" confirm-label="Sí, no puedo ir" warning="La visita vuelve a la veeduría, para que se la pida a otro veedor." :run="() => unableToVisit(visit.id)" @done="(message) => leftVisit(visit, message)" />
+                    </div>
+                </article>
+            </section>
+
             <WorksiteBrowser v-if="!contract" :location="location" @select="chooseWorksite" />
-            <ReportForm v-else :contract="contract" :gps="gps" :sending="sending" :server-errors="serverErrors" @submit="submit" @change-worksite="startOver" />
+            <template v-else>
+                <div v-if="visiting" data-test="visit-context" class="rounded-lg bg-sky-50 p-3 text-base ring-1 ring-sky-200">
+                    <p class="font-semibold text-sky-900">Lo que informó el ciudadano (n.º {{ visiting.reference }})</p>
+                    <p class="whitespace-pre-line">«{{ visiting.message }}»</p>
+                </div>
+                <ReportForm :contract="contract" :gps="gps" :sending="sending" :server-errors="serverErrors" @submit="submit" @change-worksite="startOver" />
+            </template>
         </div>
         <template #nav>
             <VeedorNav current="/reports/new" />

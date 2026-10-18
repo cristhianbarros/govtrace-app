@@ -497,3 +497,20 @@ describe('La bandeja de a páginas, con filtros (it. 52)', () => {
         expect(wrapper.get('[data-test="total"]').text()).toBe('1 evidencia');
     });
 });
+
+// It. 65b (US-068): la evidencia de un veedor que fue por un informe ciudadano lo dice.
+describe('La evidencia que documenta un informe ciudadano (it. 65b)', () => {
+    it('La Bandeja dice a qué informe responde la evidencia: its reference and what the citizen said', async () => {
+        const wrapper = await openInbox([evidence({ citizen_reports: [{ reference: '07KQ-3M9D', message: 'La obra lleva dos semanas sin trabajadores.' }] })]);
+
+        const note = wrapper.get('[data-test="citizen-report-answered"]');
+        expect(note.text()).toContain('Responde al informe ciudadano n.º 07KQ-3M9D');
+        expect(note.text()).toContain('La obra lleva dos semanas sin trabajadores.');
+    });
+
+    it('says nothing of the sort for an evidence that answers no citizen report', async () => {
+        const wrapper = await openInbox([evidence({ citizen_reports: [] })]);
+
+        expect(wrapper.find('[data-test="citizen-report-answered"]').exists()).toBe(false);
+    });
+});

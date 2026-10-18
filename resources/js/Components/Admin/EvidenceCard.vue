@@ -102,6 +102,12 @@ async function decide(decision) {
                 <span v-if="evidence.observer">Enviada por {{ evidence.observer }}</span>
             </p>
         </div>
+        <!-- It. 65b (US-068): el veedor fue por un informe ciudadano; al publicarla, el informe queda documentado. -->
+        <div v-for="citizenReport in evidence.citizen_reports ?? []" :key="citizenReport.reference" data-test="citizen-report-answered" class="rounded-lg bg-sky-50 p-3 text-base ring-1 ring-sky-200">
+            <p class="font-semibold text-sky-900">Responde al informe ciudadano n.º {{ citizenReport.reference }}</p>
+            <p class="whitespace-pre-line text-slate-800">«{{ citizenReport.message }}»</p>
+            <p class="text-sm text-slate-700">Si la publica, al ciudadano le llega el enlace para verla.</p>
+        </div>
         <div class="flex flex-wrap items-center gap-2 text-sm">
             <span class="rounded px-2 py-0.5 font-semibold" :class="CLASSIFICATION[evidence.classification]">{{ evidence.classification }}</span>
             <span class="text-slate-600">{{ formatDateTime(evidence.captured_at) }}</span>
