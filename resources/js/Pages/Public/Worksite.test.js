@@ -3,7 +3,7 @@
 // de sus evidencias publicadas, con el visor de fotos, las lápidas y el
 // sello de cada una.
 import { flushPromises, mount } from '@vue/test-utils';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import Worksite from './Worksite.vue';
 import CitizenReportForm from '@/Components/Public/CitizenReportForm.vue';
 import { formatDateTime } from '@/lib/format.js';
@@ -458,5 +458,34 @@ describe('Lo que informan los ciudadanos, en la página de la obra (it. 66b)', (
         const wrapper = await openWorksite(calle30({ citizens: null }));
 
         expect(wrapper.find('[data-test="citizens-count"]').exists()).toBe(false);
+    });
+});
+
+// It. 66c (US-069): compartir la obra — el menú del celular, o copiar el enlace.
+describe('Compartir la obra (it. 66c)', () => {
+    afterEach(() => {
+        delete navigator.share;
+        delete navigator.clipboard;
+    });
+
+    it('La obra se comparte con una vista previa: "Compartir esta obra" opens the share menu of the phone, with the work and its state', async () => {
+        navigator.share = vi.fn(async () => {});
+        const wrapper = await openWorksite(calle30());
+
+        await wrapper.findAll('button').find((candidate) => candidate.text() === 'Compartir esta obra').trigger('click');
+        await flushPromises();
+
+        expect(navigator.share).toHaveBeenCalledWith({ title: 'Pavimentación Calle 30 · En riesgo', text: 'Mire esta obra en GovTrace: su estado y sus evidencias selladas.', url: window.location.href });
+    });
+
+    it('copies the link where the browser cannot share, and says so', async () => {
+        navigator.clipboard = { writeText: vi.fn(async () => {}) };
+        const wrapper = await openWorksite(calle30());
+
+        await wrapper.findAll('button').find((candidate) => candidate.text() === 'Compartir esta obra').trigger('click');
+        await flushPromises();
+
+        expect(navigator.clipboard.writeText).toHaveBeenCalledWith(window.location.href);
+        expect(wrapper.text()).toContain('Enlace copiado: péguelo donde quiera compartirlo.');
     });
 });

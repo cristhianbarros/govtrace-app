@@ -88,10 +88,14 @@ El sitio tiene tres pestañas: **Obras**, **Estadísticas** y **Validar**. Al pi
 - **"Comprobar que es original"** en cada evidencia: el recibo público, con el sello en Stellar, el ledger y el enlace al explorador (US-025).
 - **"Descargar archivo original" y "Descargar su prueba"** (US-026): el mismo binario que se selló y su prueba de inclusión (`.prueba.json`), para verificarlo sin GovTrace.
 - **"¿Sabe de un problema en esta obra?":** los canales oficiales de la Contraloría General de la República (línea 199, el 01 8000 y SIPAR en línea), con lo que puede hacer cualquier ciudadano (it. 44a).
+- **"Yo también lo vi"** (US-069, it. 66b): si otros ya informaron de la obra, la página dice cuántos ("3 ciudadanos informaron sobre esta obra") y qué hace la veeduría ("Un veedor la está documentando"), solo el número, nunca los mensajes ni quiénes son. Mientras la veeduría no la documenta, se puede sumar con el correo, la autorización y el código, una vez por obra, y recibe los mismos correos. La tarjeta del mapa también dice cuántos.
+- **"Compartir esta obra"** (it. 66c): el menú del celular, o copiar el enlace. En WhatsApp y en redes, el enlace se ve con el nombre y el estado de la obra, el valor y la entidad de su contrato, y la foto publicada más reciente.
 - **"Informar a esta veeduría"** (US-059-LEG, it. 44f):
   1. El ciudadano escribe su correo, autoriza el tratamiento de sus datos y recibe un **código de 6 dígitos**. Vale 10 minutos y admite 5 intentos.
   2. Con el código, escribe lo que vio, entre 20 y 2.000 caracteres, y de 1 a 3 fotos opcionales (JPEG, hasta 10 MB cada una, sin metadatos), con las mismas opciones del veedor: **Tomar foto**, que abre la cámara trasera, y **Elegir de la galería**. Revisa cada una antes de enviar, con los rostros ya difuminados (it. 46e, 46h).
   3. Le llega un correo con la referencia de su informe, como `7KQ3-M9XD` (it. 46c: no un número consecutivo, que decía cuántos había). La veeduría le responde desde GovTrace **sin ver su correo**, que se guarda cifrado.
+  4. La pantalla y el correo le dicen **hasta cuándo se compromete a responder la veeduría** (it. 66a): su plazo en días hábiles, 15 por defecto, sin fines de semana ni festivos. Si pasa sin que la veeduría responda, pida la visita o lo descarte, le llega un correo con el camino a la Contraloría y los datos de su caso. El plazo no se publica.
+  5. Le llega un correo cuando la veeduría le pide a un veedor que vaya, y otro con el enlace cuando publica la evidencia (it. 65b).
   - Límites: 3 informes por correo al día, 1 por obra, y límites por conexión.
   - El informe no se sella, no se publica y no cambia el estado de la obra.
   - **Una obra sin ubicación** (it. 58): el ciudadano puede marcar en un mapa dónde queda, tocándolo o moviendo el punto, desde la cabecera de su municipio. Es el lugar de la obra, no el suyo. Un punto a más de 30 km de la cabecera se rechaza. La obra no aparece en el mapa hasta que la veeduría lo confirma.
@@ -226,6 +230,7 @@ Todo queda en el log de auditoría: quién, cuándo, antes y después.
 |---|---|---|
 | **Nombre y logo** | El nombre de fantasía (3 a 100 caracteres) y el logo: PNG, JPG o SVG, hasta 2 MB, mínimo 128×128 px. Un SVG con código se limpia. Los veedores y el sitio público los ven de inmediato. | US-007 |
 | **Contacto público** | Un correo y, si quiere, un teléfono, que se ven en el pie de su sitio. | US-007 (it. 43h, V13) |
+| **Días hábiles para responder a los ciudadanos** | 15 por defecto, de 1 a 60. El ciudadano ve la fecha al enviar su informe; el resumen diario avisa lo que vence en 3 días y lo vencido, y en "Informes ciudadanos" se ve "Vencido". Cambiarlo no cambia la fecha de lo que ya llegó. Es una sugerencia de GovTrace: la ley no le pone plazo a la veeduría. | US-069 (it. 66a) |
 | **Sus datos legales** | Los ve sin poder editarlos: el nombre legal, el NIT o la inscripción y el subdominio. Solo el Super Administrador los cambia. | US-011, R-TA-03 |
 | **Resumen del territorio** | Las obras por color, las evidencias por clasificación y por mes, y los veedores activos. | US-049-RPT |
 | **Exportar a CSV** | Las obras y las evidencias de su organización, con el veedor como seudónimo. | US-050-RPT |

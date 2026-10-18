@@ -3780,6 +3780,42 @@ Queda para la V2, opcional, con el modelo de financiación (`docs/viabilidad-leg
 
 **Modelo:** Opus 5.5 (datos públicos de ciudadanos, privacidad y correos a personas).
 
+✅ **Cumplida (2026-10-17), 66a, 66b y 66c.**
+- **Cómo quedó:**
+  - **66a:**
+    - `ColombianHolidays` y `BusinessDays` (`app/Domain/Calendar`): los 18 festivos, con la Pascua por el algoritmo de Meeus.
+    - `citizenResponseDays()` de cada veeduría, en sus datos.
+    - `CitizenResponseDeadline`: la fecha, la frase y lo vencido o por vencer.
+    - El informe guarda `due_on`, `first_action_at` y `escalated_at`.
+    - `EscalateOverdueCitizenReports` corre a las 08:00 y manda `CitizenReportOverdue`, con los canales de la Contraloría (`ContraloriaChannels`, los mismos de `oversight.js`).
+  - **66b:**
+    - `citizen_report_supports`, con el correo cifrado.
+    - `CitizenReportDesk::support` exige el código y la autorización, una vez por persona y obra.
+    - `CitizenReport::recipients()` lleva los correos a todos, cada uno por separado.
+    - `CitizenVoices` cuenta personas distintas por la huella de su correo y da el estado del informe más reciente.
+    - Lo público se recalcula con cada informe, suma y decisión.
+    - El botón de sumarse dice "Enviarme el código para sumarme", para no confundirlo con el de informar en la misma página.
+  - **66c:** `WorksitePreview` arma la vista previa con los datos de la tarjeta (en caché). La ruta de la obra la pasa a la plantilla (`withViewData`), y el botón "Compartir esta obra" usa `navigator.share` o el portapapeles.
+- **Historia:** US-069, nueva (16 escenarios), con R-LEG-12.
+- **Pruebas:**
+  - Pest:
+    - los festivos de 2026 y 15 días hábiles desde el 30 de octubre, que vencen el 24 de noviembre;
+    - el plazo en "Organización" y fuera de rango;
+    - la fecha en la respuesta y en el correo, y que cambiar el plazo no cambia la fecha;
+    - el correo del vencimiento, una vez, con su contenido, y ninguno si hubo una primera acción;
+    - el calendario a las 08:00 y una veeduría suspendida;
+    - el resumen;
+    - sumarse, una vez, sin informes abiertos o con un código malo;
+    - los correos a quien se sumó, "N ciudadanos lo vieron" y lo público sin mensajes ni correos;
+    - el informe descartado;
+    - la purga del documentado y de quienes se sumaron;
+    - la vista previa con foto y sin foto.
+  - Vitest: el plazo en "Organización", la fecha al enviar, "Vencido", el bloque de los ciudadanos y sumarse, la tarjeta y "Compartir esta obra".
+  - e2e (`6-informe-a-evidencia`): un vecino se suma, la obra lo cuenta y le llega el correo de la evidencia publicada.
+  - `make ux-check` no empeora ninguna pantalla. Todo se vio en rojo antes de implementar.
+  - Corridas: Pest 1285, Vitest 776, `make e2e` 67 y 1 `fixme`, trace-check 534 de 534.
+
+
 ### Iteración 63 — Sincronizar el SECOP desde la veeduría
 
 ⬜ **Propuesta por Claude el 2026-10-17,** a partir de una pregunta del usuario ("si el contrato se crea después de la sincronización, ¿tienen forma de sincronizarlo o deben esperar?"). Se implementa cuando la apruebe.

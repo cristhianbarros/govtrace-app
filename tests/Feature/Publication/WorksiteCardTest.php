@@ -209,3 +209,28 @@ it('Sin miniatura, la tarjeta muestra la foto completa: a photo that cannot be s
         ]);
     expect(publicGet("/public/worksites/{$this->worksite->public_id}")->json('data.timeline.0.files.0'))->not->toHaveKey('thumbnail_url');
 });
+
+// It. 66c (US-069): la obra se comparte con su vista previa (Open Graph), en el HTML de su página:
+// WhatsApp y las redes no ejecutan JavaScript.
+it('La obra se comparte con una vista previa: the HTML names the work and its state, the value and entity of its contract, and its newest published photo', function () {
+    publishedWithPhotos(['sin-rostro.jpg'], 20, 'Retraso');
+    $thumbnail = cardOf($this->worksite->public_id)['photos'][0]['thumbnail_url'];
+    $host = 'http://veeduria-smr.govtrace.localhost';
+
+    $html = publicGet("/worksite/{$this->worksite->public_id}")->assertOk()->getContent();
+
+    expect($html)->toContain('<meta property="og:title" content="Pavimentación Calle 30 · Alerta">')
+        ->toContain('<meta property="og:description" content="Santa Marta · Contrato por $1.250.000.000 · Alcaldía Distrital de Santa Marta. Evidencia ciudadana sellada: nadie la puede cambiar.">')
+        ->toContain('<meta property="og:site_name" content="Veeduría Ciudadana Santa Marta · GovTrace">')
+        ->toContain("<meta property=\"og:url\" content=\"{$host}/worksite/{$this->worksite->public_id}\">")
+        ->toContain("<meta property=\"og:image\" content=\"{$host}{$thumbnail}\">")
+        ->toContain('<meta name="twitter:card" content="summary_large_image">');
+});
+
+it('Una obra sin evidencias publicadas se comparte sin foto: its name and state, and no image', function () {
+    $html = publicGet("/worksite/{$this->worksite->public_id}")->assertOk()->getContent();
+
+    expect($html)->toContain('<meta property="og:title" content="Pavimentación Calle 30 · Normal">')
+        ->not->toContain('og:image')
+        ->toContain('<meta name="twitter:card" content="summary">');
+});

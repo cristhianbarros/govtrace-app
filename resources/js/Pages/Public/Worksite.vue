@@ -1,8 +1,9 @@
 <script setup>
 // US-029 / US-017: la vista pública de una obra — sus contratos y la línea
 // de tiempo de sus evidencias publicadas, pedidas al abrirla (R-MAP-02).
+import { ShareIcon } from '@heroicons/vue/24/outline';
 import { Head, usePage } from '@inertiajs/vue3';
-import { nextTick, onMounted } from 'vue';
+import { nextTick, onMounted, ref } from 'vue';
 import Illustration from '@/Components/Brand/Illustration.vue';
 import LoadState from '@/Components/LoadState.vue';
 import CitizenReportForm from '@/Components/Public/CitizenReportForm.vue';
@@ -26,6 +27,24 @@ const CONDITION = {
     red: { sign: '✕', css: 'bg-red-700 text-white', border: 'border-red-700' },
 };
 const { data: worksite, loading, error, load } = useLoader(() => fetchWorksite(props.worksiteId));
+
+// It. 66c (US-069): compartir la obra — el menú del celular, o copiar el enlace. La vista previa
+// (Open Graph) va en el HTML de la página, para WhatsApp y las redes.
+const shared = ref(null);
+async function share() {
+    const url = window.location.href;
+    const title = worksite.value.condition ? `${worksite.value.name} · ${worksite.value.condition.label}` : worksite.value.name;
+    if (navigator.share) {
+        try {
+            await navigator.share({ title, text: 'Mire esta obra en GovTrace: su estado y sus evidencias selladas.', url });
+        } catch {
+            // La persona cerró el menú: nada que decir.
+        }
+        return;
+    }
+    await navigator.clipboard?.writeText(url);
+    shared.value = 'Enlace copiado: péguelo donde quiera compartirlo.';
+}
 
 // It. 60: desde la tarjeta del mapa se llega a una evidencia (#evidencia-…) o a "Informar" (#informar).
 // Esas partes existen solo después de cargar la obra: entonces se va a la que pide la dirección.
@@ -70,6 +89,13 @@ onMounted(async () => {
                         </template>
                     </div>
                 </section>
+                <div class="mt-3 flex flex-wrap items-center gap-3">
+                    <button type="button" class="inline-flex min-h-12 items-center gap-2 rounded-xl border-2 border-brand-700 bg-white px-4 text-base font-semibold text-brand-800 hover:bg-brand-50" @click="share">
+                        <ShareIcon aria-hidden="true" class="size-5" />
+                        Compartir esta obra
+                    </button>
+                    <p v-if="shared" role="status" class="text-base font-semibold text-emerald-800">{{ shared }}</p>
+                </div>
                 <!-- It. 58: sin ubicación, no está en el mapa; el ciudadano puede decir dónde queda. -->
                 <p v-if="worksite.located === false" data-test="unlocated" class="mb-4 rounded-2xl bg-white p-4 text-base shadow-soft ring-1 ring-slate-900/5">Esta obra aún no está en el mapa: su ubicación está por confirmar. Si sabe dónde queda, dígaselo a la veeduría.</p>
                 <section aria-label="Contratos" class="flex flex-col gap-3">

@@ -7,6 +7,7 @@ use App\Application\Privacy\DataPolicy;
 use App\Application\Publication\PublicCache;
 use App\Application\Publication\PublicStats;
 use App\Application\Publication\StellarForBrowser;
+use App\Application\Publication\WorksitePreview;
 use App\Application\Worksites\WorksiteOfContract;
 use App\Domain\Organization\Roles;
 use App\Domain\Shared\PublicId;
@@ -89,7 +90,8 @@ Route::middleware([
     // US-003b: el mapa sale de línea con la baja de la organización; el resto, no.
     Route::middleware(EnsureMapIsOnline::class.':screen')->group(function () {
         Route::get('/', fn () => Inertia::render('Public/Map'))->name('public.map');
-        Route::get('/worksite/{worksite}', fn (string $worksite) => Inertia::render('Public/Worksite', ['worksiteId' => $worksite, 'stellar' => StellarForBrowser::props()]))->where('worksite', PublicId::PATTERN)->name('public.worksite');
+        // It. 66c (US-069): con su vista previa al compartir el enlace (Open Graph, en el HTML).
+        Route::get('/worksite/{worksite}', fn (string $worksite) => Inertia::render('Public/Worksite', ['worksiteId' => $worksite, 'stellar' => StellarForBrowser::props()])->withViewData(['preview' => WorksitePreview::of($worksite)]))->where('worksite', PublicId::PATTERN)->name('public.worksite');
         // It. 58 (US-059-LEG): un contrato del territorio sin ficha todavía; si ya la tiene, su obra.
         Route::get('/contract/{contract}', function (string $contract) {
             $sheet = WorksiteOfContract::existingIdFor($contract);
