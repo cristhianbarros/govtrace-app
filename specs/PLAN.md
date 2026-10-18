@@ -3710,6 +3710,25 @@ Queda para la V2, opcional, con el modelo de financiación (`docs/viabilidad-leg
 - **Pruebas:** Vitest: cuándo un aviso está fuera de la pantalla (arriba, abajo, cortado, o más alto que ella con su comienzo a la vista); el movimiento, suave o sin él; `v-reveal`, al aparecer y al cambiar el mensaje, no en cada redibujo; y cada pantalla, que trae su aviso. Playwright, en la pantalla de un Pixel 7: la respuesta del informe ciudadano, la foto para revisar y el reporte del veedor, dentro de la pantalla. Todo visto en rojo antes de implementar.
 - **Corridas:** Vitest 805, `make e2e` 68 (y 1 pendiente, `fixme`), trace-check 542 de 542; `make ux-check` no empeora ninguna pantalla.
 
+### Iteración 62e — La ruta también en Nuevo reporte
+
+⬜ **Reportado por el usuario el 2026-10-18:** "para el caso del veedor no veo los breadcrumbs". En la it. 62, Nuevo reporte quedó sin ruta, a propósito (propuesta de Claude): un toque por error no debía sacar al veedor a mitad de un reporte. **Elegido por el usuario** entre tres opciones: la ruta, con un aviso al salir.
+
+**Por qué:** "Nuevo reporte" es la pantalla de entrada del veedor, y sin ruta no sabe dónde está ni cómo ir al sitio de su veeduría. Además, las pestañas de arriba ya podían sacarlo a mitad de camino.
+
+**Entregable:**
+- **La ruta en Nuevo reporte:** "GovTrace › <veeduría> › Nuevo Reporte" (en el celular, "← <veeduría>").
+- **Con la obra elegida, salir pregunta antes** (`useLeaveGuard`): la ruta o una pestaña, "¿Salir sin enviar el reporte? Se perderá lo que lleva."; recargar, cerrar la app o el enlace a GovTrace, el aviso del navegador. Si dice que no, sigue en el reporte con lo que llevaba. "Salir" de la cuenta ya pregunta en su menú, y no vuelve a preguntar.
+
+**Done-when:** el escenario de US-067 reescrito, con su prueba.
+
+**Modelo:** Sonnet medium. En Opus 5.5, a pedido del usuario.
+
+✅ **Cumplida (2026-10-18).**
+- **Historia:** US-067: "Mientras el veedor llena un reporte, la ruta no aparece" pasa a "En Nuevo reporte, la ruta aparece, y salir con un reporte empezado pregunta antes", con su caso en el YAML.
+- **Pruebas:** Vitest: la ruta y sus enlaces; sin obra elegida no pregunta; con la obra elegida pregunta, y si dice que no, la visita no sale y lo escrito queda; la misma pantalla y "Salir" no preguntan; el aviso del navegador al recargar; enviado el reporte, sale sin preguntar. Vista en rojo antes de implementar.
+- **Corridas:** Vitest 806, `make e2e` 68 (y 1 pendiente, `fixme`), trace-check 542 de 542; `make ux-check` no empeora ninguna pantalla.
+
 ### Iteración 64 — Los correos salen por la cola
 
 ⬜ **Pedida por el usuario el 2026-10-17:** "el envío tanto del código como el informe del ciudadano se nota lento. Haz el análisis y aplica la mejor para que los procesos se muevan por colas". Va antes de la 63.

@@ -24,7 +24,7 @@ criterios_aceptacion:
     - "Letra de 16 px y enlaces de 44 px de alto o más"
   casos_edge:
     - {caso: "El Inicio de GovTrace", resultado: "Sin ruta: es la raíz"}
-    - {caso: "El veedor llena un reporte (Nuevo reporte)", resultado: "Sin ruta: un toque por error no lo saca a mitad de camino"}
+    - {caso: "El veedor llena un reporte (Nuevo reporte)", resultado: "(It. 62e, 2026-10-18, pedido por el usuario; antes, sin ruta) La ruta aparece. Si ya eligió la obra, salir por la ruta o por una pestaña pregunta '¿Salir sin enviar el reporte? Se perderá lo que lleva.'; recargar o cerrar la app, el aviso del navegador. 'Salir' de la cuenta ya pregunta en su menú"}
 validacion_smart:
   specific: true
   measurable: true

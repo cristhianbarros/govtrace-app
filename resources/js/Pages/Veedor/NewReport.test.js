@@ -2,7 +2,7 @@
 // veedor. Buscar la obra → GPS (con reintento) → clasificación y comentario
 // → adjuntos → enviar a POST /reports. El servidor vuelve a validar todo
 // (it. 10 y 11); aquí, lo que la app hace y muestra.
-import { flushPromises, mount } from '@vue/test-utils';
+import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import NewReport from './NewReport.vue';
 import WorksiteBrowser from '@/Components/WorksiteBrowser.vue';
@@ -12,10 +12,12 @@ import { configureOutbox, outboxState } from '@/composables/useOutbox.js';
 import { createOutbox, memoryStore } from '@/lib/outbox.js';
 import { browseContracts, fetchNearbyWorksites, sendReport, unableToVisit } from '@/services/api.js';
 import ReportForm from '@/Components/ReportForm.vue';
-import { page } from '@/testing/inertia.js';
+import { page, visitWouldGo } from '@/testing/inertia.js';
 import { everythingFarBelow } from '@/testing/reveal.js';
 
 vi.mock('@inertiajs/vue3', async () => await import('@/testing/inertia.js'));
+// It. 62e: cada pantalla se desmonta al terminar su prueba: su aviso de salida no queda escuchando en la siguiente.
+enableAutoUnmount(afterEach);
 vi.mock('@/lib/evidence/faces.js', () => ({ loadDetector: vi.fn(async () => ({})) }));
 vi.mock('@/services/api.js', () => ({ browseContracts: vi.fn(), fetchNearbyWorksites: vi.fn(), sendReport: vi.fn(), logout: vi.fn(), unableToVisit: vi.fn() }));
 // It. 65b: el mapa de Leaflet se prueba en LocationMap.test.js; aquí, qué punto recibe.
@@ -273,12 +275,71 @@ describe('Nuevo Reporte', () => {
         expect(wrapper.text()).toContain('foto1.jpg');
     });
 
-    it('Mientras el veedor llena un reporte, la ruta no aparece (US-067)', () => {
+    // It. 62e: antes, Nuevo reporte no tenía ruta (it. 62).
+    it('En Nuevo reporte, la ruta aparece, y salir con un reporte empezado pregunta antes (US-067)', async () => {
+        page.url = '/reports/new';
+        window.history.replaceState({}, '', '/reports/new');
         page.props.govtraceUrl = 'https://govtrace.duckdns.org/';
-        const wrapper = mount(NewReport);
+        const ask = vi.spyOn(window, 'confirm').mockReturnValue(false);
+        try {
+            phoneGps(reading(15));
+            const wrapper = mount(NewReport);
+            await flushPromises();
+            expect(wrapper.get('nav[aria-label="Ruta"] ol').findAll('[data-crumb]').map((crumb) => [crumb.text(), crumb.attributes('href') ?? null])).toEqual([
+                ['GovTrace', 'https://govtrace.duckdns.org/'],
+                ['Veeduría Ciudadana Santa Marta', '/'],
+                ['Nuevo Reporte', null],
+            ]);
+            // Sin obra elegida, nada que perder.
+            expect(visitWouldGo('/my-reports')).toBe(true);
+            expect(ask).not.toHaveBeenCalled();
 
-        expect(wrapper.find('nav[aria-label="Ruta"]').exists()).toBe(false);
-        delete page.props.govtraceUrl;
+            wrapper.findComponent(WorksiteBrowser).vm.$emit('select', contract);
+            await flushPromises();
+            await wrapper.get('textarea#comment').setValue('Obra detenida hace 2 meses');
+
+            expect(visitWouldGo('/my-reports')).toBe(false);
+            expect(ask).toHaveBeenCalledWith('¿Salir sin enviar el reporte? Se perderá lo que lleva.');
+            expect(wrapper.get('textarea#comment').element.value).toBe('Obra detenida hace 2 meses');
+            ask.mockReturnValue(true);
+            expect(visitWouldGo('/')).toBe(true);
+            expect(ask).toHaveBeenCalledTimes(2);
+
+            // Lo que no saca de la pantalla no pregunta, y "Salir" de la cuenta ya preguntó en su menú.
+            expect(visitWouldGo('/reports/new')).toBe(true);
+            expect(visitWouldGo('/login')).toBe(true);
+            expect(ask).toHaveBeenCalledTimes(2);
+            // Recargar o cerrar la app: el aviso del navegador.
+            const unload = new Event('beforeunload', { cancelable: true });
+            window.dispatchEvent(unload);
+            expect(unload.defaultPrevented).toBe(true);
+
+            // Fuera de la pantalla, ya no pregunta.
+            wrapper.unmount();
+            expect(visitWouldGo('/my-reports')).toBe(true);
+        } finally {
+            ask.mockRestore();
+            delete page.props.govtraceUrl;
+        }
+    });
+
+    it('lets the veedor leave freely once the report is sent', async () => {
+        sendReport.mockResolvedValue({ id: 42 });
+        const ask = vi.spyOn(window, 'confirm').mockReturnValue(false);
+        try {
+            const wrapper = await onWorksite(reading(15));
+            await fillReport(wrapper);
+            await wrapper.get('form').trigger('submit');
+            await flushPromises();
+
+            expect(visitWouldGo('/my-reports')).toBe(true);
+            const unload = new Event('beforeunload', { cancelable: true });
+            window.dispatchEvent(unload);
+            expect(unload.defaultPrevented).toBe(false);
+            expect(ask).not.toHaveBeenCalled();
+        } finally {
+            ask.mockRestore();
+        }
     });
 
     it('shows the name and logo the organization chose, as soon as it changes them (US-007)', async () => {

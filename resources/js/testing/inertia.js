@@ -19,7 +19,22 @@ export const page = reactive({ props: { organization: 'Veeduría Ciudadana Santa
 export const usePage = () => page;
 
 /** router.visit y router.reload quedan registrados: el test mira a dónde navegó la pantalla, o qué volvió a pedir. */
-export const router = { visit: vi.fn(), reload: vi.fn() };
+const listeners = {};
+export const router = {
+    visit: vi.fn(),
+    reload: vi.fn(),
+    // It. 62e: router.on('before', …), como Inertia: devuelve con qué dejar de escuchar.
+    on: (event, callback) => {
+        (listeners[event] ??= new Set()).add(callback);
+        return () => listeners[event].delete(callback);
+    },
+};
+
+/** It. 62e: lo que haría Inertia antes de una visita: false si alguien la detuvo (devolvió false). */
+export function visitWouldGo(url, method = 'get') {
+    const event = { detail: { visit: { url: new URL(url, 'https://veeduria-smr.govtrace.co'), method } } };
+    return [...(listeners.before ?? [])].every((callback) => callback(event) !== false);
+}
 
 export const submissions = [];
 let serverAnswer = () => {};

@@ -66,7 +66,7 @@ async function pendingCapturedDaysAgo(...days) {
 const signal = (online) => Object.defineProperty(window.navigator, 'onLine', { value: online, configurable: true });
 
 describe('La ruta en Mis Reportes (US-067)', () => {
-    it('Mientras el veedor llena un reporte, la ruta no aparece: in "Mis reportes" it is back, and leads to the site of the veeduría and to GovTrace', async () => {
+    it('shows the route in "Mis reportes", to the site of the veeduría and to GovTrace', async () => {
         page.url = '/my-reports';
         page.props.govtraceUrl = 'https://govtrace.duckdns.org/';
         const wrapper = await openMyReports([]);
