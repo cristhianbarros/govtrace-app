@@ -29,6 +29,9 @@ export const answerCitizenReport = (id, answer) => dataOf(http.post(`/citizen-re
 export const discardCitizenReport = (id) => dataOf(http.post(`/citizen-reports/${id}/discard`));
 // It. 58 (US-035): la ubicación que propuso el ciudadano, como la oficial de la obra.
 export const confirmCitizenLocation = (id) => dataOf(http.post(`/citizen-reports/${id}/confirm-location`));
+// It. 65b (US-068): pedirle la visita a un veedor; y el veedor, que no puede ir.
+export const assignCitizenReport = (id, observer) => dataOf(http.post(`/citizen-reports/${id}/assign`, { observer }));
+export const unableToVisit = (id) => dataOf(http.post(`/visits/${id}/unable`));
 
 /** US-008: el reporte con sus archivos y sus SHA-256, como multipart. */
 export const sendReport = (form) => dataOf(http.post('/reports', form));

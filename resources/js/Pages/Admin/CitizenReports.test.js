@@ -4,7 +4,7 @@ import { flushPromises, mount } from '@vue/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { defineComponent, h } from 'vue';
 import CitizenReports from './CitizenReports.vue';
-import { answerCitizenReport, confirmCitizenLocation, discardCitizenReport, fetchCitizenReports } from '@/services/api.js';
+import { answerCitizenReport, assignCitizenReport, confirmCitizenLocation, discardCitizenReport, fetchCitizenReports } from '@/services/api.js';
 import { router } from '@/testing/inertia.js';
 
 vi.mock('@inertiajs/vue3', async () => await import('@/testing/inertia.js'));
@@ -249,5 +249,85 @@ describe('La ubicación que propuso el ciudadano (it. 58)', () => {
 
         expect(wrapper.findAll('[data-test="proposed-location"]')).toHaveLength(1);
         expect(button(wrapper, 'Confirmar esta ubicación')).toBeUndefined();
+    });
+});
+
+// It. 65b (US-068): del informe a una evidencia — el Administrador le pide la visita a un veedor.
+describe('La visita de un veedor (it. 65b)', () => {
+    const observers = [
+        { id: '01j9xq3m7v8k2d4f6g8h0carlo', name: 'Carlos Rojas' },
+        { id: '01j9xq3m7v8k2d4f6g8h0lucia', name: 'Lucía Méndez' },
+    ];
+    const visit = (changes = {}) => ({ observer: null, suggested: null, note: null, reported: false, ...changes });
+
+    async function openWith(rows, extra = {}) {
+        fetchCitizenReports.mockResolvedValue(answer(rows, { observers, ...extra }));
+        const wrapper = mount(CitizenReports);
+        await flushPromises();
+        return wrapper;
+    }
+
+    it('El Administrador pide a un veedor que documente un informe: the suggested veedor comes chosen, and confirming asks for the visit', async () => {
+        assignCitizenReport.mockResolvedValue({ message: 'Le pedimos la visita a Carlos Rojas. Al ciudadano le avisamos que un veedor va a visitar la obra.' });
+        const wrapper = await openWith([report({ visit: visit({ suggested: observers[0].id }) })]);
+
+        await button(wrapper, 'Pedir a un veedor que lo documente').trigger('click');
+        const chooser = wrapper.get('select[data-test="visit-observer"]');
+        expect(chooser.findAll('option').map((option) => option.text())).toEqual(['Elija al veedor', 'Carlos Rojas', 'Lucía Méndez']);
+        expect(chooser.element.value).toBe(observers[0].id);
+        await button(wrapper, 'Pedir la visita').trigger('click');
+        await flushPromises();
+
+        expect(assignCitizenReport).toHaveBeenCalledWith('01j9xq3m7v8k2d4f6g8h07kq3m', observers[0].id);
+        expect(wrapper.get('[role="status"]').text()).toBe('Le pedimos la visita a Carlos Rojas. Al ciudadano le avisamos que un veedor va a visitar la obra.');
+        expect(router.reload).toHaveBeenCalledWith({ only: ['citizenReportsPending'] });
+    });
+
+    it('Si nadie ha reportado la obra, el Administrador elige al veedor: none comes chosen, and it says to choose one', async () => {
+        const wrapper = await openWith([report({ visit: visit() })]);
+
+        await button(wrapper, 'Pedir a un veedor que lo documente').trigger('click');
+        expect(wrapper.get('select[data-test="visit-observer"]').element.value).toBe('');
+        await button(wrapper, 'Pedir la visita').trigger('click');
+        await flushPromises();
+
+        expect(assignCitizenReport).not.toHaveBeenCalled();
+        expect(wrapper.get('[data-test="citizen-report"] [role="alert"]').text()).toBe('Elija al veedor que va a visitar la obra.');
+    });
+
+    it('El Administrador le pasa la visita a otro veedor: an assigned report says to whom, and can change it', async () => {
+        assignCitizenReport.mockResolvedValue({ message: 'Le pedimos la visita a Lucía Méndez.' });
+        const wrapper = await openWith([report({ status: 'assigned', status_label: 'Visita asignada', visit: visit({ observer: observers[0] }) })]);
+
+        expect(wrapper.get('[data-test="visit-assigned"]').text()).toContain('Visita asignada a Carlos Rojas');
+        expect(button(wrapper, 'Responder')).toBeUndefined();
+        await button(wrapper, 'Cambiar de veedor').trigger('click');
+        expect(wrapper.get('select[data-test="visit-observer"]').element.value).toBe(observers[0].id);
+        await wrapper.get('select[data-test="visit-observer"]').setValue(observers[1].id);
+        await button(wrapper, 'Pedir la visita').trigger('click');
+        await flushPromises();
+
+        expect(assignCitizenReport).toHaveBeenCalledWith('01j9xq3m7v8k2d4f6g8h07kq3m', observers[1].id);
+    });
+
+    it('El veedor no puede ir y la visita vuelve al Administrador: the note says who could not go', async () => {
+        const wrapper = await openWith([report({ visit: visit({ note: 'Carlos Rojas no pudo ir.' }) })]);
+
+        expect(wrapper.get('[data-test="visit-note"]').text()).toBe('Carlos Rojas no pudo ir.');
+    });
+
+    it('says when the veedor already sent the report, to review it in the Bandeja', async () => {
+        const wrapper = await openWith([report({ status: 'assigned', status_label: 'Visita asignada', visit: visit({ observer: observers[0], reported: true }) })]);
+
+        expect(wrapper.get('[data-test="visit-assigned"]').text()).toContain('Carlos Rojas ya envió su reporte: revíselo en la Bandeja.');
+    });
+
+    it('Filtro los informes por obra y por veedor, como en la Bandeja: the veedor of the visit, within the tab', async () => {
+        const wrapper = await openWith([report()], { filters: { worksites: [], observers } });
+
+        await wrapper.get('select#filter-observer').setValue(observers[0].id);
+        await flushPromises();
+
+        expect(fetchCitizenReports).toHaveBeenLastCalledWith({ status: 'new', observer: observers[0].id, page: 1 });
     });
 });

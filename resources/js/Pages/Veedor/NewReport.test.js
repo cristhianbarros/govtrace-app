@@ -10,12 +10,18 @@ import EvidencePicker from '@/Components/EvidencePicker.vue';
 import { loadDetector } from '@/lib/evidence/faces.js';
 import { configureOutbox, outboxState } from '@/composables/useOutbox.js';
 import { createOutbox, memoryStore } from '@/lib/outbox.js';
-import { browseContracts, fetchNearbyWorksites, sendReport } from '@/services/api.js';
+import { browseContracts, fetchNearbyWorksites, sendReport, unableToVisit } from '@/services/api.js';
+import ReportForm from '@/Components/ReportForm.vue';
 import { page } from '@/testing/inertia.js';
 
 vi.mock('@inertiajs/vue3', async () => await import('@/testing/inertia.js'));
 vi.mock('@/lib/evidence/faces.js', () => ({ loadDetector: vi.fn(async () => ({})) }));
-vi.mock('@/services/api.js', () => ({ browseContracts: vi.fn(), fetchNearbyWorksites: vi.fn(), sendReport: vi.fn(), logout: vi.fn() }));
+vi.mock('@/services/api.js', () => ({ browseContracts: vi.fn(), fetchNearbyWorksites: vi.fn(), sendReport: vi.fn(), logout: vi.fn(), unableToVisit: vi.fn() }));
+// It. 65b: el mapa de Leaflet se prueba en LocationMap.test.js; aquí, qué punto recibe.
+vi.mock('@/Components/LocationMap.vue', async () => {
+    const { defineComponent, h } = await import('vue');
+    return { default: defineComponent({ props: { modelValue: { type: Object, required: true }, readonly: Boolean, label: { type: String, default: null } }, setup: (props) => () => h('div', { 'data-test': 'location-map' }, `${props.modelValue.latitude}, ${props.modelValue.longitude}`) }) };
+});
 
 /** Lo que responde la lista de obras (it. 47a), sin obras ni cercanas. */
 const browsed = (more = {}) => ({
@@ -556,5 +562,94 @@ describe('El GPS, una sola vez por pantalla (it. 47b)', () => {
             expect(wrapper.find('[data-test="gps-waiting"]').exists()).toBe(true);
             expect(phone.geolocation.getCurrentPosition).toHaveBeenCalledTimes(1);
         }
+    });
+});
+
+// It. 65b (US-068): las visitas que la veeduría le pidió al veedor, por un informe ciudadano.
+describe('Las visitas pendientes (it. 65b)', () => {
+    const visit = (changes = {}) => ({
+        id: '01j9xq3m7v8k2d4f6g8h07kq3m',
+        reference: '07KQ-3M9D',
+        worksite: 'Pavimentación Calle 30',
+        message: 'La obra lleva dos semanas sin trabajadores.',
+        photo_urls: ['/visits/01j9xq3m7v8k2d4f6g8h07kq3m/photos/1', '/visits/01j9xq3m7v8k2d4f6g8h07kq3m/photos/2'],
+        contract,
+        proposed_location: null,
+        assigned_at: '2026-09-28T14:00:00+00:00',
+        ...changes,
+    });
+
+    afterEach(() => {
+        delete page.props.visits;
+    });
+
+    async function openWithVisits(visits) {
+        page.props.visits = visits;
+        phoneGps(reading(12));
+        const wrapper = mount(NewReport);
+        await flushPromises();
+        return wrapper;
+    }
+
+    it('El veedor ve su visita pendiente, con el mensaje y las fotos del ciudadano: above the works; tapping it opens the report on that work, with what the citizen said', async () => {
+        const wrapper = await openWithVisits([visit()]);
+
+        const card = wrapper.get('[data-test="visit"]');
+        expect(wrapper.text()).toContain('Visitas pendientes');
+        expect(card.text()).toContain('Pavimentación Calle 30');
+        expect(card.text()).toContain('Informe ciudadano n.º 07KQ-3M9D');
+        expect(card.text()).toContain('La obra lleva dos semanas sin trabajadores.');
+        expect(card.findAll('img').map((image) => image.attributes('src'))).toEqual(visit().photo_urls);
+
+        await card.get('[data-test="visit-report"]').trigger('click');
+        await flushPromises();
+
+        expect(wrapper.findComponent(ReportForm).props('contract')).toEqual(contract);
+        expect(wrapper.get('[data-test="visit-context"]').text()).toContain('La obra lleva dos semanas sin trabajadores.');
+        expect(wrapper.find('[data-test="visit"]').exists()).toBe(false);
+    });
+
+    it('El veedor no puede ir y la visita vuelve al Administrador: asks first, then the visit leaves the list', async () => {
+        unableToVisit.mockResolvedValue({ message: 'Listo: la veeduría le pedirá la visita a otro veedor.' });
+        const wrapper = await openWithVisits([visit()]);
+        const card = wrapper.get('[data-test="visit"]');
+
+        await card.findAll('button').find((candidate) => candidate.text() === 'No puedo ir').trigger('click');
+        expect(unableToVisit).not.toHaveBeenCalled();
+        await card.findAll('button').find((candidate) => candidate.text() === 'Sí, no puedo ir').trigger('click');
+        await flushPromises();
+
+        expect(unableToVisit).toHaveBeenCalledWith('01j9xq3m7v8k2d4f6g8h07kq3m');
+        expect(wrapper.find('[data-test="visit"]').exists()).toBe(false);
+        expect(wrapper.text()).toContain('Listo: la veeduría le pedirá la visita a otro veedor.');
+    });
+
+    it('Una obra sin ubicación: la visita muestra el punto que propuso el ciudadano, as a clue on a map', async () => {
+        const wrapper = await openWithVisits([visit({ proposed_location: { latitude: 11.2411, longitude: -74.1987 } })]);
+
+        expect(wrapper.get('[data-test="visit"]').text()).toContain('El ciudadano dice que la obra queda aquí');
+        expect(wrapper.get('[data-test="visit"] [data-test="location-map"]').text()).toBe('11.2411, -74.1987');
+    });
+
+    it('takes the visit off the list once its work is reported', async () => {
+        sendReport.mockResolvedValue({ id: 'r1' });
+        const wrapper = await openWithVisits([visit()]);
+        await wrapper.get('[data-test="visit-report"]').trigger('click');
+        await flushPromises();
+        await fillReport(wrapper);
+
+        await submitButton(wrapper).trigger('submit');
+        await flushPromises();
+
+        expect(sendReport).toHaveBeenCalled();
+        expect(wrapper.text()).toContain(SUCCESS);
+        expect(wrapper.find('[data-test="visit"]').exists()).toBe(false);
+        expect(wrapper.text()).not.toContain('Visitas pendientes');
+    });
+
+    it('shows no visits section when there is none', async () => {
+        const wrapper = await openWithVisits([]);
+
+        expect(wrapper.text()).not.toContain('Visitas pendientes');
     });
 });

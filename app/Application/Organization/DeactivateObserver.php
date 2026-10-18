@@ -2,6 +2,7 @@
 
 namespace App\Application\Organization;
 
+use App\Application\CitizenReports\CitizenVisits;
 use App\Domain\Organization\Exceptions\OrganizationValidationException;
 use App\Domain\Organization\User;
 
@@ -26,5 +27,8 @@ class DeactivateObserver
             'invitation_token_hash' => null,
             'invitation_expires_at' => null,
         ]);
+
+        // It. 65b (US-068): sus visitas por informes ciudadanos vuelven al Administrador.
+        CitizenVisits::observerDeactivated($observer);
     }
 }

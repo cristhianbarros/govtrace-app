@@ -47,6 +47,10 @@ final class AuditLabels
         'privacy.data_authorized' => 'Autorizó el tratamiento de sus datos personales',
         'citizen_report.answered' => 'Respondió un informe ciudadano',
         'citizen_report.discarded' => 'Descartó un informe ciudadano',
+        // It. 65b (US-068): la visita de un veedor por un informe ciudadano.
+        'citizen_report.visit_assigned' => 'Le pidió a un veedor documentar un informe ciudadano',
+        'citizen_report.visit_unable' => 'Un veedor no pudo ir a documentar un informe ciudadano',
+        'citizen_report.documented' => 'Un informe ciudadano quedó documentado con una evidencia publicada',
         'invitation.resent' => 'Reenvió una invitación',
         'invitation.revoked' => 'Revocó una invitación',
         'parameter.changed' => 'Cambió un parámetro global',

@@ -3,6 +3,7 @@
 namespace App\Domain\CitizenReports;
 
 use App\Domain\Geography\GeoPoint;
+use App\Domain\Organization\User;
 use App\Domain\Shared\HasPublicId;
 use App\Domain\Worksites\Worksite;
 use Illuminate\Database\Eloquent\Model;
@@ -21,7 +22,9 @@ class CitizenReport extends Model
     // respondió por escrito (antes "Atendido").
     public const STATUS_LABELS = ['new' => 'Nuevo', 'assigned' => 'Visita asignada', 'documented' => 'Documentado', 'answered' => 'Respondido', 'discarded' => 'Descartado'];
 
-    protected $fillable = ['worksite_id', 'email', 'email_hash', 'message', 'photo_paths', 'status', 'answer', 'handled_at', 'handled_by', 'data_authorized_at', 'data_policy_version', 'proposed_latitude', 'proposed_longitude', 'location_confirmed_at'];
+    protected $fillable = ['worksite_id', 'email', 'email_hash', 'message', 'photo_paths', 'status', 'answer', 'handled_at', 'handled_by', 'data_authorized_at', 'data_policy_version', 'proposed_latitude', 'proposed_longitude', 'location_confirmed_at',
+        // It. 65b (US-068): la visita de un veedor, y el reporte que la documenta.
+        'assigned_to', 'assigned_at', 'visit_note', 'citizen_notified_at', 'documenting_report_id', 'documented_at'];
 
     protected $hidden = ['email', 'email_hash'];
 
@@ -32,6 +35,9 @@ class CitizenReport extends Model
         'handled_at' => 'datetime',
         'data_authorized_at' => 'datetime',
         'location_confirmed_at' => 'datetime',
+        'assigned_at' => 'datetime',
+        'citizen_notified_at' => 'datetime',
+        'documented_at' => 'datetime',
     ];
 
     /**
@@ -59,5 +65,11 @@ class CitizenReport extends Model
     public function worksite(): BelongsTo
     {
         return $this->belongsTo(Worksite::class);
+    }
+
+    /** It. 65b: the veedor the Administrador asked to document it. */
+    public function assignee(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assigned_to');
     }
 }

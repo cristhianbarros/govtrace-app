@@ -2,6 +2,7 @@
 
 namespace App\Application\Publication;
 
+use App\Application\CitizenReports\CitizenVisits;
 use App\Application\Worksites\ContractFollowers;
 use App\Domain\Audit\AuditLog;
 use App\Domain\Organization\User;
@@ -21,13 +22,17 @@ class EditorialDecisions
 {
     public function publish(User $administrator, int $reportId): Report
     {
-        // It. 60: sus miniaturas, para la tarjeta de la obra en el mapa.
-        return $this->decide($administrator, $reportId, 'evidence.published', fn (Report $report) => $report->publish(), fn (Report $report) => (new EvidenceThumbnails)->forReport($report));
+        // It. 60: sus miniaturas, para la tarjeta de la obra en el mapa. It. 65b: y el informe ciudadano que documenta.
+        return $this->decide($administrator, $reportId, 'evidence.published', fn (Report $report) => $report->publish(), function (Report $report) use ($administrator) {
+            (new EvidenceThumbnails)->forReport($report);
+            (new CitizenVisits)->published($administrator, $report);
+        });
     }
 
     public function reject(User $administrator, int $reportId, ?string $reason): Report
     {
-        return $this->decide($administrator, $reportId, 'evidence.rejected', fn (Report $report) => $report->reject($reason));
+        // It. 65b: si documentaba un informe ciudadano, la visita vuelve a estar pendiente para el mismo veedor.
+        return $this->decide($administrator, $reportId, 'evidence.rejected', fn (Report $report) => $report->reject($reason), fn (Report $report) => CitizenVisits::rejected($report));
     }
 
     public function withdraw(User $administrator, int $reportId, ?string $reason): Report

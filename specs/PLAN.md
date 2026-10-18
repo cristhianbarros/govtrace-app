@@ -3728,15 +3728,37 @@ Queda para la V2, opcional, con el modelo de financiación (`docs/viabilidad-leg
 
 **Modelo:** Opus 5.5 (qué cuenta como evidencia, permisos entre roles y datos personales).
 
+✅ **Cumplida (2026-10-17), 65a y 65b.**
+- **Cómo quedó:**
+  - **65a:** `citizenReportsPending` (solo al Administrador) da el número rojo en la barra lateral y, en el celular, en "Más" y en su menú (`PanelTabs` suma lo que espera en sus pantallas). `CitizenReportInbox::list` devuelve, como `ReviewInbox`, el número de cada pestaña (sin filtros) y las obras y los veedores de la pestaña para filtrar. `ReviewDigest` cuenta los informes "Nuevo" y llega también sin evidencias; con solo informes, su botón lleva a ellos.
+  - **65b:** `CitizenVisits` (`app/Application/CitizenReports`) asigna (con bloqueo de fila), sugiere al último veedor que reportó la obra si todavía puede recibirla, liga el reporte del veedor asignado (`CreateReport`), marca "Documentado" al publicar y devuelve la visita al rechazar (`EditorialDecisions`), y la devuelve a "Nuevo" si el veedor no puede ir o se lo desactiva (`DeactivateObserver`). Los correos al ciudadano, `CitizenVisitAssigned` (una vez, `citizen_notified_at`) y `CitizenReportDocumented`, salen por la cola (it. 64).
+  - El veedor ve sus visitas como prop de "Nuevo reporte" (la guarda el Service Worker con la pantalla), y las fotos del ciudadano por `/visits/{id}/photos/{n}`, solo las suyas. Un reporte de esa obra, enviado o guardado sin señal, saca la visita de la lista, como en el servidor.
+  - Migración de organización: `assigned_to`, `assigned_at`, `visit_note`, `citizen_notified_at`, `documenting_report_id`, `documented_at`.
+- **Historia:** US-068, nueva (18 escenarios), con R-LEG-11. Enmiendas: US-059-LEG (el estado con pestañas, "Respondido") y US-060-MON (el resumen cuenta los informes).
+- **Pruebas:**
+  - Pest: el número rojo, las pestañas y los filtros; el resumen; asignar con el sugerido, sin veedor, con uno desactivado o sin declaración; la visita del veedor, sin el correo, y sus fotos; el reporte ligado, el de otro veedor no; "No puedo ir"; cambiar de veedor sin otro correo; la Bandeja; publicar y rechazar; la obra sin ubicación; solo sus visitas; el veedor desactivado.
+  - Vitest: las pestañas, el filtro, el número en la barra, en "Más" y en su menú; pedir la visita, sin veedor, cambiarla, la nota; la Bandeja; las visitas del veedor, "No puedo ir", el punto propuesto y la visita que sale al reportar.
+  - e2e (`6-informe-a-evidencia`): el ciudadano informa, la Administradora asigna al veedor sugerido, el veedor reporta desde su visita, la red local lo sella, la Bandeja lo publica, y al ciudadano le llegan los dos correos, sin el nombre del veedor.
+  - `make ux-check` no empeora ninguna pantalla. Todo visto en rojo antes de implementar.
+  - La suite completa encontró que las tres acciones nuevas del log de auditoría no tenían su etiqueta en español (`AuditLabels`).
+  - Corridas: Pest 1264, Vitest 761, `make e2e` 65 y 1 `fixme`, trace-check 517 de 517.
+
 ### Iteración 66 — Darle visibilidad pública a lo que informan los ciudadanos (propuesta)
 
-⬜ **Propuesta por Claude el 2026-10-17,** a partir de una pregunta del usuario: el informe ciudadano debería ser "un medio de presión", no "un informe y ya". Necesita los estados de la 65 para medir la respuesta de la veeduría. **Por decidir con el usuario:** el "Yo también lo vi", los días sin respuesta antes de sugerir la Contraloría (15, propuesto) y si el tiempo de respuesta de cada veeduría es público.
+⬜ **Propuesta por Claude el 2026-10-17,** a partir de una pregunta del usuario: el informe ciudadano debería ser "un medio de presión", no "un informe y ya". Necesita los estados de la 65 para medir la respuesta de la veeduría. **Decidido por el usuario (2026-10-17):**
+- Los días para responder son un parámetro de cada veeduría, que su Administrador cambia en "Organización", con 15 días hábiles por defecto.
+- El tiempo de respuesta **no es público**: se maneja donde importa. Al enviar el informe, la pantalla y el correo de recibo le dicen al ciudadano hasta qué fecha se compromete a responder la veeduría. El resumen diario le recuerda al Administrador los informes que están por vencer o vencidos. Si vence sin una primera acción, al ciudadano le llega un correo con el camino a la Contraloría, con su caso listo.
+- Los días hábiles descuentan los festivos de Colombia (Ley 51 de 1983).
+
+**Por decidir:** el "Yo también lo vi".
+
+**Sobre los días (revisado el 2026-10-17):** la Ley 850 de 2003 obliga a la veeduría a *recibir* los informes de los ciudadanos (arts. 15 e) y 18 a)), pero no le pone plazo para responder, y deja a cada una definir su propio reglamento de funcionamiento (art. 18 c)). Las veedurías son organizaciones civiles (art. 2), no autoridades: los 15 días del derecho de petición (Ley 1755 de 2015, art. 14) obligan a las autoridades, y ante organizaciones privadas solo cuando la petición busca garantizar un derecho fundamental (art. 32). Por eso, 15 días hábiles es una **sugerencia de GovTrace**, no una obligación legal: parámetro de cada veeduría (15 por defecto, decisión del usuario), que cuenta hasta su primera acción (responder, pedir la visita o descartar), nunca dicho en público como un incumplimiento, y a validar con las veedurías en el piloto. El camino a la Contraloría se ofrece siempre, no solo pasado el plazo.
 
 **Entregable propuesto:**
 - En la obra y en su tarjeta del mapa, cuántos ciudadanos informaron y desde cuándo, solo el número: los mensajes y las fotos no se publican (no tienen ubicación ni hora verificadas).
 - "Yo también lo vi": otro ciudadano se suma a un informe de la misma obra con su correo verificado, uno por persona y obra.
-- Si la veeduría responde: "Sin respuesta de la veeduría desde hace N días" en la obra, y en las estadísticas públicas, los informes atendidos y el tiempo de respuesta.
-- Sin respuesta en N días, al ciudadano le llega "Lleve su caso a la Contraloría", con el contrato, la entidad y su mensaje listos (los canales de la it. 44a).
+- ~~El tiempo de respuesta, público~~ (descartado por el usuario): se maneja en la pantalla de envío, los correos y el resumen diario (arriba).
+- Sin respuesta en el plazo de la veeduría, al ciudadano le llega "Lleve su caso a la Contraloría", con el contrato, la entidad y su mensaje listos (los canales de la it. 44a).
 - La evidencia publicada se comparte con una vista previa (Open Graph): la foto sellada, el estado, el valor del contrato y la entidad.
 
 ### Iteración 63 — Sincronizar el SECOP desde la veeduría

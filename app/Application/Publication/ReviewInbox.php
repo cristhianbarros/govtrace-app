@@ -2,6 +2,7 @@
 
 namespace App\Application\Publication;
 
+use App\Domain\CitizenReports\CitizenReport;
 use App\Domain\Contracts\Contract;
 use App\Domain\Geography\GeoPoint;
 use App\Domain\Geography\Municipality;
@@ -129,6 +130,8 @@ class ReviewInbox
     private function present(Collection $reports): array
     {
         $worksites = $this->describe($reports->pluck('worksite')->filter()->unique('id'));
+        // It. 65b (US-068): los informes ciudadanos que documenta cada evidencia.
+        $citizenReports = CitizenReport::query()->whereIn('documenting_report_id', $reports->pluck('id'))->orderBy('id')->get()->groupBy('documenting_report_id');
 
         return $reports
             ->map(fn (Report $report) => [
@@ -152,6 +155,7 @@ class ReviewInbox
                 'seal' => $report->seal->only(['merkle_root', 'tx_hash', 'ledger']),
                 'location' => $this->location($report),
                 'actions' => $report->editorialActions(),
+                'citizen_reports' => $citizenReports->get($report->id, collect())->map(fn (CitizenReport $citizenReport) => ['reference' => $citizenReport->reference(), 'message' => $citizenReport->message])->values()->all(),
             ])
             ->all();
     }
