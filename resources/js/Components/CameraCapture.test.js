@@ -4,9 +4,11 @@
 import { DOMWrapper, flushPromises, mount } from '@vue/test-utils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import CameraCapture from './CameraCapture.vue';
-import { grabPhoto, openCamera } from '@/lib/evidence/camera.js';
+import { grabFrame, openCamera } from '@/lib/evidence/camera.js';
+import { loadDetector } from '@/lib/evidence/faces.js';
 
-vi.mock('@/lib/evidence/camera.js', async (importOriginal) => ({ ...(await importOriginal()), openCamera: vi.fn(), grabPhoto: vi.fn() }));
+vi.mock('@/lib/evidence/camera.js', async (importOriginal) => ({ ...(await importOriginal()), openCamera: vi.fn(), grabFrame: vi.fn() }));
+vi.mock('@/lib/evidence/faces.js', () => ({ loadDetector: vi.fn(() => Promise.resolve()) }));
 
 const track = () => ({ stop: vi.fn() });
 let tracks;
@@ -23,7 +25,8 @@ const shown = () => document.body.textContent;
 beforeEach(() => {
     tracks = [track()];
     openCamera.mockReset().mockResolvedValue({ getTracks: () => tracks });
-    grabPhoto.mockReset().mockResolvedValue(new File(['jpeg'], 'foto-14-05-33.jpg', { type: 'image/jpeg' }));
+    grabFrame.mockReset().mockReturnValue({ canvas: { width: 1440, height: 1920 }, name: 'foto-14-05-33.jpg' });
+    loadDetector.mockClear();
     vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue();
     history.replaceState({ page: 'obra' }, '', '/worksite/abc');
     // El "atrás" de jsdom llega en otra tarea: aquí, en el acto, como lo oye la página.
@@ -50,9 +53,10 @@ describe('La cámara dentro de GovTrace (it. 62c)', () => {
         await get('[data-test="shutter"]').trigger('click');
         await flushPromises();
 
-        expect(grabPhoto).toHaveBeenCalledWith(get('video').element);
+        expect(grabFrame).toHaveBeenCalledWith(get('video').element);
         expect(tracks[0].stop).toHaveBeenCalled();
-        expect(wrapper.emitted('photo')[0][0].name).toBe('foto-14-05-33.jpg');
+        // It. 62f: el cuadro, en su canvas, sin JPEG de por medio.
+        expect(wrapper.emitted('frame')[0][0]).toEqual({ canvas: { width: 1440, height: 1920 }, name: 'foto-14-05-33.jpg' });
         expect(has('input[type="file"]')).toBe(false);
         wrapper.unmount();
     });
@@ -131,7 +135,9 @@ describe('La cámara dentro de GovTrace (it. 62c)', () => {
     });
 
     it('a frame that cannot be grabbed says so, and lets the person try again', async () => {
-        grabPhoto.mockRejectedValueOnce(new Error('La cámara todavía no muestra la imagen. Intente de nuevo.'));
+        grabFrame.mockImplementationOnce(() => {
+            throw new Error('La cámara todavía no muestra la imagen. Intente de nuevo.');
+        });
         const wrapper = mountCamera();
         await flushPromises();
 
@@ -140,7 +146,22 @@ describe('La cámara dentro de GovTrace (it. 62c)', () => {
 
         expect(get('[role="alert"]').text()).toBe('La cámara todavía no muestra la imagen. Intente de nuevo.');
         expect(get('[data-test="shutter"]').attributes('disabled')).toBeUndefined();
-        expect(wrapper.emitted('photo')).toBeUndefined();
+        expect(wrapper.emitted('frame')).toBeUndefined();
         wrapper.unmount();
+    });
+
+    // It. 62f: mientras la persona encuadra, el detector de rostros ya carga (la primera foto no lo espera).
+    it('La foto tomada pasa a revisión sin esperas de más: the face detector starts loading when the camera opens, without signal it does not try', async () => {
+        const wrapper = mountCamera();
+        expect(loadDetector).toHaveBeenCalledTimes(1);
+        wrapper.unmount();
+
+        Object.defineProperty(window.navigator, 'onLine', { value: false, configurable: true });
+        try {
+            mountCamera().unmount();
+            expect(loadDetector).toHaveBeenCalledTimes(1);
+        } finally {
+            delete window.navigator.onLine;
+        }
     });
 });

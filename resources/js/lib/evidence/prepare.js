@@ -40,12 +40,20 @@ const timeout = (ms) => new Promise((resolve, reject) => setTimeout(() => reject
  * @returns {Promise<{name: string, canvas: object, faces: Array<object>, detector: 'ok'|'unavailable'}>}
  *          the photo, scaled, and the heads the detector found — or that it could not look
  */
-export async function draftPhoto(file, { canvasOf = photoCanvas, findFaces = detectFaces, timeoutMs = DETECTION_TIMEOUT_MS } = {}) {
-    const canvas = await canvasOf(file);
+export async function draftPhoto(file, { canvasOf = photoCanvas, ...detection } = {}) {
+    return draftOf(await canvasOf(file), photoName(file), detection);
+}
+
+/** It. 62f: un cuadro de la cámara en la página ({ canvas, name }) ya está a su tamaño: se revisa sin decodificar nada. */
+export function draftFrame({ canvas, name }, detection = {}) {
+    return draftOf(canvas, name, detection);
+}
+
+async function draftOf(canvas, name, { findFaces = detectFaces, timeoutMs = DETECTION_TIMEOUT_MS } = {}) {
     try {
-        return { name: photoName(file), canvas, faces: await Promise.race([findFaces(canvas), timeout(timeoutMs)]), detector: 'ok' };
+        return { name, canvas, faces: await Promise.race([findFaces(canvas), timeout(timeoutMs)]), detector: 'ok' };
     } catch {
-        return { name: photoName(file), canvas, faces: [], detector: 'unavailable' };
+        return { name, canvas, faces: [], detector: 'unavailable' };
     }
 }
 

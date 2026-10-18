@@ -6,10 +6,12 @@
 // ya difuminados (PhotoReview); solo al aceptarla se calcula su huella.
 import { computed, ref, shallowRef } from 'vue';
 import CameraCapture from '@/Components/CameraCapture.vue';
+import FramePreview from '@/Components/FramePreview.vue';
 import PhotoReview from '@/Components/PhotoReview.vue';
 import { acceptedTypes, cannotAdd } from '@/lib/evidence/attachments.js';
 import { cameraInPage } from '@/lib/evidence/camera.js';
-import { draftPhoto, finishPhoto, kindOf, prepareEvidence } from '@/lib/evidence/prepare.js';
+import { loadDetector } from '@/lib/evidence/faces.js';
+import { draftFrame, draftPhoto, finishPhoto, kindOf, prepareEvidence } from '@/lib/evidence/prepare.js';
 import { releaseCanvas } from '@/lib/evidence/photos.js';
 import { vReveal } from '@/lib/reveal.js';
 
@@ -33,6 +35,15 @@ const toReview = shallowRef([]);
 const finishing = ref(false);
 const reviewed = ref(0);
 const reviewing = computed(() => toReview.value[0] ?? null);
+// It. 62f: la foto que se está revisando ahora mismo, antes de su revisión: { name, canvas? }.
+const pending = shallowRef(null);
+
+// It. 62f: el detector de rostros empieza a cargar apenas se va a elegir una foto.
+function warmUp() {
+    if (navigator.onLine !== false) {
+        loadDetector().catch(() => {});
+    }
+}
 
 // It. 62c: donde el navegador da la cámara, "Tomar foto" la abre en la página;
 // si no, la del teléfono (capture), como antes.
@@ -47,6 +58,27 @@ async function onChoose(event) {
 async function onPhoto(photo) {
     cameraOpen.value = false;
     await attach([photo]);
+}
+
+// It. 62f: el cuadro de la cámara en la página, en su canvas: la cámara se cierra
+// al instante, la foto se ve mientras se revisan sus rostros, y no hay JPEG que decodificar.
+async function onFrame(frame) {
+    cameraOpen.value = false;
+    errors.value = [];
+    const refused = cannotAdd([...evidences.value, ...toReview.value.map(() => ({ kind: 'photo' }))], 'photo', 0, limits.value);
+    if (refused) {
+        releaseCanvas(frame.canvas);
+        addError(refused);
+        return;
+    }
+    processing.value = true;
+    pending.value = frame;
+    try {
+        toReview.value = [...toReview.value, await draftFrame(frame)];
+    } finally {
+        pending.value = null;
+        processing.value = toReview.value.length > 0;
+    }
 }
 
 async function attach(files) {
@@ -64,7 +96,12 @@ async function attach(files) {
         }
         try {
             if (kind === 'photo') {
-                toReview.value = [...toReview.value, await draftPhoto(file)];
+                pending.value = { name: file.name };
+                try {
+                    toReview.value = [...toReview.value, await draftPhoto(file)];
+                } finally {
+                    pending.value = null;
+                }
                 continue;
             }
             const evidence = await prepareEvidence(file);
@@ -138,7 +175,7 @@ const kilobytes = (bytes) => `${Math.max(1, Math.round(bytes / 1024))} KB`;
                 :class="{ 'opacity-50': !accept || processing }"
             >
                 {{ reviewing ? 'Revise la foto de abajo' : processing ? 'Revisando la foto…' : photosOnly ? 'Elegir de la galería' : 'Elegir de la galería o un PDF' }}
-                <input type="file" multiple class="sr-only" :accept="accept" :disabled="!accept || processing" @change="onChoose" />
+                <input type="file" multiple class="sr-only" :accept="accept" :disabled="!accept || processing" @click="warmUp" @change="onChoose" />
             </label>
             <button
                 v-if="inPage"
@@ -156,11 +193,20 @@ const kilobytes = (bytes) => `${Math.max(1, Math.round(bytes / 1024))} KB`;
                 :class="{ 'opacity-50': !accept.startsWith('image') || processing }"
             >
                 <span aria-hidden="true">📷</span> Tomar foto
-                <input type="file" data-test="camera" class="sr-only" accept="image/*" capture="environment" :disabled="!accept.startsWith('image') || processing" @change="onChoose" />
+                <input type="file" data-test="camera" class="sr-only" accept="image/*" capture="environment" :disabled="!accept.startsWith('image') || processing" @click="warmUp" @change="onChoose" />
             </label>
         </div>
 
-        <CameraCapture v-if="cameraOpen" @photo="onPhoto" @close="cameraOpen = false" />
+        <CameraCapture v-if="cameraOpen" @frame="onFrame" @photo="onPhoto" @close="cameraOpen = false" />
+
+        <!-- It. 62f: la foto, al instante, mientras se buscan sus rostros (la revisión llega después). -->
+        <section v-if="pending" v-reveal="pending.name" data-test="photo-pending" role="status" class="flex flex-col gap-2 rounded-2xl bg-white p-3 shadow-soft ring-1 ring-slate-900/5">
+            <FramePreview v-if="pending.canvas" :source="pending.canvas" />
+            <p class="flex items-center gap-2 text-base font-semibold text-slate-800">
+                <span aria-hidden="true" class="size-5 shrink-0 rounded-full border-2 border-brand-700 border-t-transparent motion-safe:animate-spin"></span>
+                Revisando la foto: buscando rostros para difuminarlos…
+            </p>
+        </section>
 
         <!-- It. 62d: la revisión aparece debajo de los botones: se trae a la vista, foto por foto. -->
         <PhotoReview

@@ -3729,6 +3729,40 @@ Queda para la V2, opcional, con el modelo de financiación (`docs/viabilidad-leg
 - **Pruebas:** Vitest: la ruta y sus enlaces; sin obra elegida no pregunta; con la obra elegida pregunta, y si dice que no, la visita no sale y lo escrito queda; la misma pantalla y "Salir" no preguntan; el aviso del navegador al recargar; enviado el reporte, sale sin preguntar. Vista en rojo antes de implementar.
 - **Corridas:** Vitest 806, `make e2e` 68 (y 1 pendiente, `fixme`), trace-check 542 de 542; `make ux-check` no empeora ninguna pantalla.
 
+### Iteración 62f — La foto tomada, sin esperas de más
+
+⬜ **Pedida por el usuario el 2026-10-18:** "¿el proceso de tomar foto y usar esta foto ya se encuentra optimizado? Noté que al tomar la foto y usarla se demora un poco". **Aprobada** ("sí, haz la 62f") tras medir el camino entero (`make photo-time`, nuevo).
+
+**Por qué:** medido con la CPU frenada como un celular de gama media, entre "Tomar la foto" y ver la revisión pasaban de 0,8 a 1 s sin ver nada: la cámara se cerraba y solo cambiaba el texto del botón. La revisión de rostros ya se había optimizado (it. 48), pero había trabajo de más:
+- el cuadro de la cámara se codificaba en JPEG para decodificarlo enseguida;
+- la primera foto del ciudadano esperaba la carga del detector, que la pantalla del veedor ya precargaba.
+
+"Usar esta foto" ya tardaba menos de 0,1 s.
+
+**Entregable:**
+- **El cuadro pasa a revisión tal cual**, en su canvas (`grabFrame`, `draftFrame`): sin JPEG de por medio, y una copia menos de la foto en memoria.
+- **La foto se ve al instante**, con "Revisando la foto: buscando rostros para difuminarlos…", mientras se revisan sus rostros (una copia pequeña, `FramePreview`). Una de la galería, con el mismo aviso.
+- **El detector empieza a cargar al abrir la cámara** (mientras la persona encuadra) o al ir a la galería, con señal.
+
+**Done-when:** el escenario nuevo de US-009, con sus pruebas, y `make photo-time` antes y después.
+
+**Modelo:** Opus 5.5 (la foto antes de su huella: R-HASH-01, R-PRIV-05).
+
+✅ **Cumplida (2026-10-18).**
+- **Medido con `make photo-time`** (Chromium, CPU 4× más lenta, cámara simulada de 1920 × 1440, ms):
+
+  | | Antes | Después |
+  |---|---|---|
+  | Tomar → la cámara se cierra | 167 a 220 | 83 a 99 |
+  | Tomar → la foto a la vista | lo que tarda la revisión | 89 a 108 |
+  | Tomar → la revisión | 753 a 1060 | 661 a 892 |
+  | "Usar esta foto" → adjunta | 79 a 85 | 66 a 92 |
+
+  El frenado no alcanza la codificación de imágenes, que Chrome hace en otro hilo: en un celular, el JPEG que ya no se hace ahorra más que aquí. Con la cámara recién abierta, la prueba toma la foto enseguida y el detector todavía carga; quien encuadra unos segundos ya lo encuentra cargado.
+- **Historia:** US-009, con un escenario nuevo ("La foto tomada pasa a revisión sin esperas de más"). Sin historia nueva.
+- **Pruebas:** Vitest: el cuadro en su canvas, a su tamaño y sin JPEG; su revisión sin decodificar; la cámara que emite el cuadro y precarga el detector (sin señal, no); el selector, que cierra la cámara, muestra la foto con su aviso mientras se revisa (también una de la galería) y precarga el detector al ir a la galería. Todo visto en rojo antes de implementar.
+- **Corridas:** Vitest 811, `make e2e` 68 (y 1 pendiente, `fixme`), trace-check 543 de 543; `make ux-check` no empeora ninguna pantalla.
+
 ### Iteración 64 — Los correos salen por la cola
 
 ⬜ **Pedida por el usuario el 2026-10-17:** "el envío tanto del código como el informe del ciudadano se nota lento. Haz el análisis y aplica la mejor para que los procesos se muevan por colas". Va antes de la 63.
