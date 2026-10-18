@@ -3824,7 +3824,13 @@ Queda para la V2, opcional, con el modelo de financiación (`docs/viabilidad-leg
 
 **Entregable:** "Sincronizar ahora" en la pantalla Contratos del Administrador de la veeduría: solo su territorio (`SyncSecopContracts` con su id, como el alta), una vez cada 5 minutos por veeduría, y el resultado en la misma pantalla. Un contrato que todavía no está en los datos abiertos de datos.gov.co tampoco llega así: se dice en la pantalla.
 
-**Modelo:** Sonnet medium.
+**Modelo:** Sonnet medium. En Opus 5.5, a pedido del usuario ("haz la iteración 63").
+
+✅ **Cumplida (2026-10-17).**
+- **Cómo quedó:** `ContractSyncController` (`GET` y `POST /contracts/sync`, solo el Administrador) despacha `SyncSecopContracts` con el id de la veeduría, con una pausa de 5 minutos en la caché de la veeduría (la de la base, como en staging, lleva su prefijo), y lee la última `SecopSyncRun` que cubrió su territorio, la de la noche o la suya, con lo que le trajo (`per_organization`). En "Contratos", el botón, el estado y la nota de datos.gov.co; mientras corre, la pantalla vuelve a mirar cada 10 segundos y, al terminar, recarga la lista.
+- **Historia:** US-070, nueva (4 escenarios).
+- **Pruebas:** Pest: solo su territorio; la pausa de 5 minutos por veeduría (con la caché de la base: la de "array" de las pruebas se pierde entre peticiones con la tenencia); la última sincronización, la de la noche o la suya y nunca la de otra; solo el Administrador. Vitest: el botón y su mensaje, la pausa, el estado (en curso, terminada, fallida) y la vuelta a mirar sola. Todo visto en rojo antes de implementar.
+- **Corridas:** Pest 1289, Vitest 780, trace-check 538 de 538; `make ux-check` no empeora ninguna pantalla.
 
 ### Orden de lo que está en espera (2026-10-14)
 

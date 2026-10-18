@@ -82,6 +82,9 @@ export const saveTerritory = (codes) => dataOf(http.put('/territory', { codes })
 
 /** US-015: { data, meta: { current_page, last_page, total } } */
 export const fetchContracts = ({ sort, direction, page, q }) => dataOf(http.get('/contracts', { params: { sort, direction, page, ...(q ? { q } : {}) } }));
+// It. 63 (US-070): la última sincronización con el SECOP II que cubrió el territorio, y pedir una ya.
+export const fetchContractSync = async () => (await dataOf(http.get('/contracts/sync')))?.data ?? null;
+export const syncContractsNow = () => dataOf(http.post('/contracts/sync'));
 
 /** US-007: nombre de fantasía y logo (multipart). */
 export const fetchProfile = async () => (await dataOf(http.get('/organization/profile'))).data;
