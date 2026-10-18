@@ -47,6 +47,22 @@ class CitizenReportController extends Controller
         });
     }
 
+    /** It. 66b (US-069): "Yo también lo vi" — se suma a lo que ya se informó de la obra, con el código. */
+    public function support(Request $request, CitizenReportDesk $desk): JsonResponse
+    {
+        $data = $request->validate([
+            'email' => ['required', 'email', 'max:254'],
+            'code' => ['required', 'string'],
+            'worksite_id' => ['required', 'string', 'exists:tenant.worksites,public_id'],
+        ]);
+
+        return $this->refusing(function () use ($desk, $data) {
+            $desk->support($data['email'], $data['code'], Worksite::byPublicId($data['worksite_id']));
+
+            return response()->json(['message' => 'Quedó sumado: le avisamos a su correo cuando la veeduría actúe.'], 201);
+        });
+    }
+
     public function store(Request $request, CitizenReportDesk $desk): JsonResponse
     {
         $data = $request->validate([

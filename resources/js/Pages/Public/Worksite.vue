@@ -6,6 +6,7 @@ import { nextTick, onMounted } from 'vue';
 import Illustration from '@/Components/Brand/Illustration.vue';
 import LoadState from '@/Components/LoadState.vue';
 import CitizenReportForm from '@/Components/Public/CitizenReportForm.vue';
+import CitizenVoices from '@/Components/Public/CitizenVoices.vue';
 import ContractCard from '@/Components/Public/ContractCard.vue';
 import EvidenceCard from '@/Components/Public/EvidenceCard.vue';
 import OrganizationNotice from '@/Components/Public/OrganizationNotice.vue';
@@ -86,6 +87,8 @@ onMounted(async () => {
                     </li>
                 </ol>
 
+                <!-- It. 66b (US-069): cuántos ciudadanos informaron, y "Yo también lo vi". -->
+                <CitizenVoices v-if="worksite.citizens" :worksite-id="worksite.id" :citizens="worksite.citizens" />
                 <!-- It. 44f (US-059-LEG): primero, a la veeduría que la vigila; después, a la Contraloría. -->
                 <CitizenReportForm :worksite-id="worksite.id" :propose-from="worksite.located === false ? worksite.seat : null" />
                 <OversightChannels />

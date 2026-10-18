@@ -27,7 +27,7 @@ class EscalateOverdueCitizenReports implements ShouldQueue
     {
         foreach (Tenant::query()->where('status', OrganizationStatus::Active->value)->get() as $tenant) {
             $tenant->run(function () use ($tenant) {
-                $overdue = CitizenResponseDeadline::overdue()->whereNull('escalated_at')->whereNotNull('email')->with('worksite.contracts')->get();
+                $overdue = CitizenResponseDeadline::overdue()->whereNull('escalated_at')->with('worksite.contracts')->get();
                 foreach ($overdue as $report) {
                     $this->escalate($tenant, $report);
                 }
@@ -41,7 +41,10 @@ class EscalateOverdueCitizenReports implements ShouldQueue
         $contract = Contract::query()->whereIn('secop_contract_id', $worksite->contracts->pluck('secop_contract_id'))->orderBy('secop_contract_id')->first();
         $mail = new CitizenReportOverdue($report->reference(), $tenant->displayName(), CitizenReportDesk::nameOf($worksite), $contract?->secop_contract_id, $contract?->entity_name, $report->message);
 
-        Notification::route('mail', $report->email)->notify($mail);
+        // It. 66b: a quien informó y a quienes se sumaron.
+        foreach ($report->recipients() as $email) {
+            Notification::route('mail', $email)->notify($mail);
+        }
         $report->update(['escalated_at' => now()]);
     }
 }

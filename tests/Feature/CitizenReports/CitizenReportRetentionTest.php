@@ -4,6 +4,7 @@ use App\Application\Organization\ConfigureTerritory;
 use App\Application\Organization\RegisterOrganization;
 use App\Domain\Audit\AuditLog;
 use App\Domain\CitizenReports\CitizenReport;
+use App\Domain\CitizenReports\CitizenReportSupport;
 use App\Infrastructure\Tenancy\Tenant;
 use App\Jobs\PurgeCitizenReports;
 use Database\Seeders\DivipolaSeeder;
@@ -137,4 +138,24 @@ it('runs every day, at 01:15 in Colombia', function () {
 
     expect($event->expression)->toBe('15 1 * * *')
         ->and($event->timezone)->toBe('America/Bogota');
+});
+
+// It. 66b (US-069): un informe documentado (la 65 lo olvidó) y quienes se sumaron, también.
+it('erases, 30 days after, the email of a documented report and of whoever joined a report', function () {
+    $documented = citizenReport('documented', 31);
+    $recent = citizenReport('documented', 10);
+    test()->tenant->run(function () use ($documented, $recent) {
+        foreach ([$documented, $recent] as $id) {
+            CitizenReportSupport::query()->create(['citizen_report_id' => $id, 'email' => 'vecino@correo.co', 'email_hash' => hash('sha256', 'vecino@correo.co'), 'data_authorized_at' => now(), 'data_policy_version' => '2026-09-30.2']);
+        }
+    });
+
+    (new PurgeCitizenReports)->handle();
+
+    expect(citizenReportRow($documented)->email)->toBeNull()
+        ->and(citizenReportRow($recent)->email)->toBe('vecina@correo.co');
+    test()->tenant->run(function () use ($documented, $recent) {
+        expect(CitizenReportSupport::query()->where('citizen_report_id', $documented)->sole()->makeVisible('email')->email)->toBeNull()
+            ->and(CitizenReportSupport::query()->where('citizen_report_id', $recent)->sole()->makeVisible('email')->email)->toBe('vecino@correo.co');
+    });
 });

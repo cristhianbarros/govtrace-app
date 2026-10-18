@@ -34,7 +34,7 @@ class CitizenReportInbox
     public function list(int $page = 1, ?string $status = null, ?string $worksite = null, ?string $observer = null): array
     {
         $inTab = fn () => CitizenReport::query()->when($status !== null, fn ($query) => $query->where('status', $status));
-        $query = $inTab()->with(['worksite', 'assignee'])
+        $query = $inTab()->with(['worksite', 'assignee'])->withCount('supports')
             ->when($worksite !== null, fn ($query) => $query->whereHas('worksite', fn ($sheet) => $sheet->where('public_id', $worksite)))
             // It. 65b: el veedor de la visita.
             ->when($observer !== null, fn ($query) => $query->whereHas('assignee', fn ($veedor) => $veedor->where('public_id', $observer)))
@@ -115,6 +115,8 @@ class CitizenReportInbox
             'status' => $report->status,
             'status_label' => CitizenReport::STATUS_LABELS[$report->status],
             'answer' => $report->answer,
+            // It. 66b: quien informó y quienes se sumaron ("Yo también lo vi").
+            'citizens' => 1 + $report->supports_count,
             // It. 66a (R-LEG-12): hasta cuándo se comprometió a responder, y si ya venció. Solo para el Administrador.
             'due_on' => $report->due_on?->toDateString(),
             'overdue' => CitizenResponseDeadline::isOverdue($report),
@@ -195,8 +197,12 @@ class CitizenReportInbox
         $report = $this->pending($id);
         $report->update(['status' => 'answered', 'answer' => trim($answer), 'handled_at' => now(), 'handled_by' => $administrator->id, 'first_action_at' => $report->first_action_at ?? now()]);
 
-        Notification::route('mail', $report->email)->notify(new CitizenReportAnswered($report->reference(), tenant()->displayName(), $report->answer));
+        // It. 66b: a quien informó y a quienes se sumaron.
+        foreach ($report->recipients() as $email) {
+            Notification::route('mail', $email)->notify(new CitizenReportAnswered($report->reference(), tenant()->displayName(), $report->answer));
+        }
         $this->audit('citizen_report.answered', $administrator, $report);
+        PublicCache::forget();
     }
 
     public function discard(User $administrator, int $id): void
@@ -205,6 +211,8 @@ class CitizenReportInbox
         $report->update(['status' => 'discarded', 'handled_at' => now(), 'handled_by' => $administrator->id, 'first_action_at' => $report->first_action_at ?? now()]);
 
         $this->audit('citizen_report.discarded', $administrator, $report);
+        // It. 66b: un informe descartado no cuenta en público.
+        PublicCache::forget();
     }
 
     private function pending(int $id): CitizenReport

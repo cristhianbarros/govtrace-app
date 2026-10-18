@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Domain\Audit\AuditLog;
 use App\Domain\CitizenReports\CitizenReport;
+use App\Domain\CitizenReports\CitizenReportSupport;
 use App\Infrastructure\Tenancy\Tenant;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -38,11 +39,11 @@ class PurgeCitizenReports implements ShouldQueue
                     $report->delete();
                 }
 
-                $erased = CitizenReport::query()
-                    ->where('status', 'answered')
-                    ->where('handled_at', '<', $limit)
-                    ->whereNotNull('email')
+                // It. 66b: también un informe documentado (la 65 lo olvidó), y los correos de quienes se sumaron.
+                $handled = CitizenReport::query()->whereIn('status', ['answered', 'documented'])->where('handled_at', '<', $limit);
+                CitizenReportSupport::query()->whereIn('citizen_report_id', (clone $handled)->select('id'))->whereNotNull('email')
                     ->update(['email' => null, 'email_hash' => null]);
+                $erased = (clone $handled)->whereNotNull('email')->update(['email' => null, 'email_hash' => null]);
 
                 return [$discarded->count(), $erased];
             });

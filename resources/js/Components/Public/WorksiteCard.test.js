@@ -102,3 +102,18 @@ describe('La tarjeta de la obra (it. 60)', () => {
         expect(wrapper.get('h2').text()).toBe('Pavimentación Calle 30');
     });
 });
+
+// It. 66b (US-069): cuántos ciudadanos informaron, también en la tarjeta del mapa.
+describe('Lo que informan los ciudadanos, en la tarjeta (it. 66b)', () => {
+    it('El número público es solo eso: sin mensajes, fotos ni nombres — the card says how many and the state', async () => {
+        const wrapper = await openCard(card({ citizens: { count: 3, status: 'Un veedor la está documentando', open: true } }));
+
+        expect(wrapper.get('[data-test="card-citizens"]').text()).toBe('3 ciudadanos informaron sobre esta obra · Un veedor la está documentando');
+    });
+
+    it('Un informe descartado no cuenta en público: no line when nobody counts', async () => {
+        const wrapper = await openCard(card({ citizens: null }));
+
+        expect(wrapper.find('[data-test="card-citizens"]').exists()).toBe(false);
+    });
+});

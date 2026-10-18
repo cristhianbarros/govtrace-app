@@ -38,6 +38,8 @@ class PublicWorksiteView
             // It. 58: sin ubicación, el ciudadano puede proponerla; el mapa empieza en la cabecera de su municipio.
             'located' => $worksite->location() !== null,
             'seat' => $worksite->location() === null ? PublicContractView::seatOf($contracts->first()) : null,
+            // It. 66b (US-069): cuántos ciudadanos informaron, y qué hace la veeduría. Solo el número.
+            'citizens' => CitizenVoices::of($worksite),
         ];
     }
 }

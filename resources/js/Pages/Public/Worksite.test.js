@@ -444,3 +444,19 @@ describe('Las miniaturas en la vista de la obra (it. 60)', () => {
         }
     });
 });
+
+// It. 66b (US-069): cuántos ciudadanos informaron, encima del formulario para informar.
+describe('Lo que informan los ciudadanos, en la página de la obra (it. 66b)', () => {
+    it('Otro ciudadano se suma a lo que ya se informó de una obra: the page shows how many, with "Yo también lo vi"', async () => {
+        const wrapper = await openWorksite(calle30({ citizens: { count: 2, status: 'Esperando respuesta de la veeduría', open: true } }));
+
+        expect(wrapper.get('[data-test="citizens-count"]').text()).toBe('2 ciudadanos informaron sobre esta obra · Esperando respuesta de la veeduría');
+        expect(wrapper.text()).toContain('Yo también lo vi');
+    });
+
+    it('Un informe descartado no cuenta en público: nothing to show without citizens', async () => {
+        const wrapper = await openWorksite(calle30({ citizens: null }));
+
+        expect(wrapper.find('[data-test="citizens-count"]').exists()).toBe(false);
+    });
+});

@@ -12,6 +12,7 @@ const NO_FACE = fileURLToPath(new URL('../../fixtures/evidence/sin-rostro.jpg', 
 test.describe.configure({ mode: 'serial' });
 
 const citizen = `e2e.visita.${Date.now()}@correo.co`;
+const neighbour = `e2e.vecino-suma.${Date.now()}@correo.co`; // it. 66b: "Yo también lo vi"
 const MESSAGE = `La cancha del parque quedó a medio pintar (${Date.now()}).`;
 
 test('El ciudadano informa, y la Administradora le pide la visita al veedor sugerido', async ({ page }) => {
@@ -39,6 +40,28 @@ test('El ciudadano informa, y la Administradora le pide la visita al veedor suge
     await expect(page.getByRole('status')).toHaveText('Le pedimos la visita a Veedor E2E. Al ciudadano le avisamos que un veedor va a visitar la obra.');
     expect(await latestMailAbout(citizen, 'va a visitar la obra')).not.toContain('Veedor E2E');
     await logOut(page);
+});
+
+// It. 66b (US-069): un vecino se suma, y la obra lo cuenta (solo el número, con lo que hace la veeduría).
+test('Un vecino se suma con "Yo también lo vi", y la obra lo cuenta', async ({ page }) => {
+    await page.goto(ORG);
+    await page.locator('.leaflet-marker-icon').first().click();
+    await page.locator('[data-test="worksite-card"]').getByRole('link', { name: 'Ver la obra' }).click();
+    await page.waitForURL('**/worksite/*');
+    const voices = page.locator('[data-test="citizens-count"]');
+    await expect(voices).toContainText('Un veedor la está documentando');
+    const before = Number((await voices.textContent()).match(/^(\d+)/)[1]);
+
+    await page.getByRole('button', { name: 'Yo también lo vi' }).click();
+    await page.locator('#support-email').fill(neighbour);
+    await page.locator('#support-authorization').check();
+    await page.getByRole('button', { name: 'Enviarme el código para sumarme' }).click();
+    await page.locator('#support-code').fill(await latestCodeTo(neighbour));
+    await page.getByRole('button', { name: 'Confirmar: yo también lo vi' }).click();
+
+    await expect(page.getByRole('status')).toContainText('Quedó sumado');
+    await page.reload();
+    await expect(voices).toContainText(`${before + 1} ciudadanos informaron sobre esta obra`);
 });
 
 test('El veedor reporta la obra desde su visita pendiente', async ({ page }) => {
@@ -82,4 +105,6 @@ test('La Administradora publica la evidencia, el informe queda documentado y al 
     const mail = await latestMailAbout(citizen, 'documentó lo que usted informó');
     expect(mail).toContain('/worksite/');
     expect(mail).not.toContain('Veedor E2E');
+    // It. 66b: a quien se sumó, también.
+    expect(await latestMailAbout(neighbour, 'documentó lo que usted informó')).toContain('/worksite/');
 });

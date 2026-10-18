@@ -73,4 +73,16 @@ final class CitizenReportRefused extends DomainException
     {
         return new self('Esta veeduría está suspendida y no recibe informes por ahora.', 409);
     }
+
+    /** It. 66b: "Yo también lo vi", from someone who already reported the work or joined it. */
+    public static function alreadyInformed(): self
+    {
+        return new self('Usted ya informó sobre esta obra: le avisamos a su correo cuando la veeduría actúe.', 422, 'email');
+    }
+
+    /** It. 66b: every report of the work was answered, documented or discarded. */
+    public static function nothingOpen(): self
+    {
+        return new self('Esta obra no tiene informes abiertos. Si vio algo nuevo, infórmeselo a la veeduría.', 422, 'worksite_id');
+    }
 }

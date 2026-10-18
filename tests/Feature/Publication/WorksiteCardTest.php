@@ -119,7 +119,7 @@ it('La tarjeta de una obra se pide al tocar su pin: the pins stay light, and the
     publishedWithPhotos(['sin-rostro.jpg'], 20);
 
     expect(array_keys(publicGet('/public/worksites')->assertOk()->json('data.0')))->toBe(['id', 'lat', 'lng', 'color_pin'])
-        ->and(array_keys(cardOf($this->worksite->public_id)))->toBe(['id', 'name', 'municipality', 'value', 'condition', 'last_evidence_at', 'photos']);
+        ->and(array_keys(cardOf($this->worksite->public_id)))->toBe(['id', 'name', 'municipality', 'value', 'condition', 'last_evidence_at', 'citizens', 'photos']); // it. 66b: y cuántos ciudadanos informaron
     publicGet('/public/worksites/01j9xq3m7v8k2d4f6g8h0jkmnp/card')->assertNotFound();
 });
 

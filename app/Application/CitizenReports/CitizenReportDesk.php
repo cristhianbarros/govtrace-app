@@ -3,8 +3,10 @@
 namespace App\Application\CitizenReports;
 
 use App\Application\Privacy\DataPolicy;
+use App\Application\Publication\PublicCache;
 use App\Domain\CitizenReports\CitizenReport;
 use App\Domain\CitizenReports\CitizenReportCode;
+use App\Domain\CitizenReports\CitizenReportSupport;
 use App\Domain\CitizenReports\Notifications\CitizenReportCode as CodeMail;
 use App\Domain\CitizenReports\Notifications\CitizenReportReceived;
 use App\Domain\Configuration\Parameters;
@@ -112,10 +114,46 @@ class CitizenReportDesk
             ]);
         });
 
+        // It. 66b: la obra dice cuántos ciudadanos informaron.
+        PublicCache::forget();
         $commitment = CitizenResponseDeadline::sentence(CarbonImmutable::parse($report->due_on), tenant()->citizenResponseDays());
         Notification::route('mail', self::normalized($email))->notify(new CitizenReportReceived($report->reference(), tenant()->displayName(), self::nameOf($report->worksite), $commitment));
 
         return $report;
+    }
+
+    /**
+     * It. 66b (US-069): "Yo también lo vi" — the citizen joins what was already reported
+     * of the work (its newest open report), with the verified email and the
+     * authorization given with the code. Once per person and work.
+     */
+    public function support(string $email, string $code, Worksite $worksite): CitizenReport
+    {
+        $this->assertReceiving();
+        $hash = self::fingerprint($email);
+        $pending = $this->verify($hash, $code);
+
+        $reports = CitizenReport::query()->where('worksite_id', $worksite->id)->where('status', '!=', 'discarded');
+        $open = (clone $reports)->whereIn('status', ['new', 'assigned'])->latest('id')->first() ?? throw CitizenReportRefused::nothingOpen();
+        $already = (clone $reports)->where('email_hash', $hash)->exists()
+            || CitizenReportSupport::query()->where('email_hash', $hash)->whereIn('citizen_report_id', (clone $reports)->select('id'))->exists();
+        if ($already) {
+            throw CitizenReportRefused::alreadyInformed();
+        }
+
+        DB::transaction(function () use ($pending, $open, $email, $hash) {
+            $pending->update(['used_at' => now()]);
+            $open->supports()->create([
+                'email' => self::normalized($email),
+                'email_hash' => $hash,
+                'data_authorized_at' => $pending->data_authorized_at,
+                'data_policy_version' => DataPolicy::VERSION,
+            ]);
+        });
+        // Lo público cambió: la obra cuenta a uno más.
+        PublicCache::forget();
+
+        return $open;
     }
 
     /** The name a worksite goes by: its own, or its first contract's object. */
