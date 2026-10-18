@@ -276,6 +276,35 @@ describe('La foto tomada, sin esperas de más (it. 62f)', () => {
     });
 });
 
+// It. 62g (R-UX-08): la revisión era alta; al cerrarse, la pantalla quedaba en otra parte del formulario.
+describe('El formulario, a la vista después de la revisión (it. 62g)', () => {
+    it('Al usar la foto, el formulario sigue a la vista: after the last review, used or not, the photos of the form come back into view, with the focus', async () => {
+        const screen = everythingFarBelow();
+        const wrapper = mount(EvidencePicker, {
+            attachTo: document.body,
+            props: { modelValue: [], 'onUpdate:modelValue': (value) => wrapper.setProps({ modelValue: value }) },
+        });
+        try {
+            await choose(wrapper, [photo(1)]);
+            await useEachPhoto(wrapper);
+            expect(wrapper.text()).toContain('foto1.jpg');
+            expect(screen.revealed().at(-1)).toBe(wrapper.element);
+            expect(document.activeElement).toBe(wrapper.element);
+            expect(wrapper.attributes('aria-label')).toBe('Evidencia: de 1 a 5 fotos o un PDF');
+
+            await choose(wrapper, [photo(2)]);
+            expect(screen.revealed().at(-1)).toBe(wrapper.findComponent(PhotoReview).element);
+            wrapper.findComponent(PhotoReview).vm.$emit('discard');
+            await flushPromises();
+            expect(screen.revealed().at(-1)).toBe(wrapper.element);
+            expect(document.activeElement).toBe(wrapper.element);
+        } finally {
+            wrapper.unmount();
+            screen.restore();
+        }
+    });
+});
+
 describe('Tomar la foto o elegirla (it. 40d)', () => {
     it('Tomar la foto con la cámara o elegirla de la galería: two big buttons, the camera one opens the rear camera', async () => {
         const wrapper = mount(EvidencePicker, { props: { modelValue: [] } });

@@ -252,6 +252,8 @@ test('La foto se toma dentro de GovTrace, sin salir de la app', async ({ page })
     await page.getByRole('button', { name: 'Usar esta foto', exact: true }).click();
     await expect(page.locator('[data-test="remove-evidence"]')).toHaveCount(1);
     await expect(page.getByText(/foto-\d\d-\d\d-\d\d\.jpg/)).toBeVisible();
+    // It. 62g (R-UX-08): cerrada la revisión, la pantalla vuelve a las fotos del formulario.
+    await expect(page.getByText(/foto-\d\d-\d\d-\d\d\.jpg/)).toBeInViewport();
 
     // La cámara devolvió su paso en la historia: el "atrás" ahora sí sale de la obra.
     await expect(page.getByLabel('¿Qué vio en la obra?')).toHaveValue(message);

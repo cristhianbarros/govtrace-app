@@ -168,3 +168,10 @@ Característica: Adjuntar fotos o PDF con privacidad y hash en el teléfono
     Y la foto pasa a revisión tal como la vio la cámara, sin convertirla antes en un archivo
     Y el detector de rostros empezó a cargar al abrir la cámara, mientras encuadraba
 
+  # It. 62g (2026-10-18, reportado por el usuario): al cerrarse la revisión, la pantalla quedaba en otra parte del formulario.
+  @complexity:low
+  Escenario: Al usar la foto, el formulario sigue a la vista
+    Cuando toco "Usar esta foto" o "No usar esta foto" en la última foto por revisar
+    Entonces la pantalla vuelve a las fotos del formulario, con la que adjunté
+    Y sigo en el formulario desde ahí, sin buscar dónde quedé
+
