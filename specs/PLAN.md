@@ -3750,13 +3750,15 @@ Queda para la V2, opcional, con el modelo de financiación (`docs/viabilidad-leg
 - El tiempo de respuesta **no es público**: se maneja donde importa. Al enviar el informe, la pantalla y el correo de recibo le dicen al ciudadano hasta qué fecha se compromete a responder la veeduría. El resumen diario le recuerda al Administrador los informes que están por vencer o vencidos. Si vence sin una primera acción, al ciudadano le llega un correo con el camino a la Contraloría, con su caso listo.
 - Los días hábiles descuentan los festivos de Colombia (Ley 51 de 1983).
 
-**Por decidir:** el "Yo también lo vi".
+- **"Yo también lo vi" va** (2026-10-17): otro ciudadano se suma a un informe de la misma obra con su correo verificado, una vez por persona y obra, y recibe los mismos correos. **El número lo ven los dos**: la veeduría, en "Informes ciudadanos" ("15 ciudadanos lo vieron"), y los ciudadanos, en la página de la obra y en su tarjeta del mapa ("15 ciudadanos informaron sobre esta obra"). Solo el número, nunca los mensajes, las fotos ni quiénes son, y al lado el estado de lo que hizo la veeduría ("Un veedor la está documentando", "Documentado").
+
+Con esto la 66 queda decidida; falta aprobarla para empezar.
 
 **Sobre los días (revisado el 2026-10-17):** la Ley 850 de 2003 obliga a la veeduría a *recibir* los informes de los ciudadanos (arts. 15 e) y 18 a)), pero no le pone plazo para responder, y deja a cada una definir su propio reglamento de funcionamiento (art. 18 c)). Las veedurías son organizaciones civiles (art. 2), no autoridades: los 15 días del derecho de petición (Ley 1755 de 2015, art. 14) obligan a las autoridades, y ante organizaciones privadas solo cuando la petición busca garantizar un derecho fundamental (art. 32). Por eso, 15 días hábiles es una **sugerencia de GovTrace**, no una obligación legal: parámetro de cada veeduría (15 por defecto, decisión del usuario), que cuenta hasta su primera acción (responder, pedir la visita o descartar), nunca dicho en público como un incumplimiento, y a validar con las veedurías en el piloto. El camino a la Contraloría se ofrece siempre, no solo pasado el plazo.
 
 **Entregable propuesto:**
 - En la obra y en su tarjeta del mapa, cuántos ciudadanos informaron y desde cuándo, solo el número: los mensajes y las fotos no se publican (no tienen ubicación ni hora verificadas).
-- "Yo también lo vi": otro ciudadano se suma a un informe de la misma obra con su correo verificado, uno por persona y obra.
+- "Yo también lo vi": otro ciudadano se suma a un informe de la misma obra con su correo verificado, uno por persona y obra (decidido, arriba).
 - ~~El tiempo de respuesta, público~~ (descartado por el usuario): se maneja en la pantalla de envío, los correos y el resumen diario (arriba).
 - Sin respuesta en el plazo de la veeduría, al ciudadano le llega "Lleve su caso a la Contraloría", con el contrato, la entidad y su mensaje listos (los canales de la it. 44a).
 - La evidencia publicada se comparte con una vista previa (Open Graph): la foto sellada, el estado, el valor del contrato y la entidad.
