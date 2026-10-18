@@ -16,6 +16,7 @@ import ReportForm from '@/Components/ReportForm.vue';
 import VeedorNav from '@/Components/VeedorNav.vue';
 import WorksiteBrowser from '@/Components/WorksiteBrowser.vue';
 import { useGps } from '@/composables/useGps.js';
+import { useLeaveGuard } from '@/composables/useLeaveGuard.js';
 import { saveOffline, startOutboxSync } from '@/composables/useOutbox.js';
 import { registerServiceWorker } from '@/lib/pwa.js';
 import { loadDetector } from '@/lib/evidence/faces.js';
@@ -35,6 +36,9 @@ const serverErrors = ref([]);
 const sent = ref(false);
 const savedOffline = ref(false); // US-018 e it. 41: por qué quedó en la bandeja de salida (el mensaje), o false
 const locationPending = ref(null); // it. 46f: por qué la ubicación de la obra quedó por confirmar
+
+// It. 62e (US-067): con la obra elegida, el reporte está empezado: salir de la pantalla pregunta antes.
+useLeaveGuard(computed(() => contract.value !== null));
 
 // It. 47b: el GPS, una sola vez por pantalla (useGps): la lista (el municipio y
 // las obras cercanas) y el reporte usan la misma lectura. Para la lista:
@@ -146,7 +150,8 @@ function startOver() {
 <template>
     <Head title="Nuevo Reporte" />
     <!-- El nombre y el logo que la organización eligió (US-007). -->
-    <AppLayout :title="page.props.organization ?? 'GovTrace'" :logo="page.props.organizationLogo">
+    <!-- It. 62e (US-067): la ruta también aquí; salir con un reporte empezado pregunta antes (useLeaveGuard). -->
+    <AppLayout :title="page.props.organization ?? 'GovTrace'" :logo="page.props.organizationLogo" here="Nuevo Reporte">
         <div class="flex flex-col gap-5">
             <h1 class="text-xl font-semibold">Nuevo Reporte</h1>
 

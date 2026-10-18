@@ -42,12 +42,15 @@ Característica: Saber dónde estoy y volver a GovTrace desde cualquier veedurí
     Entonces veo un solo enlace, "← Veeduría BAF Medellín", en lugar de la ruta completa
     Y en la Bandeja del panel veo "← Veeduría BAF Medellín", porque "Panel" es la misma Bandeja
 
+  # It. 62e (2026-10-18, pedido por el usuario): antes, Nuevo reporte no tenía ruta, para que un toque por error no
+  # sacara al veedor a mitad de camino. Ahora la tiene, y salir con un reporte empezado pregunta antes.
   @complexity:low
-  Escenario: Mientras el veedor llena un reporte, la ruta no aparece
+  Escenario: En Nuevo reporte, la ruta aparece, y salir con un reporte empezado pregunta antes
     Dado que soy veedor de "Veeduría BAF Medellín"
     Cuando abro "Nuevo reporte"
-    Entonces no veo la ruta
-    Pero en "Mis Reportes" veo "GovTrace › Veeduría BAF Medellín › Mis Reportes"
+    Entonces veo "GovTrace › Veeduría BAF Medellín › Nuevo Reporte", y en "Mis Reportes", "GovTrace › Veeduría BAF Medellín › Mis Reportes"
+    Y si ya elegí la obra y toco la ruta o una pestaña, la app pregunta "¿Salir sin enviar el reporte? Se perderá lo que lleva."
+    Y si digo que no, sigo en el reporte, con lo que llevaba
 
   @complexity:low
   Escenario: Desde Organizaciones, el Super Administrador abre el sitio de cada veeduría

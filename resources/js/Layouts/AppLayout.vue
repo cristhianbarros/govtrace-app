@@ -29,7 +29,7 @@ const props = defineProps({
     },
     // It. 62 (US-067): la ruta de arriba. `panel`, el panel al que pertenece la pantalla
     // ({ label, href }); `here`, el nombre de la pantalla. Sin ninguno de los dos, ni el
-    // sitio de una veeduría, no hay ruta: el Inicio de GovTrace y Nuevo reporte.
+    // sitio de una veeduría, no hay ruta: el Inicio de GovTrace. It. 62e: Nuevo reporte sí la tiene.
     panel: {
         type: Object,
         default: null,
