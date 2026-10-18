@@ -3763,6 +3763,23 @@ Queda para la V2, opcional, con el modelo de financiación (`docs/viabilidad-leg
 - **Pruebas:** Vitest: el cuadro en su canvas, a su tamaño y sin JPEG; su revisión sin decodificar; la cámara que emite el cuadro y precarga el detector (sin señal, no); el selector, que cierra la cámara, muestra la foto con su aviso mientras se revisa (también una de la galería) y precarga el detector al ir a la galería. Todo visto en rojo antes de implementar.
 - **Corridas:** Vitest 811, `make e2e` 68 (y 1 pendiente, `fixme`), trace-check 543 de 543; `make ux-check` no empeora ninguna pantalla.
 
+### Iteración 62g — El formulario, a la vista después de la revisión
+
+⬜ **Reportado por el usuario el 2026-10-18:** "al tomar la foto e indicar usar foto se pierde el foco del formulario".
+
+**Por qué:** la revisión de una foto es alta: la foto, sus rostros y dos botones grandes. Al tocar "Usar esta foto" (o "No usar esta foto") desaparece, la página se acorta, y la pantalla queda en otra parte del formulario, a veces al final. El foco del teclado se iba con el botón.
+
+**Entregable:** cerrada la última revisión, usada o no, vuelven a la vista las fotos del formulario, con la que se adjuntó, y el foco queda en ese grupo ("Fotos (opcional): hasta 3"). Con varias fotos por revisar, cada una sigue apareciendo a la vista (it. 62d). Sirve al veedor y al ciudadano.
+
+**Done-when:** el escenario nuevo de US-009, con su prueba, y `make e2e` con la foto adjunta dentro de la pantalla de un Pixel 7.
+
+**Modelo:** Sonnet medium. En Opus 5.5, a pedido del usuario.
+
+✅ **Cumplida (2026-10-18).**
+- **Historia:** US-009, con un escenario nuevo ("Al usar la foto, el formulario sigue a la vista").
+- **Pruebas:** Vitest: usada o descartada la última foto, el grupo de fotos se trae a la vista y recibe el foco; con otra por revisar, la siguiente revisión. Playwright: la foto adjunta, dentro de la pantalla. Vista en rojo antes de implementar.
+- **Corridas:** Vitest 812, `make e2e` 68 (y 1 pendiente, `fixme`), trace-check 544 de 544; `make ux-check` no empeora ninguna pantalla.
+
 ### Iteración 64 — Los correos salen por la cola
 
 ⬜ **Pedida por el usuario el 2026-10-17:** "el envío tanto del código como el informe del ciudadano se nota lento. Haz el análisis y aplica la mejor para que los procesos se muevan por colas". Va antes de la 63.
