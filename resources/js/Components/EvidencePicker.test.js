@@ -6,15 +6,19 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import CameraCapture from './CameraCapture.vue';
 import EvidencePicker from './EvidencePicker.vue';
 import PhotoReview from './PhotoReview.vue';
-import { draftPhoto, finishPhoto, prepareEvidence } from '@/lib/evidence/prepare.js';
+import { draftFrame, draftPhoto, finishPhoto, prepareEvidence } from '@/lib/evidence/prepare.js';
+import { loadDetector } from '@/lib/evidence/faces.js';
+import FramePreview from './FramePreview.vue';
 import { everythingFarBelow } from '@/testing/reveal.js';
 
 vi.mock('@/lib/evidence/prepare.js', async (importOriginal) => ({
     ...(await importOriginal()),
+    draftFrame: vi.fn(),
     prepareEvidence: vi.fn(),
     draftPhoto: vi.fn(),
     finishPhoto: vi.fn(),
 }));
+vi.mock('@/lib/evidence/faces.js', async (importOriginal) => ({ ...(await importOriginal()), loadDetector: vi.fn(() => Promise.resolve()) }));
 vi.mock('@/lib/evidence/blur.js', async (importOriginal) => ({ ...(await importOriginal()), renderPreview: vi.fn() }));
 
 /** It. 46e: each photo is reviewed before it is attached; this one is used as the detector left it. */
@@ -198,6 +202,76 @@ describe('La foto para revisar, a la vista (it. 62d)', () => {
             expect(screen.revealed().at(-1)).toBe(wrapper.get('[role="alert"]').element);
         } finally {
             screen.restore();
+        }
+    });
+});
+
+// It. 62f: entre "Tomar la foto" y la revisión, la foto se ve al instante y no se hace trabajo de más.
+describe('La foto tomada, sin esperas de más (it. 62f)', () => {
+    const cameraStub = { template: '<div data-test="camera-view" />', emits: ['photo', 'frame', 'close'] };
+    const frame = () => ({ canvas: { width: 1440, height: 1920 }, name: 'foto-14-05-33.jpg' });
+
+    function withCamera() {
+        vi.stubGlobal('isSecureContext', true);
+        Object.defineProperty(navigator, 'mediaDevices', { value: { getUserMedia: vi.fn() }, configurable: true });
+        return mount(EvidencePicker, { props: { modelValue: [], photosOnly: true, max: 1 }, global: { stubs: { CameraCapture: cameraStub, FramePreview: true } } });
+    }
+    afterEach(() => {
+        vi.unstubAllGlobals();
+        delete navigator.mediaDevices;
+    });
+
+    it('La foto tomada pasa a revisión sin esperas de más: the camera closes at once, the photo shows while its faces are reviewed, and no JPEG is decoded', async () => {
+        let reviewed;
+        draftFrame.mockReturnValue(new Promise((resolve) => (reviewed = resolve)));
+        const wrapper = withCamera();
+        await wrapper.get('button[data-test="take-photo"]').trigger('click');
+
+        const taken = frame();
+        wrapper.findComponent(CameraCapture).vm.$emit('frame', taken);
+        await flushPromises();
+
+        expect(wrapper.find('[data-test="camera-view"]').exists()).toBe(false);
+        expect(wrapper.get('[data-test="photo-pending"]').text()).toContain('Revisando la foto: buscando rostros para difuminarlos…');
+        expect(wrapper.findComponent(FramePreview).props('source')).toBe(taken.canvas);
+        expect(draftFrame).toHaveBeenCalledWith(taken);
+        expect(draftPhoto).not.toHaveBeenCalled();
+
+        reviewed({ name: taken.name, canvas: taken.canvas, faces: [], detector: 'ok' });
+        await flushPromises();
+        expect(wrapper.find('[data-test="photo-pending"]').exists()).toBe(false);
+        expect(wrapper.findComponent(PhotoReview).exists()).toBe(true);
+    });
+
+    it('says so while a photo of the gallery is reviewed too', async () => {
+        let reviewed;
+        draftPhoto.mockReturnValue(new Promise((resolve) => (reviewed = resolve)));
+        const wrapper = mountPicker();
+
+        const input = wrapper.get('input[type="file"]');
+        Object.defineProperty(input.element, 'files', { value: [photo(1)], configurable: true });
+        await input.trigger('change');
+        await flushPromises();
+        expect(wrapper.get('[data-test="photo-pending"]').text()).toContain('Revisando la foto: buscando rostros para difuminarlos…');
+        expect(wrapper.findComponent(FramePreview).exists()).toBe(false);
+
+        reviewed({ name: 'foto1.jpg', canvas: {}, faces: [], detector: 'ok' });
+        await flushPromises();
+        expect(wrapper.find('[data-test="photo-pending"]').exists()).toBe(false);
+    });
+
+    it('starts loading the face detector when the person goes to choose a photo, without signal it does not try', async () => {
+        loadDetector.mockClear();
+        const wrapper = mountPicker();
+        await wrapper.get('input[type="file"]').trigger('click');
+        expect(loadDetector).toHaveBeenCalledTimes(1);
+
+        Object.defineProperty(window.navigator, 'onLine', { value: false, configurable: true });
+        try {
+            await wrapper.get('input[type="file"]').trigger('click');
+            expect(loadDetector).toHaveBeenCalledTimes(1);
+        } finally {
+            delete window.navigator.onLine;
         }
     });
 });

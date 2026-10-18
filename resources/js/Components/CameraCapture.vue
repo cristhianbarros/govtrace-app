@@ -4,10 +4,12 @@
 // con poca memoria cerraba GovTrace y, al volver, se reiniciaba sin la foto ni
 // lo escrito. La cámara se apaga apenas se toma la foto o se cierra.
 import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
-import { grabPhoto, openCamera, stopCamera } from '@/lib/evidence/camera.js';
+import { grabFrame, openCamera, stopCamera } from '@/lib/evidence/camera.js';
+import { loadDetector } from '@/lib/evidence/faces.js';
 import { holdBack } from '@/lib/backGuard.js';
 
-const emit = defineEmits(['photo', 'close']);
+// frame: el cuadro, { canvas, name } (it. 62f); photo: el archivo de la cámara del teléfono, si esta no abrió.
+const emit = defineEmits(['frame', 'photo', 'close']);
 
 const video = ref(null);
 const shutter = ref(null);
@@ -20,6 +22,10 @@ let releaseBack = () => {};
 
 onMounted(async () => {
     releaseBack = holdBack(() => emit('close'));
+    // It. 62f: mientras la persona encuadra, el detector de rostros ya carga; la primera foto no lo espera.
+    if (navigator.onLine !== false) {
+        loadDetector().catch(() => {});
+    }
     try {
         const opened = await openCamera();
         if (closed) {
@@ -44,16 +50,16 @@ onBeforeUnmount(() => {
     releaseBack();
 });
 
-async function take() {
+function take() {
     if (state.value !== 'ready') {
         return;
     }
     state.value = 'taking';
     error.value = '';
     try {
-        const photo = await grabPhoto(video.value);
+        const frame = grabFrame(video.value);
         stopCamera(stream);
-        emit('photo', photo);
+        emit('frame', frame);
     } catch (problem) {
         error.value = problem.message;
         state.value = 'ready';

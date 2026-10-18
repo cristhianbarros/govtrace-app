@@ -4,7 +4,7 @@
 // servidor recalcula. Web Crypto (crypto.subtle), como en el navegador.
 import { createHash } from 'node:crypto';
 import { describe, expect, it, vi } from 'vitest';
-import { draftPhoto, finishPhoto, kindOf, prepareEvidence } from './prepare.js';
+import { draftFrame, draftPhoto, finishPhoto, kindOf, prepareEvidence } from './prepare.js';
 
 const sha256Of = async (file) => createHash('sha256').update(Buffer.from(await file.arrayBuffer())).digest('hex');
 
@@ -98,3 +98,15 @@ describe('draftPhoto and finishPhoto', () => {
         expect(draft).toMatchObject({ faces: [], detector: 'unavailable' });
     });
 });
+
+// It. 62f: el cuadro de la cámara en la página ya es un canvas a su tamaño: se revisa sin decodificar nada.
+describe('draftFrame', () => {
+    it('reviews the faces of a frame of the camera as it is, and says so if the detector could not look', async () => {
+        const frame = { canvas: { width: 1440, height: 1920 }, name: 'foto-14-05-33.jpg' };
+        const faces = [{ x: 330, y: 230, width: 340, height: 340 }];
+
+        expect(await draftFrame(frame, { findFaces: async () => faces })).toEqual({ name: 'foto-14-05-33.jpg', canvas: frame.canvas, faces, detector: 'ok' });
+        expect(await draftFrame(frame, { findFaces: async () => Promise.reject(new Error('sin modelo')) })).toEqual({ name: 'foto-14-05-33.jpg', canvas: frame.canvas, faces: [], detector: 'unavailable' });
+    });
+});
+

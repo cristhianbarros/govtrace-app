@@ -160,3 +160,11 @@ Característica: Adjuntar fotos o PDF con privacidad y hash en el teléfono
     Entonces la pantalla se mueve sola hasta "Revise la foto antes de adjuntarla", con lo que encontró el detector
     Y si algo no se pudo adjuntar, hasta el aviso que dice por qué
 
+  # It. 62f (2026-10-18, pedido por el usuario): entre "Tomar la foto" y la revisión pasaba casi un segundo sin ver nada.
+  @complexity:medium
+  Escenario: La foto tomada pasa a revisión sin esperas de más
+    Cuando toco "Tomar la foto"
+    Entonces la cámara se cierra al instante y veo la foto con "Revisando la foto: buscando rostros para difuminarlos…"
+    Y la foto pasa a revisión tal como la vio la cámara, sin convertirla antes en un archivo
+    Y el detector de rostros empezó a cargar al abrir la cámara, mientras encuadraba
+

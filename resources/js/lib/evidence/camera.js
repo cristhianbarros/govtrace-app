@@ -3,7 +3,7 @@
 // celular con poca memoria la cierra: al volver se reinicia sin la foto ni lo
 // escrito. Aquí nunca queda detrás, y la foto sale del cuadro del video, cerca
 // de los 1920 px que se guardan, sin decodificar una de 12 o 50 megapíxeles.
-import { MAX_PHOTO_SIDE, releaseCanvas, scaledSize } from './photos.js';
+import { MAX_PHOTO_SIDE, scaledSize } from './photos.js';
 
 /** La trasera, sin micrófono, con su lado mayor cerca de lo que se guarda. */
 export const CAMERA_CONSTRAINTS = {
@@ -11,8 +11,6 @@ export const CAMERA_CONSTRAINTS = {
     video: { facingMode: { ideal: 'environment' }, width: { ideal: MAX_PHOTO_SIDE }, height: { ideal: 1440 } },
 };
 
-// La foto se codifica otra vez al revisarla (al 80 %): aquí, casi sin pérdida.
-const GRAB_QUALITY = 0.92;
 const NO_FRAME = 'La cámara todavía no muestra la imagen. Intente de nuevo.';
 
 /** Solo donde el navegador da la cámara: con HTTPS y getUserMedia. */
@@ -28,8 +26,12 @@ export function stopCamera(stream) {
     stream?.getTracks().forEach((track) => track.stop());
 }
 
-/** El cuadro que muestra el video, en JPEG, a su tamaño y sin pasar de 1920 px. */
-export async function grabPhoto(video, { createCanvas = () => document.createElement('canvas'), now = Date.now } = {}) {
+/**
+ * El cuadro que muestra el video, en un canvas a su tamaño y sin pasar de 1920 px.
+ * It. 62f: pasa a revisión tal cual; antes se codificaba en JPEG para decodificarlo
+ * enseguida (unos 200 ms de más, y otra copia de la foto en memoria).
+ */
+export function grabFrame(video, { createCanvas = () => document.createElement('canvas'), now = Date.now } = {}) {
     if (!video.videoWidth || !video.videoHeight) {
         throw new Error(NO_FRAME);
     }
@@ -37,14 +39,8 @@ export async function grabPhoto(video, { createCanvas = () => document.createEle
     const canvas = createCanvas();
     canvas.width = width;
     canvas.height = height;
-    try {
-        canvas.getContext('2d').drawImage(video, 0, 0, width, height);
-        const jpeg = await new Promise((resolve, reject) => {
-            canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error(NO_FRAME))), 'image/jpeg', GRAB_QUALITY);
-        });
-        const time = new Date(now()).toTimeString().slice(0, 8).replaceAll(':', '-');
-        return new File([jpeg], `foto-${time}.jpg`, { type: 'image/jpeg', lastModified: now() });
-    } finally {
-        releaseCanvas(canvas);
-    }
+    canvas.getContext('2d').drawImage(video, 0, 0, width, height);
+    const time = new Date(now()).toTimeString().slice(0, 8).replaceAll(':', '-');
+
+    return { canvas, name: `foto-${time}.jpg` };
 }

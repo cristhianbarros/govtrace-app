@@ -2,7 +2,7 @@
 // sin abrir la app de la cámara del teléfono (que dejaba a GovTrace detrás, y un
 // celular con poca memoria la cerraba).
 import { describe, expect, it, vi } from 'vitest';
-import { CAMERA_CONSTRAINTS, cameraInPage, grabPhoto, openCamera, stopCamera } from './camera.js';
+import { CAMERA_CONSTRAINTS, cameraInPage, grabFrame, openCamera, stopCamera } from './camera.js';
 
 function fakeCanvas() {
     const context = { drawImage: vi.fn() };
@@ -47,23 +47,22 @@ describe('La cámara en la página (it. 62c)', () => {
         expect(tracks.every((track) => track.stop.mock.calls.length === 1)).toBe(true);
     });
 
-    it('grabs the frame of the video as a JPEG, at its size and never over 1920 px, and releases the canvas', async () => {
+    // It. 62f: el cuadro pasa a revisión tal cual, en su canvas: sin codificarlo en JPEG para decodificarlo enseguida.
+    it('grabs the frame of the video in a canvas, at its size and never over 1920 px, without encoding it', () => {
         const portrait = fakeCanvas();
-        const photo = await grabPhoto({ videoWidth: 1440, videoHeight: 1920 }, { createCanvas: () => portrait, now: () => new Date('2026-10-18T14:05:33').getTime() });
+        const frame = grabFrame({ videoWidth: 1440, videoHeight: 1920 }, { createCanvas: () => portrait, now: () => new Date('2026-10-18T14:05:33').getTime() });
 
-        expect(photo).toBeInstanceOf(File);
-        expect(photo.type).toBe('image/jpeg');
-        expect(photo.name).toBe('foto-14-05-33.jpg');
-        expect(portrait.sizes).toEqual([[1440, 1920, 'image/jpeg', 0.92]]);
+        expect(frame).toEqual({ canvas: portrait, name: 'foto-14-05-33.jpg' });
+        expect([portrait.width, portrait.height]).toEqual([1440, 1920]);
         expect(portrait.context.drawImage).toHaveBeenCalledWith({ videoWidth: 1440, videoHeight: 1920 }, 0, 0, 1440, 1920);
-        expect([portrait.width, portrait.height]).toEqual([0, 0]);
+        expect(portrait.sizes).toEqual([]);
 
         const wide = fakeCanvas();
-        await grabPhoto({ videoWidth: 3840, videoHeight: 2160 }, { createCanvas: () => wide });
-        expect(wide.sizes[0].slice(0, 2)).toEqual([1920, 1080]);
+        grabFrame({ videoWidth: 3840, videoHeight: 2160 }, { createCanvas: () => wide });
+        expect([wide.width, wide.height]).toEqual([1920, 1080]);
     });
 
-    it('refuses a video that has no frame yet', async () => {
-        await expect(grabPhoto({ videoWidth: 0, videoHeight: 0 }, { createCanvas: fakeCanvas })).rejects.toThrow('La cámara todavía no muestra la imagen. Intente de nuevo.');
+    it('refuses a video that has no frame yet', () => {
+        expect(() => grabFrame({ videoWidth: 0, videoHeight: 0 }, { createCanvas: fakeCanvas })).toThrow('La cámara todavía no muestra la imagen. Intente de nuevo.');
     });
 });
