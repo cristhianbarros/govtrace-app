@@ -49,4 +49,12 @@ return [
         'api_key' => env('COINGECKO_API_KEY'),
     ],
 
+    // It. 68: ubicar una obra por su dirección, con OpenStreetMap (Nominatim).
+    // Su política pide que la aplicación se identifique; con NOMINATIM_URL,
+    // una instancia propia.
+    'nominatim' => [
+        'url' => env('NOMINATIM_URL', 'https://nominatim.openstreetmap.org'),
+        'user_agent' => env('NOMINATIM_USER_AGENT', 'GovTrace (+https://github.com/cristhianbarros/govtrace-app)'),
+    ],
+
 ];

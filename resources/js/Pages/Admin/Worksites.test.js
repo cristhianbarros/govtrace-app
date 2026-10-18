@@ -5,7 +5,7 @@ import { flushPromises, mount } from '@vue/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { defineComponent, h } from 'vue';
 import Worksites from './Worksites.vue';
-import { correctWorksiteLocation, fetchWorksites, groupContracts } from '@/services/api.js';
+import { correctWorksiteLocation, fetchWorksites, groupContracts, searchPlaces } from '@/services/api.js';
 
 vi.mock('@inertiajs/vue3', async () => await import('@/testing/inertia.js'));
 vi.mock('@/services/api.js');
@@ -127,6 +127,23 @@ describe('Obras', () => {
         await flushPromises();
 
         expect(wrapper.get('[role="alert"]').text()).toBe(message);
+    });
+
+    // It. 68: el mismo buscador de lugares del ciudadano.
+    it('Busco la dirección para corregir la ubicación: the chosen place moves the pin and fills the latitude and the longitude, without saving', async () => {
+        searchPlaces.mockResolvedValue({ data: [{ label: 'Gaira, Santa Marta, Magdalena', latitude: 11.1841, longitude: -74.2207 }] });
+        const wrapper = await openWorksites();
+        await correct(wrapper);
+
+        await wrapper.get('input#place-search').setValue('Gaira');
+        await button(wrapper, 'Buscar').trigger('click');
+        await flushPromises();
+        expect(searchPlaces).toHaveBeenCalledWith({ q: 'Gaira', worksite_id: 3 });
+        await wrapper.get('[data-test="place"]').trigger('click');
+
+        expect(wrapper.get('input#latitude').element.value).toBe('11.1841');
+        expect(wrapper.get('input#longitude').element.value).toBe('-74.2207');
+        expect(correctWorksiteLocation).not.toHaveBeenCalled();
     });
 
     it('does not save without a latitude and a longitude', async () => {

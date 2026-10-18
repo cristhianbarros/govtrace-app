@@ -180,3 +180,18 @@ Característica: Informar a la veeduría de lo que vi en una obra
     Cuando toco "Enviarme el código" o "Enviar a la veeduría"
     Entonces la pantalla se mueve sola hasta la respuesta: "Le enviamos un código…", "Su informe llegó a la veeduría…" o lo que hay que corregir
 
+  # It. 68 (2026-10-18, pedido por el usuario): ubicar la obra por su dirección o un sitio conocido.
+  @complexity:medium
+  Escenario: Escribo dónde queda la obra y el mapa la ubica
+    Dado que la obra "Construcción de la vía a Minca" no tiene ubicación
+    Cuando escribo "Parque de Minca" en "Dirección o un sitio conocido" y toco "Buscar"
+    Entonces veo los lugares que encontró OpenStreetMap cerca de Santa Marta
+    Y al elegir uno, el punto queda allí en el mapa, y lo puedo mover
+    Y la veeduría recibe con mi informe lo que escribí: "Parque de Minca"
+
+  @complexity:low @negative
+  Escenario: Si no se encuentra el lugar, la obra se marca en el mapa
+    Cuando busco un lugar que OpenStreetMap no encuentra
+    Entonces veo "No encontramos ese lugar. Pruebe con el barrio, un sitio conocido cercano o la calle sin el número, o márquelo en el mapa."
+    Y si la búsqueda no responde, veo "No pudimos buscar el lugar ahora. Márquelo en el mapa."
+

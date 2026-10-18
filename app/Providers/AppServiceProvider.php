@@ -82,6 +82,8 @@ class AppServiceProvider extends ServiceProvider
         );
         RateLimiter::for('public', fn (Request $request) => Limit::perMinute((int) config('limits.public_requests_per_minute'))->by($request->ip())->response($tooMany));
         RateLimiter::for('open-data', fn (Request $request) => Limit::perMinute((int) config('limits.open_data_per_minute'))->by($request->ip())->response($tooMany));
+        // It. 68: buscar el lugar de una obra en OpenStreetMap.
+        RateLimiter::for('place-search', fn (Request $request) => Limit::perMinute((int) config('limits.place_searches_per_minute'))->by(tenant()?->getTenantKey().':'.$request->ip())->response($tooMany));
 
         // It. 44f: el canal del ciudadano. Cada código es un correo que sale; cada informe, trabajo para la veeduría.
         $tooManyToday = fn (Request $request, array $headers) => response()->json(['message' => 'Demasiados intentos desde esta conexión. Intente de nuevo en una hora.'], 429, $headers);

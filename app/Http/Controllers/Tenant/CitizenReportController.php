@@ -24,7 +24,7 @@ use InvalidArgumentException;
  */
 class CitizenReportController extends Controller
 {
-    private const WORK = [
+    public const WORK = [
         // It. 46c: el identificador público de la ficha. It. 58: o el contrato, si aún no tiene ficha.
         'worksite_id' => ['nullable', 'required_without:contract_id', 'string', 'exists:tenant.worksites,public_id'],
         'contract_id' => ['nullable', 'required_without:worksite_id', 'string', 'max:100'],
@@ -40,7 +40,7 @@ class CitizenReportController extends Controller
 
         return $this->refusing(function () use ($desk, $data, $request) {
             $desk->assertReceiving();
-            $this->work($data); // it. 58: ningún código para una obra que la veeduría no vigila
+            ReportedWork::requested($data); // it. 58: ningún código para una obra que la veeduría no vigila
             $desk->requestCode($data['email'], $request->boolean('data_authorization'));
 
             return response()->json(['message' => "Le enviamos un código de 6 dígitos a {$data['email']}. Vence en ".CitizenReportCode::VALID_MINUTES.' minutos.']);
@@ -76,7 +76,10 @@ class CitizenReportController extends Controller
             // It. 58: dónde dice el ciudadano que queda una obra sin ubicación (opcional).
             'latitude' => ['nullable', 'required_with:longitude', 'numeric'],
             'longitude' => ['nullable', 'required_with:latitude', 'numeric'],
+            // It. 68: y lo que escribió para encontrarla, su dirección o un sitio conocido (opcional).
+            'place_reference' => ['nullable', 'string', 'max:200'],
         ], [
+            'place_reference.max' => 'Escriba hasta 200 caracteres.',
             'message.min' => 'Cuéntele a la veeduría qué vio: al menos 20 caracteres.',
             'message.max' => 'El mensaje puede tener máximo 2000 caracteres.',
         ]);
@@ -85,10 +88,11 @@ class CitizenReportController extends Controller
             $report = $desk->receive(
                 $data['email'],
                 $data['code'],
-                $this->work($data),
+                ReportedWork::requested($data),
                 $data['message'],
                 array_values(array_filter([...$request->file('photos', []), $request->file('photo')])),
                 $this->proposed($data),
+                $data['place_reference'] ?? null,
             );
 
             return response()->json([
@@ -98,14 +102,6 @@ class CitizenReportController extends Controller
                 'commitment' => CitizenResponseDeadline::sentence(CarbonImmutable::parse($report->due_on), tenant()->citizenResponseDays()),
             ], 201);
         });
-    }
-
-    /** @param  array<string, mixed>  $data */
-    private function work(array $data): ReportedWork
-    {
-        return filled($data['worksite_id'] ?? null)
-            ? ReportedWork::sheet(Worksite::byPublicId($data['worksite_id']))
-            : ReportedWork::contract($data['contract_id']);
     }
 
     /** @param  array<string, mixed>  $data */

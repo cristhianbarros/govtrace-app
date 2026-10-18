@@ -34,6 +34,7 @@ use App\Http\Controllers\Tenant\ObserverController;
 use App\Http\Controllers\Tenant\OpenDataController;
 use App\Http\Controllers\Tenant\OrganizationLogoController;
 use App\Http\Controllers\Tenant\OrganizationProfileController;
+use App\Http\Controllers\Tenant\PlaceSearchController;
 use App\Http\Controllers\Tenant\PublicContractController;
 use App\Http\Controllers\Tenant\PublicEvidenceController;
 use App\Http\Controllers\Tenant\PublicProofController;
@@ -131,6 +132,8 @@ Route::middleware([
         Route::get('/public/worksites/{worksite}/card', [PublicWorksiteController::class, 'card'])->where('worksite', PublicId::PATTERN)->name('public.worksites.card');
         // It. 56: iguales para todos los visitantes: se guardan unos segundos (PublicCache).
         Route::get('/public/stats', fn (PublicStats $stats) => response()->json(PublicCache::remember('stats', [], fn () => $stats->handle())))->name('public.stats.data');
+        // It. 68 (US-059-LEG, US-035): dónde queda una obra, por su dirección o un sitio conocido.
+        Route::get('/public/places', PlaceSearchController::class)->middleware('throttle:place-search')->name('public.places');
     });
     // US-059-LEG (it. 44f): el ciudadano informa a la veeduría, con su correo verificado por un código.
     Route::middleware(EnsureMapIsOnline::class)->group(function () {

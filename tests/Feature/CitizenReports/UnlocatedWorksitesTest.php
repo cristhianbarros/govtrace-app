@@ -357,3 +357,17 @@ it('lets only the Administrador confirm a proposal', function () {
     $this->actingAs($this->veedor, 'tenant')->postJson(unlocatedHost()."/citizen-reports/{$report}/confirm-location")->assertForbidden();
     expect(mincaWorksite()->location())->toBeNull();
 });
+
+// It. 68: lo que escribió el ciudadano para ubicar la obra llega con su informe, aunque no elija un lugar. No se publica.
+it('keeps what the citizen wrote to locate the work, with a point or without one, and only the veeduría reads it', function () {
+    informAbout('vecina@correo.co', ['place_reference' => '  Parque de Minca, frente a la iglesia ', 'latitude' => MINCA_POINT[0], 'longitude' => MINCA_POINT[1]])->assertCreated();
+    informAbout('vecino@correo.co', ['place_reference' => 'Entrada a Minca'])->assertCreated();
+    informAbout('otra@correo.co', ['place_reference' => str_repeat('a', 201)])
+        ->assertUnprocessable()->assertJsonValidationErrors(['place_reference' => 'Escriba hasta 200 caracteres.']);
+
+    expect(collect(citizenInbox()->assertOk()->json('data'))->pluck('place_reference')->sort()->values()->all())
+        ->toBe(['Entrada a Minca', 'Parque de Minca, frente a la iglesia']);
+    $public = json_encode(unlocatedList()->json());
+    expect($public)->not->toContain('frente a la iglesia')
+        ->not->toContain('Entrada a Minca');
+});

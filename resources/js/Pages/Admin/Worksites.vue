@@ -7,6 +7,7 @@ import { computed, nextTick, onMounted, ref } from 'vue';
 import LoadState from '@/Components/LoadState.vue';
 import MoreButton from '@/Components/MoreButton.vue';
 import LocationMap from '@/Components/LocationMap.vue';
+import PlaceSearch from '@/Components/PlaceSearch.vue';
 import { usePagedList } from '@/composables/usePagedList.js';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { correctWorksiteLocation, fetchWorksites, groupContracts } from '@/services/api.js';
@@ -157,6 +158,8 @@ onMounted(async () => {
                     <p class="text-slate-600">Ubicación oficial: {{ where(worksite) }}</p>
 
                     <div v-if="editing === worksite.id" class="flex flex-col gap-3">
+                        <!-- It. 68: el lugar elegido mueve el pin; se guarda con "Guardar ubicación". -->
+                        <PlaceSearch :work="{ worksite_id: worksite.id }" @found="(point) => (pin = point)" />
                         <LocationMap v-model="pin" />
                         <div class="grid grid-cols-2 gap-2">
                             <div class="flex flex-col gap-1">

@@ -11,6 +11,7 @@
 import { computed, ref } from 'vue';
 import EvidencePicker from '@/Components/EvidencePicker.vue';
 import LocationMap from '@/Components/LocationMap.vue';
+import PlaceSearch from '@/Components/PlaceSearch.vue';
 import { requestCitizenCode, sendCitizenReport } from '@/services/api.js';
 import { errorMessage } from '@/services/errors.js';
 import { vReveal } from '@/lib/reveal.js';
@@ -39,6 +40,7 @@ const refused = ref(null);
 const number = ref(null);
 const commitment = ref(null); // it. 66a: hasta cuándo se compromete a responder la veeduría
 const place = ref(null); // it. 58: { latitude, longitude } donde el ciudadano dice que queda la obra
+const placeReference = ref(''); // it. 68: lo que escribió para encontrarla; llega a la veeduría aunque no elija un lugar
 const remaining = computed(() => MAX_MESSAGE - message.value.length);
 
 async function askForCode() {
@@ -80,6 +82,9 @@ async function send() {
     if (place.value) {
         form.append('latitude', String(place.value.latitude));
         form.append('longitude', String(place.value.longitude));
+    }
+    if (placeReference.value.trim()) {
+        form.append('place_reference', placeReference.value.trim());
     }
     for (const photo of photos.value) {
         form.append('photos[]', photo.file);
@@ -143,7 +148,9 @@ const BUTTON = 'min-h-12 rounded-xl bg-brand-700 px-4 py-3 text-base font-semibo
             <!-- It. 58: una obra sin ubicación — el ciudadano puede decir dónde queda. -->
             <fieldset v-if="proposeFrom" data-test="propose-place" class="flex flex-col gap-2">
                 <legend class="font-semibold">¿Dónde queda la obra? (opcional)</legend>
-                <p class="text-sm text-slate-700">Esta obra aún no está en el mapa. Si sabe dónde queda, márquela: toque el mapa o mueva el punto. Es el lugar de la obra, no el suyo. La veeduría lo revisa antes de ponerla en el mapa.</p>
+                <p class="text-sm text-slate-700">Esta obra aún no está en el mapa. Si sabe dónde queda, escriba la dirección o un sitio conocido y búsquelo, o márquela en el mapa: toque el mapa o mueva el punto. Es el lugar de la obra, no el suyo. La veeduría lo revisa antes de ponerla en el mapa.</p>
+                <!-- It. 68: el lugar elegido pone el punto en el mapa; lo escrito llega a la veeduría. -->
+                <PlaceSearch v-model="placeReference" :work="work()" @found="(point) => (place = point)" />
                 <button v-if="!place" type="button" class="min-h-12 self-start rounded-xl border-2 border-brand-700 bg-white px-4 font-semibold text-brand-800 hover:bg-brand-50" @click="place = { ...proposeFrom }">Marcar dónde queda la obra</button>
                 <template v-else>
                     <LocationMap v-model="place" tap-to-move label="Donde queda la obra" />

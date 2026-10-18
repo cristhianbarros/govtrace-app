@@ -121,6 +121,8 @@ class CitizenReportInbox
             'due_on' => $report->due_on?->toDateString(),
             'overdue' => CitizenResponseDeadline::isOverdue($report),
             'proposed_location' => $this->proposal($report, $open->get($report->worksite_id, collect())),
+            // It. 68: lo que escribió para ubicarla (su dirección o un sitio conocido). No se publica.
+            'place_reference' => $report->place_reference,
             // It. 65b (US-068): la visita de un veedor — a quién se le pidió, a quién se sugiere, por qué volvió.
             'visit' => [
                 'observer' => $report->assignee ? ['id' => $report->assignee->public_id, 'name' => $report->assignee->name] : null,
