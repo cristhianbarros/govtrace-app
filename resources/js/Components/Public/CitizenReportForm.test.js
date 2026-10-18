@@ -8,6 +8,7 @@ import CitizenReportForm from './CitizenReportForm.vue';
 import PhotoReview from '@/Components/PhotoReview.vue';
 import { draftPhoto, finishPhoto } from '@/lib/evidence/prepare.js';
 import { requestCitizenCode, sendCitizenReport } from '@/services/api.js';
+import { everythingFarBelow } from '@/testing/reveal.js';
 
 vi.mock('@/services/api.js');
 vi.mock('@/lib/evidence/prepare.js', async (importOriginal) => ({ ...(await importOriginal()), draftPhoto: vi.fn(), finishPhoto: vi.fn(), prepareEvidence: vi.fn() }));
@@ -49,6 +50,29 @@ async function attach(wrapper, files) {
 }
 
 describe('Informar a esta veeduría', () => {
+    // It. 62d (R-UX-08): la respuesta aparece arriba de la sección, y "Enviar a la veeduría" está abajo.
+    it('La respuesta de la plataforma queda a la vista, sin mover la pantalla: the code sent, what to fix, and the report received', async () => {
+        sendCitizenReport.mockResolvedValue({ message: 'Su informe llegó a la veeduría. Si lo atiende, le responde a su correo.', number: 12 });
+        const screen = everythingFarBelow();
+        try {
+            const wrapper = mount(CitizenReportForm, { props: { worksiteId: WORKSITE } });
+            await askForTheCode(wrapper);
+            expect(screen.revealed().at(-1)).toBe(wrapper.get('[role="status"]').element);
+
+            await button(wrapper, 'Enviar a la veeduría').trigger('click');
+            expect(screen.revealed().at(-1)).toBe(wrapper.get('[role="alert"]').element);
+
+            await wrapper.get('input#citizen-code').setValue('123456');
+            await wrapper.get('textarea#citizen-message').setValue(MESSAGE);
+            await button(wrapper, 'Enviar a la veeduría').trigger('click');
+            await flushPromises();
+            expect(wrapper.get('[role="status"]').text()).toBe('Su informe llegó a la veeduría. Si lo atiende, le responde a su correo.');
+            expect(screen.revealed().at(-1)).toBe(wrapper.get('[role="status"]').element);
+        } finally {
+            screen.restore();
+        }
+    });
+
     it('El ciudadano informa a la veeduría con su correo verificado: the code by mail, then the code, the message and a clean photo', async () => {
         const clean = new File(['sin-exif'], 'obra.jpg', { type: 'image/jpeg' });
         draftPhoto.mockResolvedValue({ name: 'obra.jpg', canvas: {}, faces: [], detector: 'ok' });

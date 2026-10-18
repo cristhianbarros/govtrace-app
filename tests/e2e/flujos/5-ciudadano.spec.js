@@ -196,6 +196,8 @@ test('Informa a la veeduría con su correo verificado, y la veeduría le respond
 
     await page.getByRole('button', { name: 'Enviar a la veeduría' }).click();
     await expect(page.getByRole('status')).toContainText('Su informe llegó a la veeduría.');
+    // It. 62d (R-UX-08): la respuesta sale arriba de la sección, y "Enviar" está abajo: se trae a la vista.
+    await expect(page.getByRole('status')).toBeInViewport();
     expect(await latestMailAbout(citizen, 'Recibimos su informe')).toContain('Recibimos su informe');
 
     // La Administradora lo recibe sin el correo, y le responde desde GovTrace.
@@ -245,6 +247,8 @@ test('La foto se toma dentro de GovTrace, sin salir de la app', async ({ page })
     await camera.getByRole('button', { name: 'Tomar la foto' }).click();
     await expect(camera).toHaveCount(0);
     await expect(page.locator('[data-test="faces-found"]')).toBeVisible({ timeout: 30_000 });
+    // It. 62d (R-UX-08): la revisión aparece debajo de los botones: se trae a la vista.
+    await expect(page.locator('[data-test="faces-found"]')).toBeInViewport();
     await page.getByRole('button', { name: 'Usar esta foto', exact: true }).click();
     await expect(page.locator('[data-test="remove-evidence"]')).toHaveCount(1);
     await expect(page.getByText(/foto-\d\d-\d\d-\d\d\.jpg/)).toBeVisible();

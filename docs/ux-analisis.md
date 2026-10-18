@@ -122,6 +122,7 @@ Cada una se puede medir con un test, como las demás reglas de la SPEC:
    - Es el espíritu de R-BLK-01: "si aparece un prompt criptográfico, es un fallo de UX".
 7. **R-UX-07 — Botones deshabilitados.** Ninguno queda deshabilitado sin decir por qué, junto al botón.
 8. **R-UX-08 — Qué pasó y qué sigue.** Después de cada acción, la pantalla lo dice. Por ejemplo: "Su reporte quedó guardado con sello digital. La veeduría lo revisará antes de publicarlo".
+   - **Y lo dice a la vista** (it. 62d, reportado por el usuario). Si el aviso aparece fuera de la pantalla (arriba, como la respuesta de "Enviar", o abajo, como la revisión de una foto), la pantalla se mueve sola hasta él (`v-reveal`, en `resources/js/lib/reveal.js`): con suavidad, salvo si el teléfono pide menos movimiento, y sin quedar debajo de la barra de arriba.
 9. **R-UX-09 — Accesibilidad.** El recorrido de Playwright no tiene ninguna violación de WCAG 2.2 AA (axe), ni en celular ni en escritorio.
 10. **R-UX-10 — Una identidad simple y acogedora** (it. 40e). Lo pidió el usuario: la interfaz se veía "muy común", y la idea es que impresione sin complicarse.
     - **Paleta cálida** (`resources/css/app.css`): verde pino (`brand-*`) para la marca y las acciones principales; sol (`accent-*`) para "Entrar", la pestaña actual y el foco sobre fondos oscuros; terracota (`warm-*`) para la invitación a informar; grises cálidos y un fondo crema. La escala `slate` de toda la app se redefine en el tema, así que no cambió ninguna pantalla por eso.

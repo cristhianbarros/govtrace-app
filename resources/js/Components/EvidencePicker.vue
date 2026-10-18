@@ -11,6 +11,7 @@ import { acceptedTypes, cannotAdd } from '@/lib/evidence/attachments.js';
 import { cameraInPage } from '@/lib/evidence/camera.js';
 import { draftPhoto, finishPhoto, kindOf, prepareEvidence } from '@/lib/evidence/prepare.js';
 import { releaseCanvas } from '@/lib/evidence/photos.js';
+import { vReveal } from '@/lib/reveal.js';
 
 const evidences = defineModel({ type: Array, default: () => [] });
 const processing = defineModel('processing', { type: Boolean, default: false });
@@ -161,9 +162,11 @@ const kilobytes = (bytes) => `${Math.max(1, Math.round(bytes / 1024))} KB`;
 
         <CameraCapture v-if="cameraOpen" @photo="onPhoto" @close="cameraOpen = false" />
 
+        <!-- It. 62d: la revisión aparece debajo de los botones: se trae a la vista, foto por foto. -->
         <PhotoReview
             v-if="reviewing"
             :key="reviewed"
+            v-reveal="reviewed"
             :draft="reviewing"
             :position="reviewed + 1"
             :total="reviewed + toReview.length"
@@ -171,7 +174,7 @@ const kilobytes = (bytes) => `${Math.max(1, Math.round(bytes / 1024))} KB`;
             @discard="nextPhoto"
         />
 
-        <ul v-if="errors.length" role="alert" class="flex flex-col gap-1 text-sm text-red-700">
+        <ul v-if="errors.length" v-reveal="errors.join(' ')" role="alert" class="flex flex-col gap-1 text-sm text-red-700">
             <li v-for="error in errors" :key="error">{{ error }}</li>
         </ul>
 
