@@ -100,7 +100,7 @@ describe('Organización', () => {
         expect(wrapper.text()).toContain('900123456-8');
         expect(wrapper.text()).toContain('Solo el Super Administrador lo cambia, a solicitud formal.');
         expect(wrapper.find('input#nit').exists()).toBe(false);
-        expect(wrapper.findAll('input').map((input) => input.attributes('id'))).toEqual(['display-name', 'contact-email', 'contact-phone', 'logo']); // it. 43h: y el contacto público
+        expect(wrapper.findAll('input').map((input) => input.attributes('id'))).toEqual(['display-name', 'contact-email', 'contact-phone', 'citizen-response-days', 'logo']); // it. 43h: y el contacto público; it. 66a: y el plazo
     });
 
     it('leads to the audit log of the organization', async () => {
@@ -148,5 +148,25 @@ describe('El contacto público (it. 43h, V13)', () => {
         const sent = saveProfile.mock.calls[0][0];
         expect(sent.get('contact_email')).toBe('contacto@veeduria-smr.org');
         expect(sent.get('contact_phone')).toBe('+57 300 123 4567');
+    });
+});
+
+// It. 66a (US-069, R-LEG-12): el plazo para responder a los ciudadanos, de cada veeduría.
+describe('El plazo para responder a los ciudadanos (it. 66a)', () => {
+    it('La veeduría fija en cuántos días hábiles responde, 15 por defecto: edits it, says it is a suggestion, and sends it', async () => {
+        saveProfile.mockResolvedValue({ message: SAVED });
+        const wrapper = await openSettings({ ...profile, citizen_response_days: 15 });
+
+        const field = wrapper.get('input#citizen-response-days');
+        expect(field.element.value).toBe('15');
+        expect(field.attributes()).toMatchObject({ type: 'number', min: '1', max: '60' });
+        expect(wrapper.text()).toContain('Días hábiles para responder a los ciudadanos');
+        expect(wrapper.text()).toContain('GovTrace se lo sugiere: la ley no le pone plazo a la veeduría.');
+
+        await field.setValue('10');
+        await wrapper.get('form').trigger('submit');
+        await flushPromises();
+
+        expect(saveProfile.mock.calls[0][0].get('citizen_response_days')).toBe('10');
     });
 });

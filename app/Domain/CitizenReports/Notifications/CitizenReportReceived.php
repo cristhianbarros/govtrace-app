@@ -12,6 +12,7 @@ class CitizenReportReceived extends QueuedNotification
         public readonly string $number, // it. 46c: CitizenReport::reference()
         public readonly string $organization,
         public readonly string $worksite,
+        public readonly ?string $commitment = null, // it. 66a: hasta cuándo se compromete a responder la veeduría
     ) {}
 
     /** @return array<int, string> */
@@ -22,10 +23,14 @@ class CitizenReportReceived extends QueuedNotification
 
     public function toMail(object $notifiable): MailMessage
     {
-        return (new MailMessage)
+        $mail = (new MailMessage)
             ->subject("Recibimos su informe n.º {$this->number}")
             ->greeting('Hola')
-            ->line("Su informe n.º {$this->number} sobre «{$this->worksite}» llegó a {$this->organization}.")
-            ->line('Si lo atiende, la veeduría le responde a este correo. Su correo no se le muestra: la respuesta le llega desde GovTrace.');
+            ->line("Su informe n.º {$this->number} sobre «{$this->worksite}» llegó a {$this->organization}.");
+        if ($this->commitment !== null) {
+            $mail->line($this->commitment);
+        }
+
+        return $mail->line('Si lo atiende, la veeduría le responde a este correo. Su correo no se le muestra: la respuesta le llega desde GovTrace.');
     }
 }

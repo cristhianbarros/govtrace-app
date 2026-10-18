@@ -36,6 +36,7 @@ const busy = ref(false);
 const notice = ref(null);
 const refused = ref(null);
 const number = ref(null);
+const commitment = ref(null); // it. 66a: hasta cuándo se compromete a responder la veeduría
 const place = ref(null); // it. 58: { latitude, longitude } donde el ciudadano dice que queda la obra
 const remaining = computed(() => MAX_MESSAGE - message.value.length);
 
@@ -87,6 +88,7 @@ async function send() {
         const answer = await sendCitizenReport(form);
         notice.value = answer.message;
         number.value = answer.number;
+        commitment.value = answer.commitment ?? null;
         step.value = 'sent';
     } catch (failure) {
         refused.value = errorMessage(failure);
@@ -150,6 +152,9 @@ const BUTTON = 'min-h-12 rounded-xl bg-brand-700 px-4 py-3 text-base font-semibo
             <button type="button" class="inline-flex min-h-11 items-center self-start font-semibold underline" @click="startOver">Pedir otro código</button>
         </template>
 
-        <p v-else-if="number" class="font-semibold">Su informe es el n.º {{ number }}. Le llegó también a su correo.</p>
+        <template v-else-if="number">
+            <p class="font-semibold">Su informe es el n.º {{ number }}. Le llegó también a su correo.</p>
+            <p v-if="commitment" data-test="commitment">{{ commitment }}</p>
+        </template>
     </section>
 </template>

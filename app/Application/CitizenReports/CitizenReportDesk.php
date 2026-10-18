@@ -15,6 +15,7 @@ use App\Domain\Geography\PlaceName;
 use App\Domain\Organization\OrganizationStatus;
 use App\Domain\Reports\JpegMetadata;
 use App\Domain\Worksites\Worksite;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
@@ -106,10 +107,13 @@ class CitizenReportDesk
                 'data_policy_version' => DataPolicy::VERSION,
                 'proposed_latitude' => $proposed?->latitude,
                 'proposed_longitude' => $proposed?->longitude,
+                // It. 66a (R-LEG-12): con el plazo de la veeduría de hoy; cambiarlo después no lo cambia.
+                'due_on' => CitizenResponseDeadline::dueFrom(CarbonImmutable::now(), tenant()->citizenResponseDays())->toDateString(),
             ]);
         });
 
-        Notification::route('mail', self::normalized($email))->notify(new CitizenReportReceived($report->reference(), tenant()->displayName(), self::nameOf($report->worksite)));
+        $commitment = CitizenResponseDeadline::sentence(CarbonImmutable::parse($report->due_on), tenant()->citizenResponseDays());
+        Notification::route('mail', self::normalized($email))->notify(new CitizenReportReceived($report->reference(), tenant()->displayName(), self::nameOf($report->worksite), $commitment));
 
         return $report;
     }

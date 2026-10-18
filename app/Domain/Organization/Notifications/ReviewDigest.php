@@ -19,6 +19,8 @@ class ReviewDigest extends QueuedNotification
         public readonly string $inboxUrl,
         public readonly int $citizenReports = 0,
         public readonly ?string $citizenReportsUrl = null,
+        public readonly int $dueSoon = 0, // it. 66a: informes ciudadanos que vencen en los próximos días
+        public readonly int $overdue = 0, // it. 66a: y los que ya vencieron sin respuesta
     ) {}
 
     /** @return list<string> */
@@ -44,6 +46,12 @@ class ReviewDigest extends QueuedNotification
         }
         if ($this->citizenReports > 0) {
             $mail->line("{$reports}.");
+        }
+        if ($this->dueSoon > 0) {
+            $mail->line($this->dueSoon === 1 ? '1 informe ciudadano vence en los próximos 3 días.' : "{$this->dueSoon} informes ciudadanos vencen en los próximos 3 días.");
+        }
+        if ($this->overdue > 0) {
+            $mail->line($this->overdue === 1 ? '1 informe ciudadano ya venció sin respuesta.' : "{$this->overdue} informes ciudadanos ya vencieron sin respuesta.");
         }
 
         return ($this->pending > 0 ? $mail->action('Revisar la Bandeja', $this->inboxUrl) : $mail->action('Ver los informes ciudadanos', (string) $this->citizenReportsUrl))

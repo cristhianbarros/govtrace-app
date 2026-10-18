@@ -13,7 +13,7 @@ import MoreButton from '@/Components/MoreButton.vue';
 import RowAction from '@/Components/RowAction.vue';
 import { usePagedList } from '@/composables/usePagedList.js';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
-import { formatDateTime } from '@/lib/format.js';
+import { formatDate, formatDateTime } from '@/lib/format.js';
 import { answerCitizenReport, assignCitizenReport, confirmCitizenLocation, discardCitizenReport, fetchCitizenReports } from '@/services/api.js';
 import { errorMessage } from '@/services/errors.js';
 
@@ -167,6 +167,11 @@ onMounted(() => open(TABS[0]));
                         <span class="rounded px-2 py-0.5 text-sm font-semibold" :class="STATE[report.status]">{{ report.status_label }}</span>
                     </header>
                     <p class="text-sm text-slate-600">Informe n.º {{ report.reference }} · {{ formatDateTime(report.received_at) }}</p>
+                    <!-- It. 66a (R-LEG-12): hasta cuándo se comprometió a responder. Solo lo ve el Administrador. -->
+                    <p v-if="report.status === 'new' && report.due_on && !report.visit?.note" class="flex flex-wrap items-center gap-2 text-sm">
+                        <span data-test="due" class="text-slate-700">Responder antes del {{ formatDate(report.due_on) }}</span>
+                        <span v-if="report.overdue" data-test="overdue" class="rounded bg-red-100 px-2 py-0.5 font-semibold text-red-800">Vencido</span>
+                    </p>
                     <p class="whitespace-pre-line">{{ report.message }}</p>
                     <!-- It. 46h: de 1 a 3 fotos. -->
                     <div v-if="report.photo_urls.length" class="flex flex-wrap gap-2">

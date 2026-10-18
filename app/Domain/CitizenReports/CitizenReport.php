@@ -24,7 +24,9 @@ class CitizenReport extends Model
 
     protected $fillable = ['worksite_id', 'email', 'email_hash', 'message', 'photo_paths', 'status', 'answer', 'handled_at', 'handled_by', 'data_authorized_at', 'data_policy_version', 'proposed_latitude', 'proposed_longitude', 'location_confirmed_at',
         // It. 65b (US-068): la visita de un veedor, y el reporte que la documenta.
-        'assigned_to', 'assigned_at', 'visit_note', 'citizen_notified_at', 'documenting_report_id', 'documented_at'];
+        'assigned_to', 'assigned_at', 'visit_note', 'citizen_notified_at', 'documenting_report_id', 'documented_at',
+        // It. 66a (US-069): su vencimiento, la primera acción de la veeduría y el aviso de la Contraloría.
+        'due_on', 'first_action_at', 'escalated_at'];
 
     protected $hidden = ['email', 'email_hash'];
 
@@ -38,6 +40,9 @@ class CitizenReport extends Model
         'assigned_at' => 'datetime',
         'citizen_notified_at' => 'datetime',
         'documented_at' => 'datetime',
+        'due_on' => 'date',
+        'first_action_at' => 'datetime',
+        'escalated_at' => 'datetime',
     ];
 
     /**

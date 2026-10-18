@@ -20,6 +20,7 @@ const { data: profile, loading, error, load } = useLoader(fetchProfile);
 const displayName = ref('');
 const contactEmail = ref('');
 const contactPhone = ref('');
+const responseDays = ref(15); // it. 66a (R-LEG-12)
 const logo = ref(null);
 const saving = ref(false);
 const saved = ref(null);
@@ -29,6 +30,7 @@ watch(profile, (current) => {
     displayName.value = current?.display_name ?? '';
     contactEmail.value = current?.contact_email ?? '';
     contactPhone.value = current?.contact_phone ?? '';
+    responseDays.value = current?.citizen_response_days ?? 15;
 });
 
 function chooseLogo(event) {
@@ -55,6 +57,7 @@ async function save() {
     form.append('display_name', displayName.value);
     form.append('contact_email', contactEmail.value.trim());
     form.append('contact_phone', contactPhone.value.trim());
+    form.append('citizen_response_days', String(responseDays.value));
     if (logo.value) {
         form.append('logo', logo.value);
     }
@@ -93,6 +96,13 @@ onMounted(load);
                     <label for="contact-phone" class="text-sm font-semibold text-slate-700">Teléfono de contacto (opcional)</label>
                     <input id="contact-phone" v-model="contactPhone" type="tel" autocomplete="tel" maxlength="30" placeholder="+57 300 123 4567" class="w-full rounded-lg border border-slate-300 px-3 py-3 text-base" />
                 </fieldset>
+
+                <!-- It. 66a (US-069, R-LEG-12): en cuántos días hábiles responde a un informe ciudadano. -->
+                <div class="flex flex-col gap-1">
+                    <label for="citizen-response-days" class="text-sm font-semibold text-slate-700">Días hábiles para responder a los ciudadanos</label>
+                    <input id="citizen-response-days" v-model.number="responseDays" type="number" min="1" max="60" inputmode="numeric" class="w-32 rounded-lg border border-slate-300 px-3 py-3 text-base" />
+                    <p class="text-sm text-slate-700">El ciudadano ve la fecha al enviar su informe. Si pasa sin que la veeduría responda, pida la visita o lo descarte, le indicamos cómo acudir a la Contraloría. GovTrace se lo sugiere: la ley no le pone plazo a la veeduría.</p>
+                </div>
 
                 <div class="flex flex-col gap-2">
                     <span class="text-sm font-semibold text-slate-700">Logo</span>

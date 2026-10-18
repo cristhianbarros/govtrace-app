@@ -9,6 +9,7 @@ use App\Domain\Organization\Roles;
 use App\Domain\Organization\User as OrganizationUser;
 use App\Infrastructure\Tenancy\Tenant;
 use App\Jobs\SendReviewDigests;
+use Carbon\CarbonImmutable;
 use Database\Seeders\DivipolaSeeder;
 use Illuminate\Console\Scheduling\Event;
 use Illuminate\Console\Scheduling\Schedule;
@@ -113,6 +114,24 @@ it('Con informes ciudadanos y sin evidencias por revisar, el resumen llega igual
         ->and($mail->actionText)->toBe('Ver los informes ciudadanos')
         ->and($mail->actionUrl)->toContain('veeduria-smr.govtrace.localhost')->toEndWith('/admin/citizen-reports')
         ->and($mail->outroLines)->toContain('Le llega este resumen una vez al día, solo cuando hay algo por revisar.');
+});
+
+// It. 66a (US-069): lo que está por vencer y lo vencido, para que el Administrador responda a tiempo.
+it('El resumen diario avisa de los informes por vencer y vencidos: one line each, besides how many wait', function () {
+    $this->travelTo(CarbonImmutable::parse('2026-11-20 07:00', 'America/Bogota'));
+    citizenReportOn($this->tenant, $this->worksite, extra: ['due_on' => '2026-11-22']);
+    citizenReportOn($this->tenant, $this->worksite, extra: ['due_on' => '2026-11-19']);
+    citizenReportOn($this->tenant, $this->worksite, extra: ['due_on' => '2026-12-10']);
+    // Respondido a tiempo, aunque su fecha haya pasado: no está vencido.
+    citizenReportOn($this->tenant, $this->worksite, 'answered', extra: ['due_on' => '2026-11-10', 'first_action_at' => '2026-11-05 10:00']);
+
+    (new SendReviewDigests)->handle();
+
+    expect(digestMailOf($this->administrator)->introLines)->toBe([
+        '3 informes ciudadanos esperan respuesta.',
+        '1 informe ciudadano vence en los próximos 3 días.',
+        '1 informe ciudadano ya venció sin respuesta.',
+    ]);
 });
 
 it('Solo cuentan las evidencias que ya se pueden publicar: not one still being sealed, nor one published', function () {
