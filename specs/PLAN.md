@@ -3963,6 +3963,33 @@ Queda para la V2, opcional, con el modelo de financiación (`docs/viabilidad-leg
 
 **Modelo:** Sonnet medium. En Opus 5.5, a pedido del usuario.
 
+✅ **Cumplida (2026-10-18).**
+- **Cómo quedó:** `WorkType::classifyAll` da todos los tipos del objeto en el orden en que aparecen (sin palabra clave, el del código UNSPSC u "Otras"), y `classify` es el primero. `Contract` guarda los dos al guardarse; el filtro busca en `work_types` (jsonb, con índice GIN), y la lista dice `WorkType::describe`. La migración los calcula para `contracts` y `archived_contracts`.
+- **Historia:** US-016, con un escenario nuevo ("Una obra con dos partes aparece en el filtro de cada una") y la nota en su YAML.
+- **Pruebas:** Pest: la escuela de San Javier, en "Educación" y en "Espacio público", con "Educación · también Espacio público"; la clasificación con varios tipos, en su orden, y el contrato que los guarda. Vistas en rojo antes de implementar.
+
+### Iteración 68 — Buscar dónde queda la obra por su dirección
+
+⬜ **Pedida por el usuario el 2026-10-18:** "¿no se podría añadir un campo de dirección y que con base a eso se ubique el punto?". Propuesta de Claude: un buscador de lugares, para el ciudadano y para el Administrador. **Aprobada** ("do it"), en el mismo PR de la 67 y sin desplegar mientras el usuario graba en staging.
+
+**Por qué:** hoy el ciudadano que dice dónde queda una obra sin ubicación (it. 58), y el Administrador que corrige una (US-035), solo pueden mover el punto en el mapa. Quien conoce el lugar por su nombre, o por su dirección, tiene que encontrarlo a ojo.
+
+**Entregable:**
+- **"Dirección o un sitio conocido", con "Buscar":** GovTrace le pregunta a OpenStreetMap (Nominatim) desde el servidor, con solo ese texto, alrededor del municipio de la obra (la distancia de su cabecera que admite una ubicación propuesta: 30 km). Elegir un lugar pone el punto allí, y se puede mover.
+- **Nominatim, como pide su política:** la aplicación se identifica, se busca al tocar "Buscar" (nunca letra a letra), una búsqueda por segundo y por veeduría, y cada una se guarda 30 días. El crédito "© OpenStreetMap" va junto al buscador. Con `NOMINATIM_URL`, una instancia propia.
+- **Lo que escribió el ciudadano llega con su informe** (hasta 200 caracteres), aunque no elija un lugar, y la veeduría lo lee en "Informes ciudadanos". No se publica.
+- **El Administrador tiene el mismo buscador en "Corregir ubicación":** mueve el pin y llena la latitud y la longitud, sin guardar todavía.
+
+**Done-when:** los escenarios nuevos de US-059-LEG y US-035, con sus pruebas, y una búsqueda real en Nominatim que encuentre un lugar de Santa Marta.
+
+**Modelo:** Sonnet medium. En Opus 5.5, a pedido del usuario.
+
+✅ **Cumplida (2026-10-18).**
+- **Cómo quedó:** `GET /public/places` (`PlaceSearchController`, con los mismos campos de la obra que un informe: su ficha o un contrato que la veeduría vigila). `PlaceSearch` arma la consulta con el municipio y el departamento del contrato, guarda la respuesta 30 días y espera su turno de un segundo; `NominatimClient` pide hasta 5 lugares en Colombia, dentro de la zona. Si Nominatim no responde, 503 y "No pudimos buscar el lugar ahora. Márquelo en el mapa.", sin guardarlo. En la pantalla, `PlaceSearch.vue`, en el formulario del ciudadano y en "Obras" del Administrador. `citizen_reports.place_reference` guarda lo que escribió el ciudadano.
+- **Medido en Nominatim, el 2026-10-18:** "Minca" y "Parque de los Novios" se encuentran en Santa Marta, a unos metros de donde están. Una dirección con nomenclatura ("Calle 22 # 3-50") rara vez: por eso la pantalla sugiere el barrio o un sitio conocido.
+- **Historias:** US-059-LEG (2 escenarios nuevos) y US-035 (1), con sus notas en los YAML.
+- **Pruebas:** Pest: la consulta con solo el texto, el municipio y su zona, y la identificación de GovTrace; por la ficha y por un contrato sin municipio; una consulta al mes por lugar y una por segundo; nada encontrado, Nominatim sin responder (no se guarda) y lo que se valida; lo que escribió el ciudadano, solo para la veeduría. Vitest: el buscador (con "Buscar" o Enter, nunca letra a letra; lo encontrado, lo no encontrado, el error, el crédito), el formulario del ciudadano, la corrección del Administrador e "Informes ciudadanos". Todo visto en rojo antes de implementar.
+
 ### Orden de lo que está en espera (2026-10-14)
 
 | Orden | Qué | Por qué en ese lugar |

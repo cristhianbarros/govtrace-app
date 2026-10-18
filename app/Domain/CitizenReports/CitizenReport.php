@@ -27,7 +27,9 @@ class CitizenReport extends Model
         // It. 65b (US-068): la visita de un veedor, y el reporte que la documenta.
         'assigned_to', 'assigned_at', 'visit_note', 'citizen_notified_at', 'documenting_report_id', 'documented_at',
         // It. 66a (US-069): su vencimiento, la primera acción de la veeduría y el aviso de la Contraloría.
-        'due_on', 'first_action_at', 'escalated_at'];
+        'due_on', 'first_action_at', 'escalated_at',
+        // It. 68: lo que escribió el ciudadano para ubicar la obra.
+        'place_reference'];
 
     protected $hidden = ['email', 'email_hash'];
 

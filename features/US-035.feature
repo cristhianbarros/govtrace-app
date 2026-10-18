@@ -62,3 +62,11 @@ Característica: Corregir la ubicación oficial de una obra
     Entonces el mapa de cada informe muestra también la otra propuesta
     Cuando confirmo una
     Entonces el otro informe dice "La obra ya tiene ubicación", y confirmarlo responde "La obra ya tiene ubicación. Si está mal, corríjala en Obras."
+
+  # It. 68 (2026-10-18, pedido por el usuario).
+  @complexity:low
+  Escenario: Busco la dirección para corregir la ubicación
+    Cuando corrijo la ubicación de "Acueducto Gaira" y busco "Gaira" en "Dirección o un sitio conocido"
+    Y elijo uno de los lugares que encontró OpenStreetMap
+    Entonces el pin, la latitud y la longitud quedan en ese lugar, para ajustarlos antes de guardar
+

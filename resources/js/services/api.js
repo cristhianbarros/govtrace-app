@@ -175,6 +175,8 @@ export const fetchMapFilters = async () => (await dataOf(http.get('/public/works
 export const fetchWorksiteList = async (filters = {}) => (await dataOf(http.get('/public/worksites/list', { params: filters }))).data;
 // It. 58 (US-059-LEG): las obras del territorio que aún no están en el mapa ({ data, has_more }), y un contrato sin ficha.
 export const fetchUnlocatedWorksites = (params = {}) => dataOf(http.get('/public/unlocated-worksites', { params }));
+// It. 68: dónde queda una obra, por su dirección o un sitio conocido (OpenStreetMap), alrededor de su municipio.
+export const searchPlaces = (params) => dataOf(http.get('/public/places', { params }));
 export const fetchPublicContract = async (id) => (await dataOf(http.get(`/public/contracts/${encodeURIComponent(id)}`))).data;
 
 /** US-051-RPT: las estadísticas públicas del territorio. */

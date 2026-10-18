@@ -19,6 +19,7 @@ criterios_aceptacion:
     - "(It. 58) Solo se informa de los contratos del territorio de la veeduría que se pueden reportar: los mismos del veedor (R-SEC-07)"
     - "(It. 58) La ubicación propuesta es el lugar de la obra, no el de la persona: no sale de la foto ni del GPS del teléfono (R-PRIV-01)"
     - "(It. 58) Una obra que ya tiene ubicación no la pide; si el informe la trae igual, se recibe sin ella"
+    - "(It. 68, 2026-10-18, pedido por el usuario) En una obra sin ubicación, el ciudadano escribe la dirección o un sitio conocido y toca 'Buscar': GovTrace busca en OpenStreetMap (Nominatim) desde el servidor, con solo ese texto, dentro de la zona del municipio de la obra (la misma distancia de su cabecera que admite una ubicación propuesta) y hasta 5 lugares. Se busca al tocar 'Buscar', nunca letra a letra (la política de Nominatim no admite autocompletar), una búsqueda por segundo y por veeduría, y cada una se guarda 30 días. Lo que escribió (hasta 200 caracteres) llega con su informe, aunque no elija un lugar; no se publica"
   manejo_errores:
     - "Código equivocado o vencido: 'El código no es válido o ya venció. Pida uno nuevo.'; 5 intentos fallidos lo anulan"
     - "Más de 3 informes del mismo correo en un día, o 2 de la misma obra: 429 con el motivo"
@@ -31,6 +32,7 @@ criterios_aceptacion:
   requisitos_ux:
     - "(It. 46h) El ciudadano tiene las mismas opciones del veedor: 'Tomar foto' abre la cámara trasera, y 'Elegir de la galería'; solo fotos, sin PDF, y cada foto se revisa antes de adjuntarla, de a una"
     - "Dos pasos en la misma obra: el correo, y después el código y el mensaje; botones de 44 px y letra de 16 px"
+    - "(It. 68) Junto al buscador, el crédito 'Búsqueda con datos de © OpenStreetMap' (licencia ODbL). Elegir un lugar pone el punto allí, y se puede mover"
   casos_edge:
     - "Pedir un código nuevo anula el anterior"
     - "(It. 64, 2026-10-17, pedido por el usuario: el código y el informe se sentían lentos) El código, el acuse y la respuesta salen por la cola de correos, después de guardar: la pantalla no espera al servidor de correo (con Gmail, 1 a 3 s por correo). Si el servidor falla, el correo se reintenta hasta 5 veces (a los 10 s, 30 s, 1 min y 2 min), sin error para el ciudadano. En la cola van cifrados: ni el código ni el correo quedan legibles. Igual todos los correos de GovTrace"

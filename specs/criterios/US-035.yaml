@@ -15,6 +15,7 @@ criterios_aceptacion:
     - "(It. 58) Confirmar la propuesta de una obra que ya tiene ubicación: 'La obra ya tiene ubicación. Si está mal, corríjala en Obras.'"
   requisitos_ux:
     - "Mapa interactivo con pin arrastrable y campos de latitud/longitud"
+    - "(It. 68, 2026-10-18, pedido por el usuario) Al corregir la ubicación, el mismo buscador de lugares del ciudadano: elegir un lugar mueve el pin y llena la latitud y la longitud, sin guardar todavía"
   casos_edge:
     - {caso: "(It. 46f) El primer reporte de una obra no fijó su ubicación (lejos de su municipio o con mala señal) y la ubicación quedó por confirmar", resultado: "Desde la Bandeja, 'Confirmar esta ubicación' la fija en el punto de ese reporte: es una corrección más, con su registro en el log de auditoría (coordenadas anteriores vacías)"}
     - {caso: "(It. 58) Varios ciudadanos propusieron ubicaciones para la misma obra", resultado: "El mapa de cada informe muestra también las otras propuestas. Al confirmar una, las demás dicen 'La obra ya tiene ubicación' y ya no se pueden confirmar"}

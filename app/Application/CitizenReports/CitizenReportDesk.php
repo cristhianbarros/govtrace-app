@@ -72,7 +72,7 @@ class CitizenReportDesk
      * @param  list<UploadedFile>  $photos  from 1 to 3, or none (it. 46h)
      * @param  GeoPoint|null  $proposed  it. 58: where the citizen says a work without location is
      */
-    public function receive(string $email, string $code, ReportedWork $work, string $message, array $photos = [], ?GeoPoint $proposed = null): CitizenReport
+    public function receive(string $email, string $code, ReportedWork $work, string $message, array $photos = [], ?GeoPoint $proposed = null, ?string $placeReference = null): CitizenReport
     {
         $this->assertReceiving();
         $hash = self::fingerprint($email);
@@ -95,8 +95,10 @@ class CitizenReportDesk
         if ($proposed !== null) {
             $this->assertNearItsMunicipality($work, $proposed);
         }
+        // It. 68: lo que escribió para ubicarla, también solo para una obra sin ubicación.
+        $placeReference = $work->isLocated() ? null : (trim((string) $placeReference) ?: null);
 
-        $report = DB::transaction(function () use ($pending, $hash, $email, $work, $message, $photos, $proposed) {
+        $report = DB::transaction(function () use ($pending, $hash, $email, $work, $message, $photos, $proposed, $placeReference) {
             $pending->update(['used_at' => now()]);
 
             return CitizenReport::query()->create([
@@ -109,6 +111,7 @@ class CitizenReportDesk
                 'data_policy_version' => DataPolicy::VERSION,
                 'proposed_latitude' => $proposed?->latitude,
                 'proposed_longitude' => $proposed?->longitude,
+                'place_reference' => $placeReference,
                 // It. 66a (R-LEG-12): con el plazo de la veeduría de hoy; cambiarlo después no lo cambia.
                 'due_on' => CitizenResponseDeadline::dueFrom(CarbonImmutable::now(), tenant()->citizenResponseDays())->toDateString(),
             ]);

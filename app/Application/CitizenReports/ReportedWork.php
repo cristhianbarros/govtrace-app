@@ -33,6 +33,14 @@ final class ReportedWork
         return new self($contract, $worksite);
     }
 
+    /** It. 68: the work a request names, by its sheet (worksite_id) or its contract (contract_id). */
+    public static function requested(array $data): self
+    {
+        return filled($data['worksite_id'] ?? null)
+            ? self::sheet(Worksite::byPublicId($data['worksite_id']))
+            : self::contract($data['contract_id']);
+    }
+
     /** One of the contracts the veeduría watches and may still be reported (R-SEC-07); refused otherwise. */
     public static function contract(string $secopContractId): self
     {

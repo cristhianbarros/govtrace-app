@@ -182,6 +182,8 @@ onMounted(() => open(TABS[0]));
                         </a>
                     </div>
                     <p v-if="report.answer" class="rounded-lg bg-slate-50 p-2"><strong>Respuesta:</strong> {{ report.answer }}</p>
+                    <!-- It. 68: lo que escribió para ubicarla, con un punto o sin él. -->
+                    <p v-if="report.place_reference" data-test="place-reference" class="rounded-lg bg-amber-50 p-2"><strong>Dónde dice que queda la obra:</strong> {{ report.place_reference }}</p>
                     <!-- It. 58: dónde dice el ciudadano que queda la obra. -->
                     <div v-if="report.proposed_location" data-test="proposed-location" class="flex flex-col gap-2 rounded-lg bg-amber-50 p-3 ring-1 ring-amber-200">
                         <p class="font-semibold text-amber-900">📍 El ciudadano dice que la obra queda aquí.</p>

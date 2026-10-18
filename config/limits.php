@@ -28,4 +28,6 @@ return [
     'citizen_reports_per_hour' => (int) env('CITIZEN_REPORTS_PER_HOUR', 20),
     // It. 43k: las solicitudes de alta desde el Inicio, por conexión y por hora.
     'organization_requests_per_hour' => (int) env('ORGANIZATION_REQUESTS_PER_HOUR', 5),
+    // It. 68: las búsquedas de lugares (OpenStreetMap), por visitante y por minuto.
+    'place_searches_per_minute' => (int) env('PLACE_SEARCHES_PER_MINUTE', 20),
 ];

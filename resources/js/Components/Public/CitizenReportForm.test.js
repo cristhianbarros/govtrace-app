@@ -7,7 +7,7 @@ import { defineComponent, h } from 'vue';
 import CitizenReportForm from './CitizenReportForm.vue';
 import PhotoReview from '@/Components/PhotoReview.vue';
 import { draftPhoto, finishPhoto } from '@/lib/evidence/prepare.js';
-import { requestCitizenCode, sendCitizenReport } from '@/services/api.js';
+import { requestCitizenCode, searchPlaces, sendCitizenReport } from '@/services/api.js';
 import { everythingFarBelow } from '@/testing/reveal.js';
 
 vi.mock('@/services/api.js');
@@ -293,6 +293,45 @@ describe('Una obra sin ubicación (it. 58)', () => {
         const form = sendCitizenReport.mock.calls[0][0];
         expect(Object.fromEntries(['contract_id', 'latitude', 'longitude'].map((field) => [field, form.get(field)]))).toEqual({ contract_id: CONTRACT, latitude: '11.1427', longitude: '-74.1173' });
         expect(form.has('worksite_id')).toBe(false);
+    });
+
+    // It. 68: por su dirección o un sitio conocido, y lo escrito llega a la veeduría.
+    it('Escribo dónde queda la obra y el mapa la ubica: the place found puts the point on the map, and what was written goes with the report', async () => {
+        sendCitizenReport.mockResolvedValue({ message: 'Su informe llegó a la veeduría. Si lo atiende, le responde a su correo.', number: '7KQ3-M9XD' });
+        searchPlaces.mockResolvedValue({ data: [{ label: 'Parque de Minca, Minca, Santa Marta, Magdalena', latitude: 11.1427, longitude: -74.1173 }] });
+        const wrapper = mount(CitizenReportForm, { props: { contractId: CONTRACT, proposeFrom: SEAT } });
+        await writeTheReport(wrapper);
+        expect(wrapper.get('[data-test="propose-place"]').text()).toContain('escriba la dirección o un sitio conocido');
+
+        await wrapper.get('input#place-search').setValue('Parque de Minca');
+        await button(wrapper, 'Buscar').trigger('click');
+        await flushPromises();
+        expect(searchPlaces).toHaveBeenCalledWith({ q: 'Parque de Minca', contract_id: CONTRACT });
+        await wrapper.get('[data-test="place"]').trigger('click');
+        expect(wrapper.findComponent({ name: 'LocationMap' }).props('modelValue')).toEqual({ latitude: 11.1427, longitude: -74.1173 });
+
+        await button(wrapper, 'Enviar a la veeduría').trigger('click');
+        await flushPromises();
+        const form = sendCitizenReport.mock.calls[0][0];
+        expect(['latitude', 'longitude', 'place_reference'].map((field) => form.get(field))).toEqual(['11.1427', '-74.1173', 'Parque de Minca']);
+    });
+
+    it('sends what the citizen wrote even without a place found, and nothing when nothing was written', async () => {
+        sendCitizenReport.mockResolvedValue({ message: 'Su informe llegó a la veeduría. Si lo atiende, le responde a su correo.', number: '7KQ3-M9XD' });
+        const wrapper = mount(CitizenReportForm, { props: { contractId: CONTRACT, proposeFrom: SEAT } });
+        await writeTheReport(wrapper);
+
+        await wrapper.get('input#place-search').setValue('  Entrada a Minca, junto a la escuela ');
+        await button(wrapper, 'Enviar a la veeduría').trigger('click');
+        await flushPromises();
+        expect(sendCitizenReport.mock.calls[0][0].get('place_reference')).toBe('Entrada a Minca, junto a la escuela');
+        expect(sendCitizenReport.mock.calls[0][0].has('latitude')).toBe(false);
+
+        const other = mount(CitizenReportForm, { props: { contractId: CONTRACT, proposeFrom: SEAT } });
+        await writeTheReport(other);
+        await button(other, 'Enviar a la veeduría').trigger('click');
+        await flushPromises();
+        expect(sendCitizenReport.mock.calls[1][0].has('place_reference')).toBe(false);
     });
 
     it('sends the report without the place once the citizen takes it away', async () => {

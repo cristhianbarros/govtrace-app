@@ -233,6 +233,17 @@ describe('La ubicación que propuso el ciudadano (it. 58)', () => {
         expect(button(wrapper, 'Confirmar esta ubicación')).toBeUndefined();
     });
 
+    // It. 68: lo que escribió el ciudadano para ubicar la obra, con un punto o sin él.
+    it('shows what the citizen wrote to locate the work', async () => {
+        const wrapper = await openReports([
+            { ...proposed(), place_reference: 'Parque de Minca, frente a la iglesia' },
+            report({ id: '01j9xq3m7v8k2d4f6g8h07kq3n', proposed_location: null, place_reference: null }),
+        ]);
+
+        const references = wrapper.findAll('[data-test="place-reference"]');
+        expect(references.map((reference) => reference.text())).toEqual(['Dónde dice que queda la obra: Parque de Minca, frente a la iglesia']);
+    });
+
     it('Con varias ubicaciones propuestas, confirmar una cierra las demás: the map shows the other one, and once the work has its location there is nothing to confirm', async () => {
         const wrapper = await openReports([proposed({ others: [OTHER] })]);
         expect(wrapper.findComponent({ name: 'LocationMap' }).props('others')).toEqual([OTHER]);
