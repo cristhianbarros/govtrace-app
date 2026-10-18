@@ -13,6 +13,7 @@ import { createOutbox, memoryStore } from '@/lib/outbox.js';
 import { browseContracts, fetchNearbyWorksites, sendReport, unableToVisit } from '@/services/api.js';
 import ReportForm from '@/Components/ReportForm.vue';
 import { page } from '@/testing/inertia.js';
+import { everythingFarBelow } from '@/testing/reveal.js';
 
 vi.mock('@inertiajs/vue3', async () => await import('@/testing/inertia.js'));
 vi.mock('@/lib/evidence/faces.js', () => ({ loadDetector: vi.fn(async () => ({})) }));
@@ -132,6 +133,23 @@ describe('Nuevo Reporte', () => {
         // It. 46e: lo que se difuminó en cada foto, para la Bandeja.
         expect(JSON.parse(sent.get('blurs'))).toEqual([{ faces: 1, dismissed: 0, manual: 1 }, { faces: 2, dismissed: 0, manual: 1 }]);
         expect(wrapper.text()).toContain(SUCCESS);
+    });
+
+    // It. 62d (R-UX-08): "Enviar Reporte" está al final, y el resultado aparece arriba.
+    it('Al enviar el reporte, su resultado queda a la vista: the success message comes into view', async () => {
+        sendReport.mockResolvedValue({ id: 42 });
+        const wrapper = await onWorksite(reading(15));
+        await fillReport(wrapper);
+        const screen = everythingFarBelow();
+        try {
+            await wrapper.get('form').trigger('submit');
+            await flushPromises();
+
+            const success = wrapper.findAll('[role="status"]').find((notice) => notice.text() === SUCCESS);
+            expect(screen.revealed()).toContain(success.element);
+        } finally {
+            screen.restore();
+        }
     });
 
     it('says, after sending, why the location of the worksite was left to confirm (it. 46f)', async () => {

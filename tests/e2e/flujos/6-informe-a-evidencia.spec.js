@@ -80,6 +80,8 @@ test('El veedor reporta la obra desde su visita pendiente', async ({ page }) => 
     await page.getByRole('button', { name: 'Enviar Reporte' }).click();
 
     await expect(page.getByText('Reporte recibido con éxito.')).toBeVisible();
+    // It. 62d (R-UX-08): "Enviar Reporte" está al final, y el resultado sale arriba: se trae a la vista.
+    await expect(page.getByText('Reporte recibido con éxito.')).toBeInViewport();
     await expect(page.locator('[data-test="visit"]').filter({ hasText: MESSAGE })).toHaveCount(0);
     await logOut(page);
 });

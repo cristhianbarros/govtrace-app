@@ -9,6 +9,7 @@ import EvidencePicker from '@/Components/EvidencePicker.vue';
 import { cannotUpload } from '@/lib/evidence/attachments.js';
 import { capturePosition, formatMeters, imprecisionMessage, isPreciseEnough } from '@/lib/geolocation.js';
 import { CLASSIFICATIONS, MAX_COMMENT_LENGTH, MEANING } from '@/lib/report.js';
+import { vReveal } from '@/lib/reveal.js';
 
 const props = defineProps({
     contract: { type: Object, required: true },
@@ -197,7 +198,7 @@ function submit() {
 
         <EvidencePicker v-model="evidences" v-model:processing="preparingFiles" />
 
-        <ul v-if="serverErrors.length" role="alert" class="flex flex-col gap-1 rounded-lg bg-red-50 p-3 text-sm text-red-800">
+        <ul v-if="serverErrors.length" v-reveal="serverErrors.join(' ')" role="alert" class="flex flex-col gap-1 rounded-lg bg-red-50 p-3 text-sm text-red-800">
             <li v-for="message in serverErrors" :key="message">{{ message }}</li>
         </ul>
 

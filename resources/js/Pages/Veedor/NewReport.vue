@@ -23,6 +23,7 @@ import { MESSAGES, OutboxFull } from '@/lib/outbox.js';
 import { reportFormData } from '@/lib/report.js';
 import { sendReport, unableToVisit } from '@/services/api.js';
 import { errorMessages } from '@/services/errors.js';
+import { vReveal } from '@/lib/reveal.js';
 
 const page = usePage();
 
@@ -149,9 +150,10 @@ function startOver() {
         <div class="flex flex-col gap-5">
             <h1 class="text-xl font-semibold">Nuevo Reporte</h1>
 
-            <p v-if="sent" role="status" class="rounded-lg bg-emerald-50 p-3 text-sm font-semibold text-emerald-800">{{ SUCCESS_MESSAGE }}</p>
-            <p v-if="locationPending" data-test="location-pending" role="status" class="rounded-lg bg-amber-50 p-3 text-sm font-semibold text-amber-900 ring-1 ring-amber-200">{{ locationPending }}</p>
-            <p v-if="savedOffline" role="status" class="rounded-lg bg-amber-100 p-3 text-sm font-semibold text-amber-900">{{ savedOffline }}</p>
+            <!-- It. 62d: el resultado sale aquí arriba, y "Enviar Reporte" está abajo: se trae a la vista. -->
+            <p v-if="sent" v-reveal="sent" role="status" class="rounded-lg bg-emerald-50 p-3 text-sm font-semibold text-emerald-800">{{ SUCCESS_MESSAGE }}</p>
+            <p v-if="locationPending" v-reveal="locationPending" data-test="location-pending" role="status" class="rounded-lg bg-amber-50 p-3 text-sm font-semibold text-amber-900 ring-1 ring-amber-200">{{ locationPending }}</p>
+            <p v-if="savedOffline" v-reveal="savedOffline" role="status" class="rounded-lg bg-amber-100 p-3 text-sm font-semibold text-amber-900">{{ savedOffline }}</p>
 
             <!-- 1. La obra: las de su municipio, con filtros, y las cercanas encima (it. 47a) -->
             <!-- It. 47b: un minuto sin una lectura de 50 m o menos -->
@@ -161,7 +163,7 @@ function startOver() {
             </div>
 
             <!-- It. 65b (US-068): las visitas que le pidió la veeduría, encima de las obras. -->
-            <p v-if="visitNotice" role="status" class="rounded-lg bg-emerald-50 p-3 text-sm font-semibold text-emerald-800">{{ visitNotice }}</p>
+            <p v-if="visitNotice" v-reveal="visitNotice" role="status" class="rounded-lg bg-emerald-50 p-3 text-sm font-semibold text-emerald-800">{{ visitNotice }}</p>
             <section v-if="!contract && visits.length" aria-labelledby="visits-title" class="flex flex-col gap-3">
                 <h2 id="visits-title" class="text-lg font-semibold">Visitas pendientes</h2>
                 <p class="text-base text-slate-700">La veeduría le pidió documentar lo que informó un ciudadano. Vaya a la obra y repórtela como siempre: su reporte responde al informe.</p>

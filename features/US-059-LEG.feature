@@ -173,3 +173,10 @@ Característica: Informar a la veeduría de lo que vi en una obra
   Escenario: No se informa de un contrato que la veeduría no vigila
     Cuando informo de un contrato fuera del territorio de la veeduría, o que ya no se puede reportar
     Entonces veo "Esa obra no está entre las que vigila esta veeduría."
+
+  # It. 62d (2026-10-18, reportado por el usuario): la respuesta salía arriba, fuera de la pantalla.
+  @complexity:low
+  Escenario: La respuesta de la plataforma queda a la vista, sin mover la pantalla
+    Cuando toco "Enviarme el código" o "Enviar a la veeduría"
+    Entonces la pantalla se mueve sola hasta la respuesta: "Le enviamos un código…", "Su informe llegó a la veeduría…" o lo que hay que corregir
+

@@ -3690,6 +3690,26 @@ Queda para la V2, opcional, con el modelo de financiación (`docs/viabilidad-leg
 - **Pruebas:** Vitest: la cámara solo con HTTPS y `getUserMedia`; la trasera sin micrófono; el cuadro a su tamaño, sin pasar de 1920 px, y el canvas soltado; la cámara apagada al tomar, cancelar o cerrarse antes de abrir; el "atrás", que la cierra sin llegar a la página; el paso devuelto; la cámara del teléfono cuando no abre; el selector, que la abre y manda su foto a revisión. Playwright, con la cámara simulada de Chromium: el "atrás" la cierra con lo escrito intacto, la foto pasa a revisión y se adjunta, y el siguiente "atrás" sale de la obra. Todo visto en rojo antes de implementar.
 - **Corridas:** Vitest 798, `make e2e` 68 (y 1 pendiente, `fixme`), trace-check 539 de 539; `make ux-check` no empeora ninguna pantalla.
 
+### Iteración 62d — El aviso, a la vista
+
+⬜ **Reportado por el usuario el 2026-10-18:** "cuando se toma la foto o se hace el envío a la veeduría se pierde el encuadre del mensaje que debe leer el usuario; debe mover el scroll para ver cuál fue la respuesta de la plataforma".
+
+**Por qué:** la respuesta de "Enviar a la veeduría" y la de "Enviar Reporte" salen arriba, y esos botones están al final del formulario; la revisión de una foto sale debajo de los botones. En un celular, fuera de la pantalla: R-UX-08 dice qué pasó, pero no se ve.
+
+**Entregable:**
+- **`v-reveal`** (`resources/js/lib/reveal.js`): un aviso que aparece fuera de la pantalla, o cambia, se trae a la vista. Con suavidad, salvo si el teléfono pide menos movimiento, y sin quedar debajo de la barra de arriba. Si ya se ve, no se mueve nada.
+- **Dónde:** el código enviado, lo que hay que corregir y el informe recibido (ciudadano y "Yo también lo vi"); cada foto para revisar y lo que no se pudo adjuntar (veedor y ciudadano); y el resultado de "Enviar Reporte" (enviado, guardado sin señal o con la ubicación por confirmar) y sus errores.
+- R-UX-08, ampliada en `docs/ux-analisis.md`.
+
+**Done-when:** los escenarios nuevos de US-059-LEG, US-009 y US-008, con sus pruebas, y `make e2e` con el aviso dentro de la pantalla de un Pixel 7.
+
+**Modelo:** Sonnet medium. En Opus 5.5, a pedido del usuario.
+
+✅ **Cumplida (2026-10-18).**
+- **Historias:** US-059-LEG, US-009 y US-008, con un escenario nuevo cada una. Sin historia nueva.
+- **Pruebas:** Vitest: cuándo un aviso está fuera de la pantalla (arriba, abajo, cortado, o más alto que ella con su comienzo a la vista); el movimiento, suave o sin él; `v-reveal`, al aparecer y al cambiar el mensaje, no en cada redibujo; y cada pantalla, que trae su aviso. Playwright, en la pantalla de un Pixel 7: la respuesta del informe ciudadano, la foto para revisar y el reporte del veedor, dentro de la pantalla. Todo visto en rojo antes de implementar.
+- **Corridas:** Vitest 805, `make e2e` 68 (y 1 pendiente, `fixme`), trace-check 542 de 542; `make ux-check` no empeora ninguna pantalla.
+
 ### Iteración 64 — Los correos salen por la cola
 
 ⬜ **Pedida por el usuario el 2026-10-17:** "el envío tanto del código como el informe del ciudadano se nota lento. Haz el análisis y aplica la mejor para que los procesos se muevan por colas". Va antes de la 63.

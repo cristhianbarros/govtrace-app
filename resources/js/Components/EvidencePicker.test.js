@@ -7,6 +7,7 @@ import CameraCapture from './CameraCapture.vue';
 import EvidencePicker from './EvidencePicker.vue';
 import PhotoReview from './PhotoReview.vue';
 import { draftPhoto, finishPhoto, prepareEvidence } from '@/lib/evidence/prepare.js';
+import { everythingFarBelow } from '@/testing/reveal.js';
 
 vi.mock('@/lib/evidence/prepare.js', async (importOriginal) => ({
     ...(await importOriginal()),
@@ -174,6 +175,30 @@ describe('La foto se toma dentro de GovTrace (it. 62c)', () => {
 
         await choose(wrapper, [photo(1)]);
         expect(wrapper.get('button[data-test="take-photo"]').attributes('disabled')).toBeDefined();
+    });
+});
+
+// It. 62d (R-UX-08): la revisión aparece debajo de los botones, quizá fuera de la pantalla.
+describe('La foto para revisar, a la vista (it. 62d)', () => {
+    it('La foto para revisar queda a la vista al tomarla: each review comes into view, and so do the errors', async () => {
+        const screen = everythingFarBelow();
+        try {
+            const wrapper = mountPicker();
+            await choose(wrapper, [photo(1), photo(2)]);
+            const first = wrapper.findComponent(PhotoReview).element;
+            expect(screen.revealed()).toContain(first);
+
+            wrapper.findComponent(PhotoReview).vm.$emit('use', { dismissed: [], manual: [] });
+            await flushPromises();
+            expect(screen.revealed().at(-1)).toBe(wrapper.findComponent(PhotoReview).element);
+            expect(screen.revealed().at(-1)).not.toBe(first);
+
+            await useEachPhoto(wrapper);
+            await choose(wrapper, [new File(['video'], 'video.mp4', { type: 'video/mp4' })]);
+            expect(screen.revealed().at(-1)).toBe(wrapper.get('[role="alert"]').element);
+        } finally {
+            screen.restore();
+        }
     });
 });
 

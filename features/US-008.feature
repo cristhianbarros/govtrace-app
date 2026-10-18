@@ -211,3 +211,10 @@ Característica: Crear un reporte de evidencia con ubicación GPS
       | 10   | usa esa lectura, con su hora como hora de captura |
       | 30   | usa esa lectura, con su hora como hora de captura |
       | 31   | espera una lectura nueva                        |
+
+  # It. 62d (2026-10-18, reportado por el usuario): "Enviar Reporte" está al final, y el resultado salía arriba.
+  @complexity:low
+  Escenario: Al enviar el reporte, su resultado queda a la vista
+    Cuando toco "Enviar Reporte"
+    Entonces la pantalla se mueve sola hasta "Reporte recibido con éxito…", o hasta lo que hay que corregir
+

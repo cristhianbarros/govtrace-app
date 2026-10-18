@@ -13,6 +13,7 @@ import EvidencePicker from '@/Components/EvidencePicker.vue';
 import LocationMap from '@/Components/LocationMap.vue';
 import { requestCitizenCode, sendCitizenReport } from '@/services/api.js';
 import { errorMessage } from '@/services/errors.js';
+import { vReveal } from '@/lib/reveal.js';
 
 const props = defineProps({
     worksiteId: { type: String, default: null }, // it. 46c: su identificador público
@@ -114,8 +115,9 @@ const BUTTON = 'min-h-12 rounded-xl bg-brand-700 px-4 py-3 text-base font-semibo
         <h2 id="informar-title" class="text-lg font-semibold">Informar a esta veeduría</h2>
         <p>¿Vio algo en esta obra? Cuénteselo a la veeduría: la ley la obliga a recibir lo que le informen los ciudadanos (Ley 850 de 2003, art. 18). No hace falta tener cuenta.</p>
 
-        <p v-if="notice" role="status" class="rounded-lg bg-emerald-50 p-3 font-semibold text-emerald-800">{{ notice }}</p>
-        <p v-if="refused" role="alert" class="rounded-lg bg-red-50 p-3 text-red-800">{{ refused }}</p>
+        <!-- It. 62d: la respuesta sale aquí arriba, y "Enviar" está abajo: se trae a la vista. -->
+        <p v-if="notice" v-reveal="notice" role="status" class="rounded-lg bg-emerald-50 p-3 font-semibold text-emerald-800">{{ notice }}</p>
+        <p v-if="refused" v-reveal="refused" role="alert" class="rounded-lg bg-red-50 p-3 text-red-800">{{ refused }}</p>
 
         <template v-if="step === 'email'">
             <label for="citizen-email" class="font-semibold">Su correo</label>

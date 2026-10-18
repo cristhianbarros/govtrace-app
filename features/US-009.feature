@@ -152,3 +152,11 @@ Característica: Adjuntar fotos o PDF con privacidad y hash en el teléfono
     Y al tocar "Tomar la foto" la cámara se apaga y la foto pasa a revisión, como una de la galería
     Y el botón "atrás" del teléfono cierra la cámara sin salir del formulario
     Y si el navegador no da la cámara, puedo abrir la cámara del teléfono, como antes
+
+  # It. 62d (2026-10-18, reportado por el usuario): la revisión salía debajo, fuera de la pantalla.
+  @complexity:low
+  Escenario: La foto para revisar queda a la vista al tomarla
+    Cuando tomo una foto o la elijo de la galería
+    Entonces la pantalla se mueve sola hasta "Revise la foto antes de adjuntarla", con lo que encontró el detector
+    Y si algo no se pudo adjuntar, hasta el aviso que dice por qué
+

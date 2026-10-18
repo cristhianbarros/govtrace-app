@@ -7,6 +7,7 @@
 import { computed, ref } from 'vue';
 import { requestCitizenCode, supportCitizenReport } from '@/services/api.js';
 import { errorMessage } from '@/services/errors.js';
+import { vReveal } from '@/lib/reveal.js';
 
 const props = defineProps({
     worksiteId: { type: String, required: true },
@@ -67,8 +68,8 @@ const BUTTON = 'min-h-12 rounded-xl bg-brand-700 px-4 py-3 text-base font-semibo
         <h2 id="citizens-title" class="sr-only">Lo que informaron los ciudadanos</h2>
         <p data-test="citizens-count" class="text-lg font-semibold text-brand-900">{{ sentence }} · {{ citizens.status }}</p>
 
-        <p v-if="notice" role="status" class="rounded-lg bg-emerald-50 p-3 font-semibold text-emerald-800">{{ notice }}</p>
-        <p v-if="refused" role="alert" class="rounded-lg bg-red-50 p-3 text-red-800">{{ refused }}</p>
+        <p v-if="notice" v-reveal="notice" role="status" class="rounded-lg bg-emerald-50 p-3 font-semibold text-emerald-800">{{ notice }}</p>
+        <p v-if="refused" v-reveal="refused" role="alert" class="rounded-lg bg-red-50 p-3 text-red-800">{{ refused }}</p>
 
         <template v-if="citizens.open && step !== 'joined'">
             <template v-if="step === 'closed'">
