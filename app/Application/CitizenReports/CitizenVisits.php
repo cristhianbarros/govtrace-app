@@ -2,6 +2,7 @@
 
 namespace App\Application\CitizenReports;
 
+use App\Application\Publication\PublicCache;
 use App\Domain\Audit\AuditLog;
 use App\Domain\CitizenReports\CitizenReport;
 use App\Domain\CitizenReports\Notifications\CitizenReportDocumented;
@@ -76,11 +77,17 @@ class CitizenVisits
             return $report;
         });
 
+        // It. 66b: lo público dice qué está haciendo la veeduría.
+        PublicCache::forget();
+
         // Al ciudadano, una vez: si la visita cambia de veedor, no le llega otro correo.
         if ($report->citizen_notified_at !== null) {
             return "Le pedimos la visita a {$observer->name}.";
         }
-        Notification::route('mail', $report->email)->notify(new CitizenVisitAssigned($report->reference(), tenant()->displayName(), CitizenReportDesk::nameOf($report->worksite)));
+        // It. 66b: a quien informó y a quienes se sumaron, a cada uno en su correo.
+        foreach ($report->recipients() as $email) {
+            Notification::route('mail', $email)->notify(new CitizenVisitAssigned($report->reference(), tenant()->displayName(), CitizenReportDesk::nameOf($report->worksite)));
+        }
         $report->update(['citizen_notified_at' => now()]);
 
         return "Le pedimos la visita a {$observer->name}. Al ciudadano le avisamos que un veedor va a visitar la obra.";
@@ -109,6 +116,7 @@ class CitizenVisits
             $report->update(['status' => 'new', 'assigned_to' => null, 'assigned_at' => null, 'visit_note' => "{$veedor->name} no pudo ir."]);
             $this->audit('citizen_report.visit_unable', 'observer', $veedor, $report, $before);
         });
+        PublicCache::forget();
     }
 
     /** The report of the assigned veedor on the work documents the visits it had pending there. */
@@ -128,7 +136,9 @@ class CitizenVisits
 
             $worksite = $citizenReport->worksite;
             $url = TenantUrl::to(tenant()->domains()->value('domain'), "worksite/{$worksite->public_id}");
-            Notification::route('mail', $citizenReport->email)->notify(new CitizenReportDocumented($citizenReport->reference(), tenant()->displayName(), CitizenReportDesk::nameOf($worksite), $url));
+            foreach ($citizenReport->recipients() as $email) {
+                Notification::route('mail', $email)->notify(new CitizenReportDocumented($citizenReport->reference(), tenant()->displayName(), CitizenReportDesk::nameOf($worksite), $url));
+            }
         }
     }
 
@@ -143,6 +153,7 @@ class CitizenVisits
     {
         CitizenReport::query()->where('assigned_to', $observer->id)->where('status', 'assigned')
             ->update(['status' => 'new', 'assigned_to' => null, 'assigned_at' => null, 'documenting_report_id' => null, 'visit_note' => 'El veedor ya no está activo.']);
+        PublicCache::forget();
     }
 
     /** @return Builder<CitizenReport> */

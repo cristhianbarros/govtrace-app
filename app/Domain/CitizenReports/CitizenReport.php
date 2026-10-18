@@ -8,6 +8,7 @@ use App\Domain\Shared\HasPublicId;
 use App\Domain\Worksites\Worksite;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * US-059-LEG: lo que un ciudadano le informa a la veeduría sobre una obra.
@@ -70,6 +71,23 @@ class CitizenReport extends Model
     public function worksite(): BelongsTo
     {
         return $this->belongsTo(Worksite::class);
+    }
+
+    /** It. 66b: the citizens who joined it ("Yo también lo vi"). */
+    public function supports(): HasMany
+    {
+        return $this->hasMany(CitizenReportSupport::class);
+    }
+
+    /**
+     * It. 66b: who hears what the veeduría does — whoever reported it and
+     * whoever joined, each in their own mail (none sees the others').
+     *
+     * @return list<string>
+     */
+    public function recipients(): array
+    {
+        return array_values(array_filter([$this->email, ...$this->supports()->get()->pluck('email')->all()]));
     }
 
     /** It. 65b: the veedor the Administrador asked to document it. */

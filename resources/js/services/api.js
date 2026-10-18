@@ -22,6 +22,8 @@ export const browseContracts = (body) => dataOf(http.post('/contracts/browse', b
 /** It. 44f (US-059-LEG): el ciudadano informa a la veeduría — primero el código a su correo, después el informe (multipart). */
 export const requestCitizenCode = (data) => dataOf(http.post('/citizen-reports/code', data));
 export const sendCitizenReport = (form) => dataOf(http.post('/citizen-reports', form));
+// It. 66b (US-069): "Yo también lo vi".
+export const supportCitizenReport = (data) => dataOf(http.post('/citizen-reports/support', data));
 /** Y el Administrador los lee, los responde o los descarta. */
 /** It. 52: de a una página ({ page, status }): { data, total, has_more }. */
 export const fetchCitizenReports = (params) => dataOf(http.get('/citizen-reports', { params }));

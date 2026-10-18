@@ -346,3 +346,14 @@ describe('El plazo de cada informe (it. 66a)', () => {
         expect(late.get('[data-test="overdue"]').text()).toBe('Vencido');
     });
 });
+
+// It. 66b (US-069): "Yo también lo vi".
+describe('Cuántos ciudadanos lo vieron (it. 66b)', () => {
+    it('La veeduría ve cuántos ciudadanos lo vieron: only when someone joined', async () => {
+        const wrapper = await openReports([report({ id: 'a', citizens: 3 }), report({ id: 'b', citizens: 1 })]);
+
+        const [joined, alone] = wrapper.findAll('[data-test="citizen-report"]');
+        expect(joined.get('[data-test="citizens"]').text()).toBe('3 ciudadanos lo vieron');
+        expect(alone.find('[data-test="citizens"]').exists()).toBe(false);
+    });
+});

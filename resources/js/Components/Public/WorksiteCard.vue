@@ -58,6 +58,8 @@ onMounted(() => {
                 <p data-test="condition" class="mt-2 flex items-start gap-2 text-base"><span aria-hidden="true" class="grid size-8 shrink-0 place-items-center rounded-full font-bold" :class="LOOK[card.condition.color].css">{{ LOOK[card.condition.color].sign }}</span> <span><strong class="font-semibold">{{ card.condition.label }}</strong> {{ card.condition.reason }}</span></p>
                 <p data-test="place" class="mt-2 text-base text-slate-800">{{ place() }}</p>
                 <p data-test="last-evidence" class="mt-1 text-base text-slate-700">{{ card.last_evidence_at ? `Última evidencia publicada: ${formatDay(card.last_evidence_at)}` : 'Sin evidencias publicadas todavía.' }}</p>
+                <!-- It. 66b (US-069): cuántos ciudadanos informaron, y qué hace la veeduría. Solo el número. -->
+                <p v-if="card.citizens" data-test="card-citizens" class="mt-1 text-base font-semibold text-brand-900">{{ card.citizens.count === 1 ? '1 ciudadano informó' : `${card.citizens.count} ciudadanos informaron` }} sobre esta obra · {{ card.citizens.status }}</p>
                 <div v-if="card.photos.length" class="mt-3 grid grid-cols-3 gap-2">
                     <Link
                         v-for="(photo, index) in card.photos"

@@ -21,7 +21,7 @@ final class PublicWorksiteCard
 {
     public const PHOTOS = 3;
 
-    /** @return array{id: string, name: ?string, municipality: ?string, value: ?float, condition: array{color: string, label: string, reason: string}, last_evidence_at: ?string, photos: list<array{report_id: string, thumbnail_url: string}>} */
+    /** @return array{id: string, name: ?string, municipality: ?string, value: ?float, condition: array{color: string, label: string, reason: string}, last_evidence_at: ?string, citizens: ?array{count: int, status: string, open: bool}, photos: list<array{report_id: string, thumbnail_url: string}>} */
     public function handle(Worksite $worksite): array
     {
         $contracts = Contract::query()
@@ -45,6 +45,8 @@ final class PublicWorksiteCard
             'value' => $values->isEmpty() ? null : (float) $values->sum(),
             'condition' => (new WorksiteCondition)->of($worksite, $contracts),
             'last_evidence_at' => $latest?->captured_at->toIso8601String(),
+            // It. 66b (US-069): cuántos ciudadanos informaron, y qué hace la veeduría. Solo el número.
+            'citizens' => CitizenVoices::of($worksite),
             'photos' => $withPhotos
                 ->flatMap(fn (Report $report) => $report->evidences->map(fn (Evidence $photo) => [
                     'report_id' => $report->public_id,

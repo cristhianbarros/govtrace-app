@@ -133,6 +133,8 @@ Route::middleware([
     Route::middleware(EnsureMapIsOnline::class)->group(function () {
         Route::post('/citizen-reports/code', [CitizenReportController::class, 'code'])->middleware('throttle:citizen-codes')->name('citizen-reports.code');
         Route::post('/citizen-reports', [CitizenReportController::class, 'store'])->middleware('throttle:citizen-reports')->name('citizen-reports.store');
+        // It. 66b (US-069): "Yo también lo vi".
+        Route::post('/citizen-reports/support', [CitizenReportController::class, 'support'])->middleware('throttle:citizen-reports')->name('citizen-reports.support');
     });
 
     // US-052-RPT: los datos abiertos, en CSV o JSON.

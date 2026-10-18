@@ -167,6 +167,8 @@ onMounted(() => open(TABS[0]));
                         <span class="rounded px-2 py-0.5 text-sm font-semibold" :class="STATE[report.status]">{{ report.status_label }}</span>
                     </header>
                     <p class="text-sm text-slate-600">Informe n.º {{ report.reference }} · {{ formatDateTime(report.received_at) }}</p>
+                    <!-- It. 66b (US-069): "Yo también lo vi". -->
+                    <p v-if="report.citizens > 1" data-test="citizens" class="font-semibold text-brand-900">{{ report.citizens }} ciudadanos lo vieron</p>
                     <!-- It. 66a (R-LEG-12): hasta cuándo se comprometió a responder. Solo lo ve el Administrador. -->
                     <p v-if="report.status === 'new' && report.due_on && !report.visit?.note" class="flex flex-wrap items-center gap-2 text-sm">
                         <span data-test="due" class="text-slate-700">Responder antes del {{ formatDate(report.due_on) }}</span>
