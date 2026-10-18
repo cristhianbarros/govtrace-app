@@ -3818,7 +3818,7 @@ Queda para la V2, opcional, con el modelo de financiación (`docs/viabilidad-leg
 
 ### Iteración 63 — Sincronizar el SECOP desde la veeduría
 
-⬜ **Propuesta por Claude el 2026-10-17,** a partir de una pregunta del usuario ("si el contrato se crea después de la sincronización, ¿tienen forma de sincronizarlo o deben esperar?"). Se implementa cuando la apruebe.
+⬜ **Propuesta por Claude el 2026-10-17,** a partir de una pregunta del usuario ("si el contrato se crea después de la sincronización, ¿tienen forma de sincronizarlo o deben esperar?"). **Aprobada** ("haz la iteración 63"). Historia nueva: US-070 (4 escenarios).
 
 **Por qué:** hoy la veeduría no puede sincronizar por su cuenta. Sus contratos llegan cada noche, al registrarse, al cambiar su territorio, al reactivarse o cuando el Super Administrador pulsa "Sincronizar ahora" (todo el territorio vigilado).
 
