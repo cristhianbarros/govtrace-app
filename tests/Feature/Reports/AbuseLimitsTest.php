@@ -125,5 +125,7 @@ it('allows by default 30 reports per veedor per hour, 120 public requests per vi
         'citizen_reports_per_hour' => 20,
         // It. 43k: las solicitudes de alta desde el Inicio.
         'organization_requests_per_hour' => 5,
+        // It. 68: las búsquedas de lugares en OpenStreetMap, por visitante y por minuto.
+        'place_searches_per_minute' => 20,
     ]);
 });
