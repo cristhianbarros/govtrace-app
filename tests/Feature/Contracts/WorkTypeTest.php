@@ -79,3 +79,17 @@ it('keeps the UNSPSC code SECOP II publishes, and a contract saved outside the s
         ->and($contract->work_type)->toBe(WorkType::Roads->value)
         ->and(reportableContract('CO1.PCCNTR.4700002', ['object' => 'Construcción del coliseo'])->work_type)->toBe(WorkType::Sports->value);
 });
+
+// It. 67: el tipo principal, y los demás que nombra el objeto, en el orden en que aparecen.
+it('keeps the main type and the others the object names, in their order', function () {
+    expect(array_map(fn (WorkType $type) => $type->value, WorkType::classifyAll('Construcción de la escuela San Javier y espacio público asociado', 'V1.72103300')))->toBe(['education', 'public_space'])
+        ->and(array_map(fn (WorkType $type) => $type->value, WorkType::classifyAll('Pavimentación de la calle 30 con andenes', null)))->toBe(['roads', 'public_space'])
+        ->and(array_map(fn (WorkType $type) => $type->value, WorkType::classifyAll('Mejoramiento de vivienda', null)))->toBe(['housing'])
+        ->and(array_map(fn (WorkType $type) => $type->value, WorkType::classifyAll('Obras varias', 'V1.72141100')))->toBe(['roads'])
+        ->and(array_map(fn (WorkType $type) => $type->value, WorkType::classifyAll('Obras varias', null)))->toBe(['other']);
+
+    (new ProcessSecopContractRow)->handle(secopWorksRow('Construcción de la escuela San Javier y espacio público asociado', 'V1.72103300'));
+    $contract = Contract::query()->where('secop_contract_id', 'CO1.PCCNTR.4700001')->sole();
+    expect($contract->work_type)->toBe('education')
+        ->and($contract->work_types)->toBe(['education', 'public_space']);
+});

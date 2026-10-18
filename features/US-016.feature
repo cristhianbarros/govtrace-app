@@ -151,6 +151,14 @@ Característica: Buscar la obra por palabra clave
     Cuando filtro el tipo de obra por "Agua y saneamiento"
     Entonces veo solo "Construcción del acueducto veredal"
 
+  # It. 67 (2026-10-18, pedido por el usuario): la escuela San Javier también es espacio público.
+  @complexity:low
+  Escenario: Una obra con dos partes aparece en el filtro de cada una
+    Dado que en "Santa Marta" está la obra "Construcción de la escuela San Javier y espacio público asociado"
+    Cuando filtro el tipo de obra por "Espacio público"
+    Entonces veo "Construcción de la escuela San Javier y espacio público asociado"
+    Y su tipo dice "Educación · también Espacio público"
+
   @complexity:low
   Escenario: Filtro las obras por la entidad que contrató
     Dado que en "Santa Marta" hay obras de "Distrito de Santa Marta" y de "Gobernación del Magdalena"

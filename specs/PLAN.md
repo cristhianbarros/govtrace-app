@@ -3947,6 +3947,22 @@ Queda para la V2, opcional, con el modelo de financiación (`docs/viabilidad-leg
 - **Pruebas:** Pest: solo su territorio; la pausa de 5 minutos por veeduría (con la caché de la base: la de "array" de las pruebas se pierde entre peticiones con la tenencia); la última sincronización, la de la noche o la suya y nunca la de otra; solo el Administrador. Vitest: el botón y su mensaje, la pausa, el estado (en curso, terminada, fallida) y la vuelta a mirar sola. Todo visto en rojo antes de implementar.
 - **Corridas:** Pest 1289, Vitest 780, trace-check 538 de 538; `make ux-check` no empeora ninguna pantalla.
 
+### Iteración 67 — Una obra con dos partes, en el filtro de cada una
+
+⬜ **Pedida por el usuario el 2026-10-18,** a partir de una pregunta: la escuela de San Javier, ¿qué tipo de obra es? Su objeto nombra la escuela y el espacio público a su alrededor, y solo aparecía en "Educación". **Aprobada** ("do it"), para el veedor: el ciudadano no filtra por tipo.
+
+**Por qué:** el tipo de obra (it. 47a) es la primera palabra clave de su objeto. Una obra que nombra dos cosas queda en una sola, y quien la busca por la otra no la encuentra.
+
+**Entregable:**
+- **Cada contrato guarda todos los tipos que nombra su objeto** (`work_types`), en el orden en que aparecen. El primero sigue siendo su tipo (`work_type`), y sin palabra clave decide el código UNSPSC, como antes.
+- **El filtro "Tipo de obra" la encuentra por cualquiera de ellos.**
+- **La lista dice su tipo y los demás:** "Educación · también Espacio público".
+- Los contratos guardados, y los del archivo (US-048-MNT), se calculan en la migración.
+
+**Done-when:** el escenario nuevo de US-016, con su prueba; la clasificación con varios tipos, en su orden.
+
+**Modelo:** Sonnet medium. En Opus 5.5, a pedido del usuario.
+
 ### Orden de lo que está en espera (2026-10-14)
 
 | Orden | Qué | Por qué en ese lugar |

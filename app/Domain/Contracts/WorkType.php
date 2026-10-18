@@ -12,6 +12,10 @@ use Illuminate\Support\Str;
  * in Antioquia, water networks and housing fall under "maintenance" (7210)
  * and a sports court under "specialized trades" (7215) — so it only decides
  * where it is reliable.
+ *
+ * It. 67: an object may name more than one kind ("la escuela y su espacio
+ * público"). The first one is still its kind; the others let the filter
+ * find it too.
  */
 enum WorkType: string
 {
@@ -43,30 +47,51 @@ enum WorkType: string
 
     public static function classify(?string $object, ?string $unspsc): self
     {
+        return self::classifyAll($object, $unspsc)[0];
+    }
+
+    /**
+     * Every kind the object names, in the order they first appear; the code,
+     * or Other, when it names none.
+     *
+     * @return non-empty-list<self>
+     */
+    public static function classifyAll(?string $object, ?string $unspsc): array
+    {
         $text = ' '.SearchText::of($object).' ';
-        $first = null;
+        $found = [];
 
         foreach (self::KEYWORDS as $type => $words) {
             foreach ($words as $word) {
-                if (preg_match('/(?<=[^a-z0-9])'.preg_quote($word, '/').'(?=[^a-z0-9])/', $text, $match, PREG_OFFSET_CAPTURE)
-                    && ($first === null || $match[0][1] < $first[1])) {
-                    $first = [$type, $match[0][1]];
+                if (preg_match('/(?<=[^a-z0-9])'.preg_quote($word, '/').'(?=[^a-z0-9])/', $text, $match, PREG_OFFSET_CAPTURE)) {
+                    $found[$type] = min($found[$type] ?? PHP_INT_MAX, $match[0][1]);
                 }
             }
         }
 
-        if ($first !== null) {
-            return self::from($first[0]);
+        if ($found !== []) {
+            asort($found);
+
+            return array_map(fn (string $type) => self::from($type), array_keys($found));
         }
 
         $code = Str::after((string) $unspsc, 'V1.');
         foreach (self::UNSPSC as $prefix => $type) {
             if (str_starts_with($code, $prefix)) {
-                return self::from($type);
+                return [self::from($type)];
             }
         }
 
-        return self::Other;
+        return [self::Other];
+    }
+
+    /** "Educación · también Espacio público": its kind, and the others its object names. */
+    public static function describe(?string $main, ?array $all): string
+    {
+        $label = self::tryFrom((string) $main)?->label() ?? self::Other->label();
+        $others = array_map(fn (self $type) => $type->label(), array_filter(array_map(self::tryFrom(...), array_values(array_diff($all ?? [], [$main])))));
+
+        return $others === [] ? $label : $label.' · también '.implode(', ', $others);
     }
 
     public function label(): string
