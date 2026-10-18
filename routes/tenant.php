@@ -21,6 +21,7 @@ use App\Http\Controllers\Tenant\CitizenReportController;
 use App\Http\Controllers\Tenant\CitizenReportInboxController;
 use App\Http\Controllers\Tenant\ContractListController;
 use App\Http\Controllers\Tenant\ContractSearchController;
+use App\Http\Controllers\Tenant\ContractSyncController;
 use App\Http\Controllers\Tenant\DeclarationController;
 use App\Http\Controllers\Tenant\EditorialController;
 use App\Http\Controllers\Tenant\EvidenceFileController;
@@ -253,6 +254,9 @@ Route::middleware([
             Route::get('/territory/search', [TerritoryController::class, 'search'])->name('territory.search');
             Route::put('/territory', [TerritoryController::class, 'update'])->name('territory.update');
             Route::get('/contracts', ContractListController::class)->name('contracts.index');
+            // It. 63 (US-070): sincronizar su territorio con el SECOP II sin esperar a la noche, y cómo le fue.
+            Route::get('/contracts/sync', [ContractSyncController::class, 'show'])->name('contracts.sync.show');
+            Route::post('/contracts/sync', [ContractSyncController::class, 'store'])->name('contracts.sync.store');
             Route::get('/worksites', [WorksiteController::class, 'index'])->name('worksites.index');
 
             // US-007: nombre de fantasía y logo. US-043-MON: el log de auditoría de la organización.

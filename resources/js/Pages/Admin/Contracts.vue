@@ -3,12 +3,13 @@
 // mandar a los veedores. De 20 en 20, por fecha de firma (lo más reciente
 // primero) o por valor; cada orden se invierte con un segundo toque.
 // It. 40c: y un buscador, por objeto, contratista o número de proceso.
-import { computed, onMounted, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import LoadState from '@/Components/LoadState.vue';
 import { useLoader } from '@/composables/useLoader.js';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
-import { formatCop, formatDate } from '@/lib/format.js';
-import { fetchContracts } from '@/services/api.js';
+import { formatCop, formatDate, formatDateTime } from '@/lib/format.js';
+import { fetchContracts, fetchContractSync, syncContractsNow } from '@/services/api.js';
+import { errorMessage } from '@/services/errors.js';
 
 const OBJECT_PREVIEW = 50;
 
@@ -50,6 +51,62 @@ const arrow = (field) => (sort.value !== field ? '' : direction.value === 'desc'
 
 onMounted(reload);
 
+// It. 63 (US-070): la sincronización con el SECOP II de su territorio, sin esperar a la noche. Mientras una
+// corre, la pantalla vuelve a mirar sola cada 10 segundos.
+const lastSync = ref(null);
+const syncNotice = ref(null);
+const syncRefused = ref(null);
+const syncing = ref(false);
+let watching = null;
+
+const lastSyncText = computed(() => {
+    const run = lastSync.value;
+    if (!run) {
+        return 'Aún no se ha sincronizado.';
+    }
+    if (run.status === 'running') {
+        return 'Sincronizando…';
+    }
+    if (run.status === 'failed') {
+        return 'La última sincronización falló. GovTrace la vuelve a intentar sola.';
+    }
+    const inserted = run.inserted === 1 ? '1 contrato nuevo' : `${run.inserted} contratos nuevos`;
+    const updated = run.updated === 1 ? '1 actualizado' : `${run.updated} actualizados`;
+    return `Última sincronización: ${formatDateTime(run.finished_at)} · ${inserted} y ${updated}`;
+});
+
+async function readSync() {
+    try {
+        lastSync.value = (await fetchContractSync()) ?? null;
+    } catch {
+        lastSync.value = null; // sin el estado, la pantalla sirve igual
+    }
+    if (lastSync.value?.status === 'running' && !watching) {
+        watching = setInterval(readSync, 10_000);
+    } else if (lastSync.value?.status !== 'running' && watching) {
+        clearInterval(watching);
+        watching = null;
+        reload(); // llegaron contratos: la lista también cambia
+    }
+}
+
+async function syncNow() {
+    syncing.value = true;
+    syncNotice.value = null;
+    syncRefused.value = null;
+    try {
+        syncNotice.value = (await syncContractsNow()).message;
+        await readSync();
+    } catch (failure) {
+        syncRefused.value = errorMessage(failure);
+    } finally {
+        syncing.value = false;
+    }
+}
+
+onMounted(readSync);
+onBeforeUnmount(() => clearInterval(watching));
+
 // It. 40b: "cancelled" es el estado interno de GovTrace para un contrato anulado
 // o retirado en SECOP; se nombra como en la tarjeta pública (US-017).
 const statusOf = (contract) => (contract.status === 'cancelled' ? 'Anulado/Retirado en SECOP' : contract.status);
@@ -57,6 +114,16 @@ const statusOf = (contract) => (contract.status === 'cancelled' ? 'Anulado/Retir
 
 <template>
     <AdminLayout title="Contratos">
+        <!-- It. 63 (US-070): sincronizar su territorio con el SECOP II sin esperar a la noche. -->
+        <section data-test="sync" aria-labelledby="sync-title" class="flex flex-col gap-2 rounded-2xl bg-white p-4 text-base shadow-soft ring-1 ring-slate-900/5">
+            <h2 id="sync-title" class="font-semibold">Sincronización con el SECOP II</h2>
+            <p data-test="sync-last" class="text-slate-800">{{ lastSyncText }}</p>
+            <p v-if="syncNotice" role="status" class="rounded-lg bg-emerald-50 p-3 font-semibold text-emerald-800">{{ syncNotice }}</p>
+            <p v-if="syncRefused" role="alert" class="rounded-lg bg-amber-50 p-3 text-amber-900">{{ syncRefused }}</p>
+            <button type="button" :disabled="syncing" class="min-h-11 self-start rounded-xl bg-brand-700 px-4 font-semibold text-white disabled:opacity-40 hover:bg-brand-800" @click="syncNow">Sincronizar ahora</button>
+            <p class="text-sm text-slate-700">GovTrace lee los contratos de los datos abiertos del SECOP II en datos.gov.co. Uno que el SECOP aún no publica allí llega cuando lo publique.</p>
+        </section>
+
         <form role="search" class="flex flex-col gap-2 md:flex-row" @submit.prevent="search">
             <label for="contract-words" class="sr-only">Buscar un contrato</label>
             <input

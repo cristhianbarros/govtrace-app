@@ -201,6 +201,7 @@ Todo queda en el log de auditoría: quién, cuándo, antes y después.
 | **Agrupar contratos en una ficha de obra** | Varios contratos de la misma obra física, en una ficha con su nombre. Gana el peor estado. | US-045-INT |
 | **Descargar el expediente** | Un ZIP con el **expediente en PDF**, las plantillas pre-llenadas del **derecho de petición** (Ley 1755 de 2015) y de la **denuncia ante la Contraloría**, que citan cada sello como "Prueba Pericial Criptográfica", y los **originales con su prueba**. Solo lo publicado. Cada descarga queda en el log. Desde la it. 46j, de cada contrato dice también el **supervisor** (según SECOP II), el **origen de los recursos** y el **lugar**; la denuncia orienta **a qué contraloría acudir** y deja espacio para las **normas incumplidas**. | US-056-LEG |
 | **Contratos** | Los contratos de obra de su territorio, sincronizados de SECOP II, con un buscador. | US-015 |
+| **Sincronizar ahora** | En "Contratos": trae del SECOP II los contratos de su territorio sin esperar a la noche, una vez cada 5 minutos. Dice cómo le fue a la última sincronización (cuándo terminó, cuántos contratos nuevos y actualizados), y mientras corre, la pantalla se actualiza sola. Un contrato que el SECOP aún no publica en datos.gov.co llega cuando lo publique. | US-070 (it. 63) |
 | **Territorio** | Los departamentos o municipios que vigila. Al cambiarlo, se sincroniza SECOP de inmediato. | US-012 |
 
 ### 5.3 El equipo ("Veedores")

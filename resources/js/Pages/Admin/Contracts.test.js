@@ -2,9 +2,9 @@
 // por fecha de firma o por valor. El objeto largo se corta en 50 caracteres
 // y se lee completo al pasar sobre él.
 import { flushPromises, mount } from '@vue/test-utils';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import Contracts from './Contracts.vue';
-import { fetchContracts } from '@/services/api.js';
+import { fetchContracts, fetchContractSync, syncContractsNow } from '@/services/api.js';
 
 vi.mock('@inertiajs/vue3', async () => await import('@/testing/inertia.js'));
 vi.mock('@/services/api.js');
@@ -137,3 +137,53 @@ describe('Buscar un contrato (it. 40c)', () => {
     });
 });
 
+// It. 63 (US-070): sincronizar el territorio con el SECOP II sin esperar a la noche.
+describe('Sincronizar el SECOP desde la veeduría (it. 63)', () => {
+    afterEach(() => vi.useRealTimers());
+
+    it('La veeduría pide la sincronización de su territorio sin esperar a la noche: says it is on its way, and why a contract may still be missing', async () => {
+        fetchContractSync.mockResolvedValue(null);
+        syncContractsNow.mockResolvedValue({ message: 'Buscamos los contratos de su territorio en el SECOP II. En unos minutos verá el resultado aquí.' });
+        const wrapper = await openContracts(pageOf([contract()]));
+
+        expect(wrapper.get('[data-test="sync"]').text()).toContain('Aún no se ha sincronizado.');
+        expect(wrapper.text()).toContain('GovTrace lee los contratos de los datos abiertos del SECOP II en datos.gov.co. Uno que el SECOP aún no publica allí llega cuando lo publique.');
+        await button(wrapper, 'Sincronizar ahora').trigger('click');
+        await flushPromises();
+
+        expect(syncContractsNow).toHaveBeenCalledTimes(1);
+        expect(wrapper.get('[data-test="sync"] [role="status"]').text()).toBe('Buscamos los contratos de su territorio en el SECOP II. En unos minutos verá el resultado aquí.');
+    });
+
+    it('Una sincronización cada 5 minutos por veeduría: says why it has to wait', async () => {
+        fetchContractSync.mockResolvedValue(null);
+        syncContractsNow.mockRejectedValue({ response: { status: 429, data: { message: 'Ya pidió una sincronización hace menos de 5 minutos. Espere su resultado.' } } });
+        const wrapper = await openContracts(pageOf([contract()]));
+
+        await button(wrapper, 'Sincronizar ahora').trigger('click');
+        await flushPromises();
+
+        expect(wrapper.get('[data-test="sync"] [role="alert"]').text()).toBe('Ya pidió una sincronización hace menos de 5 minutos. Espere su resultado.');
+    });
+
+    it('La pantalla dice cómo le fue a la última sincronización: when it ended and what it brought; while one runs, it looks again by itself', async () => {
+        vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
+        fetchContractSync.mockResolvedValue({ status: 'running', started_at: '2026-10-17T13:30:00+00:00', finished_at: null, inserted: 0, updated: 0 });
+        const wrapper = await openContracts(pageOf([contract()]));
+        expect(wrapper.get('[data-test="sync-last"]').text()).toBe('Sincronizando…');
+
+        fetchContractSync.mockResolvedValue({ status: 'success', started_at: '2026-10-17T13:30:00+00:00', finished_at: '2026-10-17T13:41:00+00:00', inserted: 3, updated: 12 });
+        vi.advanceTimersByTime(10_000);
+        await flushPromises();
+
+        expect(fetchContractSync).toHaveBeenCalledTimes(2);
+        expect(wrapper.get('[data-test="sync-last"]').text()).toMatch(/^Última sincronización: 17\/10\/2026, 08:41 .*· 3 contratos nuevos y 12 actualizados$/);
+    });
+
+    it('says when the last one failed, and that it tries again by itself', async () => {
+        fetchContractSync.mockResolvedValue({ status: 'failed', started_at: '2026-10-17T13:30:00+00:00', finished_at: '2026-10-17T13:31:00+00:00', inserted: 0, updated: 0 });
+        const wrapper = await openContracts(pageOf([contract()]));
+
+        expect(wrapper.get('[data-test="sync-last"]').text()).toBe('La última sincronización falló. GovTrace la vuelve a intentar sola.');
+    });
+});
