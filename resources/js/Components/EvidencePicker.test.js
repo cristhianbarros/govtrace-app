@@ -2,7 +2,8 @@
 // se prepara en el teléfono (optimizado o limpio, y con su SHA-256) antes de
 // quedar adjunto; aquí la preparación es un doble, probada en lib/evidence.
 import { flushPromises, mount } from '@vue/test-utils';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import CameraCapture from './CameraCapture.vue';
 import EvidencePicker from './EvidencePicker.vue';
 import PhotoReview from './PhotoReview.vue';
 import { draftPhoto, finishPhoto, prepareEvidence } from '@/lib/evidence/prepare.js';
@@ -124,6 +125,55 @@ describe('EvidencePicker', () => {
         await wrapper.findAll('[data-test="remove-evidence"]')[0].trigger('click');
 
         expect(wrapper.props('modelValue').map((evidence) => evidence.file.name)).toEqual(['foto2.jpg']);
+    });
+});
+
+// It. 62c: donde el navegador da la cámara, "Tomar foto" la abre en la página.
+describe('La foto se toma dentro de GovTrace (it. 62c)', () => {
+    function withCameraInPage() {
+        vi.stubGlobal('isSecureContext', true);
+        Object.defineProperty(navigator, 'mediaDevices', { value: { getUserMedia: vi.fn() }, configurable: true });
+    }
+    afterEach(() => {
+        vi.unstubAllGlobals();
+        delete navigator.mediaDevices;
+    });
+
+    it('La foto se toma dentro de GovTrace, sin salir de la app: "Tomar foto" opens the camera in the page, and its photo goes to review like one from the gallery', async () => {
+        withCameraInPage();
+        const wrapper = mount(EvidencePicker, {
+            props: { modelValue: [], photosOnly: true, max: 3 },
+            global: { stubs: { CameraCapture: { template: '<div data-test="camera-view" />', emits: ['photo', 'close'] } } },
+        });
+
+        expect(wrapper.find('input[data-test="camera"]').exists()).toBe(false);
+        expect(wrapper.find('[data-test="camera-view"]').exists()).toBe(false);
+        await wrapper.get('button[data-test="take-photo"]').trigger('click');
+        expect(wrapper.find('[data-test="camera-view"]').exists()).toBe(true);
+
+        const taken = new File(['jpeg'], 'foto-14-05-33.jpg', { type: 'image/jpeg' });
+        wrapper.findComponent(CameraCapture).vm.$emit('photo', taken);
+        await flushPromises();
+
+        expect(wrapper.find('[data-test="camera-view"]').exists()).toBe(false);
+        expect(draftPhoto).toHaveBeenCalledWith(taken);
+        expect(wrapper.findComponent(PhotoReview).exists()).toBe(true);
+    });
+
+    it('closes the camera without a photo, and keeps "Tomar foto" off while a photo is being reviewed', async () => {
+        withCameraInPage();
+        const wrapper = mount(EvidencePicker, {
+            props: { modelValue: [] },
+            global: { stubs: { CameraCapture: { template: '<div data-test="camera-view" />', emits: ['photo', 'close'] } } },
+        });
+
+        await wrapper.get('button[data-test="take-photo"]').trigger('click');
+        wrapper.findComponent(CameraCapture).vm.$emit('close');
+        await flushPromises();
+        expect(wrapper.find('[data-test="camera-view"]').exists()).toBe(false);
+
+        await choose(wrapper, [photo(1)]);
+        expect(wrapper.get('button[data-test="take-photo"]').attributes('disabled')).toBeDefined();
     });
 });
 

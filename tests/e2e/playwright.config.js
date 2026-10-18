@@ -16,7 +16,9 @@ export default defineConfig({
         ...devices['Pixel 7'],
         baseURL: process.env.E2E_BASE_URL ?? 'http://veeduria-e2e.govtrace.localhost:8080',
         geolocation: { latitude: 11.2419, longitude: -74.199, accuracy: 12 },
-        permissions: ['geolocation'],
+        // It. 62c: la cámara de "Tomar foto", simulada por Chromium (un cuadro que se mueve), sin pedir permiso.
+        permissions: ['geolocation', 'camera'],
+        launchOptions: { args: ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'] },
         locale: 'es-CO',
         timezoneId: 'America/Bogota',
         serviceWorkers: 'allow',

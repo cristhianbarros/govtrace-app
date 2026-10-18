@@ -5,8 +5,10 @@
 // It. 46e (R-PRIV-05): cada foto se revisa antes, de a una, con sus rostros
 // ya difuminados (PhotoReview); solo al aceptarla se calcula su huella.
 import { computed, ref, shallowRef } from 'vue';
+import CameraCapture from '@/Components/CameraCapture.vue';
 import PhotoReview from '@/Components/PhotoReview.vue';
 import { acceptedTypes, cannotAdd } from '@/lib/evidence/attachments.js';
+import { cameraInPage } from '@/lib/evidence/camera.js';
 import { draftPhoto, finishPhoto, kindOf, prepareEvidence } from '@/lib/evidence/prepare.js';
 import { releaseCanvas } from '@/lib/evidence/photos.js';
 
@@ -31,8 +33,22 @@ const finishing = ref(false);
 const reviewed = ref(0);
 const reviewing = computed(() => toReview.value[0] ?? null);
 
+// It. 62c: donde el navegador da la cámara, "Tomar foto" la abre en la página;
+// si no, la del teléfono (capture), como antes.
+const inPage = cameraInPage();
+const cameraOpen = ref(false);
+
 async function onChoose(event) {
-    const files = Array.from(event.target.files ?? []);
+    await attach(Array.from(event.target.files ?? []));
+    event.target.value = '';
+}
+
+async function onPhoto(photo) {
+    cameraOpen.value = false;
+    await attach([photo]);
+}
+
+async function attach(files) {
     errors.value = [];
     processing.value = true;
 
@@ -64,7 +80,6 @@ async function onChoose(event) {
 
     evidences.value = attached;
     processing.value = toReview.value.length > 0;
-    event.target.value = '';
 }
 
 // It. 62b: la foto revisada ya es un archivo (o no se usó): su canvas se suelta ya.
@@ -115,7 +130,7 @@ const kilobytes = (bytes) => `${Math.max(1, Math.round(bytes / 1024))} KB`;
         <span class="text-sm font-semibold text-slate-700">{{ label }}</span>
         <p data-test="faces-warning" class="text-sm text-slate-700">Si en la foto aparecen personas, sobre todo niños, sus rostros se difuminan antes de enviarla.</p>
 
-        <!-- It. 40d: elegir es claro, y la cámara, a un toque (capture: abre la trasera). -->
+        <!-- It. 40d: elegir es claro, y la cámara, a un toque (la trasera). -->
         <div class="grid grid-cols-1 gap-2 md:grid-cols-2">
             <label
                 class="flex min-h-14 items-center justify-center gap-2 rounded-lg border-2 border-dashed border-slate-300 bg-white px-3 py-3 text-base font-semibold text-slate-800"
@@ -124,7 +139,18 @@ const kilobytes = (bytes) => `${Math.max(1, Math.round(bytes / 1024))} KB`;
                 {{ reviewing ? 'Revise la foto de abajo' : processing ? 'Revisando la foto…' : photosOnly ? 'Elegir de la galería' : 'Elegir de la galería o un PDF' }}
                 <input type="file" multiple class="sr-only" :accept="accept" :disabled="!accept || processing" @change="onChoose" />
             </label>
+            <button
+                v-if="inPage"
+                type="button"
+                data-test="take-photo"
+                class="flex min-h-14 items-center justify-center gap-2 rounded-xl bg-brand-700 px-3 py-3 text-base font-semibold text-white hover:bg-brand-800 disabled:opacity-50"
+                :disabled="!accept.startsWith('image') || processing"
+                @click="cameraOpen = true"
+            >
+                <span aria-hidden="true">📷</span> Tomar foto
+            </button>
             <label
+                v-else
                 class="flex min-h-14 items-center justify-center gap-2 rounded-xl bg-brand-700 px-3 py-3 text-base font-semibold text-white hover:bg-brand-800"
                 :class="{ 'opacity-50': !accept.startsWith('image') || processing }"
             >
@@ -132,6 +158,8 @@ const kilobytes = (bytes) => `${Math.max(1, Math.round(bytes / 1024))} KB`;
                 <input type="file" data-test="camera" class="sr-only" accept="image/*" capture="environment" :disabled="!accept.startsWith('image') || processing" @change="onChoose" />
             </label>
         </div>
+
+        <CameraCapture v-if="cameraOpen" @photo="onPhoto" @close="cameraOpen = false" />
 
         <PhotoReview
             v-if="reviewing"
