@@ -1,0 +1,40 @@
+story_id: "US-069"
+titulo_historia: "Como ciudadano que informó de una obra quiero saber hasta cuándo me responde la veeduría, sumarme a lo que otro vecino informó y compartir la evidencia, para que el problema se vea y no se quede en un informe"
+bloque: "Iteración 66 — Seguimiento y visibilidad de lo que informan los ciudadanos"
+criterios_aceptacion:
+  escenarios_exito:
+    - "(66a) 'Días hábiles para responder a los ciudadanos', en 'Organización': 15 por defecto, de 1 a 60; cambiarlo queda en el log de auditoría"
+    - "(66a) Cada informe guarda su fecha de vencimiento al llegar (el plazo de la veeduría en ese momento): cambiar el plazo no la cambia"
+    - "(66a) Al enviar el informe, la pantalla y el correo de recibo dicen: 'La veeduría se compromete a responderle antes del <día de la semana> <día> de <mes> de <año> (<N> días hábiles).'"
+    - "(66a) El resumen diario suma 'N informe(s) ciudadano(s) vence(n) en los próximos 3 días.' y 'N informe(s) ciudadano(s) ya venció(eron) sin respuesta.'"
+    - "(66a) Cada mañana, a las 08:00, un informe vencido sin una primera acción (responder, pedir la visita o descartar) le manda a su ciudadano, y a quienes se sumaron, un correo con la obra, el contrato del SECOP, la entidad, lo que informó y los canales de la Contraloría. Una sola vez"
+    - "(66b) En la página de la obra: 'N ciudadano(s) informó(aron) sobre esta obra · <estado>', y mientras la veeduría no la documenta, '¿Usted también lo vio?' con 'Yo también lo vi': el correo, la autorización de datos y el código, como al informar"
+    - "(66b) Quien se suma recibe los mismos correos que quien informó: la respuesta, la visita, la evidencia publicada y el aviso del vencimiento"
+    - "(66b) En 'Informes ciudadanos', cada informe dice 'N ciudadanos lo vieron' (quien informó y quienes se sumaron)"
+    - "(66c) La página de la obra lleva su vista previa (Open Graph): el nombre de la obra con su estado, el valor del contrato y la entidad, y la miniatura de la foto publicada más reciente; y un botón 'Compartir' (el menú del celular, o copiar el enlace)"
+  validaciones_reglas:
+    - "R-LEG-12 (nueva): el plazo para responder un informe ciudadano es una sugerencia de GovTrace que cada veeduría fija (Ley 850 de 2003, art. 18 c)); no se publica ni se presenta como incumplimiento. Los días hábiles descuentan sábados, domingos y festivos de Colombia (Ley 51 de 1983), y cuentan desde el día siguiente a la llegada"
+    - "El plazo se detiene con la primera acción de la veeduría (first_action_at): si la visita vuelve a 'Nuevo', no vuelve a correr"
+    - "El número público cuenta personas distintas (por la huella del correo) entre los informes no descartados de la obra y quienes se sumaron; el estado es el del informe más reciente: 'Esperando respuesta de la veeduría', 'Un veedor la está documentando', 'Documentado con evidencia' o 'La veeduría respondió'"
+    - "Lo público es solo el número y el estado: nunca el mensaje, las fotos, el correo ni el nombre (R-LEG-10)"
+    - "Una persona se suma una vez por obra; si ya informó de esa obra (en un informe no descartado), tampoco"
+    - "Los correos de quienes se suman se guardan cifrados, como el de quien informa, y se borran a los 30 días de respondido o documentado el informe; con el informe descartado, se borran a los 30 días con él"
+  manejo_errores:
+    - "Plazo fuera de rango: 'El plazo va de 1 a 60 días hábiles.'"
+    - "Sumarse otra vez: 'Usted ya informó sobre esta obra: le avisamos a su correo cuando la veeduría actúe.'"
+    - "Sumarse sin código válido: 'El código no es válido o ya venció. Pida uno nuevo.'"
+    - "Sumarse a una obra sin informes abiertos (todos documentados, respondidos o descartados): 'Esta obra no tiene informes abiertos. Si vio algo nuevo, infórmeselo a la veeduría.'"
+  requisitos_ux:
+    - "La fecha, con el día de la semana y en palabras: 'antes del martes 24 de noviembre de 2026'"
+    - "En 'Informes ciudadanos', el Administrador ve la fecha de cada informe nuevo y, si venció, 'Vencido' (no es público)"
+    - "Botones de 44 px y letra de 16 px"
+  casos_edge:
+    - {caso: "Un informe que llega un viernes antes de dos lunes festivos", resultado: "Vence el martes 24 de noviembre de 2026, con 15 días hábiles"}
+    - {caso: "La veeduría está suspendida o dada de baja", resultado: "No se revisan sus plazos ni se mandan correos"}
+    - {caso: "Una obra sin evidencias publicadas", resultado: "Su vista previa no lleva foto"}
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true
