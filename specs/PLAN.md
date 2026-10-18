@@ -3665,6 +3665,31 @@ Queda para la V2, opcional, con el modelo de financiación (`docs/viabilidad-leg
 - **Historia:** US-009, con un escenario nuevo ("Una foto de 50 megapíxeles se prepara sin agotar la memoria del celular") y la nota en su YAML. Sin historia nueva.
 - **Pruebas:** Vitest: el octavo justo para 3, 4, 12, 50 y 108 MP; el tamaño leído del encabezado; la decodificación reducida y derecha, con el decodificador y el cuadro cerrados; la decodificación entera cuando no se puede, llega pequeña o acostada; el JPEG del mismo canvas; los canvas soltados. Todo visto en rojo antes de implementar.
 
+### Iteración 62c — La foto se toma dentro de GovTrace
+
+⬜ **Reportado por el usuario el 2026-10-18,** ya con la 62b en staging: el aviso de memoria baja seguía saliendo cuando el ciudadano tomaba la foto, y la app se reiniciaba.
+
+**Por qué:** "Tomar foto" abría la app de la cámara del teléfono (`capture`), y GovTrace quedaba detrás. Con la cámara al frente, un celular con poca memoria cierra las apps que quedaron detrás, y al volver GovTrace se reinicia sin la foto ni lo escrito. La 62b redujo la memoria al preparar la foto, pero esto pasa antes: mientras la cámara está abierta.
+
+**Entregable:**
+- **"Tomar foto" abre la cámara trasera dentro de GovTrace** (`getUserMedia`), a pantalla completa, con "Tomar la foto" y "Cancelar" grandes. GovTrace nunca queda detrás.
+- **La foto sale del cuadro del video,** con su lado mayor cerca de 1920 px (lo que se guarda), sin decodificar una de 12 o 50 megapíxeles. Pasa a revisión como una de la galería, y la cámara se apaga apenas se toma o se cierra.
+- **El "atrás" del teléfono cierra la cámara, no la página:** lo escrito en el formulario no se pierde.
+- **Donde el navegador no da la cámara** (sin HTTPS, sin permiso o sin `getUserMedia`), la del teléfono, como antes. "Elegir de la galería" no cambia.
+- Sirve igual al veedor y al ciudadano: comparten el selector (`EvidencePicker`).
+
+**Done-when:** el escenario nuevo de US-009, con sus pruebas, y `make e2e` con la cámara simulada de Chromium.
+
+**Modelo:** Opus 5.5 (la foto antes de su huella: R-HASH-01, R-PRIV-05 y R-PRIV-06).
+
+✅ **Cumplida (2026-10-18).**
+- **Cómo quedó:**
+  - **`CameraCapture`:** el video de la cámara (`camera.js`: la trasera, sin micrófono, 1920 x 1440 ideales) y la foto del cuadro, en JPEG al 92 % (al revisarla se codifica otra vez, al 80 %). Si la cámara no abre, lo dice y ofrece la del teléfono.
+  - **`backGuard.js`:** la cámara ocupa un paso de la historia con el mismo estado de la página; el "atrás" la cierra, y al cerrarse con sus botones devuelve ese paso. Ninguno de los dos llega a Inertia, que rehace la página (`preserveState: false`) y borraba lo escrito. Se importa en `app.js` antes que Inertia: medido en Chromium, en `window` los oyentes se llaman en el orden en que se registraron, con captura o sin ella (jsdom llama primero a los de captura).
+- **Historia:** US-009, con un escenario nuevo ("La foto se toma dentro de GovTrace, sin salir de la app") y las notas en su YAML. Sin historia nueva.
+- **Pruebas:** Vitest: la cámara solo con HTTPS y `getUserMedia`; la trasera sin micrófono; el cuadro a su tamaño, sin pasar de 1920 px, y el canvas soltado; la cámara apagada al tomar, cancelar o cerrarse antes de abrir; el "atrás", que la cierra sin llegar a la página; el paso devuelto; la cámara del teléfono cuando no abre; el selector, que la abre y manda su foto a revisión. Playwright, con la cámara simulada de Chromium: el "atrás" la cierra con lo escrito intacto, la foto pasa a revisión y se adjunta, y el siguiente "atrás" sale de la obra. Todo visto en rojo antes de implementar.
+- **Corridas:** Vitest 798, `make e2e` 68 (y 1 pendiente, `fixme`), trace-check 539 de 539; `make ux-check` no empeora ninguna pantalla.
+
 ### Iteración 64 — Los correos salen por la cola
 
 ⬜ **Pedida por el usuario el 2026-10-17:** "el envío tanto del código como el informe del ciudadano se nota lento. Haz el análisis y aplica la mejor para que los procesos se muevan por colas". Va antes de la 63.

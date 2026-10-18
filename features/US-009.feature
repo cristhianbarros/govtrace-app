@@ -140,5 +140,15 @@ Característica: Adjuntar fotos o PDF con privacidad y hash en el teléfono
   @complexity:low
   Escenario: Tomar la foto con la cámara o elegirla de la galería
     Cuando voy a adjuntar la evidencia de un reporte
-    Entonces veo "Tomar foto", que abre la cámara trasera del teléfono
+    Entonces veo "Tomar foto", que abre la cámara trasera
     Y veo "Elegir de la galería o un PDF"
+
+  # It. 62c (2026-10-18, reportado por el usuario): con la app de la cámara al frente, el
+  # celular se quedaba sin memoria, cerraba GovTrace y, al volver, se reiniciaba sin la foto.
+  @complexity:medium
+  Escenario: La foto se toma dentro de GovTrace, sin salir de la app
+    Cuando toco "Tomar foto"
+    Entonces la cámara trasera se abre dentro de GovTrace, sin abrir la app de la cámara del teléfono
+    Y al tocar "Tomar la foto" la cámara se apaga y la foto pasa a revisión, como una de la galería
+    Y el botón "atrás" del teléfono cierra la cámara sin salir del formulario
+    Y si el navegador no da la cámara, puedo abrir la cámara del teléfono, como antes

@@ -218,6 +218,43 @@ test('Informa a la veeduría con su correo verificado, y la veeduría le respond
 });
 
 // It. 59 (US-066): el Inicio empieza por la obra, y GovTrace sugiere la veeduría.
+// It. 62c (US-009): con la app de la cámara del teléfono al frente, un celular con poca memoria cerraba
+// GovTrace. La cámara (aquí, la simulada de Chromium) se abre en la página, y el "atrás" la cierra sin salir.
+test('La foto se toma dentro de GovTrace, sin salir de la app', async ({ page }) => {
+    const citizen = `e2e.camara.${Date.now()}@correo.co`;
+    const message = 'Escrito antes de abrir la cámara: la obra está parada.';
+    await openTheWorksite(page);
+    await page.getByLabel('Su correo').fill(citizen);
+    await page.getByLabel('Autorizo el tratamiento de mis datos personales según la política.').check();
+    await page.getByRole('button', { name: 'Enviarme el código' }).click();
+    await page.getByLabel('El código que le llegó al correo').fill(await latestCodeTo(citizen));
+    await page.getByLabel('¿Qué vio en la obra?').fill(message);
+
+    const camera = page.getByRole('dialog', { name: 'Tomar foto' });
+    await page.getByRole('button', { name: 'Tomar foto', exact: true }).click();
+    await expect(camera.getByRole('button', { name: 'Tomar la foto' })).toBeEnabled();
+    expect(await page.evaluate(() => document.querySelector('video').srcObject?.getVideoTracks()[0]?.readyState)).toBe('live');
+
+    // El "atrás" del teléfono cierra la cámara: la página y lo escrito siguen ahí.
+    await page.goBack();
+    await expect(camera).toHaveCount(0);
+    await expect(page).toHaveURL(/\/worksite\//);
+    await expect(page.getByLabel('¿Qué vio en la obra?')).toHaveValue(message);
+
+    await page.getByRole('button', { name: 'Tomar foto', exact: true }).click();
+    await camera.getByRole('button', { name: 'Tomar la foto' }).click();
+    await expect(camera).toHaveCount(0);
+    await expect(page.locator('[data-test="faces-found"]')).toBeVisible({ timeout: 30_000 });
+    await page.getByRole('button', { name: 'Usar esta foto', exact: true }).click();
+    await expect(page.locator('[data-test="remove-evidence"]')).toHaveCount(1);
+    await expect(page.getByText(/foto-\d\d-\d\d-\d\d\.jpg/)).toBeVisible();
+
+    // La cámara devolvió su paso en la historia: el "atrás" ahora sí sale de la obra.
+    await expect(page.getByLabel('¿Qué vio en la obra?')).toHaveValue(message);
+    await page.goBack();
+    await expect(page).not.toHaveURL(/\/worksite\//);
+});
+
 test('Busca la obra en el Inicio, GovTrace le sugiere la veeduría y le informa (it. 59)', async ({ page }) => {
     const citizen = `e2e.inicio.${Date.now()}@correo.co`;
     const asked = [];
