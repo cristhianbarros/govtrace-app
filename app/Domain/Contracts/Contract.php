@@ -61,10 +61,13 @@ class Contract extends Model
         static::creating($guard);
         static::updating($guard);
 
-        // It. 47a (US-016): its kind of work and the text the veedor's search
-        // compares, from what SECOP says — kept with it, never typed by hand.
+        // It. 47a (US-016): its kind of work (and, it. 67, every kind its object
+        // names) and the text the veedor's search compares, from what SECOP
+        // says — kept with it, never typed by hand.
         static::saving(function (self $contract) {
-            $contract->work_type = WorkType::classify($contract->object, $contract->raw_payload['codigo_de_categoria_principal'] ?? null)->value;
+            $types = WorkType::classifyAll($contract->object, $contract->raw_payload['codigo_de_categoria_principal'] ?? null);
+            $contract->work_type = $types[0]->value;
+            $contract->work_types = array_map(fn (WorkType $type) => $type->value, $types);
             $contract->search_text = SearchText::of($contract->object, $contract->contractor_name, $contract->process_number, $contract->entity_name);
         });
 
@@ -90,6 +93,7 @@ class Contract extends Model
         'end_date' => 'date',
         'raw_payload' => 'array',
         'funding_sources' => 'array',
+        'work_types' => 'array',
         'cancelled_at' => 'datetime',
     ];
 

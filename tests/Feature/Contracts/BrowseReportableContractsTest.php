@@ -247,6 +247,20 @@ it('Filtro las obras por su tipo', function () {
         ]);
 });
 
+// It. 67: una obra con dos partes, en el filtro de cada una; la lista dice su tipo principal y los demás.
+it('Una obra con dos partes aparece en el filtro de cada una', function () {
+    contractIn('47001', 'Construcción de la escuela San Javier y espacio público asociado');
+    contractIn('47001', 'Pavimentación Calle 30');
+
+    $publicSpace = browse(fromSantaMarta(['work_type' => WorkType::PublicSpace->value]));
+    $education = browse(fromSantaMarta(['work_type' => WorkType::Education->value]));
+
+    expect(objectsOf($publicSpace))->toBe(['Construcción de la escuela San Javier y espacio público asociado'])
+        ->and(objectsOf($education))->toBe(['Construcción de la escuela San Javier y espacio público asociado'])
+        ->and($publicSpace->json('data.0.work_type'))->toBe('education')
+        ->and($publicSpace->json('data.0.work_type_label'))->toBe('Educación · también Espacio público');
+});
+
 it('Filtro las obras por la entidad que contrató', function () {
     contractIn('47001', 'Pavimentación Calle 30', ['entity_name' => 'Distrito de Santa Marta']);
     contractIn('47001', 'Andenes del centro', ['entity_name' => 'Distrito de Santa Marta']);

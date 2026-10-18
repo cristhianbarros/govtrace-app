@@ -172,8 +172,9 @@ final class BrowseReportableContracts
             default => null,
         };
 
+        // It. 67: by any kind its object names, not only the first.
         if (! empty($request['work_type'])) {
-            $query->where('work_type', $request['work_type']);
+            $query->whereJsonContains('work_types', $request['work_type']);
         }
 
         if (! empty($request['entity'])) {
@@ -231,7 +232,7 @@ final class BrowseReportableContracts
                 'name' => $worksite?->name,
                 'municipality' => $contract->municipality ? PlaceName::forDisplay($contract->municipality->name) : null,
                 'work_type' => $contract->work_type,
-                'work_type_label' => WorkType::tryFrom((string) $contract->work_type)?->label() ?? WorkType::Other->label(),
+                'work_type_label' => WorkType::describe($contract->work_type, $contract->work_types),
                 'situation' => $this->situation($contract, $today, $longOverdue),
                 'end_date' => $contract->end_date?->toDateString(),
                 'located' => $worksite instanceof Worksite && $worksite->latitude !== null,

@@ -32,6 +32,7 @@ criterios_aceptacion:
     - "Búsqueda con debounce de 300 ms a partir del tercer carácter"
     - "(It. 47, 2026-10-10, discovery corto; propuesta de Claude, validada por el usuario) Cada obra muestra su nombre (o el objeto, en dos líneas), la entidad, el tipo de obra, el número de proceso, la situación con su fecha (Plazo vencido hace 40 días, Vence en 3 meses, Terminada hace 2 meses) y Sin ubicación todavía o su distancia"
     - "(It. 47, 2026-10-10, discovery corto; propuesta de Claude, validada por el usuario) El selector de municipio trae los del territorio que tienen obras reportables, en orden alfabético, con cuántas tiene cada uno; el de entidad, las de las obras del municipio, de la que más tiene a la que menos. Letra de 16 px y botones de 44 px (R-UX)"
+    - "(It. 67, 2026-10-18, pedido por el usuario) Una obra tiene un tipo principal (la primera palabra clave de su objeto) y los demás que nombra su objeto; el filtro 'Tipo de obra' la encuentra por cualquiera, y la lista dice 'Educación · también Espacio público'"
   casos_edge:
     - "(It. 47) Una obra sin ubicación aparece como cualquier otra, con Sin ubicación todavía: la ubica su primer reporte (US-008, V18)"
     - "(It. 47) via encuentra Vía y VÍA: sin tildes ni mayúsculas (V19)"
