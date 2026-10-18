@@ -5,6 +5,9 @@
 // Aislado (isolate): las capas de Leaflet llevan z-index de 400 a 1000, y en
 // el computador, al bajar, se pintaban encima de las pestañas fijas (Validar,
 // Mapa, Lista). Como LocationMap (it. 55).
+// "Ver todas las obras" (2026-10-17, pedido por el usuario): quien se aleja de las obras moviendo
+// el mapa lo vuelve a encuadrar en todos los pines con un toque, como al abrirlo.
+import { ArrowsPointingOutIcon } from '@heroicons/vue/24/outline';
 import { onBeforeUnmount, onMounted, ref, shallowRef } from 'vue';
 
 const props = defineProps({
@@ -33,9 +36,13 @@ const tiles = shallowRef(null);
 const markers = shallowRef([]);
 const circles = shallowRef([]);
 const markerOf = {}; // it. 60: cada pin por el id de su obra, para devolverle el foco
+// Todos los pines a la vista, con un margen y sin acercarse tanto que una sola obra llene la pantalla.
+const FIT = { padding: [32, 32], maxZoom: 16 };
+let leaflet = null;
 
 onMounted(async () => {
     const [{ default: L }] = await Promise.all([import('leaflet'), import('leaflet/dist/leaflet.css')]);
+    leaflet = L;
 
     map.value = L.map(container.value);
     tiles.value = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -72,8 +79,15 @@ onMounted(async () => {
         return marker;
     });
 
-    map.value.fitBounds(L.latLngBounds(props.pins.map((pin) => [pin.lat, pin.lng])), { padding: [32, 32], maxZoom: 16 });
+    fitPins();
 });
+
+function fitPins() {
+    if (props.pins.length === 0) {
+        return; // sin obras, nada que encuadrar (y Leaflet no acepta unos límites vacíos)
+    }
+    map.value?.fitBounds(leaflet.latLngBounds(props.pins.map((pin) => [pin.lat, pin.lng])), FIT);
+}
 
 onBeforeUnmount(() => map.value?.remove());
 
@@ -82,9 +96,21 @@ function focusPin(id) {
     markerOf[id]?.getElement()?.focus();
 }
 
-defineExpose({ tiles, markers, circles, focusPin });
+defineExpose({ map, tiles, markers, circles, focusPin });
 </script>
 
 <template>
-    <div ref="container" class="isolate h-[60dvh] w-full rounded-lg border border-slate-200 md:h-[70vh]"></div>
+    <div class="relative isolate">
+        <div ref="container" class="h-[60dvh] w-full rounded-lg border border-slate-200 md:h-[70vh]"></div>
+        <button
+            v-if="pins.length"
+            type="button"
+            data-test="fit-pins"
+            class="absolute right-3 top-3 z-[1000] inline-flex min-h-11 items-center gap-2 rounded-xl bg-white px-3 text-base font-semibold text-brand-800 shadow-md ring-1 ring-slate-900/10 hover:bg-brand-50"
+            @click="fitPins"
+        >
+            <ArrowsPointingOutIcon aria-hidden="true" class="size-5" />
+            Ver todas las obras
+        </button>
+    </div>
 </template>

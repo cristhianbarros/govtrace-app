@@ -58,6 +58,12 @@ Característica: Pines del mapa por color de estado
     Cuando abro el mapa
     Entonces la carga inicial solo trae id, latitud, longitud y color de cada pin
 
+  @complexity:low
+  Escenario: Un botón vuelve a mostrar todas las obras del mapa
+    Dado que me alejé de las obras moviendo o acercando el mapa
+    Cuando toco "Ver todas las obras"
+    Entonces el mapa vuelve a mostrar todos los pines, como al abrirlo
+
   @complexity:low @privacy
   Escenario: El mapa dice que cada punto es aproximado
     Dado que el mapa de la veeduría tiene obras con evidencias publicadas

@@ -96,6 +96,37 @@ test('En el computador, al bajar, el mapa no tapa las pestañas de la veeduría'
     expect(onTop).toBe(true);
 });
 
+// 2026-10-17, pedido por el usuario: quien se aleja de las obras moviendo el mapa no tiene que buscarlas a mano.
+test('Un botón vuelve a mostrar todas las obras del mapa', async ({ page }) => {
+    await page.goto(ORG);
+    const map = page.locator('.leaflet-container');
+    const pin = page.locator('.leaflet-marker-icon').first();
+    await map.scrollIntoViewIfNeeded();
+    // Dentro del recuadro del mapa: un pin fuera de él sigue en la página, pero no se ve.
+    const pinOnTheMap = async () => {
+        const [spot, frame] = [await pin.boundingBox(), await map.boundingBox()];
+        return Boolean(spot && spot.x >= frame.x && spot.x + spot.width <= frame.x + frame.width && spot.y >= frame.y && spot.y + spot.height <= frame.y + frame.height);
+    };
+    await expect.poll(pinOnTheMap).toBe(true);
+
+    // Lejos de las obras: unos zooms hacia afuera y dos arrastres largos.
+    for (let step = 0; step < 4; step++) {
+        await page.locator('.leaflet-control-zoom-out').click();
+    }
+    const box = await map.boundingBox();
+    for (let drag = 0; drag < 2; drag++) {
+        await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+        await page.mouse.down();
+        await page.mouse.move(box.x + 10, box.y + 10, { steps: 8 });
+        await page.mouse.up();
+    }
+    await expect.poll(pinOnTheMap).toBe(false);
+
+    await page.getByRole('button', { name: 'Ver todas las obras' }).click();
+
+    await expect.poll(pinOnTheMap).toBe(true);
+});
+
 test('Toca un pin y ve la tarjeta de la obra, con sus miniaturas; también con el teclado (it. 60)', async ({ page }) => {
     await page.goto(ORG);
     const pin = page.locator('.leaflet-marker-icon').first();

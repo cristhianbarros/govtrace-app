@@ -41,6 +41,32 @@ describe('PinsMap', () => {
         wrapper.unmount();
     });
 
+    // 2026-10-17, pedido por el usuario: quien se aleja de las obras no tiene que buscarlas a mano.
+    it('Un botón vuelve a mostrar todas las obras del mapa: it fits every pin again, as when the map opened', async () => {
+        const wrapper = await mountMap();
+        const map = wrapper.vm.map;
+        map.setView([4.6, -74.08], 6);
+        const fit = vi.spyOn(map, 'fitBounds');
+
+        const button = wrapper.get('button[data-test="fit-pins"]');
+        expect(button.text()).toContain('Ver todas las obras');
+        await button.trigger('click');
+
+        expect(fit).toHaveBeenCalledTimes(1);
+        const [bounds, options] = fit.mock.calls[0];
+        expect(pins.every((pin) => bounds.contains([pin.lat, pin.lng]))).toBe(true);
+        expect(options).toMatchObject({ padding: [32, 32], maxZoom: 16 });
+        wrapper.unmount();
+    });
+
+    it('offers no button when there are no pins', async () => {
+        const wrapper = mount(PinsMap, { props: { pins: [] }, attachTo: document.body });
+        await flushPromises();
+
+        expect(wrapper.find('button[data-test="fit-pins"]').exists()).toBe(false);
+        wrapper.unmount();
+    });
+
     it('shows the OpenStreetMap tiles, with their attribution', async () => {
         const wrapper = await mountMap();
 
