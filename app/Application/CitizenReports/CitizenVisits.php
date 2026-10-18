@@ -69,7 +69,8 @@ class CitizenVisits
                 throw new DomainException('Este informe ya fue respondido, documentado o descartado.');
             }
             $before = ['status' => $report->status, 'observer_id' => $report->assigned_to];
-            $report->update(['status' => 'assigned', 'assigned_to' => $observer->id, 'assigned_at' => now(), 'visit_note' => null, 'documenting_report_id' => null]);
+            // It. 66a: pedir la visita es una primera acción: detiene el plazo, aunque la visita vuelva a "Nuevo".
+            $report->update(['status' => 'assigned', 'assigned_to' => $observer->id, 'assigned_at' => now(), 'visit_note' => null, 'documenting_report_id' => null, 'first_action_at' => $report->first_action_at ?? now()]);
             $this->audit('citizen_report.visit_assigned', 'organization_admin', $administrator, $report, $before);
 
             return $report;

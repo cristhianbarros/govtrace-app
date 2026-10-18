@@ -6,6 +6,7 @@ use App\Jobs\CheckContractLifetime;
 use App\Jobs\CheckOrganizationActivity;
 use App\Jobs\CheckSealingQueue;
 use App\Jobs\CheckSponsorBalance;
+use App\Jobs\EscalateOverdueCitizenReports;
 use App\Jobs\PurgeCitizenReports;
 use App\Jobs\PurgeDecommissionedEvidence;
 use App\Jobs\PurgeOrganizationRequests;
@@ -83,6 +84,13 @@ app(Schedule::class)->job(new PurgeVeedorPseudonyms)
 app(Schedule::class)->job(new PurgeCitizenReports)
     ->dailyAt('01:15')
     ->name('citizen-reports-purge')
+    ->onOneServer();
+
+// It. 66a (US-069, R-LEG-12): al ciudadano cuyo informe venció sin una primera acción de la
+// veeduría, el camino a la Contraloría; una vez, cada día a las 08:00.
+app(Schedule::class)->job(new EscalateOverdueCitizenReports)
+    ->dailyAt('08:00')
+    ->name('citizen-reports-deadlines')
     ->onOneServer();
 
 // US-060-MON (it. 43i, V9): a cada Administrador, cuántas evidencias esperan su

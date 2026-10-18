@@ -20,7 +20,8 @@ class UpdateOrganizationProfile
 {
     private const DISK = 'evidencias';
 
-    public function handle(User $administrator, ?string $displayName, ?OrganizationLogo $logo, ?OrganizationContact $contact = null): void
+    /** @param  int|null  $responseDays  it. 66a: in how many business days it answers the citizens; null keeps it */
+    public function handle(User $administrator, ?string $displayName, ?OrganizationLogo $logo, ?OrganizationContact $contact = null, ?int $responseDays = null): void
     {
         $name = DisplayName::fromString($displayName);
         $tenant = tenant();
@@ -28,6 +29,7 @@ class UpdateOrganizationProfile
             'display_name' => $tenant->display_name,
             'logo' => $tenant->logo_path !== null,
             ...($contact ? ['contact' => ['email' => $tenant->contact_email, 'phone' => $tenant->contact_phone]] : []),
+            ...($responseDays !== null ? ['citizen_response_days' => $tenant->citizenResponseDays()] : []),
         ];
         $previousLogo = $tenant->logo_path;
 
@@ -35,6 +37,9 @@ class UpdateOrganizationProfile
         if ($contact !== null) {
             $changes['contact_email'] = $contact->email;
             $changes['contact_phone'] = $contact->phone;
+        }
+        if ($responseDays !== null) {
+            $changes['citizen_response_days'] = $responseDays;
         }
         if ($logo !== null) {
             // El hash en el nombre cambia la URL cuando cambia el logo: nadie ve uno viejo en caché.
@@ -60,6 +65,7 @@ class UpdateOrganizationProfile
                 'display_name' => $tenant->display_name,
                 'logo' => $tenant->logo_path !== null,
                 ...($contact ? ['contact' => $contact->toArray()] : []),
+                ...($responseDays !== null ? ['citizen_response_days' => $tenant->citizenResponseDays()] : []),
             ],
         );
     }

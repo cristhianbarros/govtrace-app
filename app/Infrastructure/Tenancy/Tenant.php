@@ -19,12 +19,15 @@ class Tenant extends BaseTenant implements TenantWithDatabase
 {
     use HasDatabase, HasDomains;
 
-    protected $fillable = ['id', 'nit', 'registration_number', 'registration_authority', 'registration_key', 'name', 'display_name', 'logo_path', 'contact_email', 'contact_phone', 'status', 'decommissioned_at', 'evidence_files_purged_at', 'registration_document_path'];
+    protected $fillable = ['id', 'nit', 'registration_number', 'registration_authority', 'registration_key', 'name', 'display_name', 'logo_path', 'contact_email', 'contact_phone', 'status', 'decommissioned_at', 'evidence_files_purged_at', 'registration_document_path', 'citizen_response_days'];
 
     protected $casts = [
         'decommissioned_at' => 'datetime',
         'evidence_files_purged_at' => 'datetime',
     ];
+
+    /** It. 66a (R-LEG-12): the business days to answer a citizen report, unless the organization set its own. */
+    public const CITIZEN_RESPONSE_DAYS = 15;
 
     /** US-003b: the files are kept this long after the decommission; the seals and proofs, forever. */
     public const EVIDENCE_RETENTION_YEARS = 5;
@@ -38,6 +41,12 @@ class Tenant extends BaseTenant implements TenantWithDatabase
     public static function getCustomColumns(): array
     {
         return ['id', 'nit', 'registration_number', 'registration_authority', 'registration_key', 'name', 'display_name', 'logo_path', 'contact_email', 'contact_phone', 'status', 'decommissioned_at', 'evidence_files_purged_at'];
+    }
+
+    /** It. 66a (R-LEG-12): in how many business days it commits to answer a citizen report (a GovTrace suggestion, not a legal term). */
+    public function citizenResponseDays(): int
+    {
+        return (int) ($this->citizen_response_days ?? self::CITIZEN_RESPONSE_DAYS);
     }
 
     /** R-LEG-06: how it is identified — "NIT 900123456-8 · Acta 45 de 2025, Cámara de Comercio de Santa Marta". */

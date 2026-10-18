@@ -298,7 +298,7 @@ function editorialStatusOf(Tenant $tenant, int $reportId): string
 }
 
 /** It. 65 (US-068): a citizen report on $worksite, in $status, as the citizen left it. */
-function citizenReportOn(Tenant $tenant, Worksite $worksite, string $status = 'new', string $message = 'La obra lleva dos semanas sin trabajadores.'): int
+function citizenReportOn(Tenant $tenant, Worksite $worksite, string $status = 'new', string $message = 'La obra lleva dos semanas sin trabajadores.', array $extra = []): int
 {
     return $tenant->run(fn () => CitizenReport::query()->create([
         'worksite_id' => $worksite->id,
@@ -311,5 +311,6 @@ function citizenReportOn(Tenant $tenant, Worksite $worksite, string $status = 'n
         'handled_at' => $status === 'new' ? null : now(),
         'data_authorized_at' => now(),
         'data_policy_version' => '2026-09-30.2',
+        ...$extra, // it. 66a: su vencimiento, su primera acción
     ])->id);
 }

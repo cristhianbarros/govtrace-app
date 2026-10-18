@@ -4,11 +4,13 @@ namespace App\Http\Controllers\Tenant;
 
 use App\Application\CitizenReports\CitizenReportDesk;
 use App\Application\CitizenReports\CitizenReportRefused;
+use App\Application\CitizenReports\CitizenResponseDeadline;
 use App\Application\CitizenReports\ReportedWork;
 use App\Domain\CitizenReports\CitizenReportCode;
 use App\Domain\Geography\GeoPoint;
 use App\Domain\Worksites\Worksite;
 use App\Http\Controllers\Controller;
+use Carbon\CarbonImmutable;
 use Closure;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -73,7 +75,12 @@ class CitizenReportController extends Controller
                 $this->proposed($data),
             );
 
-            return response()->json(['message' => 'Su informe llegó a la veeduría. Si lo atiende, le responde a su correo.', 'number' => $report->reference()], 201);
+            return response()->json([
+                'message' => 'Su informe llegó a la veeduría. Si lo atiende, le responde a su correo.',
+                'number' => $report->reference(),
+                // It. 66a (R-LEG-12): hasta cuándo se compromete a responder la veeduría.
+                'commitment' => CitizenResponseDeadline::sentence(CarbonImmutable::parse($report->due_on), tenant()->citizenResponseDays()),
+            ], 201);
         });
     }
 

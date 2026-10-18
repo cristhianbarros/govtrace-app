@@ -53,7 +53,11 @@ describe('Informar a esta veeduría', () => {
         const clean = new File(['sin-exif'], 'obra.jpg', { type: 'image/jpeg' });
         draftPhoto.mockResolvedValue({ name: 'obra.jpg', canvas: {}, faces: [], detector: 'ok' });
         finishPhoto.mockResolvedValue({ kind: 'photo', file: clean, sha256: 'ab'.repeat(32), blurs: { faces: 0, dismissed: 0, manual: 0 } });
-        sendCitizenReport.mockResolvedValue({ message: 'Su informe llegó a la veeduría. Si lo atiende, le responde a su correo.', number: 12 });
+        sendCitizenReport.mockResolvedValue({
+            message: 'Su informe llegó a la veeduría. Si lo atiende, le responde a su correo.',
+            number: 12,
+            commitment: 'La veeduría se compromete a responderle antes del martes 24 de noviembre de 2026 (15 días hábiles).',
+        });
         const wrapper = mount(CitizenReportForm, { props: { worksiteId: WORKSITE } });
 
         await askForTheCode(wrapper);
@@ -73,6 +77,8 @@ describe('Informar a esta veeduría', () => {
         expect(form.getAll('photos[]').map((photo) => photo.name)).toEqual(['obra.jpg']);
         expect(wrapper.get('[role="status"]').text()).toContain('Su informe llegó a la veeduría.');
         expect(wrapper.text()).toContain('Su informe es el n.º 12.');
+        // It. 66a (US-069): hasta cuándo se compromete a responder la veeduría.
+        expect(wrapper.get('[data-test="commitment"]').text()).toBe('La veeduría se compromete a responderle antes del martes 24 de noviembre de 2026 (15 días hábiles).');
     });
 
     it('Sin autorizar el tratamiento de datos no se pide el código: nothing is sent, and it says why', async () => {

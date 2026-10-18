@@ -331,3 +331,18 @@ describe('La visita de un veedor (it. 65b)', () => {
         expect(fetchCitizenReports).toHaveBeenLastCalledWith({ status: 'new', observer: observers[0].id, page: 1 });
     });
 });
+
+// It. 66a (US-069, R-LEG-12): el plazo, solo para el Administrador.
+describe('El plazo de cada informe (it. 66a)', () => {
+    it('Al enviar el informe, el ciudadano sabe hasta cuándo responde la veeduría: the Administrador sees that date on each new report, and "Vencido" once it passed', async () => {
+        const wrapper = await openReports([
+            report({ id: 'a', due_on: '2026-11-24', overdue: false }),
+            report({ id: 'b', due_on: '2026-11-03', overdue: true }),
+        ]);
+
+        const [onTime, late] = wrapper.findAll('[data-test="citizen-report"]');
+        expect(onTime.get('[data-test="due"]').text()).toBe('Responder antes del 24/11/2026');
+        expect(onTime.find('[data-test="overdue"]').exists()).toBe(false);
+        expect(late.get('[data-test="overdue"]').text()).toBe('Vencido');
+    });
+});

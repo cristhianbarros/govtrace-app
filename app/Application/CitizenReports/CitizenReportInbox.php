@@ -115,6 +115,9 @@ class CitizenReportInbox
             'status' => $report->status,
             'status_label' => CitizenReport::STATUS_LABELS[$report->status],
             'answer' => $report->answer,
+            // It. 66a (R-LEG-12): hasta cuándo se comprometió a responder, y si ya venció. Solo para el Administrador.
+            'due_on' => $report->due_on?->toDateString(),
+            'overdue' => CitizenResponseDeadline::isOverdue($report),
             'proposed_location' => $this->proposal($report, $open->get($report->worksite_id, collect())),
             // It. 65b (US-068): la visita de un veedor — a quién se le pidió, a quién se sugiere, por qué volvió.
             'visit' => [
@@ -190,7 +193,7 @@ class CitizenReportInbox
     public function answer(User $administrator, int $id, string $answer): void
     {
         $report = $this->pending($id);
-        $report->update(['status' => 'answered', 'answer' => trim($answer), 'handled_at' => now(), 'handled_by' => $administrator->id]);
+        $report->update(['status' => 'answered', 'answer' => trim($answer), 'handled_at' => now(), 'handled_by' => $administrator->id, 'first_action_at' => $report->first_action_at ?? now()]);
 
         Notification::route('mail', $report->email)->notify(new CitizenReportAnswered($report->reference(), tenant()->displayName(), $report->answer));
         $this->audit('citizen_report.answered', $administrator, $report);
@@ -199,7 +202,7 @@ class CitizenReportInbox
     public function discard(User $administrator, int $id): void
     {
         $report = $this->pending($id);
-        $report->update(['status' => 'discarded', 'handled_at' => now(), 'handled_by' => $administrator->id]);
+        $report->update(['status' => 'discarded', 'handled_at' => now(), 'handled_by' => $administrator->id, 'first_action_at' => $report->first_action_at ?? now()]);
 
         $this->audit('citizen_report.discarded', $administrator, $report);
     }

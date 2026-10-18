@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Application\CitizenReports\CitizenReportInbox;
+use App\Application\CitizenReports\CitizenResponseDeadline;
 use App\Domain\Organization\Notifications\ReviewDigest;
 use App\Domain\Organization\OrganizationStatus;
 use App\Domain\Organization\Roles;
@@ -44,7 +45,9 @@ class SendReviewDigests implements ShouldQueue
                 }
 
                 $domain = $tenant->domains()->value('domain');
-                $digest = new ReviewDigest($pending, $tenant->displayName(), TenantUrl::to($domain, 'admin/inbox'), $citizenReports, TenantUrl::to($domain, 'admin/citizen-reports'));
+                // It. 66a (R-LEG-12): lo que está por vencer y lo vencido, para responder a tiempo.
+                $deadlines = ['soon' => CitizenResponseDeadline::dueSoon()->count(), 'overdue' => CitizenResponseDeadline::overdue()->count()];
+                $digest = new ReviewDigest($pending, $tenant->displayName(), TenantUrl::to($domain, 'admin/inbox'), $citizenReports, TenantUrl::to($domain, 'admin/citizen-reports'), $deadlines['soon'], $deadlines['overdue']);
                 OrganizationUser::role(Roles::Administrator->value, 'tenant')
                     ->where('is_active', true)
                     ->whereNull('invitation_token_hash') // quien no activó su cuenta todavía no entra
