@@ -10,7 +10,9 @@
 # ===========================================================================
 # base
 # ===========================================================================
-FROM php:8.4-apache-bookworm AS base
+# 8.4.27: fixes CVE-2026-109618 and CVE-2026-109619, remote code execution
+# without an account, highest risk with mod_php (tests/Unit/Runtime).
+FROM php:8.4.27-apache-bookworm AS base
 
 ARG PUID=1000
 ARG PGID=1000

@@ -3990,6 +3990,25 @@ Queda para la V2, opcional, con el modelo de financiación (`docs/viabilidad-leg
 - **Historias:** US-059-LEG (2 escenarios nuevos) y US-035 (1), con sus notas en los YAML.
 - **Pruebas:** Pest: la consulta con solo el texto, el municipio y su zona, y la identificación de GovTrace; por la ficha y por un contrato sin municipio; una consulta al mes por lugar y una por segundo; nada encontrado, Nominatim sin responder (no se guarda) y lo que se valida; lo que escribió el ciudadano, solo para la veeduría. Vitest: el buscador (con "Buscar" o Enter, nunca letra a letra; lo encontrado, lo no encontrado, el error, el crédito), el formulario del ciudadano, la corrección del Administrador e "Informes ciudadanos". Todo visto en rojo antes de implementar.
 
+### Hotfix del 2026-10-21 — PHP 8.4.27, contra dos fallas críticas
+
+⬜ **Pedido por el usuario el 2026-10-21** ("Va que va ese hotfix"), a partir del anuncio de PHP: 8.5.12, 8.4.27, 8.3.36 y 8.2.35 corrigen CVE-2026-109618 y CVE-2026-109619, que dejan ejecutar código en el servidor sin cuenta. El riesgo es más alto con mod_php, donde hay un exploit demostrado que actúa antes del código de la aplicación.
+
+**Por qué:** la imagen de la app es Apache con mod_php (`php:8.4-apache-bookworm`), y staging está en internet con 8.4.26 o anterior. Desplegar de nuevo no bastaba: `deploy/deploy.sh` construía sin `--pull`, y la máquina reutilizaba la imagen base de su caché.
+
+**Entregable:**
+- **La imagen parte de `php:8.4.27-apache-bookworm`**, fija, para que la corrección quede a la vista.
+- **El despliegue construye con `--pull`**, la app y los respaldos, para recibir los parches de PHP y de Debian en cada despliegue.
+- **Una prueba que corre dentro de la imagen** y falla con un PHP anterior a 8.4.27.
+
+**Done-when:** la prueba, vista en rojo con 8.4.26 y en verde con 8.4.27; "CI completo" en verde; staging desplegado y con `php -v` en 8.4.27.
+
+**Modelo:** Opus 5.5, en esta sesión.
+
+✅ **Cumplido en el código (2026-10-21).** Falta desplegar staging, con el OK del usuario.
+- **Cómo quedó:** `docker/app/Dockerfile` parte de `php:8.4.27-apache-bookworm`, y `deploy/deploy.sh` construye las dos imágenes con `--pull`.
+- **Pruebas:** Pest: `tests/Unit/Runtime/PhpVersionTest.php` falla con 8.4.26 (vista en rojo en el contenedor local) y pasa con 8.4.27, después de reconstruir con `make setup`. En el pipeline corre dentro de la imagen que construye `make setup`.
+
 ### Orden de lo que está en espera (2026-10-14)
 
 | Orden | Qué | Por qué en ese lugar |

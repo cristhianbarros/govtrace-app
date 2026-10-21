@@ -39,8 +39,10 @@ step() { printf '\n▶ %s\n' "$1"; }
 
 step "1/4 Las imágenes"
 if [ "${SKIP_BUILD:-0}" != 1 ]; then
-    docker build -q --network "${DOCKER_BUILD_NETWORK:-default}" -f docker/app/Dockerfile --target qa -t "$APP_IMAGE" . >/dev/null
-    docker build -q --network "${DOCKER_BUILD_NETWORK:-default}" -f docker/backup/Dockerfile -t "$BACKUP_IMAGE" . >/dev/null
+    # --pull: sin él, la máquina reutiliza la imagen base que tiene en caché
+    # y no recibe los parches de seguridad de PHP ni de Debian.
+    docker build -q --pull --network "${DOCKER_BUILD_NETWORK:-default}" -f docker/app/Dockerfile --target qa -t "$APP_IMAGE" . >/dev/null
+    docker build -q --pull --network "${DOCKER_BUILD_NETWORK:-default}" -f docker/backup/Dockerfile -t "$BACKUP_IMAGE" . >/dev/null
 fi
 
 step "2/4 La base de datos y las migraciones"
