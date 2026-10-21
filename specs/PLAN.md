@@ -4008,6 +4008,7 @@ Queda para la V2, opcional, con el modelo de financiación (`docs/viabilidad-leg
 ✅ **Cumplido en el código (2026-10-21).** Falta desplegar staging, con el OK del usuario.
 - **Cómo quedó:** `docker/app/Dockerfile` parte de `php:8.4.27-apache-bookworm`, y `deploy/deploy.sh` construye las dos imágenes con `--pull`.
 - **Pruebas:** Pest: `tests/Unit/Runtime/PhpVersionTest.php` falla con 8.4.26 (vista en rojo en el contenedor local) y pasa con 8.4.27, después de reconstruir con `make setup`. En el pipeline corre dentro de la imagen que construye `make setup`.
+- **Además, `follow-redirects` 1.16.1:** el mismo día, `make audit` (it. 41) encontró dos avisos nuevos de severidad alta en 1.16.0, que llega con axios (GHSA-q3jh-wrc6-jgq8 y GHSA-8r9p-f939-6h3c). En `package-lock.json` cambia solo esa entrada, sin `npm audit fix`, que también actualizaba dependencias que no tenían nada que ver.
 
 ### Orden de lo que está en espera (2026-10-14)
 
