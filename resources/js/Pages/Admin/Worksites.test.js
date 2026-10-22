@@ -282,3 +282,18 @@ describe('Las obras de a una página, con búsqueda (it. 52)', () => {
         window.history.replaceState({}, '', '/admin/worksites');
     });
 });
+
+// It. 69 — US-071 (R-PRIV-07).
+describe('Cuántas personas ven cada obra (it. 69)', () => {
+    it('La veeduría ve cuántas personas vieron cada obra: today, the last 30 days and all of them, under its official location', async () => {
+        const wrapper = await openWorksites([{ ...gaira, visitors: { today: 3, last_30_days: 12, total: 1400 } }]);
+
+        expect(wrapper.get('[data-test="visitors"]').text()).toBe('Personas que vieron su página: 3 hoy · 12 en los últimos 30 días · 1.400 en total');
+    });
+
+    it('says when nobody has seen the page of a work yet', async () => {
+        const wrapper = await openWorksites([{ ...gaira, visitors: { today: 0, last_30_days: 0, total: 0 } }]);
+
+        expect(wrapper.get('[data-test="visitors"]').text()).toBe('Nadie ha visto su página todavía.');
+    });
+});

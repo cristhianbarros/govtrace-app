@@ -184,6 +184,11 @@ export const fetchPublicStats = () => dataOf(http.get('/public/stats'));
 
 /** US-029 / US-017: la obra, sus contratos y su línea de tiempo, al tocar su pin. */
 export const fetchWorksite = async (id) => (await dataOf(http.get(`/public/worksites/${id}`))).data;
+/** It. 69 (US-071): al abrir la página de la obra, el navegador avisa de la visita. Si falla, la página no dice nada. */
+export const recordWorksiteVisit = (id) => http.post(`/public/worksites/${id}/visit`).then(
+    () => undefined,
+    () => undefined,
+);
 // It. 59 (US-066): en el Inicio, buscar la obra ({ data, has_more }), los municipios con su cabecera, y quién puede atenderla.
 export const searchWorks = (params = {}) => dataOf(http.get('/public/obras', { params }));
 export const fetchWorkMunicipalities = async () => (await dataOf(http.get('/public/obras/municipios'))).data;

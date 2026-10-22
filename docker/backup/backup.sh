@@ -36,11 +36,13 @@ work="$root/.$stamp.partial"
 find "$root" -mindepth 1 -maxdepth 1 -name '.*.partial' -exec rm -rf {} +
 mkdir -p "$work/postgres" "$work/evidencias"
 
-# 1. Las bases.
+# 1. Las bases. It. 69 (R-PRIV-07): sin las huellas de quien vio una obra ni las claves
+# del día, que se borran al día siguiente; una copia de 30 días las haría durar. Las
+# tablas van, vacías.
 databases=()
 for db in $(psql -d postgres -Atc "select datname from pg_database where not datistemplate and datname <> 'postgres' order by 1"); do
     [[ "$exclude" == *" $db "* ]] && continue
-    if ! pg_dump --format=custom --file="$work/postgres/$db.dump" "$db"; then
+    if ! pg_dump --format=custom --exclude-table-data=worksite_visitors --exclude-table-data=visitor_keys --file="$work/postgres/$db.dump" "$db"; then
         # It. 45a: una base que se borró entre la lista y su volcado (en desarrollo, las
         # organizaciones que crean y borran los tests) no es una falla. Si sigue ahí, sí.
         if [ -n "$(psql -d postgres -At -v db="$db" <<< "select 1 from pg_database where datname = :'db'")" ]; then

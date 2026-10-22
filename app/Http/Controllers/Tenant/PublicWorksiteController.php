@@ -7,10 +7,12 @@ use App\Application\Publication\PublicMap;
 use App\Application\Publication\PublicWorksiteCard;
 use App\Application\Publication\PublicWorksiteView;
 use App\Application\Publication\UnlocatedWorksites;
+use App\Application\Publication\WorksiteVisits;
 use App\Domain\Worksites\Worksite;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 /**
  * The public map of the organization (it. 24; the screen, it. 26), without
@@ -81,5 +83,13 @@ class PublicWorksiteController extends Controller
         $found = Worksite::byPublicId($worksite);
 
         return response()->json(['data' => PublicCache::remember('worksite', ['id' => $found->public_id], fn () => (new PublicWorksiteView)->handle($found))]);
+    }
+
+    /** It. 69 (US-071, R-PRIV-07): the browser tells of a visit once the page of the work opens. Never its IP or browser: a fingerprint of the day. */
+    public function visit(Request $request, string $worksite): Response
+    {
+        (new WorksiteVisits)->record(Worksite::byPublicId($worksite), $request->ip(), $request->userAgent());
+
+        return response()->noContent();
     }
 }

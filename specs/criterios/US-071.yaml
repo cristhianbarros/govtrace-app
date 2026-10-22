@@ -1,0 +1,36 @@
+story_id: "US-071"
+titulo_historia: "Como Administrador de una veeduría quiero saber cuántas personas ven la página de cada obra, para saber qué obras le importan a la gente; y como ciudadano, ver cuántas la han visto"
+bloque: "Iteración 69 — Cuántas personas ven cada obra"
+criterios_aceptacion:
+  escenarios_exito:
+    - "Al abrir la página pública de una obra, el navegador avisa de la visita (POST /public/worksites/<obra>/visit, 204): la obra suma una persona en el día"
+    - "La misma persona (la misma IP y el mismo navegador) cuenta una vez al día por obra; al día siguiente, otra vez"
+    - "En 'Obras', cada obra dice 'Personas que vieron su página: <N> hoy · <N> en los últimos 30 días · <N> en total'; sin ninguna, 'Nadie ha visto su página todavía.'"
+    - "La página pública de la obra dice '<N> personas han visto esta obra', con 'Cada persona cuenta una vez al día.'"
+    - "La política de datos dice para qué se usan la IP y el navegador en la página de una obra, y que la huella se borra al día siguiente"
+  validaciones_reglas:
+    - "R-PRIV-07 (nueva): no se guardan la IP ni el navegador. Con ellos, la organización y la obra se calcula una huella HMAC-SHA256 con la clave del día: 32 bytes aleatorios, una por día en la base central"
+    - "El día es el de Colombia (America/Bogota), no el del servidor (UTC)"
+    - "Cada día a las 00:05 se borran las huellas y las claves de los días anteriores; queda el número de personas de cada obra en cada día"
+    - "Las copias de cada hora (it. 35) llevan las tablas de las huellas y de las claves, sin sus datos: guardadas 30 días, harían durar lo que se borra al día siguiente"
+    - "Los últimos 30 días son hoy y los 29 anteriores"
+    - "El público ve el total desde 10 personas; la veeduría, siempre"
+    - "Lo público se guarda unos segundos (PublicCache): el total puede tardar hasta un minuto en verse"
+  manejo_errores:
+    - "Una obra que no existe: 404, y no se guarda nada"
+    - "Si el aviso de la visita falla, la página no dice nada: se ve igual"
+  requisitos_ux:
+    - "El número de la página pública va bajo el estado de la obra, en letra de 16 px"
+    - "En 'Obras', la línea de las personas va bajo la ubicación oficial"
+  casos_edge:
+    - {caso: "Una persona abre la obra a las 23:30 y a las 00:30, hora de Colombia", resultado: "Cuenta en los dos días"}
+    - {caso: "La vista previa de WhatsApp, Facebook o X, o un buscador", resultado: "No cuenta: no ejecuta la página, y si se presenta como robot el aviso se ignora"}
+    - {caso: "Sin IP o sin navegador en la petición", resultado: "No cuenta"}
+    - {caso: "La misma persona en dos obras", resultado: "Cuenta en las dos, con una huella distinta en cada una"}
+    - {caso: "Una veeduría suspendida o dada de baja", resultado: "Su página no está en línea y no cuenta (EnsureMapIsOnline)"}
+validacion_smart:
+  specific: true
+  measurable: true
+  achievable: true
+  relevant: true
+  testable: true

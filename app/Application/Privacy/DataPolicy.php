@@ -18,10 +18,10 @@ use App\Models\User as SuperAdmin;
  */
 class DataPolicy
 {
-    /** The text in force. Changing it means a new version: it. 44f added the reports of citizens, 45c their retention, 43k the requests for an alta, 58 the place a citizen marks for a work. */
-    public const VERSION = '2026-10-14.1';
+    /** The text in force. Changing it means a new version: it. 44f added the reports of citizens, 45c their retention, 43k the requests for an alta, 58 the place a citizen marks for a work, 69 the people who see the page of a work. */
+    public const VERSION = '2026-10-21.1';
 
-    public const EFFECTIVE_DATE = '2026-10-14';
+    public const EFFECTIVE_DATE = '2026-10-21';
 
     public const AUTHORIZATION_REQUIRED = 'Para crear su cuenta, autorice el tratamiento de sus datos personales.';
 

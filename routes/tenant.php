@@ -130,6 +130,8 @@ Route::middleware([
         // It. 60 (US-029): la miniatura de una foto publicada, y la tarjeta de una obra al tocar su pin.
         Route::get('/public/evidences/{evidence}/thumbnail', [PublicEvidenceController::class, 'thumbnail'])->where('evidence', PublicId::PATTERN)->name('public.evidences.thumbnail');
         Route::get('/public/worksites/{worksite}/card', [PublicWorksiteController::class, 'card'])->where('worksite', PublicId::PATTERN)->name('public.worksites.card');
+        // It. 69 (US-071): el navegador avisa de la visita al abrir la página de la obra; sin cookies, no hay sesión que falsificar.
+        Route::post('/public/worksites/{worksite}/visit', [PublicWorksiteController::class, 'visit'])->where('worksite', PublicId::PATTERN)->name('public.worksites.visit');
         // It. 56: iguales para todos los visitantes: se guardan unos segundos (PublicCache).
         Route::get('/public/stats', fn (PublicStats $stats) => response()->json(PublicCache::remember('stats', [], fn () => $stats->handle())))->name('public.stats.data');
         // It. 68 (US-059-LEG, US-035): dónde queda una obra, por su dirección o un sitio conocido.

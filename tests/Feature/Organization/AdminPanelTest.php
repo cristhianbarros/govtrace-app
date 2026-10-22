@@ -267,6 +267,8 @@ it('lists the worksites of the organization with their official location and the
             ['secop_contract_id' => 'CO1.PCCNTR.1111111', 'object' => 'Acueducto Gaira'],
             ['secop_contract_id' => 'CO1.PCCNTR.3333333', 'object' => 'Acueducto Gaira, segunda etapa'],
         ],
+        // It. 69 (US-071): nadie ha visto su página todavía.
+        'visitors' => ['today' => 0, 'last_30_days' => 0, 'total' => 0],
     ]]);
 });
 

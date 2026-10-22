@@ -1,7 +1,7 @@
 <script setup>
 // US-029 / US-017: la vista pública de una obra — sus contratos y la línea
 // de tiempo de sus evidencias publicadas, pedidas al abrirla (R-MAP-02).
-import { ShareIcon } from '@heroicons/vue/24/outline';
+import { EyeIcon, ShareIcon } from '@heroicons/vue/24/outline';
 import { Head, usePage } from '@inertiajs/vue3';
 import { nextTick, onMounted, ref } from 'vue';
 import Illustration from '@/Components/Brand/Illustration.vue';
@@ -14,7 +14,8 @@ import OrganizationNotice from '@/Components/Public/OrganizationNotice.vue';
 import OversightChannels from '@/Components/Public/OversightChannels.vue';
 import { useLoader } from '@/composables/useLoader.js';
 import AppLayout from '@/Layouts/AppLayout.vue';
-import { fetchWorksite } from '@/services/api.js';
+import { formatCount } from '@/lib/format.js';
+import { fetchWorksite, recordWorksiteVisit } from '@/services/api.js';
 
 const props = defineProps({
     worksiteId: { type: String, required: true }, // it. 46c: su identificador público
@@ -49,6 +50,8 @@ async function share() {
 // It. 60: desde la tarjeta del mapa se llega a una evidencia (#evidencia-…) o a "Informar" (#informar).
 // Esas partes existen solo después de cargar la obra: entonces se va a la que pide la dirección.
 onMounted(async () => {
+    // It. 69 (US-071): cuenta a quien abre la página, no a la vista previa de un enlace, que no la ejecuta.
+    recordWorksiteVisit(props.worksiteId);
     await load();
     const anchor = window.location.hash.slice(1);
     if (anchor) {
@@ -89,6 +92,11 @@ onMounted(async () => {
                         </template>
                     </div>
                 </section>
+                <!-- It. 69 (US-071): cuántas personas vieron esta página, desde 10. -->
+                <p v-if="worksite.visitors" data-test="visitors" class="mb-4 flex items-start gap-2 text-base text-slate-700">
+                    <EyeIcon aria-hidden="true" class="mt-0.5 size-5 shrink-0" />
+                    <span><strong class="font-semibold text-slate-900">{{ formatCount(worksite.visitors) }} personas han visto esta obra.</strong> Cada persona cuenta una vez al día.</span>
+                </p>
                 <div class="mt-3 flex flex-wrap items-center gap-3">
                     <button type="button" class="inline-flex min-h-12 items-center gap-2 rounded-xl border-2 border-brand-700 bg-white px-4 text-base font-semibold text-brand-800 hover:bg-brand-50" @click="share">
                         <ShareIcon aria-hidden="true" class="size-5" />

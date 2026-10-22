@@ -10,6 +10,7 @@ import LocationMap from '@/Components/LocationMap.vue';
 import PlaceSearch from '@/Components/PlaceSearch.vue';
 import { usePagedList } from '@/composables/usePagedList.js';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import { formatCount } from '@/lib/format.js';
 import { correctWorksiteLocation, fetchWorksites, groupContracts } from '@/services/api.js';
 import { errorMessage } from '@/services/errors.js';
 
@@ -98,6 +99,10 @@ async function group() {
     }
 }
 
+// It. 69 (US-071): cuántas personas vieron su página pública.
+const seenBy = ({ today, last_30_days: lastThirtyDays, total }) =>
+    total === 0 ? 'Nadie ha visto su página todavía.' : `Personas que vieron su página: ${formatCount(today)} hoy · ${formatCount(lastThirtyDays)} en los últimos 30 días · ${formatCount(total)} en total`;
+
 const where = (worksite) =>
     worksite.latitude === null ? 'Sin ubicación oficial' : `${worksite.latitude.toFixed(7)}, ${worksite.longitude.toFixed(7)}`;
 
@@ -156,6 +161,7 @@ onMounted(async () => {
                         </li>
                     </ul>
                     <p class="text-slate-600">Ubicación oficial: {{ where(worksite) }}</p>
+                    <p v-if="worksite.visitors" data-test="visitors" class="text-slate-600">{{ seenBy(worksite.visitors) }}</p>
 
                     <div v-if="editing === worksite.id" class="flex flex-col gap-3">
                         <!-- It. 68: el lugar elegido mueve el pin; se guarda con "Guardar ubicación". -->
