@@ -58,13 +58,29 @@ fi
 # Una copia "de hace 31 días", que la próxima debe borrar.
 in_backup 'mkdir -p /backups/20200101T000000Z && touch -d "31 days ago" /backups/20200101T000000Z'
 
+# It. 69 (R-PRIV-07): una huella de quien vio una obra y una clave del día, con una marca, y el número de un día.
+tenant=$(in_backup "psql -Atc 'select id from tenants order by id limit 1'")
+marker=$(printf 'fe%.0s' $(seq 32))
+in_backup "psql -q -d tenant$tenant -c \"insert into worksite_visitors (worksite_id, day, fingerprint) select id, current_date, '$marker' from worksites order by id limit 1; insert into worksite_visit_days (worksite_id, day, visitors) select id, date '2000-01-01', 4321 from worksites order by id limit 1\" && psql -q -c \"insert into visitor_keys (day, key) values (date '2000-01-01', '$marker')\"" >/dev/null
+
 in_backup backup.sh >/dev/null || { echo "FAIL  la primera copia falló"; exit 1; }
 in_backup backup.sh >/dev/null || { echo "FAIL  la segunda copia falló"; exit 1; }
 read -r first second < <(in_backup 'ls -1d /backups/2*Z | tail -2 | xargs')
 
+central=$(sed -n 's/^DB_DATABASE=//p' .env.docker | head -1); central=${central:-govtrace}
+# Los volcados van comprimidos: se buscan en lo que restaurarían.
+leaked=$(in_backup "for dump in $second/postgres/*.dump; do pg_restore -f - \$dump; done" | grep -c "$marker")
+tables=$(in_backup "pg_restore -l $second/postgres/tenant$tenant.dump; pg_restore -l $second/postgres/$central.dump" | grep -cE 'TABLE public (worksite_visitors|visitor_keys) ')
+days=$(in_backup "pg_restore --data-only --table=worksite_visit_days -f - $second/postgres/tenant$tenant.dump" | grep -c 4321)
+if [ "$leaked" -eq 0 ] && [ "$tables" -eq 2 ] && [ "$days" -eq 1 ]; then
+    pass "Las huellas y la clave del día no van a los respaldos: las tablas van vacías, y el número de cada día sí va"
+else
+    flunk "las huellas o la clave del día van a los respaldos (marcas en las copias: $leaked, tablas: $tables de 2, números del día: $days)"
+fi
+in_backup "psql -q -d tenant$tenant -c \"delete from worksite_visitors where fingerprint = '$marker'; delete from worksite_visit_days where visitors = 4321\" && psql -q -c \"delete from visitor_keys where key = '$marker'\"" >/dev/null
+
 if in_backup "test ! -e /backups/20200101T000000Z"; then pass "la copia de hace 31 días se borró (R-BCK-04)"; else flunk "la copia de hace 31 días sigue ahí"; fi
 
-central=$(sed -n 's/^DB_DATABASE=//p' .env.docker | head -1); central=${central:-govtrace}
 if in_backup "test -s $second/postgres/$central.dump && test -s $second/manifest.json && cd $second/postgres && sha256sum --quiet -c ../SHA256SUMS"; then
     pass "la copia trae la base central, su manifiesto y el SHA-256 de cada volcado"
 else

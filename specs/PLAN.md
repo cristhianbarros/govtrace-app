@@ -4005,10 +4005,54 @@ Queda para la V2, opcional, con el modelo de financiación (`docs/viabilidad-leg
 
 **Modelo:** Opus 5.5, en esta sesión.
 
-✅ **Cumplido en el código (2026-10-21).** Falta desplegar staging, con el OK del usuario.
+✅ **Cumplido y en staging (2026-10-21)**, `05e839c`: la app, el worker, el mail-worker y el calendario responden 8.4.27.
 - **Cómo quedó:** `docker/app/Dockerfile` parte de `php:8.4.27-apache-bookworm`, y `deploy/deploy.sh` construye las dos imágenes con `--pull`.
 - **Pruebas:** Pest: `tests/Unit/Runtime/PhpVersionTest.php` falla con 8.4.26 (vista en rojo en el contenedor local) y pasa con 8.4.27, después de reconstruir con `make setup`. En el pipeline corre dentro de la imagen que construye `make setup`.
 - **Además, `follow-redirects` 1.16.1:** el mismo día, `make audit` (it. 41) encontró dos avisos nuevos de severidad alta en 1.16.0, que llega con axios (GHSA-q3jh-wrc6-jgq8 y GHSA-8r9p-f939-6h3c). En `package-lock.json` cambia solo esa entrada, sin `npm audit fix`, que también actualizaba dependencias que no tenían nada que ver.
+
+### Iteración 69 — Cuántas personas ven cada obra (US-071)
+
+⬜ **Pedida por el usuario el 2026-10-21:** "una parte de analítica sencilla, por ejemplo de cuántas personas han visitado tal obra", una visita por persona cada 24 o 12 horas, con la IP. **Decidido por el usuario:** no se guarda la IP sino una huella que se borra al día siguiente, una visita por persona al día, y el número lo ven la veeduría y el público. Las propuestas de Claude, para validar, están en `specs/historias/US-071.md`. R-PRIV-07 es nueva.
+
+**Entregable:**
+- **El navegador avisa de la visita** al abrir la página de la obra: `POST /public/worksites/<obra>/visit`, sin sesión ni cookies, con el límite de lo público.
+- **La huella:** HMAC-SHA256 de la organización, la obra, la IP y el navegador, con la clave del día (32 bytes aleatorios, una por día en la base central, en hora de Colombia). Una por persona, obra y día.
+- **El número de cada día:** suma uno con cada huella nueva. A las 00:05 se borran las huellas y las claves de los días anteriores, y queda solo el número.
+- **Las copias de cada hora no llevan las huellas ni las claves** (`pg_dump --exclude-table-data`): duran 30 días, y harían durar lo que se borra al día siguiente.
+- **En "Obras"**, por obra, las personas de hoy, de los últimos 30 días y el total. **En la página pública**, el total desde 10 personas.
+- **La política de datos** dice para qué sirven la IP y el navegador en la página de una obra (versión nueva).
+
+**Done-when:** los 13 escenarios de US-071, con sus pruebas, vistas en rojo antes de implementar; `make trace-check`, `make backup-check`, Vitest y Pest de lo que cambió en verde; "CI completo" en verde.
+
+**Modelo:** Opus 5.5 (datos de quien visita, Ley 1581).
+
+✅ **Cumplida en el código (2026-10-21).** Falta fusionarla y desplegarla en staging, con el OK del usuario.
+- **Cómo quedó:**
+  - `WorksiteVisits` (`app/Application/Publication`) hace la huella con `hash_hmac('sha256', …)` y la clave del día (`VisitorKey`, en la base central, `random_bytes(32)`). Guarda una por persona, obra y día (`worksite_visitors`), y con cada huella nueva suma uno al día (`worksite_visit_days`, con `upsert`).
+  - `ForgetWorksiteVisitors` corre a las 00:05 y borra las huellas y las claves de los días anteriores.
+  - `docker/backup/backup.sh` vuelca las bases con `--exclude-table-data` para las dos tablas.
+  - `POST /public/worksites/<obra>/visit` va con el resto de lo público: sin sesión, sin cookies y con `throttle:public`. No cuentan los robots ni las vistas previas: WhatsApp, Facebook, X, Telegram, los buscadores y los navegadores *headless*.
+  - En "Obras", cada obra dice "Personas que vieron su página: …"; la página pública dice "N personas han visto esta obra.", desde 10 personas.
+  - La política de datos pasa a la versión `2026-10-21.1`.
+- **Historia:** US-071, nueva (13 escenarios), con R-PRIV-07.
+- **Pruebas:**
+  - Pest (`WorksiteVisitsTest`):
+    - una visita, y la misma persona una vez al día;
+    - el día de Colombia, a las 23:30 y a las 00:30;
+    - dos personas, por la IP o por el navegador;
+    - lo guardado no trae la IP ni el navegador, y la huella cambia de obra a obra y de un día a otro;
+    - lo que se borra a las 00:05, y el calendario;
+    - los robots, la página sin su navegador y una petición sin navegador;
+    - una obra que no existe;
+    - los 30 días (hoy y los 29 anteriores), el total y el umbral de 10.
+  - Vitest: el aviso de la visita al abrir la obra, el número y su ausencia, la línea de "Obras" y la política de datos.
+  - `make backup-check`: las marcas de una huella y de una clave no llegan a las copias, las tablas sí, y el número del día también. Se vio fallar con el `backup.sh` anterior.
+  - Todo se vio en rojo antes de implementar.
+  - Corridas:
+    - Pest: 399 en las carpetas de lo público, las obras, la configuración, los informes ciudadanos y la infraestructura;
+    - Vitest: 826;
+    - trace-check: 561 de 561.
+  - A mano, por nginx: dos visitas del mismo navegador cuentan una, la de WhatsApp no cuenta, y la respuesta no pone cookies.
 
 ### Orden de lo que está en espera (2026-10-14)
 

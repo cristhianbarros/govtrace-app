@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Tenant;
 
 use App\Application\Pagination\Page;
+use App\Application\Publication\WorksiteVisits;
 use App\Domain\Contracts\Contract;
 use App\Domain\Contracts\SearchText;
 use App\Domain\Shared\PublicId;
@@ -47,6 +48,7 @@ class WorksiteController extends Controller
             $objects = Contract::query()
                 ->whereIn('secop_contract_id', $worksites->flatMap->contracts->pluck('secop_contract_id'))
                 ->pluck('object', 'secop_contract_id');
+            $visitors = (new WorksiteVisits)->ofWorksites($worksites->pluck('id')->all());
 
             return $worksites->map(fn (Worksite $worksite) => [
                 'id' => $worksite->public_id, // it. 46c
@@ -57,6 +59,8 @@ class WorksiteController extends Controller
                     'secop_contract_id' => $link->secop_contract_id,
                     'object' => $objects[$link->secop_contract_id] ?? null,
                 ])->all(),
+                // It. 69 (US-071): cuántas personas vieron su página pública.
+                'visitors' => $visitors[$worksite->id],
             ]);
         }));
     }

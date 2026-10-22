@@ -85,5 +85,13 @@ describe('Las solicitudes de alta (it. 43k)', () => {
         expect(text).toContain('para comprobar la inscripción también se consultan los datos abiertos del RUES (Confecámaras).');
         expect(text).toContain('Las solicitudes de alta de una veeduría, y su PDF, hasta 30 días después de decididas. Si el alta se aprueba, el PDF queda con la organización.');
     });
-});
 
+    // It. 69 — US-071 (R-PRIV-07).
+    it('La política de datos dice cómo se cuentan las visitas: the IP and the browser, a fingerprint that changes every day and goes away the next', () => {
+        const text = open().text();
+
+        expect(text).toContain('para contar cuántas personas ven la página de cada obra');
+        expect(text).toContain('una huella que cambia cada día');
+        expect(text).toContain('La huella de quien ve la página de una obra, hasta el día siguiente.');
+    });
+});

@@ -40,6 +40,8 @@ class PublicWorksiteView
             'seat' => $worksite->location() === null ? PublicContractView::seatOf($contracts->first()) : null,
             // It. 66b (US-069): cuántos ciudadanos informaron, y qué hace la veeduría. Solo el número.
             'citizens' => CitizenVoices::of($worksite),
+            // It. 69 (US-071): cuántas personas vieron esta página, desde 10.
+            'visitors' => (new WorksiteVisits)->publicTotal($worksite),
         ];
     }
 }

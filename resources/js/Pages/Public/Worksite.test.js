@@ -8,7 +8,7 @@ import Worksite from './Worksite.vue';
 import CitizenReportForm from '@/Components/Public/CitizenReportForm.vue';
 import { formatDateTime } from '@/lib/format.js';
 import { validate } from '@/lib/validator.js';
-import { fetchReceipt, fetchWorksite, findProof } from '@/services/api.js';
+import { fetchReceipt, fetchWorksite, findProof, recordWorksiteVisit } from '@/services/api.js';
 import { page } from '@/testing/inertia.js';
 
 vi.mock('@inertiajs/vue3', async () => await import('@/testing/inertia.js'));
@@ -487,5 +487,32 @@ describe('Compartir la obra (it. 66c)', () => {
 
         expect(navigator.clipboard.writeText).toHaveBeenCalledWith(window.location.href);
         expect(wrapper.text()).toContain('Enlace copiado: péguelo donde quiera compartirlo.');
+    });
+});
+
+// It. 69 — US-071 (R-PRIV-07).
+describe('Cuántas personas ven la obra (it. 69)', () => {
+    it('Quien abre la página de una obra cuenta como una persona que la vio: the browser tells GovTrace once, when the page opens', async () => {
+        const wrapper = await openWorksite();
+
+        expect(recordWorksiteVisit).toHaveBeenCalledTimes(1);
+        expect(recordWorksiteVisit).toHaveBeenCalledWith('01j9xq3m7v8k2d4f6g8h0jkmnp');
+        wrapper.unmount();
+    });
+
+    it('El público ve cuántas personas han visto la obra: under its state, and that each one counts once a day', async () => {
+        const wrapper = await openWorksite(calle30({ visitors: 1400 }));
+        const visitors = wrapper.get('[data-test="visitors"]');
+
+        expect(visitors.text()).toContain('1.400 personas han visto esta obra');
+        expect(visitors.text()).toContain('Cada persona cuenta una vez al día.');
+        wrapper.unmount();
+    });
+
+    it('Con menos de 10 personas, la página pública no dice el número: the server sends none', async () => {
+        const wrapper = await openWorksite(calle30({ visitors: null }));
+
+        expect(wrapper.find('[data-test="visitors"]').exists()).toBe(false);
+        wrapper.unmount();
     });
 });

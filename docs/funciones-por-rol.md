@@ -90,6 +90,7 @@ El sitio tiene tres pestañas: **Obras**, **Estadísticas** y **Validar**. Al pi
 - **"¿Sabe de un problema en esta obra?":** los canales oficiales de la Contraloría General de la República (línea 199, el 01 8000 y SIPAR en línea), con lo que puede hacer cualquier ciudadano (it. 44a).
 - **"Yo también lo vi"** (US-069, it. 66b): si otros ya informaron de la obra, la página dice cuántos ("3 ciudadanos informaron sobre esta obra") y qué hace la veeduría ("Un veedor la está documentando"), solo el número, nunca los mensajes ni quiénes son. Mientras la veeduría no la documenta, se puede sumar con el correo, la autorización y el código, una vez por obra, y recibe los mismos correos. La tarjeta del mapa también dice cuántos.
 - **"Compartir esta obra"** (it. 66c): el menú del celular, o copiar el enlace. En WhatsApp y en redes, el enlace se ve con el nombre y el estado de la obra, el valor y la entidad de su contrato, y la foto publicada más reciente.
+- **Cuántas personas la han visto** (US-071, it. 69): "140 personas han visto esta obra", desde 10 personas. Cada persona cuenta una vez al día. GovTrace no guarda la IP ni el navegador de quien la ve: una huella del día, que se borra al día siguiente (R-PRIV-07).
 - **"Informar a esta veeduría"** (US-059-LEG, it. 44f):
   1. El ciudadano escribe su correo, autoriza el tratamiento de sus datos y recibe un **código de 6 dígitos**. Vale 10 minutos y admite 5 intentos.
   2. Con el código, escribe lo que vio, entre 20 y 2.000 caracteres, y de 1 a 3 fotos opcionales (JPEG, hasta 10 MB cada una, sin metadatos), con las mismas opciones del veedor: **Tomar foto**, que abre la cámara trasera, y **Elegir de la galería**. Revisa cada una antes de enviar, con los rostros ya difuminados (it. 46e, 46h).
@@ -197,6 +198,7 @@ Todo queda en el log de auditoría: quién, cuándo, antes y después.
 | Función | Qué hace | Historia |
 |---|---|---|
 | **Obras** | Las obras de su organización, con su estado. Una obra aparece con el primer reporte de uno de sus contratos. | US-027 |
+| **Cuántas personas la vieron** | En "Obras", cada obra dice cuántas personas vieron su página pública: hoy, en los últimos 30 días y en total. Una persona cuenta una vez al día; los robots y las vistas previas de los enlaces, no. Es aproximado: varios celulares pueden compartir la IP de su operador. | US-071 (it. 69) |
 | **Corregir la ubicación oficial** | Mueve el punto de una obra mal ubicada; la geocerca de los veedores sigue el punto nuevo. | US-035 |
 | **Agrupar contratos en una ficha de obra** | Varios contratos de la misma obra física, en una ficha con su nombre. Gana el peor estado. | US-045-INT |
 | **Descargar el expediente** | Un ZIP con el **expediente en PDF**, las plantillas pre-llenadas del **derecho de petición** (Ley 1755 de 2015) y de la **denuncia ante la Contraloría**, que citan cada sello como "Prueba Pericial Criptográfica", y los **originales con su prueba**. Solo lo publicado. Cada descarga queda en el log. Desde la it. 46j, de cada contrato dice también el **supervisor** (según SECOP II), el **origen de los recursos** y el **lugar**; la denuncia orienta **a qué contraloría acudir** y deja espacio para las **normas incumplidas**. | US-056-LEG |
@@ -283,6 +285,7 @@ Las horas son de Colombia (it. 45a).
 |---|---|---|
 | **Al recibir un reporte** | Lo sella en Stellar: la raíz de Merkle de sus archivos y metadatos, con la comisión pagada por la cuenta patrocinadora. Una transacción a la vez por cuenta, por turnos. Reintenta a 1, 5, 15 y 60 minutos y, tras 5 intentos, lo deja en "Falla de Sellado". | US-020b, US-021, it. 39 |
 | **Cada 15 minutos** | Revisa la cola (alerta si algo lleva más de 2 horas) y el saldo de la patrocinadora (alerta bajo el umbral). | US-021, US-022 |
+| **00:05** | Borra las huellas de quien vio la página de una obra el día anterior, y la clave de ese día; queda el número. | US-071 |
 | **01:00** | Borra los archivos de las organizaciones dadas de baja hace 5 años. | US-003b |
 | **01:15** | La retención de los informes ciudadanos. | it. 45c |
 | **01:20** | Borra las solicitudes de alta decididas hace 30 días. | US-062-ALT |

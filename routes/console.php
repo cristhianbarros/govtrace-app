@@ -7,6 +7,7 @@ use App\Jobs\CheckOrganizationActivity;
 use App\Jobs\CheckSealingQueue;
 use App\Jobs\CheckSponsorBalance;
 use App\Jobs\EscalateOverdueCitizenReports;
+use App\Jobs\ForgetWorksiteVisitors;
 use App\Jobs\PurgeCitizenReports;
 use App\Jobs\PurgeDecommissionedEvidence;
 use App\Jobs\PurgeOrganizationRequests;
@@ -112,4 +113,11 @@ app(Schedule::class)->command('contracts:followers')
 app(Schedule::class)->job(new PurgeOrganizationRequests)
     ->dailyAt('01:20')
     ->name('organization-requests-purge')
+    ->onOneServer();
+
+// It. 69 (US-071, R-PRIV-07): las huellas de quien vio la página de una obra, y la clave
+// del día, se borran cuando el día termina; queda el número. Cada día a las 00:05.
+app(Schedule::class)->job(new ForgetWorksiteVisitors)
+    ->dailyAt('00:05')
+    ->name('worksite-visitors-forget')
     ->onOneServer();
