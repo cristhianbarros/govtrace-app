@@ -26,33 +26,40 @@ $COMPOSE up -d --wait backup >/dev/null || { echo "FAIL  el servicio backup no a
 # enlazar ni una base de organización que pueda faltar.
 $COMPOSE exec -T -u workspace app php tests/e2e/fixture.php >/dev/null || { echo "FAIL  no se pudo preparar la organización de pruebas (¿make up?)"; exit 1; }
 
+# Hotfix del 2026-11-17: el servicio sigue haciendo su copia cada hora en punto mientras corren
+# estas pruebas, y una que caía a esa hora contaba la copia del servicio como suya. Cada prueba
+# mira solo sus copias, por el nombre que anuncia cada una al terminar, y los restos se cuentan
+# con el candado de backup.sh: si el servicio está copiando, se espera a que termine.
+stamp_of() { in_backup "sed -n 's/^\[backup\] \([0-9]\{8\}T[0-9]\{6\}Z\): .*/\1/p' $1"; }
+partials_left() { in_backup 'flock /backups/.backup.lock bash -c "ls -1d /backups/.*.partial 2>/dev/null | wc -l"'; }
+
 # It. 49: dos copias a la vez (la del servicio, que hace una al arrancar y cada hora, y una
 # manual) no se pisan: backup.sh borraba las carpetas .partial de TODAS al empezar, también la
 # de la otra copia en curso. Con un candado, la segunda espera su turno y las dos terminan.
 in_backup 'backup.sh >/tmp/a.log 2>&1 & backup.sh >/tmp/b.log 2>&1 & wait -n; wait' >/dev/null 2>&1
-before=$(in_backup 'ls -1d /backups/2*Z | wc -l')
 in_backup 'rm -f /tmp/c1.log /tmp/c2.log; (backup.sh >/tmp/c1.log 2>&1; echo $? >/tmp/c1.rc) & (backup.sh >/tmp/c2.log 2>&1; echo $? >/tmp/c2.rc) & wait'
-after=$(in_backup 'ls -1d /backups/2*Z | wc -l')
-partials=$(in_backup 'ls -1d /backups/.*.partial 2>/dev/null | wc -l')
 rcs=$(in_backup 'cat /tmp/c1.rc /tmp/c2.rc | sort -u | tr -d "\n"')
-if [ "$rcs" = 0 ] && [ "$((after - before))" -ge 2 ] && [ "$partials" -eq 0 ]; then
+first=$(stamp_of /tmp/c1.log)
+second=$(stamp_of /tmp/c2.log)
+complete=$(in_backup "ls -1d /backups/${first:-ninguna} /backups/${second:-ninguna} 2>/dev/null | sort -u | wc -l")
+partials=$(partials_left)
+if [ "$rcs" = 0 ] && [ "$complete" -eq 2 ] && [ "$partials" -eq 0 ]; then
     pass "dos copias a la vez terminan las dos, completas y sin dejar restos"
 else
-    flunk "dos copias a la vez se pisan (códigos de salida: ${rcs:-?}, copias nuevas: $((after - before)), restos: $partials)"
+    flunk "dos copias a la vez se pisan (códigos de salida: ${rcs:-?}, copias completas: $complete, restos: $partials)"
 fi
 
 # It. 49: un nombre de copia ya usado (dos copias que terminan en el mismo segundo, que con pocos
 # archivos pasa) no se mezcla con la anterior: mv metía la copia nueva DENTRO de la vieja y se
 # perdía. BACKUP_STAMP fija el nombre, solo para esta prueba.
 latest=$(in_backup 'ls -1d /backups/2*Z | tail -1')
-before=$(in_backup 'ls -1d /backups/2*Z | wc -l')
-in_backup "BACKUP_STAMP=$(basename "$latest") backup.sh" >/dev/null 2>&1; rc=$?
-after=$(in_backup 'ls -1d /backups/2*Z | wc -l')
+in_backup "BACKUP_STAMP=$(basename "$latest") backup.sh >/tmp/d.log 2>&1"; rc=$?
+taken=$(stamp_of /tmp/d.log)
 nested=$(in_backup "ls -1d $latest/.*partial 2>/dev/null | wc -l")
-if [ "$rc" -eq 0 ] && [ "$((after - before))" -eq 1 ] && [ "$nested" -eq 0 ]; then
+if [ "$rc" -eq 0 ] && [ -n "$taken" ] && [ "$taken" != "$(basename "$latest")" ] && in_backup "test -d /backups/$taken" && [ "$nested" -eq 0 ]; then
     pass "una copia con un nombre ya usado toma otro, y no se mete dentro de la anterior"
 else
-    flunk "una copia con un nombre ya usado se mezcla con la anterior (salida: $rc, copias nuevas: $((after - before)), anidadas: $nested)"
+    flunk "una copia con un nombre ya usado se mezcla con la anterior (salida: $rc, copia nueva: ${taken:-ninguna}, anidadas: $nested)"
 fi
 
 # Una copia "de hace 31 días", que la próxima debe borrar.
