@@ -4026,7 +4026,7 @@ Queda para la V2, opcional, con el modelo de financiación (`docs/viabilidad-leg
 
 **Modelo:** Opus 5.5 (datos de quien visita, Ley 1581).
 
-✅ **Cumplida en el código (2026-10-21).** Falta fusionarla y desplegarla en staging, con el OK del usuario.
+✅ **Cumplida, fusionada (#147) y en staging (2026-10-21).** Staging se borró el 2026-11-17 (`docs/staging.md`).
 - **Cómo quedó:**
   - `WorksiteVisits` (`app/Application/Publication`) hace la huella con `hash_hmac('sha256', …)` y la clave del día (`VisitorKey`, en la base central, `random_bytes(32)`). Guarda una por persona, obra y día (`worksite_visitors`), y con cada huella nueva suma uno al día (`worksite_visit_days`, con `upsert`).
   - `ForgetWorksiteVisitors` corre a las 00:05 y borra las huellas y las claves de los días anteriores.
@@ -4053,6 +4053,36 @@ Queda para la V2, opcional, con el modelo de financiación (`docs/viabilidad-leg
     - Vitest: 826;
     - trace-check: 561 de 561.
   - A mano, por nginx: dos visitas del mismo navegador cuentan una, la de WhatsApp no cuenta, y la respuesta no pone cookies.
+
+### Hotfix del 2026-11-17 — avisos nuevos en las dependencias, y la prueba de respaldos que caía en la hora en punto
+
+⬜ **Pedido por el usuario el 2026-11-17:** dejar `main` en verde antes de fusionar #148, que solo cambia documentos (staging se borró). El pipeline de #148 falló en dos trabajos, y en `main` habría fallado igual.
+
+**Por qué:**
+- **`make audit` (it. 41):** desde el 21 de octubre se publicaron avisos nuevos para lo que tenemos instalado.
+  - Composer: 10 avisos en 7 paquetes: `laravel/framework` 13.33.0, `phpseclib/phpseclib` 3.0.57, y `symfony/filesystem`, `http-foundation`, `http-kernel`, `mime` y `routing` en 8.1.6 y 8.1.7.
+  - npm: `follow-redirects` 1.16.1, de severidad alta (GHSA-mrwp-f3q8-3g9p).
+- **`make backup-check`:** fallaban "dos copias a la vez…" y "una copia con un nombre ya usado…", pero `backup.sh` estaba bien. El servicio de respaldos hace su copia cada hora en punto, y la prueba corrió de 14:59:55 a 15:00:04. Contó la copia del servicio como suya: una copia de más, y su carpeta `.partial` todavía en curso.
+
+**Entregable:**
+- **Composer:** `composer update` de esos 7 paquetes, con sus dependencias. Quedan Laravel 13.43.0, phpseclib 3.0.58 y Symfony 8.1.10 y 8.1.11. Cambian 52 paquetes, ninguno de versión mayor, y llega `symfony/polyfill-time`.
+- **npm:** `follow-redirects` 1.16.2. En `package-lock.json` cambia solo esa entrada, como el 2026-10-21.
+- **La prueba de respaldos:** las dos pruebas de `tests/infra/check-backup.sh` miran solo sus copias, por el nombre que anuncia cada una al terminar. Cuentan los restos con el candado de `backup.sh`: si el servicio está copiando, esperan a que termine.
+
+**Done-when:**
+- `make audit` y `make backup-check` en verde;
+- las dos pruebas fallan con copias del servicio en curso y pasan con el cambio;
+- siguen fallando con un `backup.sh` sin candado ni espera de nombre;
+- "CI completo" en verde.
+
+**Modelo:** Opus 5.5, en esta sesión.
+
+✅ **Cumplido en el código (2026-11-17).**
+- **La prueba de respaldos, en rojo y en verde:**
+  - Con un bucle de copias del servicio corriendo a la vez, las dos pruebas anteriores fallaron como en el pipeline. La primera dio 3 copias nuevas y 1 resto; la segunda, 2 copias nuevas.
+  - Las pruebas nuevas pasaron dos veces seguidas.
+  - Con un `backup.sh` sin candado ni espera de nombre, las nuevas fallan: de dos copias a la vez queda una sola completa, y la del nombre usado queda anidada.
+- **Corridas:** `make backup-check`, 19 de 19; `make audit`, sin avisos en Composer ni en npm. La suite completa, con las dependencias nuevas, corre en el pipeline.
 
 ### Orden de lo que está en espera (2026-10-14)
 
