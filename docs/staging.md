@@ -2,6 +2,8 @@
 
 Una copia de GovTrace en internet, apuntando a la **testnet** de Stellar, para probar con celulares de verdad: cámara y GPS (que el navegador solo da por HTTPS), correo real y SECOP II de punta a punta. Iteración 42b; las decisiones están en D14 de `specs/PLAN.md`.
 
+> **Staging ya no existe.** Se borró completo el 2026-11-17, porque el proyecto no siguió: la pila, los dos buckets (sin copia) y los secretos de SSM, como dice "Borrar todo". `https://govtrace.duckdns.org` ya no responde. Esta guía queda para volver a montarlo desde cero: "La primera vez" sirve tal cual.
+
 | Qué | Valor |
 |---|---|
 | Dirección | `https://govtrace.duckdns.org`; cada organización en `https://<slug>.govtrace.duckdns.org` |
@@ -110,11 +112,28 @@ Adentro, el código está en `/opt/govtrace`, y los contenedores se ven con `sud
 
 ## Borrar todo
 
+Así se borró el 2026-11-17. Todo es irreversible.
+
+**1. La pila.** Primero se quita la protección de la máquina (ver "La seguridad"); sin eso, la pila no se deja borrar:
+
 ```
+aws ec2 modify-instance-attribute --profile govtrace-staging --region us-east-2 --instance-id <InstanceId> --no-disable-api-termination
 aws cloudformation delete-stack --profile govtrace-staging --region us-east-2 --stack-name govtrace-staging
+aws cloudformation wait stack-delete-complete --profile govtrace-staging --region us-east-2 --stack-name govtrace-staging
 ```
 
-Borra la máquina (con su base de datos), la IP, el rol y el grupo de seguridad. **Los dos buckets quedan**, porque guardan evidencias y respaldos: si de verdad sobran, se vacían y se borran a mano. Los secretos de SSM también quedan.
+Borra la máquina (con su disco y la base de datos), la IP fija, el rol y el grupo de seguridad, y, si los tiene, el horario, el presupuesto y la alerta de gastos.
+
+**2. Los dos buckets.** La pila los deja a propósito, porque guardan las evidencias y los respaldos. Si de verdad sobran, se borran cuando la máquina ya no existe, para que no suba otra copia mientras tanto. En la consola de S3, a cada uno: *Vaciar* y después *Eliminar*. *Vaciar* borra también las versiones anteriores y las marcas de borrado del bucket de respaldos, que tiene versionado: sin eso, AWS no deja eliminarlo.
+
+**3. Los secretos de SSM.** La pila tampoco los borra:
+
+```
+aws ssm get-parameters-by-path --profile govtrace-staging --region us-east-2 --path /govtrace/staging --query 'Parameters[].Name' --output text \
+  | xargs -n 10 aws ssm delete-parameters --profile govtrace-staging --region us-east-2 --names
+```
+
+**4. Fuera de AWS.** Revocar la contraseña de aplicación de Gmail, que estuvo en la máquina y en SSM, y, si se quiere, liberar el subdominio en duckdns.org. En la testnet no hay nada que borrar.
 
 ## El horario, lo que cuesta y la seguridad (it. 61)
 
